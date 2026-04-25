@@ -36,7 +36,7 @@ Frappe Framework
 |-------------|-----------|------|---------|
 | **Tax** | `kr_dependents_count` | Int | 간이세액표 가족수 |
 | | `kr_withholding_rate` | Select | 80/100/120% |
-| | `kr_resident_id` | Data | 주민등록번호 (encrypted) |
+| | `kr_resident_id` | Password | 주민등록번호 — Frappe Password 필드 사용 (AES 암호화 저장, API 응답에서 자동 마스킹). ⚠ Data 타입 절대 금지 — 평문 저장됨 |
 | **Insurance** | `kr_pension_notified_amount` | Currency | 국민연금 공단 고지액 |
 | | `kr_pension_exempt` | Check | 만60세 면제 |
 | | `kr_employ_ins_exempt` | Check | 만65세 입사 면제 |
@@ -66,14 +66,19 @@ Frappe Framework
 
 ### Deductions
 
-| Component | Type | Formula | Phase |
-|-----------|------|---------|-------|
-| 국민연금 | Formula | `kr_national_pension(base)` | 1 |
-| 건강보험 | Formula | `kr_health_insurance(base)` | 1 |
-| 장기요양 | Formula | `kr_longterm_care(health_ins)` | 1 |
-| 고용보험 | Formula | `kr_employment_insurance(base)` | 1 |
-| 소득세 | Formula | `kr_income_tax(taxable, deps)` | 1 |
-| 지방소득세 | Formula | `income_tax * 0.1` | 1 |
+| Component | Type | Formula | Base | Phase |
+|-----------|------|---------|------|-------|
+| 국민연금 | Formula | `kr_national_pension(employee)` | **NPS 고지액** (kr_pension_notified_amount). 미입력 시 과세급여 × 4.75% + 상한/하한 적용. ⚠ 과세급여 직접 아님 | 1 |
+| 건강보험 | Formula | `kr_health_insurance(taxable_pay)` | **과세급여** × 3.595% | 1 |
+| 장기요양 | Formula | `kr_longterm_care(health_ins)` | **건강보험료** × 13.14% | 1 |
+| 고용보험 | Formula | `kr_employment_insurance(taxable_pay)` | **과세급여** × 0.9% | 1 |
+| 소득세 | Formula | `kr_income_tax(taxable_pay, deps, withholding_rate)` | 간이세액표 lookup × **withholding_rate** (80/100/120%). ⚠ rate 누락 시 100% 고정 = 맞춤형 원천징수 작동 안 함 | 1 |
+| 지방소득세 | Formula | `income_tax * 0.1` | 소득세의 10% | 1 |
+
+> **⚠ 보험별 base 주의** (docs/korea/02 §3-2, insurance.py 기준):
+> - 국민연금: NPS 고지액 우선. 고지액 없을 때만 요율 계산 (상한 637만/659만, 하한 40만/41만 적용)
+> - 건강/장기/고용: 과세급여(taxable_pay) 기준. 상한 없음
+> - 모든 보험: `floor10()` 단수처리 (10원 절사)
 
 ---
 
@@ -122,12 +127,24 @@ def validate(doc, method):
 
 ```python
 # In hrms/hooks.py or south_korea/hooks.py
+#
+# ⚠ Hook 타이밍 중요:
+#   before_save → 너무 늦음 (Salary Slip 계산이 이미 완료된 후)
+#   validate    → 계산 전에 실행 → 데이터 로드/보험 판단에 적합
+#   on_submit   → 확정 후 → 최종 검증에 적합
+#
+# Frappe Salary Slip 라이프사이클:
+#   validate → before_save → on_update → on_submit
+#   Salary Slip의 calculate()는 validate 내부에서 호출됨
+#   → 데이터 로드는 반드시 validate 이전(before_validate) 또는 validate 초입
 
 doc_events = {
     "Salary Slip": {
-        "before_save": "hrms.regional.south_korea.salary_slip.before_calculate",
-        "on_change": "hrms.regional.south_korea.salary_slip.on_calculate",
-        "validate": "hrms.regional.south_korea.salary_slip.validate",
+        "before_validate": "hrms.regional.south_korea.salary_slip.before_calculate",
+        "validate": [
+            "hrms.regional.south_korea.salary_slip.on_calculate",
+            "hrms.regional.south_korea.salary_slip.validate",
+        ],
     }
 }
 ```

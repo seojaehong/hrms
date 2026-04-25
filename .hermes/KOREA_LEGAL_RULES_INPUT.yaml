@@ -1,0 +1,83 @@
+effective_date: 2026-01-01
+jurisdiction: Korea, Republic of
+owner_notes: |
+  2026 데모 기본값은 공식/준공식 공개 기준을 우선 반영한다.
+  자동 계산 엔진보다 '검증 가능한 기준값 저장소'로 먼저 운영한다.
+  운영 반영 전에는 해당 연도 고시/기관 공지로 1회 재확인한다.
+
+labor_standards:
+  workweek_hours: 40
+  standard_daily_hours: 8
+  overtime_limit_hours_per_week: 12
+  max_total_hours_per_week_note: "일반 40시간제 기준 52시간(40+12). 탄력/선택근로, 특별연장근로는 별도 정책 필요"
+  overtime_premium_multiplier: 1.5
+  night_work_window: "22:00-06:00"
+  night_work_premium_multiplier: 1.5
+  holiday_work_premium_under_8h_multiplier: 1.5
+  holiday_work_premium_over_8h_multiplier: 2.0
+  annual_leave_policy:
+    under_one_year: "1개월 개근 시 1일"
+    one_year_or_more: "출근율 80% 이상 시 15일"
+    long_service_bonus: "3년 이상부터 2년마다 1일 가산"
+    max_days: 25
+    note: "회계연도 기준 운영 여부 및 세부 부여정책은 회사 규정으로 확정"
+
+social_insurance:
+  national_pension:
+    enabled: true
+    employee_rate: 0.045
+    employer_rate: 0.045
+    monthly_floor: null
+    monthly_cap: null
+    note: "국민연금 총 9%, 근로자/사용자 각 4.5%"
+  health_insurance:
+    enabled: true
+    employee_rate: 0.03545
+    employer_rate: 0.03545
+    note: "건강보험 총 7.09%, 근로자/사용자 각 3.545%"
+  long_term_care_insurance:
+    enabled: true
+    employee_rate: null
+    employer_rate: null
+    linked_to: health_insurance
+    formula_note: "건강보험료의 9.182%"
+    note: "근로자/사용자 각각 자기 부담 건강보험료를 기준으로 계산"
+  employment_insurance:
+    enabled: true
+    employee_rate: 0.009
+    employer_rate: 0.009
+    employer_additional_rate_by_industry:
+      priority_support_company: 0.0025
+      under_150_non_priority: 0.0045
+      from_150_to_999: 0.0065
+      over_1000: 0.0085
+      government_local_government: 0.0065
+    note: "실업급여 기준 근로자/사용자 각 0.9%. 사용자는 기업 규모/구분별 추가요율 별도"
+    recommended_demo_employer_total_rate: 0.0115
+  industrial_accident_compensation:
+    enabled: true
+    employer_rate_by_industry: {}
+    note: "전액 사용자 부담. 업종별 산재보험료율 + 출퇴근재해요율을 회사별 수동 입력"
+
+withholding_tax:
+  simplified_tax_table_version: "NTS Simplified Withholding Table - verify latest 2026 publication before production"
+  default_selection_ratio: 1.0
+  local_income_tax_ratio_to_income_tax: 0.1
+  note: "데모는 자동 계산 대신 수동 샘플/오버라이드 우선. 실제 신고용 자동화는 보류"
+
+mvp_policy:
+  automation_scope: "1차는 기준값 저장 + 체크리스트 + 수동검증 보조 중심"
+  restricted_data_policy: "주민등록번호 전체 저장 금지, 마스킹/최소수집 우선"
+  payslip_minimum_fields:
+    - employee_name
+    - employee_id_or_masked_identifier
+    - pay_period
+    - pay_date
+    - earning_items
+    - deduction_items
+    - working_hours_or_days_basis
+    - gross_pay
+    - total_deductions
+    - net_pay
+    - tax_table_version_note
+    - demo_disclaimer

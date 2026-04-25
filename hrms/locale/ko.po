@@ -1,0 +1,200 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: frappe\n"
+"Report-Msgid-Bugs-To: contact@frappe.io\n"
+"POT-Creation-Date: 2026-04-24 00:00+0000\n"
+"PO-Revision-Date: 2026-04-24 00:00+0000\n"
+"Last-Translator: Hermes Agent\n"
+"Language-Team: Korean\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Hermes\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ko\n"
+
+msgid "Employee"
+msgstr "직원"
+
+msgid "Employees"
+msgstr "직원"
+
+msgid "Attendance"
+msgstr "출근기록"
+
+msgid "Leave Application"
+msgstr "휴가신청"
+
+msgid "Leave Allocation"
+msgstr "휴가배정"
+
+msgid "Leave Policy"
+msgstr "휴가정책"
+
+msgid "Leave Policy Assignment"
+msgstr "휴가정책 할당"
+
+msgid "Shift Type"
+msgstr "교대유형"
+
+msgid "Holiday List"
+msgstr "휴일목록"
+
+msgid "Department"
+msgstr "부서"
+
+msgid "Designation"
+msgstr "직책"
+
+msgid "Company"
+msgstr "회사"
+
+msgid "Salary Component"
+msgstr "급여항목"
+
+msgid "Salary Structure"
+msgstr "급여구조"
+
+msgid "Salary Slip"
+msgstr "급여명세서"
+
+msgid "Payroll Entry"
+msgstr "급여처리"
+
+msgid "Payroll Period"
+msgstr "급여기간"
+
+msgid "Expense Claim"
+msgstr "경비청구"
+
+msgid "Full Name"
+msgstr "이름"
+
+msgid "Company Email"
+msgstr "회사 이메일"
+
+msgid "Date of Joining"
+msgstr "입사일"
+
+msgid "Relieving Date"
+msgstr "퇴사일"
+
+msgid "Reports To"
+msgstr "보고 대상"
+
+msgid "Employment Type"
+msgstr "고용형태"
+
+msgid "Status"
+msgstr "상태"
+
+msgid "Designation"
+msgstr "직무/직책"
+
+msgid "Branch"
+msgstr "지점"
+
+msgid "Bank Name"
+msgstr "은행명"
+
+msgid "Bank Account No"
+msgstr "계좌번호"
+
+msgid "Payroll Payable"
+msgstr "급여미지급금"
+
+msgid "Basic"
+msgstr "기본급"
+
+msgid "Arrear"
+msgstr "소급분"
+
+msgid "Earning"
+msgstr "지급항목"
+
+msgid "Deduction"
+msgstr "공제항목"
+
+msgid "Overtime"
+msgstr "연장근로"
+
+msgid "Night Shift"
+msgstr "야간근로"
+
+msgid "Holiday"
+msgstr "휴일"
+
+msgid "Working Hours"
+msgstr "근로시간"
+
+msgid "Check In"
+msgstr "출근"
+
+msgid "Check Out"
+msgstr "퇴근"
+
+msgid "Approved"
+msgstr "승인됨"
+
+msgid "Pending"
+msgstr "대기중"
+
+msgid "Rejected"
+msgstr "반려됨"
+
+msgid "Opening Date"
+msgstr "시작일"
+
+msgid "Closing Date"
+msgstr "종료일"
+
+msgid "Korea HR & Payroll"
+msgstr "한국 HR·급여"
+
+msgid "Business Registration Number"
+msgstr "사업자등록번호"
+
+msgid "Workplace Management Number"
+msgstr "사업장관리번호"
+
+msgid "Default Work Location"
+msgstr "기본 근무지"
+
+msgid "Korea Rules Reference"
+msgstr "한국 기준값 참조"
+
+msgid "Korea Employee Data"
+msgstr "한국 직원정보"
+
+msgid "Resident Registration No. (Masked)"
+msgstr "주민등록번호(마스킹)"
+
+msgid "Employment Type (KR)"
+msgstr "고용형태(한국)"
+
+msgid "Work Location"
+msgstr "근무지"
+
+msgid "Bank Account Holder"
+msgstr "예금주"
+
+msgid "ZIP Code"
+msgstr "우편번호"
+
+msgid "Road Address"
+msgstr "도로명 주소"
+
+msgid "Korea Component Category"
+msgstr "한국 급여항목 분류"
+
+msgid "Ordinary Wage"
+msgstr "통상임금"
+
+msgid "Allowance"
+msgstr "수당"
+
+msgid "Statutory Deduction"
+msgstr "법정공제"
+
+msgid "Company-specific Deduction"
+msgstr "회사별 공제"

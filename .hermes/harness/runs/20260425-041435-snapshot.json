@@ -1,0 +1,68 @@
+{
+  "generated_at_utc": "2026-04-25T04:14:35Z",
+  "git": {
+    "branch": "develop",
+    "status": [
+      "M hrms/overrides/company.py",
+      "?? .hermes/",
+      "?? AGENTS.md",
+      "?? HERMES_WORKSPACE.md",
+      "?? docs/",
+      "?? hrms/locale/ko.po",
+      "?? hrms/regional/korea_republic_of/",
+      "?? hrms/regional/south_korea/",
+      "?? hrms_preview_proxy.py",
+      "?? scripts/",
+      "?? scripts_hrms_down.sh",
+      "?? scripts_hrms_status.sh",
+      "?? scripts_hrms_up.sh"
+    ],
+    "diff_stat": "hrms/overrides/company.py | 65 +++++++++++++++++++++++++++++++----------------\n 1 file changed, 43 insertions(+), 22 deletions(-)"
+  },
+  "docker": {
+    "command": "sudo docker compose -f /home/ubuntu/workspaces/frappe-hrms/docker/docker-compose.yml ps",
+    "exit_code": 0,
+    "stdout": "NAME               IMAGE                 COMMAND                  SERVICE   CREATED        STATUS        PORTS\ndocker-frappe-1    frappe/bench:latest   \"bash /workspace/ini…\"   frappe    13 hours ago   Up 13 hours   6787/tcp, 0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp, 8001-8005/tcp, 9001-9005/tcp, 0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp\ndocker-mariadb-1   mariadb:10.8          \"docker-entrypoint.s…\"   mariadb   13 hours ago   Up 13 hours   3306/tcp\ndocker-redis-1     redis:alpine          \"docker-entrypoint.s…\"   redis     13 hours ago   Up 13 hours   6379/tcp",
+    "stderr": "time=\"2026-04-25T04:14:36Z\" level=warning msg=\"/home/ubuntu/workspaces/frappe-hrms/docker/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\""
+  },
+  "readiness": {
+    "command": "python3 /home/ubuntu/workspaces/frappe-hrms/scripts/korea_launch_readiness.py",
+    "exit_code": 0,
+    "stdout": "KOREA LAUNCH READINESS\n================================================================================\n- ko locale file exists: YES\n  detail: ko.po\n- regional package for korea exists: YES\n  detail: india, korea_republic_of, south_korea, united_arab_emirates\n- korea launch plan exists: YES\n  detail: .hermes/KOREA_LAUNCH_PLAN.md\n- korea gap audit exists: YES\n  detail: .hermes/KOREA_GAP_AUDIT.md\n- docker compose ps ok: YES\n  detail: NAME               IMAGE                 COMMAND                  SERVICE   CREATED        STATUS        PORTS\n- http 8000 responds: YES\n  detail: HTTP/1.1 200 OK",
+    "stderr": ""
+  },
+  "key_paths": [
+    {
+      "path": ".hermes/KOREA_LAUNCH_PLAN.md",
+      "exists": true
+    },
+    {
+      "path": ".hermes/KOREA_GAP_AUDIT.md",
+      "exists": true
+    },
+    {
+      "path": ".hermes/KOREA_LEGAL_RULES_INPUT.yaml",
+      "exists": true
+    },
+    {
+      "path": ".hermes/harness/README.md",
+      "exists": true
+    },
+    {
+      "path": ".hermes/harness/launch-week.yaml",
+      "exists": true
+    },
+    {
+      "path": "hrms/locale/ko.po",
+      "exists": true
+    },
+    {
+      "path": "hrms/regional/south_korea/setup.py",
+      "exists": true
+    },
+    {
+      "path": "hrms/regional/korea_republic_of/setup.py",
+      "exists": true
+    }
+  ]
+}

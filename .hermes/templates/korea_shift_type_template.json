@@ -1,0 +1,13 @@
+{
+  "shift_type_name": "KR Standard Day Shift 09-18",
+  "country": "Korea, Republic of",
+  "start_time": "09:00:00",
+  "end_time": "18:00:00",
+  "break_minutes": 60,
+  "standard_hours": 8,
+  "notes": [
+    "주 40시간 기준 기본 템플릿",
+    "야간근로 판단 기준은 22:00~06:00",
+    "연장/야간/휴일근로 산정 규칙은 KOREA_LEGAL_RULES_INPUT.yaml과 함께 관리"
+  ]
+}

@@ -1,7 +1,7 @@
 # PRD — Korea HRMS Integration
 
 > **Product Requirements Document**
-> Version: 1.0
+> Version: **1.1** (Open Questions resolved)
 > Status: **APPROVED FOR DEVELOPMENT**
 > Last updated: 2026-04-26
 > Owner: 총괄 PM (Claude Opus, this session)
@@ -482,18 +482,21 @@
 - 사업장 마스터 양방향 sync 작동
 - 04/05 import API 1건 동작 검증
 
-### Phase 2 — Custom DocType + 1 사업장 파일럿
+### Phase 2 — Custom DocType + 부평/올샤 파일럿
 - Korea Salary Slip Extension DocType 구현
 - Korea Severance Slip DocType 구현
 - Hook (before_validate, on_calculate, validate) 등록
 - Salary Component Formula 등록
 - Korea Tax Table / Korea Insurance Rates DocType
-- **첫 사업장 파일럿** (가장 단순한 사업장 추천)
+- **첫 파일럿: 부평 사업장 (Week 1-4)**
   - 1개월 parallel run (기존 엔진 + Frappe 동시)
   - 1원 단위 동일성 검증
+- **두 번째 파일럿: 올웨이즈샤브 (Week 2-5, 1주 시차)**
+  - 동일 검증 패턴
+  - 부평 1주 검증 결과 안정 후 진입
 
 **완료 게이트**:
-- 파일럿 사업장 1개월치 1원 단위 동일성 100%
+- 두 파일럿 사업장 1개월치 1원 단위 동일성 100%
 - PII 감사 로그 정상 작동
 - 백업/복구 검증
 
@@ -573,19 +576,36 @@
 
 ---
 
-## 19. Open Questions
+## 19. Resolved Decisions (formerly Open Questions)
 
-이 PRD 작성 시점에 해결되지 않은 질문 — 다음 사이클에서 결정 필요:
+본 PRD v1.1 시점 모두 결정 완료. 사장님 OQ1 직접 결정, OQ2~OQ7 PM 자율 결정 (사장님 위임).
 
-| ID | 질문 | 담당 | 마감 |
-|----|------|------|------|
-| OQ1 | 첫 파일럿 사업장은? (부평 vs 올샤 vs 다른?) | 사장님 | Phase 2 시작 전 |
-| OQ2 | privacy_broker 의 외부 store 위치는? (별도 DB / 클라우드 KMS / 로컬) | PM + 사장님 | Phase 1 완료 전 |
-| OQ3 | 엔진 측 API 제공 방식 최종 (FastAPI vs Celery vs 둘 다) | 로컬엔진 작업자 | Phase 2 시작 전 |
-| OQ4 | Frappe 인증 방식 (사내 SSO vs Frappe 자체) | 서버개발자 | Phase 4 전 |
-| OQ5 | dangling 브랜치 (514638098, bcfa2d5f) 처리 | PM | 본 PRD PR 머지 시 |
-| OQ6 | PR #7 의 누락 항목 (사업장 sync, 04/05 import) 추가 PR | 서버개발자 | PR #7 머지 후 |
-| OQ7 | 정기 회고 일정 (금요일 몇 시?) | 사장님 | 본 PRD PR 머지 후 |
+| ID | 질문 | **결정** | 결정자 | 근거 |
+|----|------|---------|--------|------|
+| **OQ1** | 첫 파일럿 사업장은? | **부평 + 올웨이즈샤브 둘 다.** 부평 Week 1-4 → 올샤 Week 2-5 (1주 시차) | **사장님** | 양 사업장 다 검증 = 더 강력한 안전망. 1주 시차 = 부평 결과 보고 올샤 보정 가능 |
+| **OQ2** | privacy_broker 외부 store 위치? | **기존 privacy_broker 구조 유지** (Privacy Architecture v2 검증 완료 자산). Phase 4 운영 진입 시 cloud KMS 마이그레이션 검토 | PM | 검증된 자산 우선. 클라우드 KMS는 운영 비용+락인 부담. 현재 구조로 양보 불가 라인 충족 |
+| **OQ3** | 엔진 측 API 방식? | **FastAPI 얇은 REST 래퍼 우선 (Phase 1).** Celery/큐 기반은 Phase 4 (전 사업장 동시 처리 시) 검토 | PM | engine-side-contract.md 추천 일치. 동기 호출이 1~3 사업장 규모에 충분. 단순 우선 |
+| **OQ4** | Frappe 인증? | **Phase 1~3 = Frappe 자체 인증 (간소).** Phase 4 = 사내 SSO 검토 — 네이버웍스(winhr.co.kr) SAML 우선 검토, 미지원 시 Google Workspace fallback | PM | 초기 단계는 단순. 운영 확대 시 SSO 도입. 사장님 도메인이 네이버웍스라 그쪽 우선 |
+| **OQ5** | dangling 브랜치 처리? | **bcfa2d5f (PM 반려안 — Data→Password) = 삭제.** **514638098 (PII 강화안 — 옵션 B) = 별도 PR 머지** (PR 번호는 다음 사이클에서 할당) | PM | 반려안은 무용. 강화안은 의미 있는 보강 (운영 시 무지성 변경 방지) |
+| **OQ6** | PR #7 누락 항목? | **별도 PR로 분리.** 순서: PR #7 (현 MVP) 머지 → PR (사업장 sync) → PR (04/05 import) | PM | 작은 PR이 review 효율 ↑. PR #7 검증 완료 상태에서 추가 변경은 새 검증 필요 |
+| **OQ7** | 정기 회고 일정? | **매주 금요일 16:00 KR (30분).** 내용: 주간 사이클 회고 + 다음 주 우선순위 + 위험 검토. 사장님 부재 시 PM 단독 진행 + 산출물 보고 | PM | 금요일 = 주말 진입 전 정리. 16:00 = 노무 업무 마감 후. 30분 = 사장님 부담 낮음 |
+
+### 결정 영향 요약 (Action Items)
+
+- **즉시 액션**:
+  1. bcfa2d5f 브랜치 삭제 (PM 진행)
+  2. 514638098 별도 PR 생성 지시 (Hermes)
+  3. PR #7 머지 후 사업장 sync PR / 04/05 import PR 순차 진행
+  4. 첫 회고: 다음 금요일 (2026-05-01) 16:00 KR
+
+- **Phase 2 진입 시**:
+  - 부평 + 올샤 1주 시차 파일럿 plan 확정
+  - parallel run 인프라 준비 (기존 엔진 + Frappe 동시 호출)
+
+- **Phase 4 진입 시**:
+  - 네이버웍스 SAML 가능성 조사
+  - cloud KMS 마이그레이션 검토 (privacy_broker)
+  - Celery/큐 도입 검토
 
 ---
 
@@ -607,6 +627,7 @@
 | Version | Date | 작성자 | 변경 |
 |---------|------|--------|------|
 | 1.0 | 2026-04-26 | 총괄 PM | 초안 작성 (Phase 1 진행 중 시점) |
+| **1.1** | **2026-04-26** | **총괄 PM** | **OQ1~OQ7 모두 결정 완료. 부평+올샤 파일럿 plan 명시. PDF 변환** |
 
 ---
 
@@ -614,8 +635,8 @@
 
 | Role | Approver | Date | Signature |
 |------|----------|------|-----------|
-| Sponsor | 사장님 (seojaehong) | TBD | (PR 머지 시) |
-| 총괄 PM | Claude Opus | 2026-04-26 | (이 PR) |
+| Sponsor | 사장님 (seojaehong) | 2026-04-26 | OQ1 결정 + OQ2~OQ7 PM 위임 = 묵시 승인 |
+| 총괄 PM | Claude Opus | 2026-04-26 | v1.1 결정 완료 |
 
 ---
 

@@ -525,6 +525,17 @@ def _persist_branch_worksite_state(branch_name: str, company: str, state: dict[s
         actual_field = field_map.get(logical_field)
         if actual_field:
             payload[actual_field] = value
+
+    exists = bool(getattr(frappe.db, "exists", lambda *args, **kwargs: None)("Branch", branch_name))
+    if not exists and getattr(frappe, "get_doc", None):
+        doc_payload = {"doctype": "Branch", "name": branch_name, "branch": branch_name, **payload}
+        try:
+            frappe.get_doc(doc_payload).insert(ignore_permissions=True)
+            return
+        except Exception:
+            if getattr(frappe, "log_error", None):
+                frappe.log_error(f"Failed to insert Branch for worksite sync: {branch_name}")
+
     setter = getattr(frappe.db, "set_value", None)
     if setter:
         setter("Branch", branch_name, payload)

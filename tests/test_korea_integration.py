@@ -126,6 +126,16 @@ class FakeFrappeModule(types.SimpleNamespace):
         return list(rows[start : start + page_length])
 
     def get_doc(self, payload):
+        if payload.get("doctype") == "Branch":
+            branch_name = payload.get("name") or payload.get("branch")
+
+            def insert(ignore_permissions=False):
+                record = self.db.branch_records.setdefault(branch_name, {"name": branch_name})
+                record.update(payload)
+                return record
+
+            return types.SimpleNamespace(insert=insert)
+
         self._comments.append(payload)
         return types.SimpleNamespace(insert=lambda ignore_permissions=False: payload)
 

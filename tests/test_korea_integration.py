@@ -21,6 +21,7 @@ class FakeDB:
         self.korea_calc_reference_run_ids = set()
         self.korea_calc_reference_records = {}
         self.branch_records = {}
+        self.employee_names = {"EMP-0001"}
         self.table_columns = {
             "Attendance": [
                 "name",
@@ -53,6 +54,8 @@ class FakeDB:
         self.exists_calls.append((doctype, name))
         if doctype == "Salary Slip" and name == "SS-0001":
             return True
+        if doctype == "Employee":
+            return name in self.employee_names
         if doctype == "Korea Calc Reference" and isinstance(name, dict):
             return name.get("run_id") in self.korea_calc_reference_run_ids
         if doctype == "Branch":
@@ -146,6 +149,8 @@ class FakeFrappeModule(types.SimpleNamespace):
             record_name = payload.get("name") or payload.get("run_id")
 
             def insert(ignore_permissions=False):
+                if payload.get("employee_id") not in self.db.employee_names:
+                    raise FakeFrappeError(f"Could not find Employee: {payload.get('employee_id')}")
                 if payload.get("run_id") in self.db.korea_calc_reference_run_ids:
                     raise FakeDuplicateEntryError(f"Duplicate run_id: {payload.get('run_id')}")
                 record = {"name": record_name}
@@ -696,6 +701,28 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.fake_frappe.get_doc({"doctype": "Korea Calc Reference", **payload}).insert(ignore_permissions=True)
         with self.assertRaises(FakeDuplicateEntryError):
             self.fake_frappe.get_doc({"doctype": "Korea Calc Reference", **payload}).insert(ignore_permissions=True)
+
+    def test_korea_calc_reference_employee_id_must_be_existing_employee(self):
+        with self.assertRaises(FakeFrappeError):
+            self.module.import_payroll_result(
+                payload={
+                    "run_id": "RUN-MISSING-EMP-1",
+                    "employee_id": "EMP-4040",
+                    "pay_year_month": "2026-04",
+                    "taxable_items": [{"code": "BASE", "label": "기본급", "amount": 2000}],
+                    "non_taxable_items": [],
+                    "social_insurance_deductions": {
+                        "national_pension": 10,
+                        "health_insurance": 20,
+                        "long_term_care_insurance": 3,
+                        "employment_insurance": 4,
+                    },
+                    "withholding_tax": {"income_tax": 30, "local_income_tax": 3},
+                    "gross_pay": 2000,
+                    "total_deduction": 67,
+                    "net_pay": 1933,
+                }
+            )
 
     def test_serialize_import_payload_rejects_pii_again_before_persist(self):
         with self.assertRaises(FakeFrappeError):

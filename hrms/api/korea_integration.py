@@ -345,12 +345,18 @@ def import_payroll_result(payload: dict[str, Any] | None = None, **kwargs) -> di
     if salary_slip:
         _record_payroll_import_comment(salary_slip, payload)
 
+    korea_calc_reference = _create_korea_calc_reference(
+        import_type="payroll",
+        payload=payload,
+        linked_salary_slip=salary_slip,
+    )
+
     return {
         "status": "updated" if salary_slip else "received",
         "employee_id": payload["employee_id"],
         "pay_year_month": payload["pay_year_month"],
         "salary_slip": salary_slip,
-        "korea_calc_reference": None,
+        "korea_calc_reference": korea_calc_reference,
         "message": "Validated and queued for downstream mapping" if not salary_slip else "Validated and linked to Salary Slip",
     }
 
@@ -399,13 +405,19 @@ def import_year_end_settlement_result(payload: dict[str, Any] | None = None, **k
     if salary_slip:
         _record_year_end_settlement_comment(salary_slip, payload)
 
+    korea_calc_reference = _create_korea_calc_reference(
+        import_type="year_end_settlement",
+        payload=payload,
+        linked_salary_slip=salary_slip,
+    )
+
     return {
         "status": "updated" if salary_slip else "received",
         "employee_id": payload["employee_id"],
         "settlement_year": payload["settlement_year"],
         "applied_pay_year_month": payload["applied_pay_year_month"],
         "salary_slip": salary_slip,
-        "korea_calc_reference": None,
+        "korea_calc_reference": korea_calc_reference,
         "message": "Validated and queued for year-end settlement mapping" if not salary_slip else "Validated and linked to Salary Slip",
     }
 
@@ -450,12 +462,18 @@ def import_severance_result(payload: dict[str, Any] | None = None, **kwargs) -> 
     if linked_salary_slip:
         _record_severance_import_comment(linked_salary_slip, payload)
 
+    korea_calc_reference = _create_korea_calc_reference(
+        import_type="severance",
+        payload=payload,
+        linked_salary_slip=linked_salary_slip,
+    )
+
     return {
         "status": "updated" if linked_salary_slip else "received",
         "employee_id": payload["employee_id"],
         "retirement_date": payload["retirement_date"],
         "korea_severance_slip": None,
-        "korea_calc_reference": None,
+        "korea_calc_reference": korea_calc_reference,
         "message": "Validated and queued for severance mapping" if not linked_salary_slip else "Validated and linked to Salary Slip",
     }
 
@@ -825,6 +843,33 @@ def _validate_required_numeric_mapping(payload: Any, required_keys: set[str], la
     _reject_unknown_keys(payload, required_keys, label)
     for key in required_keys:
         _as_float(payload.get(key))
+
+
+def _create_korea_calc_reference(
+    import_type: str,
+    payload: dict[str, Any],
+    linked_salary_slip: str | None = None,
+) -> str | None:
+    if not hasattr(frappe, "get_doc"):
+        return None
+
+    doc_payload = {
+        "doctype": "Korea Calc Reference",
+        "run_id": payload["run_id"],
+        "employee_id": payload["employee_id"],
+        "import_type": import_type,
+        "pay_year_month": payload.get("pay_year_month"),
+        "settlement_year": payload.get("settlement_year"),
+        "settlement_kind": payload.get("settlement_kind"),
+        "applied_pay_year_month": payload.get("applied_pay_year_month"),
+        "retirement_date": payload.get("retirement_date"),
+        "linked_salary_slip": linked_salary_slip,
+        "engine_version": payload.get("engine_version"),
+        "ruleset_version": payload.get("ruleset_version"),
+        "source_payload": json.dumps(payload, ensure_ascii=False, sort_keys=True),
+    }
+    doc = frappe.get_doc(doc_payload).insert(ignore_permissions=True)
+    return getattr(doc, "name", payload["run_id"])
 
 
 def _as_float(value: Any) -> float:

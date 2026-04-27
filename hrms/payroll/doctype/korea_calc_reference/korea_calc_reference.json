@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:run_id",
+ "creation": "2026-04-27 20:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "run_id",
+  "employee_id",
+  "import_type",
+  "linked_salary_slip",
+  "pay_year_month",
+  "settlement_year",
+  "settlement_kind",
+  "applied_pay_year_month",
+  "retirement_date",
+  "engine_version",
+  "ruleset_version",
+  "source_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "run_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Run ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "employee_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "import_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Import Type",
+   "options": "payroll\nyear_end_settlement\nseverance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "linked_salary_slip",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Linked Salary Slip",
+   "options": "Salary Slip"
+  },
+  {
+   "fieldname": "pay_year_month",
+   "fieldtype": "Data",
+   "label": "Pay Year Month"
+  },
+  {
+   "fieldname": "settlement_year",
+   "fieldtype": "Int",
+   "label": "Settlement Year"
+  },
+  {
+   "fieldname": "settlement_kind",
+   "fieldtype": "Select",
+   "label": "Settlement Kind",
+   "options": "\nannual_february\nmid_year_termination"
+  },
+  {
+   "fieldname": "applied_pay_year_month",
+   "fieldtype": "Data",
+   "label": "Applied Pay Year Month"
+  },
+  {
+   "fieldname": "retirement_date",
+   "fieldtype": "Date",
+   "label": "Retirement Date"
+  },
+  {
+   "fieldname": "engine_version",
+   "fieldtype": "Data",
+   "label": "Engine Version"
+  },
+  {
+   "fieldname": "ruleset_version",
+   "fieldtype": "Data",
+   "label": "Ruleset Version"
+  },
+  {
+   "fieldname": "source_payload",
+   "fieldtype": "Code",
+   "label": "Source Payload",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-27 20:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Payroll",
+ "name": "Korea Calc Reference",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "run_id, employee_id, import_type, linked_salary_slip",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "run_id",
+ "track_changes": 1
+}

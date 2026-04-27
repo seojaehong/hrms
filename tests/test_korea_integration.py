@@ -15,6 +15,7 @@ class FakeDB:
         self.set_value_calls = []
         self.single_values = {}
         self.korea_calc_reference_run_ids = set()
+        self.korea_calc_reference_records = {}
         self.branch_records = {}
         self.table_columns = {
             "Attendance": [
@@ -50,6 +51,8 @@ class FakeDB:
             return True
         if doctype == "Korea Calc Reference" and isinstance(name, dict):
             return name.get("run_id") in self.korea_calc_reference_run_ids
+        if doctype == "Korea Calc Reference" and isinstance(name, str):
+            return name if name in self.korea_calc_reference_records else None
         if doctype == "Branch":
             return name if name in self.branch_records else None
         return False
@@ -133,6 +136,18 @@ class FakeFrappeModule(types.SimpleNamespace):
                 record = self.db.branch_records.setdefault(branch_name, {"name": branch_name})
                 record.update(payload)
                 return record
+
+            return types.SimpleNamespace(insert=insert)
+
+        if payload.get("doctype") == "Korea Calc Reference":
+            record_name = payload.get("name") or payload.get("run_id")
+
+            def insert(ignore_permissions=False):
+                record = {"name": record_name}
+                record.update(payload)
+                self.db.korea_calc_reference_records[record_name] = record
+                self.db.korea_calc_reference_run_ids.add(payload.get("run_id"))
+                return types.SimpleNamespace(**record)
 
             return types.SimpleNamespace(insert=insert)
 
@@ -419,6 +434,27 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.assertEqual(self.fake_frappe._comments[0]["reference_name"], "SS-0001")
         self.assertIn("year-end settlement", self.fake_frappe._comments[0]["content"])
 
+    def test_import_year_end_settlement_creates_korea_calc_reference(self):
+        result = self.module.import_year_end_settlement_result(
+            payload={
+                "run_id": "YES-2",
+                "employee_id": "EMP-0001",
+                "settlement_year": 2025,
+                "settlement_kind": "annual_february",
+                "applied_pay_year_month": "2026-02",
+                "prepaid_tax": 100,
+                "determined_tax": 120,
+                "adjustment_tax": 20,
+                "engine_version": "engine-v1",
+                "ruleset_version": "rules-v1",
+            }
+        )
+
+        self.assertEqual(result["korea_calc_reference"], "YES-2")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["YES-2"]["import_type"], "year_end_settlement")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["YES-2"]["settlement_year"], 2025)
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["YES-2"]["applied_pay_year_month"], "2026-02")
+
     def test_import_year_end_settlement_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("YES-1")
 
@@ -479,6 +515,26 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.assertEqual(self.fake_frappe._comments[0]["reference_name"], "SS-0001")
         self.assertIn("severance import", self.fake_frappe._comments[0]["content"])
 
+    def test_import_severance_result_creates_korea_calc_reference(self):
+        result = self.module.import_severance_result(
+            payload={
+                "run_id": "SEV-2",
+                "employee_id": "EMP-0001",
+                "retirement_date": "2026-04-30",
+                "average_wage": 100,
+                "service_years": 3,
+                "severance_pay": 1000,
+                "severance_income_tax": 30,
+                "net_pay": 970,
+                "engine_version": "engine-v1",
+                "ruleset_version": "rules-v1",
+            }
+        )
+
+        self.assertEqual(result["korea_calc_reference"], "SEV-2")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["SEV-2"]["import_type"], "severance")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["SEV-2"]["retirement_date"], "2026-04-30")
+
     def test_import_severance_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("SEV-1")
 
@@ -526,6 +582,32 @@ class KoreaIntegrationTests(unittest.TestCase):
 
         with self.assertRaises(FakeFrappeError):
             self.module.import_payroll_result()
+
+    def test_import_payroll_result_creates_korea_calc_reference(self):
+        result = self.module.import_payroll_result(
+            payload={
+                "run_id": "RUN-2",
+                "employee_id": "EMP-0001",
+                "pay_year_month": "2026-04",
+                "taxable_items": [],
+                "non_taxable_items": [],
+                "social_insurance_deductions": {
+                    "national_pension": 10,
+                    "health_insurance": 20,
+                    "long_term_care_insurance": 3,
+                    "employment_insurance": 4,
+                },
+                "withholding_tax": {"income_tax": 30, "local_income_tax": 3},
+                "net_pay": 1000,
+                "engine_version": "engine-v1",
+                "ruleset_version": "rules-v1",
+            }
+        )
+
+        self.assertEqual(result["korea_calc_reference"], "RUN-2")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["RUN-2"]["import_type"], "payroll")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["RUN-2"]["employee_id"], "EMP-0001")
+        self.assertEqual(self.fake_frappe.db.korea_calc_reference_records["RUN-2"]["pay_year_month"], "2026-04")
 
     def test_import_payroll_result_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("RUN-1")

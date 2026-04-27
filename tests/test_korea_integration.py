@@ -14,6 +14,7 @@ class FakeDB:
         self.exists_calls = []
         self.set_value_calls = []
         self.single_values = {}
+        self.korea_calc_reference_run_ids = set()
         self.table_columns = {
             "Attendance": [
                 "name",
@@ -34,6 +35,8 @@ class FakeDB:
         self.exists_calls.append((doctype, name))
         if doctype == "Salary Slip" and name == "SS-0001":
             return True
+        if doctype == "Korea Calc Reference" and isinstance(name, dict):
+            return name.get("run_id") in self.korea_calc_reference_run_ids
         return False
 
     def set_value(self, *args, **kwargs):
@@ -50,6 +53,7 @@ class FakeFrappeModule(types.SimpleNamespace):
         self._attendance_rows = []
         self._leave_rows = []
         self._comments = []
+        self.get_all_calls = []
         self.db = FakeDB()
         self._ = lambda value: value
         self.whitelist = lambda *args, **kwargs: (lambda fn: fn)
@@ -63,6 +67,17 @@ class FakeFrappeModule(types.SimpleNamespace):
         raise FakeFrappeError(message)
 
     def get_all(self, doctype, filters=None, fields=None, order_by=None, start=0, page_length=None, pluck=None):
+        self.get_all_calls.append(
+            {
+                "doctype": doctype,
+                "filters": filters,
+                "fields": fields,
+                "order_by": order_by,
+                "start": start,
+                "page_length": page_length,
+                "pluck": pluck,
+            }
+        )
         rows = {
             "Employee": self._employee_rows,
             "Attendance": self._attendance_rows,
@@ -176,6 +191,23 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.assertEqual(employee_row["work_time_summary"]["overtime_hours_total"], 2.0)
         self.assertEqual(employee_row["leave_records"][0]["leave_type"], "연차")
 
+    def test_export_time_and_leave_uses_bounded_page_length_for_queries(self):
+        self.fake_frappe._employee_rows = [{"name": "EMP-0001"}]
+
+        self.module.export_time_and_leave(
+            from_date="2026-04-01",
+            to_date="2026-04-30",
+            company="Winners",
+            branch="Seoul",
+            page=2,
+            page_size=10,
+        )
+
+        calls_by_doctype = {call["doctype"]: call for call in self.fake_frappe.get_all_calls}
+        self.assertIsNotNone(calls_by_doctype["Employee"]["page_length"])
+        self.assertIsNotNone(calls_by_doctype["Attendance"]["page_length"])
+        self.assertIsNotNone(calls_by_doctype["Leave Application"]["page_length"])
+
     def test_import_payroll_result_rejects_pii_fields(self):
         with self.assertRaises(FakeFrappeError):
             self.module.import_payroll_result(
@@ -204,6 +236,36 @@ class KoreaIntegrationTests(unittest.TestCase):
 
         with self.assertRaises(FakeFrappeError):
             self.module.import_payroll_result()
+
+    def test_import_payroll_result_rejects_duplicate_run_id(self):
+        self.fake_frappe.db.korea_calc_reference_run_ids.add("RUN-1")
+
+        with self.assertRaises(FakeFrappeError):
+            self.module.import_payroll_result(
+                payload={
+                    "run_id": "RUN-1",
+                    "employee_id": "EMP-0001",
+                    "pay_year_month": "2026-04",
+                    "taxable_items": [],
+                    "non_taxable_items": [],
+                    "social_insurance_deductions": {
+                        "national_pension": 10,
+                        "health_insurance": 20,
+                        "long_term_care_insurance": 3,
+                        "employment_insurance": 4,
+                    },
+                    "withholding_tax": {"income_tax": 30, "local_income_tax": 3},
+                    "net_pay": 1000,
+                }
+            )
+
+        self.assertIn(("Korea Calc Reference", {"run_id": "RUN-1"}), self.fake_frappe.db.exists_calls)
+
+    def test_as_float_raises_when_frappe_throw_returns_unexpectedly(self):
+        self.fake_frappe.throw = lambda message, exc=None: None
+
+        with self.assertRaises(RuntimeError):
+            self.module._as_float("not-a-number")
 
     def test_import_payroll_result_links_salary_slip_when_external_ref_exists(self):
         result = self.module.import_payroll_result(

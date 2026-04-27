@@ -113,6 +113,7 @@ def export_time_and_leave(
         frappe.throw("from_date must be less than or equal to to_date")
 
     page, page_size = _normalize_pagination(page, page_size)
+    query_page_length = _bounded_query_page_length(page_size)
     attendance_fields = ["name", "employee", "attendance_date", "status", "shift", "modified"]
     attendance_fields.extend(_get_optional_fields("Attendance"))
 
@@ -135,7 +136,9 @@ def export_time_and_leave(
     employee_filters = {k: v for k, v in {"company": company, "branch": branch}.items() if v}
     employee_whitelist = None
     if employee_filters:
-        employee_whitelist = set(frappe.get_all("Employee", filters=employee_filters, pluck="name"))
+        employee_whitelist = set(
+            frappe.get_all("Employee", filters=employee_filters, pluck="name", page_length=query_page_length)
+        )
         if not employee_whitelist:
             return {"data": [], "meta": _build_meta(page, page_size, False)}
 
@@ -144,6 +147,7 @@ def export_time_and_leave(
         filters=attendance_filters,
         fields=attendance_fields,
         order_by="employee asc, attendance_date asc",
+        page_length=query_page_length,
     )
     leave_rows = frappe.get_all(
         "Leave Application",
@@ -161,6 +165,7 @@ def export_time_and_leave(
             "modified",
         ],
         order_by="employee asc, from_date asc",
+        page_length=query_page_length,
     )
 
     data = _build_time_and_leave_export(
@@ -283,6 +288,8 @@ def import_payroll_result(payload: dict[str, Any] | None = None, **kwargs) -> di
     _require_keys(payload, PAYROLL_REQUIRED_FIELDS, "payload")
     if not PAY_YEAR_MONTH_PATTERN.match(str(payload.get("pay_year_month", ""))):
         frappe.throw("pay_year_month must be in YYYY-MM format")
+    if getattr(frappe, "db", None) and frappe.db.exists("Korea Calc Reference", {"run_id": payload["run_id"]}):
+        frappe.throw(f"run_id already imported: {payload['run_id']}")
     _validate_payroll_items(payload.get("taxable_items"), "taxable_items")
     _validate_payroll_items(payload.get("non_taxable_items"), "non_taxable_items")
     _validate_required_numeric_mapping(
@@ -488,6 +495,10 @@ def _build_meta(page: int, page_size: int, has_more: bool) -> dict[str, Any]:
     return {"page": page, "page_size": page_size, "has_more": has_more}
 
 
+def _bounded_query_page_length(page_size: int) -> int:
+    return min(max(page_size, DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE) + 1
+
+
 def _coerce_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -546,6 +557,7 @@ def _as_float(value: Any) -> float:
         return float(value or 0)
     except (TypeError, ValueError):
         frappe.throw(f"Invalid numeric value: {value}")
+        raise RuntimeError(f"frappe.throw returned unexpectedly for invalid numeric value: {value}")
 
 
 def _stringify_date(value: Any) -> str | None:

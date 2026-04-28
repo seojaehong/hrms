@@ -102,6 +102,53 @@ class KoreaPayrollDocTypeScaffoldTests(unittest.TestCase):
         )
         self.assertTrue(hasattr(module, "KoreaTaxTable"))
 
+    def test_korea_salary_slip_extension_scaffold_exists_with_payroll_summary_fields(self):
+        doc = self.load_doctype_json(
+            "korea_salary_slip_extension",
+            "korea_salary_slip_extension.json",
+        )
+        fields = {field["fieldname"]: field for field in doc["fields"]}
+
+        expected = {
+            "salary_slip",
+            "employee",
+            "pay_year_month",
+            "taxable_total",
+            "non_taxable_total",
+            "national_pension",
+            "health_insurance",
+            "long_term_care_insurance",
+            "employment_insurance",
+            "income_tax",
+            "local_income_tax",
+            "net_pay",
+            "tax_method",
+            "linked_calc_reference",
+        }
+
+        self.assertEqual(doc["module"], "Payroll")
+        self.assertEqual(doc["name"], "Korea Salary Slip Extension")
+        self.assertEqual(doc["autoname"], "field:salary_slip")
+        self.assertEqual(doc["title_field"], "salary_slip")
+        self.assertTrue(expected.issubset(fields.keys()))
+        self.assertEqual(fields["salary_slip"]["fieldtype"], "Link")
+        self.assertEqual(fields["salary_slip"]["options"], "Salary Slip")
+        self.assertEqual(fields["salary_slip"]["reqd"], 1)
+        self.assertEqual(fields["salary_slip"]["unique"], 1)
+        self.assertEqual(fields["taxable_total"]["fieldtype"], "Currency")
+        self.assertEqual(fields["tax_method"]["fieldtype"], "Select")
+        self.assertEqual(fields["linked_calc_reference"]["options"], "Korea Calc Reference")
+
+        employee_permissions = [perm for perm in doc["permissions"] if perm["role"] == "Employee"]
+        self.assertTrue(employee_permissions)
+        self.assertEqual(employee_permissions[0]["read"], 1)
+
+        module = self.load_doctype_module(
+            "korea_salary_slip_extension",
+            "korea_salary_slip_extension.py",
+        )
+        self.assertTrue(hasattr(module, "KoreaSalarySlipExtension"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -149,6 +149,50 @@ class KoreaPayrollDocTypeScaffoldTests(unittest.TestCase):
         )
         self.assertTrue(hasattr(module, "KoreaSalarySlipExtension"))
 
+    def test_korea_severance_slip_scaffold_exists_with_audit_fields(self):
+        doc = self.load_doctype_json(
+            "korea_severance_slip",
+            "korea_severance_slip.json",
+        )
+        fields = {field["fieldname"]: field for field in doc["fields"]}
+
+        expected = {
+            "employee",
+            "retirement_date",
+            "linked_salary_slip",
+            "average_wage",
+            "service_years",
+            "severance_pay",
+            "severance_income_tax",
+            "local_income_tax",
+            "net_pay",
+            "external_run_id",
+            "engine_version",
+            "ruleset_version",
+            "linked_calc_reference",
+        }
+
+        self.assertEqual(doc["module"], "Payroll")
+        self.assertEqual(doc["name"], "Korea Severance Slip")
+        self.assertEqual(doc["autoname"], "field:external_run_id")
+        self.assertEqual(doc["title_field"], "external_run_id")
+        self.assertTrue(expected.issubset(fields.keys()))
+        self.assertEqual(fields["employee"]["fieldtype"], "Link")
+        self.assertEqual(fields["employee"]["options"], "Employee")
+        self.assertEqual(fields["retirement_date"]["fieldtype"], "Date")
+        self.assertEqual(fields["average_wage"]["fieldtype"], "Currency")
+        self.assertEqual(fields["service_years"]["fieldtype"], "Float")
+        self.assertEqual(fields["external_run_id"]["fieldtype"], "Data")
+        self.assertEqual(fields["external_run_id"]["reqd"], 1)
+        self.assertEqual(fields["external_run_id"]["unique"], 1)
+        self.assertEqual(fields["linked_calc_reference"]["options"], "Korea Calc Reference")
+
+        module = self.load_doctype_module(
+            "korea_severance_slip",
+            "korea_severance_slip.py",
+        )
+        self.assertTrue(hasattr(module, "KoreaSeveranceSlip"))
+
 
 if __name__ == "__main__":
     unittest.main()

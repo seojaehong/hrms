@@ -350,12 +350,22 @@ def import_payroll_result(payload: dict[str, Any] | None = None, **kwargs) -> di
             payload=payload,
             salary_slip_external_ref=external_ref,
         )
+        korea_salary_slip_extension = None
+        if salary_slip:
+            korea_salary_slip_extension = _upsert_korea_salary_slip_extension(
+                salary_slip=salary_slip,
+                employee_id=payload["employee_id"],
+                pay_year_month=payload["pay_year_month"],
+                payload=payload,
+                korea_calc_reference=korea_calc_reference,
+            )
 
     return {
         "status": "updated" if salary_slip else "received",
         "employee_id": payload["employee_id"],
         "pay_year_month": payload["pay_year_month"],
         "salary_slip": salary_slip,
+        "korea_salary_slip_extension": korea_salary_slip_extension,
         "korea_calc_reference": korea_calc_reference,
         "message": "Validated and queued for downstream mapping" if not salary_slip else "Validated and linked to Salary Slip",
     }
@@ -613,6 +623,52 @@ def _record_payroll_import_comment(salary_slip: str, payload: dict[str, Any]) ->
     except Exception:
         if getattr(frappe, "log_error", None):
             frappe.log_error("Failed to persist Korea payroll import comment")
+
+
+def _upsert_korea_salary_slip_extension(
+    *,
+    salary_slip: str,
+    employee_id: str,
+    pay_year_month: str,
+    payload: dict[str, Any],
+    korea_calc_reference: str,
+) -> str:
+    extension_payload = {
+        "employee": employee_id,
+        "pay_year_month": pay_year_month,
+        "taxable_total": _sum_payroll_items(payload.get("taxable_items")),
+        "non_taxable_total": _sum_payroll_items(payload.get("non_taxable_items")),
+        "national_pension": _as_float(payload.get("social_insurance_deductions", {}).get("national_pension")),
+        "health_insurance": _as_float(payload.get("social_insurance_deductions", {}).get("health_insurance")),
+        "long_term_care_insurance": _as_float(
+            payload.get("social_insurance_deductions", {}).get("long_term_care_insurance")
+        ),
+        "employment_insurance": _as_float(payload.get("social_insurance_deductions", {}).get("employment_insurance")),
+        "income_tax": _as_float(payload.get("withholding_tax", {}).get("income_tax")),
+        "local_income_tax": _as_float(payload.get("withholding_tax", {}).get("local_income_tax")),
+        "net_pay": _as_float(payload.get("net_pay")),
+        "engine_version": payload.get("engine_version"),
+        "ruleset_version": payload.get("ruleset_version"),
+        "linked_calc_reference": korea_calc_reference,
+    }
+    if getattr(frappe, "db", None):
+        existing_extension = frappe.db.exists("Korea Salary Slip Extension", {"salary_slip": salary_slip})
+        if existing_extension:
+            frappe.db.set_value("Korea Salary Slip Extension", existing_extension, extension_payload)
+            return existing_extension
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "Korea Salary Slip Extension",
+            "salary_slip": salary_slip,
+            **extension_payload,
+        }
+    ).insert(ignore_permissions=True)
+    return getattr(doc, "name", salary_slip)
+
+
+def _sum_payroll_items(items: Any) -> float:
+    return sum(_as_float(item.get("amount")) for item in items or [])
 
 
 def _record_year_end_settlement_comment(salary_slip: str, payload: dict[str, Any]) -> None:

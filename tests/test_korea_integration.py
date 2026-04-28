@@ -900,6 +900,67 @@ class KoreaIntegrationTests(unittest.TestCase):
                 }
             )
 
+    def test_import_severance_rejects_cross_employee_run_id_reuse(self):
+        self.fake_frappe.db.korea_severance_slip_records["KSEV-0001"] = {
+            "name": "KSEV-0001",
+            "external_run_id": "SEV-1",
+            "employee": "EMP-0009",
+            "retirement_date": "2026-03-31",
+            "severance_pay": 800.0,
+        }
+
+        with self.assertRaises(FakeFrappeError) as exc:
+            self.module.import_severance_result(
+                payload={
+                    "run_id": "SEV-1",
+                    "employee_id": "EMP-0001",
+                    "retirement_date": "2026-04-30",
+                    "linked_salary_slip": "SS-0001",
+                    "average_wage": 100,
+                    "service_years": 3,
+                    "severance_pay": 1000,
+                    "severance_income_tax": 30,
+                    "local_income_tax": 3,
+                    "net_pay": 967,
+                }
+            )
+
+        self.assertIn("already used for employee EMP-0009", str(exc.exception))
+        self.assertNotIn(
+            (("Korea Severance Slip", "KSEV-0001", unittest.mock.ANY), {}),
+            self.fake_frappe.db.set_value_calls,
+        )
+
+    def test_import_severance_allows_same_employee_idempotent_update(self):
+        self.fake_frappe.db.korea_severance_slip_records["KSEV-0001"] = {
+            "name": "KSEV-0001",
+            "external_run_id": "SEV-1",
+            "employee": "EMP-0001",
+            "retirement_date": "2026-03-31",
+            "severance_pay": 800.0,
+        }
+
+        result = self.module.import_severance_result(
+            payload={
+                "run_id": "SEV-1",
+                "employee_id": "EMP-0001",
+                "retirement_date": "2026-04-30",
+                "linked_salary_slip": "SS-0001",
+                "average_wage": 100,
+                "service_years": 3,
+                "severance_pay": 1000,
+                "severance_income_tax": 30,
+                "local_income_tax": 3,
+                "net_pay": 967,
+            }
+        )
+
+        self.assertEqual(result["korea_severance_slip"], "KSEV-0001")
+        self.assertIn(
+            (("Korea Severance Slip", "KSEV-0001", unittest.mock.ANY), {}),
+            self.fake_frappe.db.set_value_calls,
+        )
+
     def test_import_severance_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("SEV-1")
 

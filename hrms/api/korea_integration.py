@@ -733,6 +733,12 @@ def _upsert_korea_severance_slip(
     if getattr(frappe, "db", None):
         existing_docname = frappe.db.exists("Korea Severance Slip", {"external_run_id": payload.get("run_id")})
         if existing_docname:
+            existing_employee = frappe.db.get_value("Korea Severance Slip", existing_docname, "employee")
+            if existing_employee and existing_employee != payload.get("employee_id"):
+                frappe.throw(
+                    f"run_id {payload['run_id']} already used for employee {existing_employee}, "
+                    f"cannot reuse for {payload.get('employee_id')}"
+                )
             frappe.db.set_value("Korea Severance Slip", existing_docname, severance_payload)
             return existing_docname
 

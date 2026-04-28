@@ -140,8 +140,9 @@ class KoreaPayrollDocTypeScaffoldTests(unittest.TestCase):
         self.assertEqual(fields["linked_calc_reference"]["options"], "Korea Calc Reference")
 
         employee_permissions = [perm for perm in doc["permissions"] if perm["role"] == "Employee"]
-        self.assertTrue(employee_permissions)
-        self.assertEqual(employee_permissions[0]["read"], 1)
+        self.assertEqual(employee_permissions, [])
+        self.assertTrue(any(perm["role"] == "System Manager" for perm in doc["permissions"]))
+        self.assertTrue(any(perm["role"] == "HR Manager" for perm in doc["permissions"]))
 
         module = self.load_doctype_module(
             "korea_salary_slip_extension",
@@ -186,6 +187,11 @@ class KoreaPayrollDocTypeScaffoldTests(unittest.TestCase):
         self.assertEqual(fields["external_run_id"]["reqd"], 1)
         self.assertEqual(fields["external_run_id"]["unique"], 1)
         self.assertEqual(fields["linked_calc_reference"]["options"], "Korea Calc Reference")
+
+        employee_permissions = [perm for perm in doc["permissions"] if perm["role"] == "Employee"]
+        self.assertEqual(employee_permissions, [])
+        self.assertTrue(any(perm["role"] == "System Manager" for perm in doc["permissions"]))
+        self.assertTrue(any(perm["role"] == "HR Manager" for perm in doc["permissions"]))
 
         module = self.load_doctype_module(
             "korea_severance_slip",

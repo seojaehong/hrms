@@ -340,6 +340,7 @@ def import_payroll_result(payload: dict[str, Any] | None = None, **kwargs) -> di
         salary_slip = None
         external_ref = payload.get("salary_slip_external_ref")
         if external_ref and getattr(frappe, "db", None) and frappe.db.exists("Salary Slip", external_ref):
+            _ensure_salary_slip_employee_match(external_ref, payload["employee_id"])
             salary_slip = external_ref
 
         if salary_slip:
@@ -413,9 +414,11 @@ def import_year_end_settlement_result(payload: dict[str, Any] | None = None, **k
         salary_slip = None
         external_ref = payload.get("salary_slip_external_ref")
         if external_ref and getattr(frappe, "db", None) and frappe.db.exists("Salary Slip", external_ref):
+            _ensure_salary_slip_employee_match(external_ref, payload["employee_id"])
             salary_slip = external_ref
         if salary_slip:
             _record_year_end_settlement_comment(salary_slip, payload)
+            _apply_year_end_settlement_to_salary_slip(salary_slip, payload)
 
         korea_calc_reference = _create_korea_calc_reference(
             kind="year_end_settlement",
@@ -466,27 +469,38 @@ def import_severance_result(payload: dict[str, Any] | None = None, **kwargs) -> 
         _as_float(payload.get("local_income_tax"))
 
     with _korea_calc_reference_run_lock(payload["run_id"]):
-        if getattr(frappe, "db", None) and frappe.db.exists("Korea Calc Reference", {"run_id": payload["run_id"]}):
-            frappe.throw(f"run_id already imported: {payload['run_id']}")
+        existing_severance_slip = None
+        existing_reference = None
+        if getattr(frappe, "db", None):
+            existing_severance_slip = frappe.db.exists("Korea Severance Slip", {"external_run_id": payload["run_id"]})
+            existing_reference = frappe.db.exists("Korea Calc Reference", {"run_id": payload["run_id"]})
+            if existing_reference and not existing_severance_slip:
+                frappe.throw(f"run_id already imported: {payload['run_id']}")
 
         linked_salary_slip = None
         external_ref = payload.get("linked_salary_slip")
         if external_ref and getattr(frappe, "db", None) and frappe.db.exists("Salary Slip", external_ref):
+            _ensure_salary_slip_employee_match(external_ref, payload["employee_id"])
             linked_salary_slip = external_ref
         if linked_salary_slip:
             _record_severance_import_comment(linked_salary_slip, payload)
 
-        korea_calc_reference = _create_korea_calc_reference(
+        korea_calc_reference = payload["run_id"] if existing_reference else _create_korea_calc_reference(
             kind="severance",
             payload=payload,
             salary_slip_external_ref=external_ref,
+        )
+        korea_severance_slip = _upsert_korea_severance_slip(
+            payload=payload,
+            linked_salary_slip=linked_salary_slip,
+            korea_calc_reference=korea_calc_reference,
         )
 
     return {
         "status": "updated" if linked_salary_slip else "received",
         "employee_id": payload["employee_id"],
         "retirement_date": payload["retirement_date"],
-        "korea_severance_slip": None,
+        "korea_severance_slip": korea_severance_slip,
         "korea_calc_reference": korea_calc_reference,
         "message": "Validated and queued for severance mapping" if not linked_salary_slip else "Validated and linked to Salary Slip",
     }
@@ -669,6 +683,61 @@ def _upsert_korea_salary_slip_extension(
 
 def _sum_payroll_items(items: Any) -> float:
     return sum(_as_float(item.get("amount")) for item in items or [])
+
+
+def _apply_year_end_settlement_to_salary_slip(salary_slip: str, payload: dict[str, Any]) -> None:
+    if not getattr(frappe, "db", None):
+        return
+    frappe.db.set_value(
+        "Salary Slip",
+        salary_slip,
+        {
+            "kr_prepaid_tax": _as_float(payload.get("prepaid_tax")),
+            "kr_determined_tax": _as_float(payload.get("determined_tax")),
+            "kr_adjustment_tax": _as_float(payload.get("adjustment_tax")),
+            "kr_year_end_settlement_kind": payload.get("settlement_kind"),
+            "kr_year_end_target_month": payload.get("applied_pay_year_month"),
+        },
+    )
+
+
+def _ensure_salary_slip_employee_match(salary_slip: str, employee_id: str) -> None:
+    if not getattr(frappe, "db", None):
+        return
+    linked_employee = frappe.db.get_value("Salary Slip", salary_slip, "employee")
+    if linked_employee and linked_employee != employee_id:
+        frappe.throw(f"salary slip {salary_slip} does not belong to employee {employee_id}")
+
+
+def _upsert_korea_severance_slip(
+    *,
+    payload: dict[str, Any],
+    linked_salary_slip: str | None,
+    korea_calc_reference: str,
+) -> str:
+    severance_payload = {
+        "employee": payload.get("employee_id"),
+        "retirement_date": payload.get("retirement_date"),
+        "linked_salary_slip": linked_salary_slip,
+        "average_wage": _as_float(payload.get("average_wage")),
+        "service_years": _as_float(payload.get("service_years")),
+        "severance_pay": _as_float(payload.get("severance_pay")),
+        "severance_income_tax": _as_float(payload.get("severance_income_tax")),
+        "local_income_tax": _as_float(payload.get("local_income_tax")) if payload.get("local_income_tax") is not None else None,
+        "net_pay": _as_float(payload.get("net_pay")),
+        "external_run_id": payload.get("run_id"),
+        "engine_version": payload.get("engine_version"),
+        "ruleset_version": payload.get("ruleset_version"),
+        "linked_calc_reference": korea_calc_reference,
+    }
+    if getattr(frappe, "db", None):
+        existing_docname = frappe.db.exists("Korea Severance Slip", {"external_run_id": payload.get("run_id")})
+        if existing_docname:
+            frappe.db.set_value("Korea Severance Slip", existing_docname, severance_payload)
+            return existing_docname
+
+    doc = frappe.get_doc({"doctype": "Korea Severance Slip", **severance_payload}).insert(ignore_permissions=True)
+    return getattr(doc, "name", payload.get("run_id"))
 
 
 def _record_year_end_settlement_comment(salary_slip: str, payload: dict[str, Any]) -> None:

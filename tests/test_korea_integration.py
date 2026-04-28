@@ -27,6 +27,8 @@ class FakeDB:
         self.korea_calc_reference_run_ids = set()
         self.korea_calc_reference_records = {}
         self.korea_salary_slip_extension_records = {}
+        self.korea_severance_slip_records = {}
+        self.salary_slip_records = {"SS-0001": {"name": "SS-0001", "employee": "EMP-0001"}}
         self.branch_records = {}
         self.employee_names = {"EMP-0001"}
         self.lock_results = {}
@@ -61,8 +63,10 @@ class FakeDB:
 
     def exists(self, doctype, name):
         self.exists_calls.append((doctype, name))
-        if doctype == "Salary Slip" and name == "SS-0001":
-            return True
+        if doctype == "Salary Slip":
+            if isinstance(name, dict):
+                return None
+            return name if name in self.salary_slip_records else False
         if doctype == "Employee":
             return name in self.employee_names
         if doctype == "Korea Calc Reference" and isinstance(name, dict):
@@ -75,6 +79,14 @@ class FakeDB:
                         return record_name
                 return None
             return name if name in self.korea_salary_slip_extension_records else None
+        if doctype == "Korea Severance Slip":
+            if isinstance(name, dict):
+                external_run_id = name.get("external_run_id")
+                for record_name, record in self.korea_severance_slip_records.items():
+                    if record.get("external_run_id") == external_run_id:
+                        return record_name
+                return None
+            return name if name in self.korea_severance_slip_records else None
         if doctype == "Branch":
             return name if name in self.branch_records else None
         return False
@@ -89,8 +101,24 @@ class FakeDB:
                 fieldname = values
                 value = args[0] if args else kwargs.get("value")
                 record[fieldname] = value
+        if doctype == "Salary Slip":
+            record = self.salary_slip_records.setdefault(name, {"name": name})
+            if isinstance(values, dict):
+                record.update(values)
+            else:
+                fieldname = values
+                value = args[0] if args else kwargs.get("value")
+                record[fieldname] = value
         if doctype == "Korea Salary Slip Extension":
             record = self.korea_salary_slip_extension_records.setdefault(name, {"name": name})
+            if isinstance(values, dict):
+                record.update(values)
+            else:
+                fieldname = values
+                value = args[0] if args else kwargs.get("value")
+                record[fieldname] = value
+        if doctype == "Korea Severance Slip":
+            record = self.korea_severance_slip_records.setdefault(name, {"name": name})
             if isinstance(values, dict):
                 record.update(values)
             else:
@@ -108,8 +136,26 @@ class FakeDB:
             if isinstance(fieldname, (list, tuple)):
                 return {field: record.get(field) for field in fieldname}
             return record.get(fieldname)
+        if doctype == "Salary Slip":
+            record = self.salary_slip_records.get(name)
+            if not record:
+                return None
+            if fieldname is None:
+                return record
+            if isinstance(fieldname, (list, tuple)):
+                return {field: record.get(field) for field in fieldname}
+            return record.get(fieldname)
         if doctype == "Korea Salary Slip Extension":
             record = self.korea_salary_slip_extension_records.get(name)
+            if not record:
+                return None
+            if fieldname is None:
+                return record
+            if isinstance(fieldname, (list, tuple)):
+                return {field: record.get(field) for field in fieldname}
+            return record.get(fieldname)
+        if doctype == "Korea Severance Slip":
+            record = self.korea_severance_slip_records.get(name)
             if not record:
                 return None
             if fieldname is None:
@@ -220,6 +266,19 @@ class FakeFrappeModule(types.SimpleNamespace):
                 record = {"name": record_name}
                 record.update(payload)
                 self.db.korea_salary_slip_extension_records[record_name] = record
+                return types.SimpleNamespace(**record)
+
+            return types.SimpleNamespace(insert=insert)
+
+        if payload.get("doctype") == "Korea Severance Slip":
+            record_name = payload.get("name") or payload.get("external_run_id")
+
+            def insert(ignore_permissions=False):
+                if payload.get("employee") not in self.db.employee_names:
+                    raise FakeFrappeError(f"Could not find Employee: {payload.get('employee')}")
+                record = {"name": record_name}
+                record.update(payload)
+                self.db.korea_severance_slip_records[record_name] = record
                 return types.SimpleNamespace(**record)
 
             return types.SimpleNamespace(insert=insert)
@@ -691,9 +750,34 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.assertEqual(result["settlement_year"], 2025)
         self.assertEqual(result["applied_pay_year_month"], "2026-02")
         self.assertEqual(result["salary_slip"], "SS-0001")
+        salary_slip = self.fake_frappe.db.salary_slip_records["SS-0001"]
+        self.assertEqual(salary_slip["kr_prepaid_tax"], 100.0)
+        self.assertEqual(salary_slip["kr_determined_tax"], 120.0)
+        self.assertEqual(salary_slip["kr_adjustment_tax"], 20.0)
+        self.assertNotIn("kr_local_income_tax", salary_slip)
+        self.assertEqual(salary_slip["kr_year_end_settlement_kind"], "annual_february")
+        self.assertEqual(salary_slip["kr_year_end_target_month"], "2026-02")
         self.assertEqual(len(self.fake_frappe._comments), 1)
         self.assertEqual(self.fake_frappe._comments[0]["reference_name"], "SS-0001")
         self.assertIn("year-end settlement", self.fake_frappe._comments[0]["content"])
+
+    def test_import_year_end_settlement_rejects_salary_slip_employee_mismatch(self):
+        self.fake_frappe.db.salary_slip_records["SS-0002"] = {"name": "SS-0002", "employee": "EMP-9999"}
+
+        with self.assertRaises(FakeFrappeError):
+            self.module.import_year_end_settlement_result(
+                payload={
+                    "run_id": "YES-MISMATCH-1",
+                    "employee_id": "EMP-0001",
+                    "settlement_year": 2025,
+                    "settlement_kind": "annual_february",
+                    "applied_pay_year_month": "2026-02",
+                    "salary_slip_external_ref": "SS-0002",
+                    "prepaid_tax": 100,
+                    "determined_tax": 120,
+                    "adjustment_tax": 20,
+                }
+            )
 
     def test_import_year_end_settlement_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("YES-1")
@@ -750,10 +834,71 @@ class KoreaIntegrationTests(unittest.TestCase):
         self.assertEqual(result["status"], "updated")
         self.assertEqual(result["employee_id"], "EMP-0001")
         self.assertEqual(result["retirement_date"], "2026-04-30")
-        self.assertIsNone(result["korea_severance_slip"])
+        self.assertEqual(result["korea_severance_slip"], "SEV-1")
+        severance = self.fake_frappe.db.korea_severance_slip_records["SEV-1"]
+        self.assertEqual(severance["employee"], "EMP-0001")
+        self.assertEqual(severance["linked_salary_slip"], "SS-0001")
+        self.assertEqual(severance["average_wage"], 100.0)
+        self.assertEqual(severance["service_years"], 3.0)
+        self.assertEqual(severance["severance_pay"], 1000.0)
+        self.assertEqual(severance["severance_income_tax"], 30.0)
+        self.assertEqual(severance["local_income_tax"], 3.0)
+        self.assertEqual(severance["net_pay"], 967.0)
+        self.assertEqual(severance["linked_calc_reference"], "SEV-1")
         self.assertEqual(len(self.fake_frappe._comments), 1)
         self.assertEqual(self.fake_frappe._comments[0]["reference_name"], "SS-0001")
         self.assertIn("severance import", self.fake_frappe._comments[0]["content"])
+
+    def test_import_severance_result_updates_existing_korea_severance_slip(self):
+        self.fake_frappe.db.korea_severance_slip_records["KSEV-0001"] = {
+            "name": "KSEV-0001",
+            "external_run_id": "SEV-1",
+            "employee": "EMP-0001",
+            "retirement_date": "2026-03-31",
+            "severance_pay": 800.0,
+        }
+
+        result = self.module.import_severance_result(
+            payload={
+                "run_id": "SEV-1",
+                "employee_id": "EMP-0001",
+                "retirement_date": "2026-04-30",
+                "linked_salary_slip": "SS-0001",
+                "average_wage": 100,
+                "service_years": 3,
+                "severance_pay": 1000,
+                "severance_income_tax": 30,
+                "local_income_tax": 3,
+                "net_pay": 967,
+            }
+        )
+
+        self.assertEqual(result["korea_severance_slip"], "KSEV-0001")
+        severance = self.fake_frappe.db.korea_severance_slip_records["KSEV-0001"]
+        self.assertEqual(severance["retirement_date"], "2026-04-30")
+        self.assertEqual(severance["severance_pay"], 1000.0)
+        self.assertIn(
+            (("Korea Severance Slip", "KSEV-0001", unittest.mock.ANY), {}),
+            self.fake_frappe.db.set_value_calls,
+        )
+
+    def test_import_severance_result_rejects_salary_slip_employee_mismatch(self):
+        self.fake_frappe.db.salary_slip_records["SS-0002"] = {"name": "SS-0002", "employee": "EMP-9999"}
+
+        with self.assertRaises(FakeFrappeError):
+            self.module.import_severance_result(
+                payload={
+                    "run_id": "SEV-MISMATCH-1",
+                    "employee_id": "EMP-0001",
+                    "retirement_date": "2026-04-30",
+                    "linked_salary_slip": "SS-0002",
+                    "average_wage": 100,
+                    "service_years": 3,
+                    "severance_pay": 1000,
+                    "severance_income_tax": 30,
+                    "net_pay": 970,
+                }
+            )
 
     def test_import_severance_rejects_duplicate_run_id(self):
         self.fake_frappe.db.korea_calc_reference_run_ids.add("SEV-1")
@@ -792,6 +937,31 @@ class KoreaIntegrationTests(unittest.TestCase):
                     "withholding_tax": {"income_tax": 30, "local_income_tax": 3},
                     "net_pay": 1000,
                     "resident_registration_number": "900101-1234567",
+                }
+            )
+
+    def test_import_payroll_result_rejects_salary_slip_employee_mismatch(self):
+        self.fake_frappe.db.salary_slip_records["SS-0002"] = {"name": "SS-0002", "employee": "EMP-9999"}
+
+        with self.assertRaises(FakeFrappeError):
+            self.module.import_payroll_result(
+                payload={
+                    "run_id": "RUN-MISMATCH-1",
+                    "employee_id": "EMP-0001",
+                    "pay_year_month": "2026-04",
+                    "salary_slip_external_ref": "SS-0002",
+                    "taxable_items": [{"code": "BASE", "label": "기본급", "amount": 1800}],
+                    "non_taxable_items": [],
+                    "social_insurance_deductions": {
+                        "national_pension": 9,
+                        "health_insurance": 18,
+                        "long_term_care_insurance": 2.7,
+                        "employment_insurance": 3.6,
+                    },
+                    "withholding_tax": {"income_tax": 27, "local_income_tax": 2.7},
+                    "gross_pay": 1800,
+                    "total_deduction": 60,
+                    "net_pay": 1740,
                 }
             )
 

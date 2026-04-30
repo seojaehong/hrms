@@ -1065,6 +1065,11 @@ components:
    - 주민번호 원문/부분값/복원 가능한 토큰은 Frappe에 저장하지 않는다.
 4. `Korea Calc Reference`에는 broker lookup 결과가 필요하면 `broker_lookup_id`와 성공/실패 상태만 남긴다.
 
+#### Phase 2 pilot defer note
+- `privacy_broker live integration is deferred` until endpoint/auth/audit specifications are fixed outside this repo.
+- `Frappe runtime does not call privacy_broker in this pilot` and no placeholder broker client is shipped in Phase 2.
+- `manual or external secure-store lookup remains outside this repo` for any subject-resolution step that would touch PII.
+
 ### 9.5 표준 Salary Slip vs Korea Salary Slip 충돌 룰
 
 1. **한국 급여 결과 값은 외부 엔진이 우선**

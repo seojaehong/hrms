@@ -53,6 +53,63 @@ class TestUnifiedApprovalInbox(unittest.TestCase):
 	def test_inbox_summary_counts_items_by_source(self):
 		self.assertEqual(self.mod.summarize_inbox([{"source_doctype": "Leave Application"}, {"source_doctype": "Leave Application"}, {"source_doctype": "Expense Claim"}]), {"Leave Application": 2, "Expense Claim": 1})
 
+	def test_builds_single_approval_action_contract_for_open_assigned_item(self):
+		item = {
+			"source_doctype": "Leave Application",
+			"name": "LA-1",
+			"approver": "manager@example.com",
+			"status": "Open",
+		}
+
+		action = self.mod.build_approval_action(
+			item,
+			action="approve",
+			actor="manager@example.com",
+			note="Looks good",
+		)
+
+		self.assertEqual(action["action_type"], "korea_approval_action_v1")
+		self.assertEqual(action["action"], "approve")
+		self.assertEqual(action["target"], {"doctype": "Leave Application", "name": "LA-1"})
+		self.assertEqual(action["actor"], "manager@example.com")
+		self.assertEqual(action["note"], "Looks good")
+		self.assertEqual(action["result_status"], "Approved")
+		self.assertTrue(action["requires_runtime_apply"])
+
+	def test_builds_batch_action_contract_preserving_order_and_summary(self):
+		items = [
+			{"source_doctype": "Leave Application", "name": "LA-1", "approver": "manager@example.com", "status": "Open"},
+			{"source_doctype": "Expense Claim", "name": "EC-1", "approver": "manager@example.com", "status": "Pending"},
+		]
+
+		batch = self.mod.build_approval_batch_action(
+			items,
+			action="reject",
+			actor="manager@example.com",
+			note="Missing evidence",
+		)
+
+		self.assertEqual(batch["batch_type"], "korea_approval_batch_action_v1")
+		self.assertEqual(batch["actor"], "manager@example.com")
+		self.assertEqual(batch["action"], "reject")
+		self.assertEqual([entry["target"]["name"] for entry in batch["actions"]], ["LA-1", "EC-1"])
+		self.assertEqual(batch["summary"], {"total": 2, "by_doctype": {"Leave Application": 1, "Expense Claim": 1}})
+
+	def test_approval_action_rejects_wrong_actor_closed_item_and_invalid_action(self):
+		open_item = {"source_doctype": "Leave Application", "name": "LA-1", "approver": "manager@example.com", "status": "Open"}
+		closed_item = {"source_doctype": "Leave Application", "name": "LA-2", "approver": "manager@example.com", "status": "Approved"}
+
+		with self.assertRaises(ValueError):
+			self.mod.build_approval_action(open_item, action="approve", actor="other@example.com")
+		with self.assertRaises(ValueError):
+			self.mod.build_approval_action(closed_item, action="reject", actor="manager@example.com")
+		with self.assertRaises(ValueError):
+			self.mod.build_approval_action(open_item, action="delegate", actor="manager@example.com")
+
+	def test_batch_action_rejects_empty_selection(self):
+		with self.assertRaises(ValueError):
+			self.mod.build_approval_batch_action([], action="approve", actor="manager@example.com")
+
 
 if __name__ == "__main__":
 	unittest.main()

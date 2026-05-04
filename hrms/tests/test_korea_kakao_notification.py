@@ -45,6 +45,110 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			self.mod.build_kakao_template_payload(recipient_phone="02-1234", template_code="PAYSLIP_READY", variables={})
 
+	def test_builds_side_effect_free_send_queue_item_with_consent_and_retry_policy(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="010-1234-5678",
+			template_code="PAYSLIP_READY",
+			variables={"employee": "홍길동", "period": "2026-05"},
+		)
+
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			opted_out=False,
+			scheduled_at="2026-05-31T09:00:00+09:00",
+			provider_key="partner_alimtalk",
+			max_attempts=4,
+		)
+
+		self.assertEqual(queue_item["queue_type"], "korea_kakao_send_queue_v1")
+		self.assertEqual(queue_item["status"], "queued")
+		self.assertEqual(queue_item["provider_key"], "partner_alimtalk")
+		self.assertEqual(queue_item["attempt_count"], 0)
+		self.assertEqual(queue_item["max_attempts"], 4)
+		self.assertEqual(queue_item["next_attempt_at"], "2026-05-31T09:00:00+09:00")
+		self.assertEqual(queue_item["payload"], payload)
+		self.assertTrue(queue_item["dedupe_key"].startswith("kakao:"))
+		self.assertNotIn("PAYSLIP_READY", queue_item["dedupe_key"])
+		self.assertNotIn("01012345678", queue_item["dedupe_key"])
+
+	def test_queue_item_rejects_timezone_naive_schedule_values(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+
+		with self.assertRaisesRegex(ValueError, "scheduled_at must include timezone"):
+			self.mod.build_kakao_send_queue_item(
+				payload=payload,
+				recipient_consent=True,
+				scheduled_at="2026-05-31T09:00:00",
+			)
+
+	def test_queue_item_requires_consent_and_rejects_opted_out_recipients(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+
+		with self.assertRaisesRegex(ValueError, "recipient_consent is required"):
+			self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=False)
+
+		with self.assertRaisesRegex(ValueError, "recipient has opted out"):
+			self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True, opted_out=True)
+
+	def test_delivery_attempt_audit_event_records_provider_result_without_mutating_queue_item(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			scheduled_at="2026-05-31T09:00:00+09:00",
+			provider_key="partner_alimtalk",
+		)
+
+		audit = self.mod.build_kakao_delivery_audit_event(
+			queue_item=queue_item,
+			attempted_at="2026-05-31T09:00:02+09:00",
+			provider_status="retryable_error",
+			provider_message_id="msg-123",
+			error_code="TIMEOUT",
+		)
+
+		self.assertEqual(audit["event_type"], "korea_kakao_delivery_audit_v1")
+		self.assertEqual(audit["dedupe_key"], queue_item["dedupe_key"])
+		self.assertEqual(audit["attempt_number"], 1)
+		self.assertEqual(audit["provider_key"], "partner_alimtalk")
+		self.assertEqual(audit["provider_status"], "retryable_error")
+		self.assertEqual(audit["next_retry_at"], "2026-05-31T09:01:02+09:00")
+		self.assertEqual(queue_item["attempt_count"], 0)
+
+	def test_non_retryable_delivery_status_does_not_schedule_retry(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True)
+
+		audit = self.mod.build_kakao_delivery_audit_event(
+			queue_item=queue_item,
+			attempted_at="2026-05-31T09:00:02+09:00",
+			provider_status="delivered",
+		)
+
+		self.assertIsNone(audit["next_retry_at"])
+
+	def test_delivery_audit_rejects_timezone_naive_attempt_values(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True)
+
+		with self.assertRaisesRegex(ValueError, "attempted_at must include timezone"):
+			self.mod.build_kakao_delivery_audit_event(
+				queue_item=queue_item,
+				attempted_at="2026-05-31T09:00:02",
+				provider_status="delivered",
+			)
+
 
 if __name__ == "__main__":
 	unittest.main()

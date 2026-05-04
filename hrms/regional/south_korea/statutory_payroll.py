@@ -8,7 +8,7 @@ inputs they want to apply for a payroll period.
 from __future__ import annotations
 
 import json
-import math
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 
@@ -104,24 +104,28 @@ def _validate_policy(policy: dict[str, Any]) -> None:
 		if basis != expected_basis:
 			raise ValueError(f"{key}.basis must be {expected_basis}")
 		for rate_key in ("employee_rate", "employer_rate"):
-			_validate_number(entry.get(rate_key), f"{key}.{rate_key}")
-			if float(entry[rate_key]) < 0:
+			rate = _to_decimal(entry.get(rate_key), f"{key}.{rate_key}")
+			if rate < 0:
 				raise ValueError(f"{key}.{rate_key} cannot be negative")
 		for limit_key in ("floor", "ceiling"):
 			if entry.get(limit_key) is not None:
-				_validate_number(entry[limit_key], f"{key}.{limit_key}")
-				if float(entry[limit_key]) < 0:
+				limit = _to_integer_won(entry[limit_key], f"{key}.{limit_key}")
+				if limit < 0:
 					raise ValueError(f"{key}.{limit_key} cannot be negative")
-		if entry.get("floor") is not None and entry.get("ceiling") is not None and float(entry["floor"]) > float(entry["ceiling"]):
+		if (
+			entry.get("floor") is not None
+			and entry.get("ceiling") is not None
+			and _to_integer_won(entry["floor"], f"{key}.floor") > _to_integer_won(entry["ceiling"], f"{key}.ceiling")
+		):
 			raise ValueError(f"{key}.floor cannot exceed {key}.ceiling")
 	limit = policy.get("meal_allowance_monthly_non_taxable_limit", 0)
-	_validate_number(limit, "meal_allowance_monthly_non_taxable_limit")
-	if float(limit) < 0:
+	limit_won = _to_integer_won(limit, "meal_allowance_monthly_non_taxable_limit")
+	if limit_won < 0:
 		raise ValueError("meal_allowance_monthly_non_taxable_limit cannot be negative")
 
 
 def _build_taxable_summary(lines: list[dict[str, Any]], policy: dict[str, Any], component_presets: dict[str, dict[str, Any]]) -> dict[str, int]:
-	meal_limit = _to_won(policy.get("meal_allowance_monthly_non_taxable_limit", 0))
+	meal_limit = _to_integer_won(policy.get("meal_allowance_monthly_non_taxable_limit", 0), "meal_allowance_monthly_non_taxable_limit")
 	meal_non_taxable_remaining = meal_limit
 	gross = 0
 	taxable = 0
@@ -154,19 +158,17 @@ def _split_contribution(policy: dict[str, Any], employee_basis: int, *, employer
 	basis = _apply_floor_ceiling(employee_basis, policy)
 	employer_basis = basis if employer_basis is None else _apply_floor_ceiling(employer_basis, policy)
 	return {
-		"employee": _to_won(basis * float(policy["employee_rate"])),
-		"employer": _to_won(employer_basis * float(policy["employer_rate"])),
+		"employee": _round_decimal_to_won(Decimal(basis) * _to_decimal(policy["employee_rate"], "employee_rate")),
+		"employer": _round_decimal_to_won(Decimal(employer_basis) * _to_decimal(policy["employer_rate"], "employer_rate")),
 	}
 
 
 def _apply_floor_ceiling(value: int, policy: dict[str, Any]) -> int:
 	basis = value
 	if policy.get("floor") is not None:
-		_validate_number(policy["floor"], "floor")
-		basis = max(basis, _to_won(policy["floor"]))
+		basis = max(basis, _to_integer_won(policy["floor"], "floor"))
 	if policy.get("ceiling") is not None:
-		_validate_number(policy["ceiling"], "ceiling")
-		basis = min(basis, _to_won(policy["ceiling"]))
+		basis = min(basis, _to_integer_won(policy["ceiling"], "ceiling"))
 	return basis
 
 
@@ -174,26 +176,33 @@ def _normalize_earning(line: dict[str, Any]) -> dict[str, Any]:
 	component = str(line.get("component") or line.get("label") or "").strip()
 	if not component:
 		raise ValueError("earning component is required")
-	amount = _to_won(line.get("amount"))
+	amount = _to_integer_won(line.get("amount"), "earning amount")
 	if amount < 0:
 		raise ValueError("earning amount cannot be negative")
 	return {"component": component, "amount": amount}
 
 
-def _to_won(value: Any) -> int:
-	_validate_number(value, "amount")
-	return int(round(float(value)))
+def _to_integer_won(value: Any, name: str) -> int:
+	amount = _to_decimal(value, name)
+	if amount != amount.to_integral_value():
+		raise ValueError(f"{name} must be an integer KRW amount")
+	return int(amount)
 
 
-def _validate_number(value: Any, name: str) -> None:
+def _round_decimal_to_won(value: Decimal) -> int:
+	return int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _to_decimal(value: Any, name: str) -> Decimal:
 	if isinstance(value, bool):
 		raise ValueError(f"{name} must be a finite number")
 	try:
-		number = float(value)
-	except (TypeError, ValueError) as exc:
+		number = Decimal(str(value))
+	except (InvalidOperation, ValueError) as exc:
 		raise ValueError(f"{name} must be a finite number") from exc
-	if not math.isfinite(number):
+	if not number.is_finite():
 		raise ValueError(f"{name} must be a finite number")
+	return number
 
 
 __all__ = ["build_statutory_payroll_snapshot", "load_korea_salary_component_presets"]

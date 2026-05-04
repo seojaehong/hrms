@@ -80,6 +80,39 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "national_pension.floor cannot exceed national_pension.ceiling"):
 			self.mod.build_statutory_payroll_snapshot(earnings=[{"component": "Basic Pay", "amount": 1500000}], policy=policy)
 
+	def test_fractional_krw_money_inputs_are_rejected_instead_of_rounded(self):
+		with self.assertRaisesRegex(ValueError, "earning amount must be an integer KRW amount"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": "1000000.50"}],
+				policy=self.policy,
+			)
+
+		policy = dict(self.policy)
+		policy["meal_allowance_monthly_non_taxable_limit"] = "200000.25"
+		with self.assertRaisesRegex(ValueError, "meal_allowance_monthly_non_taxable_limit must be an integer KRW amount"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": 1000000}],
+				policy=policy,
+			)
+
+	def test_large_integer_like_krw_values_are_preserved_without_float_normalization(self):
+		policy = {
+			"meal_allowance_monthly_non_taxable_limit": 0,
+			"national_pension": {"basis": "monthly_taxable_wage", "employee_rate": "0", "employer_rate": "0"},
+			"health_insurance": {"basis": "monthly_taxable_wage", "employee_rate": "0", "employer_rate": "0"},
+			"long_term_care_insurance": {"basis": "health_insurance", "employee_rate": "0", "employer_rate": "0"},
+			"employment_insurance": {"basis": "monthly_taxable_wage", "employee_rate": "0", "employer_rate": "0"},
+		}
+
+		snapshot = self.mod.build_statutory_payroll_snapshot(
+			earnings=[{"component": "Basic Pay", "amount": "9007199254740993"}],
+			policy=policy,
+		)
+
+		self.assertEqual(snapshot["gross_earnings"], 9007199254740993)
+		self.assertEqual(snapshot["taxable_earnings"], 9007199254740993)
+		self.assertEqual(snapshot["ordinary_wage"], 9007199254740993)
+
 	def test_component_presets_are_available_for_safe_salary_component_mapping(self):
 		presets = self.mod.load_korea_salary_component_presets()
 

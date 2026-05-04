@@ -72,11 +72,73 @@ class KoreaAnnualLeaveEngineTest(unittest.TestCase):
         self.assertEqual(result["annual_entitlement_days"], 7.56)
         self.assertEqual(result["total_entitlement_days"], 12.56)
 
+    def test_fiscal_year_start_on_february_twenty_nine_clamps_to_valid_year_date(self):
+        period_start, period_end = self.annual_leave.fiscal_period_for(
+            dt.date(2025, 3, 1), fiscal_year_start_month=2, fiscal_year_start_day=29
+        )
+
+        self.assertEqual(period_start, dt.date(2025, 2, 28))
+        self.assertEqual(period_end, dt.date(2026, 2, 27))
+
+    def test_february_twenty_nine_hire_anniversary_uses_clamped_non_leap_year_date(self):
+        result = self.annual_leave.calculate_annual_leave_entitlement(
+            hire_date=dt.date(2024, 2, 29),
+            as_of_date=dt.date(2025, 2, 28),
+        )
+
+        self.assertEqual(result["service_years"], 1)
+        self.assertEqual(result["monthly_accrual_days"], 0)
+        self.assertEqual(result["annual_entitlement_days"], 15)
+
+    def test_fiscal_year_proration_can_be_capped_by_mid_year_employment_end_date(self):
+        result = self.annual_leave.calculate_annual_leave_entitlement(
+            hire_date=dt.date(2026, 7, 1),
+            as_of_date=dt.date(2026, 12, 31),
+            basis="Fiscal Year",
+            employment_end_date=dt.date(2026, 9, 30),
+        )
+
+        self.assertEqual(result["employment_end_date"], dt.date(2026, 9, 30))
+        self.assertEqual(result["monthly_accrual_days"], 2)
+        self.assertEqual(result["annual_entitlement_days"], 3.78)
+        self.assertEqual(result["total_entitlement_days"], 5.78)
+
+    def test_fiscal_year_after_employment_end_uses_final_employment_period_not_future_period(self):
+        result = self.annual_leave.calculate_annual_leave_entitlement(
+            hire_date=dt.date(2024, 1, 1),
+            as_of_date=dt.date(2027, 3, 1),
+            basis="Fiscal Year",
+            employment_end_date=dt.date(2026, 9, 30),
+        )
+
+        self.assertEqual(result["period_start"], dt.date(2026, 1, 1))
+        self.assertEqual(result["period_end"], dt.date(2026, 12, 31))
+        self.assertEqual(result["service_years"], 2)
+
+    def test_fiscal_year_long_service_entitlement_uses_end_date_not_period_end_after_leave(self):
+        result = self.annual_leave.calculate_annual_leave_entitlement(
+            hire_date=dt.date(2023, 7, 1),
+            as_of_date=dt.date(2026, 12, 31),
+            basis="Fiscal Year",
+            employment_end_date=dt.date(2026, 6, 30),
+        )
+
+        self.assertEqual(result["service_years"], 2)
+        self.assertEqual(result["annual_entitlement_days"], 15)
+
     def test_hire_date_after_as_of_date_is_rejected(self):
         with self.assertRaises(ValueError):
             self.annual_leave.calculate_annual_leave_entitlement(
                 hire_date=dt.date(2026, 5, 1),
                 as_of_date=dt.date(2026, 4, 30),
+            )
+
+    def test_employment_end_date_before_hire_date_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.annual_leave.calculate_annual_leave_entitlement(
+                hire_date=dt.date(2026, 5, 1),
+                as_of_date=dt.date(2026, 12, 31),
+                employment_end_date=dt.date(2026, 4, 30),
             )
 
 

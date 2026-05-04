@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:employee",
+ "creation": "2026-05-04 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "company",
+  "workplace_profile",
+  "contract_section",
+  "employment_contract_type",
+  "contract_start_date",
+  "contract_end_date",
+  "probation_end_date",
+  "work_section",
+  "scheduled_work_days",
+  "scheduled_work_hours_per_week",
+  "weekly_holiday",
+  "wage_section",
+  "wage_type",
+  "base_wage",
+  "inclusive_wage",
+  "non_taxable_meal_allowance",
+  "leave_section",
+  "leave_grant_basis_override",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workplace_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Korea Workplace Profile",
+   "options": "Korea Workplace Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_section",
+   "fieldtype": "Section Break",
+   "label": "Contract"
+  },
+  {
+   "default": "Indefinite",
+   "fieldname": "employment_contract_type",
+   "fieldtype": "Select",
+   "label": "Employment Contract Type",
+   "options": "Indefinite\nFixed Term\nPart Time\nDaily\nIntern\nProbationary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_start_date",
+   "fieldtype": "Date",
+   "label": "Contract Start Date"
+  },
+  {
+   "fieldname": "contract_end_date",
+   "fieldtype": "Date",
+   "label": "Contract End Date"
+  },
+  {
+   "fieldname": "probation_end_date",
+   "fieldtype": "Date",
+   "label": "Probation End Date"
+  },
+  {
+   "fieldname": "work_section",
+   "fieldtype": "Section Break",
+   "label": "Work Conditions"
+  },
+  {
+   "fieldname": "scheduled_work_days",
+   "fieldtype": "Data",
+   "label": "Scheduled Work Days"
+  },
+  {
+   "fieldname": "scheduled_work_hours_per_week",
+   "fieldtype": "Float",
+   "label": "Scheduled Work Hours Per Week"
+  },
+  {
+   "fieldname": "weekly_holiday",
+   "fieldtype": "Data",
+   "label": "Weekly Holiday"
+  },
+  {
+   "fieldname": "wage_section",
+   "fieldtype": "Section Break",
+   "label": "Wage"
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "wage_type",
+   "fieldtype": "Select",
+   "label": "Wage Type",
+   "options": "Monthly\nHourly\nDaily\nAnnual"
+  },
+  {
+   "fieldname": "base_wage",
+   "fieldtype": "Currency",
+   "label": "Base Wage"
+  },
+  {
+   "default": "0",
+   "description": "Inclusive wage arrangements require legal review before use.",
+   "fieldname": "inclusive_wage",
+   "fieldtype": "Check",
+   "label": "Inclusive Wage"
+  },
+  {
+   "fieldname": "non_taxable_meal_allowance",
+   "fieldtype": "Currency",
+   "label": "Non Taxable Meal Allowance"
+  },
+  {
+   "fieldname": "leave_section",
+   "fieldtype": "Section Break",
+   "label": "Leave"
+  },
+  {
+   "fieldname": "leave_grant_basis_override",
+   "fieldtype": "Select",
+   "label": "Leave Grant Basis Override",
+   "options": "\nHire Date\nFiscal Year"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Korea Employment Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee"
+}

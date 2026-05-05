@@ -40,6 +40,29 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 		self.assertEqual(dashboard["status"], "Ready")
 		self.assertTrue(all(card["value"] == 0 for card in dashboard["cards"]))
 
+	def test_cards_include_admin_home_action_contracts(self):
+		dashboard = self.mod.build_admin_dashboard(metrics={"open_approvals": 3, "pending_payslips": 2})
+
+		approvals = next(card for card in dashboard["cards"] if card["key"] == "open_approvals")
+		payslips = next(card for card in dashboard["cards"] if card["key"] == "pending_payslips")
+		self.assertEqual(approvals["action"]["action"], "review_approval_inbox")
+		self.assertEqual(approvals["action"]["route"], "korea-approval-inbox")
+		self.assertTrue(approvals["action"]["enabled"])
+		self.assertFalse(approvals["action"]["requires_runtime_apply"])
+		self.assertEqual(payslips["action"]["action"], "open_payroll_closing_center")
+
+	def test_zero_count_cards_keep_disabled_navigation_actions(self):
+		dashboard = self.mod.build_admin_dashboard(metrics={})
+
+		for card in dashboard["cards"]:
+			self.assertIn("action", card)
+			self.assertFalse(card["action"]["enabled"])
+			self.assertFalse(card["action"]["requires_runtime_apply"])
+
+	def test_boolean_metric_values_are_rejected_instead_of_counted_as_one(self):
+		with self.assertRaises(ValueError):
+			self.mod.build_admin_dashboard(metrics={"open_approvals": True})
+
 
 if __name__ == "__main__":
 	unittest.main()

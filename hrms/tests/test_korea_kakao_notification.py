@@ -239,6 +239,118 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 				requested_at="2026-05-31T09:00:02+09:00",
 			)
 
+	def test_builds_template_registry_entry_without_provider_side_effects(self):
+		entry = self.mod.build_kakao_template_registry_entry(
+			template_code="PAYSLIP_READY",
+			template_name="급여명세서 발송",
+			template_body="{{employee}}님 {{period}} 급여명세서가 준비되었습니다.",
+			required_variables=["period", "employee"],
+			consent_purpose="payroll_notification",
+			provider_template_keys={"partner_alimtalk": "tpl-001"},
+			active=True,
+		)
+
+		self.assertEqual(entry["registry_type"], "korea_kakao_template_registry_v1")
+		self.assertEqual(entry["channel"], "kakao_alimtalk")
+		self.assertEqual(entry["template_code"], "PAYSLIP_READY")
+		self.assertEqual(entry["template_name"], "급여명세서 발송")
+		self.assertEqual(entry["required_variables"], ["employee", "period"])
+		self.assertEqual(entry["consent_purpose"], "payroll_notification")
+		self.assertEqual(entry["provider_template_keys"], {"partner_alimtalk": "tpl-001"})
+		self.assertTrue(entry["active"])
+		self.assertFalse(entry["requires_runtime_send"])
+
+	def test_template_registry_rejects_body_variable_mismatch_and_pii_provider_keys(self):
+		with self.assertRaisesRegex(ValueError, "required_variables must match body variables"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님 {{period}}",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+			)
+
+		with self.assertRaisesRegex(ValueError, "required_variables must match body variables"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님",
+				required_variables=["employee", "unused"],
+				consent_purpose="payroll_notification",
+			)
+
+		with self.assertRaisesRegex(ValueError, "template_body is required"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="   ",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+			)
+
+		with self.assertRaisesRegex(ValueError, "provider_template_keys must not contain phone numbers"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+				provider_template_keys={"01012345678": "tpl-001"},
+			)
+
+		with self.assertRaisesRegex(ValueError, "provider_template_keys must not contain phone numbers"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+				provider_template_keys={"partner_alimtalk": "tpl-010-1234-5678"},
+			)
+
+	def test_builds_registered_template_payload_and_rejects_inactive_or_missing_variables(self):
+		entry = self.mod.build_kakao_template_registry_entry(
+			template_code="PAYSLIP_READY",
+			template_name="급여명세서 발송",
+			template_body="{{employee}}님 {{period}} 급여명세서가 준비되었습니다.",
+			required_variables=["employee", "period"],
+			consent_purpose="payroll_notification",
+		)
+
+		payload = self.mod.build_registered_kakao_template_payload(
+			recipient_phone="010-1234-5678",
+			template_registry_entry=entry,
+			variables={"employee": "홍길동", "period": "2026-05", "ignored": "value"},
+		)
+
+		self.assertEqual(payload["template_code"], "PAYSLIP_READY")
+		self.assertEqual(payload["variables"], {"employee": "홍길동", "period": "2026-05"})
+		self.assertEqual(payload["consent_purpose"], "payroll_notification")
+		self.assertEqual(payload["preview_text"], "홍길동님 2026-05 급여명세서가 준비되었습니다.")
+
+		inactive_entry = {**entry, "active": False}
+		with self.assertRaisesRegex(ValueError, "template registry entry is inactive"):
+			self.mod.build_registered_kakao_template_payload(
+				recipient_phone="01012345678",
+				template_registry_entry=inactive_entry,
+				variables={"employee": "홍길동", "period": "2026-05"},
+			)
+
+		string_inactive_entry = {**entry, "active": "false"}
+		with self.assertRaisesRegex(TypeError, "template_registry_entry.active must be a bool"):
+			self.mod.build_registered_kakao_template_payload(
+				recipient_phone="01012345678",
+				template_registry_entry=string_inactive_entry,
+				variables={"employee": "홍길동", "period": "2026-05"},
+			)
+
+		with self.assertRaisesRegex(ValueError, "missing template variables: period"):
+			self.mod.build_registered_kakao_template_payload(
+				recipient_phone="01012345678",
+				template_registry_entry=entry,
+				variables={"employee": "홍길동"},
+			)
+
 
 if __name__ == "__main__":
 	unittest.main()

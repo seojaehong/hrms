@@ -13,6 +13,84 @@ RETRYABLE_PROVIDER_STATUSES = {"retryable_error", "rate_limited", "timeout"}
 TERMINAL_PROVIDER_STATUSES = {"delivered", "accepted", "permanent_error", "opted_out"}
 SUPPORTED_PROVIDER_STATUSES = RETRYABLE_PROVIDER_STATUSES | TERMINAL_PROVIDER_STATUSES
 SUPPORTED_PROVIDER_TYPES = {"paid_vendor", "partner_api", "delegated_rpa", "owned_connector"}
+PHONE_NUMBER_RE = re.compile(r"01\d{8,9}")
+
+
+def build_kakao_template_registry_entry(
+	*,
+	template_code: str,
+	template_name: str,
+	template_body: str,
+	required_variables: list[str],
+	consent_purpose: str,
+	provider_template_keys: dict[str, Any] | None = None,
+	active: bool = True,
+) -> dict[str, Any]:
+	"""Build a side-effect-free Kakao template registry entry contract.
+
+	This models a runtime-managed approved template catalog. It does not call a
+	provider, persist a DocType, or assume any public/government API route.
+	"""
+
+	template_code = str(template_code or "").strip()
+	template_name = str(template_name or "").strip()
+	template_body = str(template_body or "")
+	consent_purpose = str(consent_purpose or "").strip()
+	if not template_code:
+		raise ValueError("template_code is required")
+	if not template_name:
+		raise ValueError("template_name is required")
+	if not template_body.strip():
+		raise ValueError("template_body is required")
+	if not consent_purpose:
+		raise ValueError("consent_purpose is required")
+
+	body_variables = sorted({match.group(1) for match in VARIABLE_RE.finditer(template_body)})
+	required = sorted({str(variable or "").strip() for variable in (required_variables or []) if str(variable or "").strip()})
+	if not required:
+		raise ValueError("required_variables is required")
+	if body_variables != required:
+		raise ValueError("required_variables must match body variables")
+
+	provider_keys = _validate_provider_template_keys(provider_template_keys or {})
+	return {
+		"registry_type": "korea_kakao_template_registry_v1",
+		"channel": "kakao_alimtalk",
+		"template_code": template_code,
+		"template_name": template_name,
+		"template_body": template_body,
+		"required_variables": required,
+		"consent_purpose": consent_purpose,
+		"provider_template_keys": provider_keys,
+		"active": bool(active),
+		"requires_runtime_send": False,
+	}
+
+
+def build_registered_kakao_template_payload(
+	*,
+	recipient_phone: str,
+	template_registry_entry: dict[str, Any],
+	variables: dict[str, Any],
+) -> dict[str, Any]:
+	"""Build a Kakao payload from an approved registry entry without sending it."""
+
+	entry = _validate_template_registry_entry(template_registry_entry)
+	if not entry["active"]:
+		raise ValueError("template registry entry is inactive")
+	provided = {str(key): str(value) for key, value in (variables or {}).items()}
+	missing = [key for key in entry["required_variables"] if key not in provided]
+	if missing:
+		raise ValueError(f"missing template variables: {', '.join(missing)}")
+	filtered_variables = {key: provided[key] for key in entry["required_variables"]}
+	payload = build_kakao_template_payload(
+		recipient_phone=recipient_phone,
+		template_code=entry["template_code"],
+		variables=filtered_variables,
+	)
+	payload["consent_purpose"] = entry["consent_purpose"]
+	payload["preview_text"] = render_kakao_preview(entry["template_body"], filtered_variables)
+	return payload
 
 
 def build_kakao_template_payload(
@@ -219,6 +297,47 @@ def _validate_provider(provider: dict[str, Any], expected_provider_key: str) -> 
 	return {"provider_key": provider_key, "provider_type": provider_type, "endpoint_key": endpoint_key}
 
 
+def _validate_provider_template_keys(provider_template_keys: dict[str, Any]) -> dict[str, str]:
+	if not isinstance(provider_template_keys, dict):
+		raise TypeError("provider_template_keys must be a dict")
+	validated: dict[str, str] = {}
+	for provider_key, template_key in sorted(provider_template_keys.items()):
+		provider_key = str(provider_key or "").strip()
+		template_key = str(template_key or "").strip()
+		if not provider_key or not template_key:
+			raise ValueError("provider_template_keys requires non-empty provider and template keys")
+		if _contains_korean_mobile_number(provider_key) or _contains_korean_mobile_number(template_key):
+			raise ValueError("provider_template_keys must not contain phone numbers")
+		validated[provider_key] = template_key
+	return validated
+
+
+def _contains_korean_mobile_number(value: str) -> bool:
+	digits = "".join(ch for ch in value if ch.isdigit())
+	return PHONE_NUMBER_RE.search(digits) is not None
+
+
+def _validate_template_registry_entry(entry: dict[str, Any]) -> dict[str, Any]:
+	if not isinstance(entry, dict):
+		raise TypeError("template_registry_entry must be a dict")
+	if entry.get("registry_type") != "korea_kakao_template_registry_v1":
+		raise ValueError("template_registry_entry.registry_type must be korea_kakao_template_registry_v1")
+	if entry.get("channel") != "kakao_alimtalk":
+		raise ValueError("template_registry_entry.channel must be kakao_alimtalk")
+	active = entry.get("active")
+	if not isinstance(active, bool):
+		raise TypeError("template_registry_entry.active must be a bool")
+	return build_kakao_template_registry_entry(
+		template_code=entry.get("template_code"),
+		template_name=entry.get("template_name"),
+		template_body=entry.get("template_body"),
+		required_variables=entry.get("required_variables") or [],
+		consent_purpose=entry.get("consent_purpose"),
+		provider_template_keys=entry.get("provider_template_keys") or {},
+		active=active,
+	)
+
+
 def _build_dedupe_key(payload: dict[str, Any]) -> str:
 	body = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 	digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
@@ -279,6 +398,8 @@ def _retry_delay_seconds(
 
 
 __all__ = [
+	"build_kakao_template_registry_entry",
+	"build_registered_kakao_template_payload",
 	"build_kakao_template_payload",
 	"render_kakao_preview",
 	"build_kakao_send_queue_item",

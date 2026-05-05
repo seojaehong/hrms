@@ -24,15 +24,29 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 	def test_direct_test_targets_cover_regional_productization_contracts(self):
 		targets = self.mod.korea_direct_test_targets(ROOT)
 
-		self.assertIn("hrms/tests/test_korea_statutory_payroll.py", targets)
-		self.assertIn("hrms/tests/test_korea_payroll_verification_provider.py", targets)
-		self.assertIn("hrms/tests/test_korea_annual_leave.py", targets)
-		self.assertIn("hrms/tests/test_korea_hrms_profiles.py", targets)
-		self.assertIn("hrms/tests/test_korea_closing_center.py", targets)
-		self.assertIn("hrms/tests/test_korea_approval_inbox.py", targets)
-		self.assertIn("hrms/tests/test_korea_kakao_notification.py", targets)
-		self.assertIn("hrms/tests/test_korea_mobile_ess_mss_contracts.py", targets)
-		self.assertIn("hrms/tests/test_korea_mobile_ess_mss_api.py", targets)
+		expected_targets = {
+			"hrms/tests/test_korea_admin_dashboard.py",
+			"hrms/tests/test_korea_annual_leave.py",
+			"hrms/tests/test_korea_approval_inbox.py",
+			"hrms/tests/test_korea_approval_inbox_api.py",
+			"hrms/tests/test_korea_attendance_summary.py",
+			"hrms/tests/test_korea_closing_center.py",
+			"hrms/tests/test_korea_compliance_checklist.py",
+			"hrms/tests/test_korea_compliance_diagnosis_api.py",
+			"hrms/tests/test_korea_employment_contract.py",
+			"hrms/tests/test_korea_expense_settlement.py",
+			"hrms/tests/test_korea_hrms_profiles.py",
+			"hrms/tests/test_korea_kakao_notification.py",
+			"hrms/tests/test_korea_leave_allocation_adapter.py",
+			"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
+			"hrms/tests/test_korea_mobile_ess_mss_api.py",
+			"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
+			"hrms/tests/test_korea_payroll_salary_slip_api.py",
+			"hrms/tests/test_korea_payroll_verification_provider.py",
+			"hrms/tests/test_korea_payslip.py",
+			"hrms/tests/test_korea_statutory_payroll.py",
+		}
+		self.assertTrue(expected_targets.issubset(set(targets)), set(expected_targets).difference(targets))
 		self.assertEqual(targets, sorted(targets))
 
 	def test_builds_direct_and_optional_bench_commands_without_requiring_bench(self):

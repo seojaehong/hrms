@@ -36,6 +36,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 			"hrms/tests/test_korea_compliance_checklist.py",
 			"hrms/tests/test_korea_compliance_diagnosis_api.py",
 			"hrms/tests/test_korea_employment_contract.py",
+			"hrms/tests/test_korea_employment_contract_api.py",
 			"hrms/tests/test_korea_expense_settlement.py",
 			"hrms/tests/test_korea_hrms_profiles.py",
 			"hrms/tests/test_korea_kakao_notification.py",

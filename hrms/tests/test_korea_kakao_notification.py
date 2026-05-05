@@ -149,6 +149,96 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 				provider_status="delivered",
 			)
 
+	def test_builds_provider_dispatch_request_without_sending_or_exposing_pii_in_request_id(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="010-1234-5678",
+			template_code="PAYSLIP_READY",
+			variables={"employee": "홍길동", "period": "2026-05"},
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="partner_alimtalk",
+		)
+
+		request = self.mod.build_kakao_provider_dispatch_request(
+			queue_item=queue_item,
+			provider={
+				"provider_key": "partner_alimtalk",
+				"provider_type": "partner_api",
+				"endpoint_key": "kakao-partner-send",
+			},
+			requested_at="2026-05-31T09:00:02+09:00",
+		)
+
+		self.assertEqual(request["request_type"], "korea_kakao_provider_dispatch_v1")
+		self.assertEqual(request["runtime_action"], "send_via_provider")
+		self.assertTrue(request["requires_runtime_send"])
+		self.assertEqual(request["provider_key"], "partner_alimtalk")
+		self.assertEqual(request["provider_type"], "partner_api")
+		self.assertEqual(request["endpoint_key"], "kakao-partner-send")
+		self.assertEqual(request["attempt_number"], 1)
+		self.assertEqual(request["payload"], queue_item["payload"])
+		self.assertTrue(request["dispatch_request_id"].startswith("kakao-dispatch:"))
+		self.assertNotIn("01012345678", request["dispatch_request_id"])
+		self.assertNotIn("PAYSLIP_READY", request["dispatch_request_id"])
+
+	def test_provider_dispatch_rejects_public_api_and_provider_key_mismatch(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="partner_alimtalk",
+		)
+
+		with self.assertRaisesRegex(ValueError, "provider_type must be one of"):
+			self.mod.build_kakao_provider_dispatch_request(
+				queue_item=queue_item,
+				provider={"provider_key": "partner_alimtalk", "provider_type": "public_api", "endpoint_key": "public-send"},
+				requested_at="2026-05-31T09:00:02+09:00",
+			)
+
+		with self.assertRaisesRegex(ValueError, "provider.provider_key must match queue_item.provider_key"):
+			self.mod.build_kakao_provider_dispatch_request(
+				queue_item=queue_item,
+				provider={"provider_key": "other_partner", "provider_type": "partner_api", "endpoint_key": "kakao-partner-send"},
+				requested_at="2026-05-31T09:00:02+09:00",
+			)
+
+	def test_provider_dispatch_returns_payload_copy_without_mutating_queue_item(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={"employee": "홍길동"}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True, provider_key="partner_alimtalk")
+
+		request = self.mod.build_kakao_provider_dispatch_request(
+			queue_item=queue_item,
+			provider={"provider_key": "partner_alimtalk", "provider_type": "partner_api", "endpoint_key": "kakao-partner-send"},
+			requested_at="2026-05-31T09:00:02+09:00",
+		)
+		request["payload"]["variables"]["employee"] = "변조"
+
+		self.assertEqual(queue_item["payload"]["variables"]["employee"], "홍길동")
+
+	def test_provider_dispatch_rejects_malformed_queue_payload(self):
+		queue_item = {
+			"queue_type": "korea_kakao_send_queue_v1",
+			"dedupe_key": "kakao:abc",
+			"provider_key": "partner_alimtalk",
+			"attempt_count": 0,
+			"max_attempts": 3,
+			"payload": "not-a-dict",
+		}
+
+		with self.assertRaisesRegex(TypeError, "payload must be a dict"):
+			self.mod.build_kakao_provider_dispatch_request(
+				queue_item=queue_item,
+				provider={"provider_key": "partner_alimtalk", "provider_type": "partner_api", "endpoint_key": "kakao-partner-send"},
+				requested_at="2026-05-31T09:00:02+09:00",
+			)
+
 
 if __name__ == "__main__":
 	unittest.main()

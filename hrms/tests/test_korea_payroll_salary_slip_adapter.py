@@ -49,8 +49,14 @@ class TestKoreaPayrollSalarySlipAdapter(unittest.TestCase):
 		self.assertEqual(payload["employee"], "EMP-0001")
 		self.assertEqual(payload["period"], {"start_date": "2026-05-01", "end_date": "2026-05-31"})
 		self.assertEqual(payload["snapshot"]["taxable_earnings"], 3350000)
-		self.assertEqual(payload["deduction_rows"][0], {"salary_component": "National Pension", "amount": 150750})
-		self.assertEqual(payload["employer_contribution_rows"][-1], {"salary_component": "Employment Insurance", "amount": 38525})
+		self.assertEqual(
+			payload["deduction_rows"][0],
+			{"salary_component": "National Pension", "amount": 150750, "contribution_basis": 3350000},
+		)
+		self.assertEqual(
+			payload["employer_contribution_rows"][-1],
+			{"salary_component": "Employment Insurance", "amount": 38525, "contribution_basis": 3350000},
+		)
 
 	def test_includes_employer_only_industrial_accident_contribution_row(self):
 		policy = {
@@ -76,7 +82,7 @@ class TestKoreaPayrollSalarySlipAdapter(unittest.TestCase):
 			payload["deduction_rows"],
 		)
 		self.assertIn(
-			{"salary_component": "Industrial Accident Insurance", "amount": 21000},
+			{"salary_component": "Industrial Accident Insurance", "amount": 21000, "contribution_basis": 3000000},
 			payload["employer_contribution_rows"],
 		)
 

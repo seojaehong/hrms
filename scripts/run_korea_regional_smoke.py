@@ -31,6 +31,7 @@ _KOREA_DIRECT_TEST_TARGETS = (
 	"hrms/tests/test_korea_hrms_profiles.py",
 	"hrms/tests/test_korea_kakao_notification.py",
 	"hrms/tests/test_korea_leave_allocation_adapter.py",
+	"hrms/tests/test_korea_leave_allocation_api.py",
 	"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
 	"hrms/tests/test_korea_mobile_ess_mss_api.py",
 	"hrms/tests/test_korea_payroll_salary_slip_adapter.py",

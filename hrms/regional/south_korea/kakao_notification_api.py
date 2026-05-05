@@ -82,6 +82,37 @@ def preview_korea_kakao_provider_dispatch(*, queue_item: Any, provider: Any, req
 	}
 
 
+@_whitelist
+def preview_korea_kakao_delivery_audit_event(
+	*,
+	queue_item: Any,
+	attempted_at: str,
+	provider_status: str,
+	provider_message_id: str | None = None,
+	error_code: str | None = None,
+	base_retry_delay_seconds: int | str = 60,
+	max_retry_delay_seconds: int | str = 3600,
+) -> dict[str, Any]:
+	"""Return a side-effect-free Kakao delivery audit event preview."""
+
+	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
+	audit_event = kakao.build_kakao_delivery_audit_event(
+		queue_item=_coerce_mapping(queue_item, "queue_item"),
+		attempted_at=attempted_at,
+		provider_status=provider_status,
+		provider_message_id=provider_message_id,
+		error_code=error_code,
+		base_retry_delay_seconds=_coerce_int(base_retry_delay_seconds, "base_retry_delay_seconds"),
+		max_retry_delay_seconds=_coerce_int(max_retry_delay_seconds, "max_retry_delay_seconds"),
+	)
+	return {
+		"contract_type": "korea_kakao_delivery_audit_preview_v1",
+		"runtime_action": "preview_only",
+		"requires_runtime_send": True,
+		"audit_event": deepcopy(audit_event),
+	}
+
+
 def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:
 	coerced = _coerce_json_if_needed(value)
 	if not isinstance(coerced, dict):
@@ -112,6 +143,13 @@ def _coerce_bool(value: Any, fieldname: str) -> bool:
 	raise ValueError(f"{fieldname} must be a bool")
 
 
+def _coerce_int(value: Any, fieldname: str) -> int:
+	try:
+		return int(value)
+	except (TypeError, ValueError) as exc:
+		raise ValueError(f"{fieldname} must be an integer") from exc
+
+
 def _load_sibling_module(filename: str, module_name: str):
 	path = Path(__file__).with_name(filename)
 	spec = importlib.util.spec_from_file_location(module_name, path)
@@ -124,4 +162,5 @@ def _load_sibling_module(filename: str, module_name: str):
 __all__ = [
 	"preview_korea_kakao_registered_queue_item",
 	"preview_korea_kakao_provider_dispatch",
+	"preview_korea_kakao_delivery_audit_event",
 ]

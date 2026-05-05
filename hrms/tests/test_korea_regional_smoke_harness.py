@@ -44,6 +44,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 			"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
 			"hrms/tests/test_korea_mobile_ess_mss_api.py",
 			"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
+			"hrms/tests/test_korea_payroll_entry_adapter.py",
 			"hrms/tests/test_korea_payroll_salary_slip_api.py",
 			"hrms/tests/test_korea_payroll_verification_provider.py",
 			"hrms/tests/test_korea_payslip.py",
@@ -60,6 +61,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertIn(["python3", "hrms/tests/test_korea_leave_allocation_api.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
+		self.assertIn(["python3", "hrms/tests/test_korea_payroll_entry_adapter.py"], direct)
 		self.assertTrue(all(command[0] == "python3" for command in direct))
 		self.assertEqual(
 			bench,

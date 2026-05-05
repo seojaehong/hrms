@@ -52,6 +52,8 @@ def build_kakao_template_registry_entry(
 	if body_variables != required:
 		raise ValueError("required_variables must match body variables")
 
+	if not isinstance(active, bool):
+		raise TypeError("active must be a bool")
 	provider_keys = _validate_provider_template_keys(provider_template_keys or {})
 	return {
 		"registry_type": "korea_kakao_template_registry_v1",
@@ -62,7 +64,7 @@ def build_kakao_template_registry_entry(
 		"required_variables": required,
 		"consent_purpose": consent_purpose,
 		"provider_template_keys": provider_keys,
-		"active": bool(active),
+		"active": active,
 		"requires_runtime_send": False,
 	}
 

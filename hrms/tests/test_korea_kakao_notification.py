@@ -260,6 +260,17 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 		self.assertTrue(entry["active"])
 		self.assertFalse(entry["requires_runtime_send"])
 
+	def test_template_registry_rejects_non_bool_active_flags_at_creation(self):
+		with self.assertRaisesRegex(TypeError, "active must be a bool"):
+			self.mod.build_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+				active="false",
+			)
+
 	def test_template_registry_rejects_body_variable_mismatch_and_pii_provider_keys(self):
 		with self.assertRaisesRegex(ValueError, "required_variables must match body variables"):
 			self.mod.build_kakao_template_registry_entry(

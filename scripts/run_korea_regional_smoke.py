@@ -17,42 +17,26 @@ import shutil
 import subprocess
 from typing import Any
 
-_KOREA_DIRECT_TEST_TARGETS = (
-	"hrms/tests/test_korea_admin_dashboard.py",
-	"hrms/tests/test_korea_annual_leave.py",
-	"hrms/tests/test_korea_approval_inbox.py",
-	"hrms/tests/test_korea_approval_inbox_api.py",
-	"hrms/tests/test_korea_attendance_closing_api.py",
-	"hrms/tests/test_korea_attendance_summary.py",
-	"hrms/tests/test_korea_closing_center.py",
-	"hrms/tests/test_korea_closing_center_api.py",
-	"hrms/tests/test_korea_compliance_checklist.py",
-	"hrms/tests/test_korea_compliance_diagnosis_api.py",
-	"hrms/tests/test_korea_employment_contract.py",
-	"hrms/tests/test_korea_employment_contract_api.py",
-	"hrms/tests/test_korea_expense_settlement.py",
-	"hrms/tests/test_korea_hrms_profiles.py",
-	"hrms/tests/test_korea_kakao_notification.py",
-	"hrms/tests/test_korea_kakao_notification_api.py",
-	"hrms/tests/test_korea_leave_allocation_adapter.py",
-	"hrms/tests/test_korea_leave_allocation_api.py",
-	"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
-	"hrms/tests/test_korea_mobile_ess_mss_api.py",
-	"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
-	"hrms/tests/test_korea_payroll_entry_adapter.py",
-	"hrms/tests/test_korea_payroll_entry_api.py",
-	"hrms/tests/test_korea_payroll_salary_slip_api.py",
-	"hrms/tests/test_korea_payroll_verification_provider.py",
-	"hrms/tests/test_korea_payslip.py",
-	"hrms/tests/test_korea_statutory_payroll.py",
-)
+_EXCLUDED_DIRECT_TEST_FILENAMES = {
+	# The harness test validates this script; running it from the harness itself
+	# would add noisy recursion without increasing regional contract coverage.
+	"test_korea_regional_smoke_harness.py",
+}
 
 
 def korea_direct_test_targets(repo_root: pathlib.Path) -> list[str]:
-	"""Return existing Korea direct-run test files as repo-relative paths."""
+	"""Return discovered Korea direct-run test files as repo-relative paths."""
 
 	root = pathlib.Path(repo_root)
-	return sorted(target for target in _KOREA_DIRECT_TEST_TARGETS if (root / target).exists())
+	tests_dir = root / "hrms" / "tests"
+	if not tests_dir.exists():
+		return []
+	targets = []
+	for path in tests_dir.glob("test_korea*.py"):
+		if path.name in _EXCLUDED_DIRECT_TEST_FILENAMES:
+			continue
+		targets.append(path.relative_to(root).as_posix())
+	return sorted(targets)
 
 
 def build_direct_test_commands(repo_root: pathlib.Path) -> list[list[str]]:

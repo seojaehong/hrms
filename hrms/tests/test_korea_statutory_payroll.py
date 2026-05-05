@@ -41,6 +41,35 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertEqual(snapshot["ordinary_wage"], 3000000)
 		self.assertEqual(snapshot["non_taxable_earnings"], 200000)
 		self.assertEqual(snapshot["taxable_earnings"], 3350000)
+		self.assertEqual(
+			snapshot["earnings"],
+			[
+				{
+					"component": "Basic Pay",
+					"amount": 3000000,
+					"korea_component_category": "Ordinary Wage",
+					"ordinary_wage_amount": 3000000,
+					"taxable_amount": 3000000,
+					"non_taxable_amount": 0,
+				},
+				{
+					"component": "Meal Allowance",
+					"amount": 250000,
+					"korea_component_category": "Allowance",
+					"ordinary_wage_amount": 0,
+					"taxable_amount": 50000,
+					"non_taxable_amount": 200000,
+				},
+				{
+					"component": "Overtime Allowance",
+					"amount": 300000,
+					"korea_component_category": "Allowance",
+					"ordinary_wage_amount": 0,
+					"taxable_amount": 300000,
+					"non_taxable_amount": 0,
+				},
+			],
+		)
 		self.assertEqual(snapshot["employee_deductions"]["National Pension"], 150750)
 		self.assertEqual(snapshot["employee_deductions"]["Health Insurance"], 118758)
 		self.assertEqual(snapshot["employee_deductions"]["Long-term Care Insurance"], 15379)

@@ -78,7 +78,7 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 		contribution_bases[_STATUTORY_COMPONENTS["industrial_accident_insurance"]] = _basis_pair(industrial_accident)
 
 	return {
-		"earnings": lines,
+		"earnings": tax_summary["earnings"],
 		"ordinary_wage": tax_summary["ordinary_wage"],
 		"gross_earnings": tax_summary["gross_earnings"],
 		"taxable_earnings": tax_summary["taxable_earnings"],
@@ -165,29 +165,43 @@ def _validate_industrial_accident_policy(entry: dict[str, Any]) -> None:
 		raise ValueError("industrial_accident_insurance.floor cannot exceed industrial_accident_insurance.ceiling")
 
 
-def _build_taxable_summary(lines: list[dict[str, Any]], policy: dict[str, Any], component_presets: dict[str, dict[str, Any]]) -> dict[str, int]:
+def _build_taxable_summary(lines: list[dict[str, Any]], policy: dict[str, Any], component_presets: dict[str, dict[str, Any]]) -> dict[str, Any]:
 	meal_limit = _to_integer_won(policy.get("meal_allowance_monthly_non_taxable_limit", 0), "meal_allowance_monthly_non_taxable_limit")
 	meal_non_taxable_remaining = meal_limit
 	gross = 0
 	taxable = 0
 	non_taxable = 0
 	ordinary_wage = 0
+	enriched_lines = []
 
 	for line in lines:
 		amount = line["amount"]
 		gross += amount
 		preset = component_presets.get(line["component"], {})
-		if preset.get("korea_component_category") == "Ordinary Wage" or line["component"] in _ORDINARY_WAGE_COMPONENTS:
-			ordinary_wage += amount
+		category = preset.get("korea_component_category")
+		is_ordinary_wage = category == "Ordinary Wage" or line["component"] in _ORDINARY_WAGE_COMPONENTS
+		ordinary_wage_amount = amount if is_ordinary_wage else 0
+		ordinary_wage += ordinary_wage_amount
 		if line["component"] == _MEAL_ALLOWANCE_COMPONENT:
 			non_taxable_amount = min(amount, meal_non_taxable_remaining)
 			meal_non_taxable_remaining -= non_taxable_amount
 		else:
 			non_taxable_amount = 0
+		taxable_amount = amount - non_taxable_amount
 		non_taxable += non_taxable_amount
-		taxable += amount - non_taxable_amount
+		taxable += taxable_amount
+		enriched_lines.append(
+			{
+				**line,
+				"korea_component_category": category,
+				"ordinary_wage_amount": ordinary_wage_amount,
+				"taxable_amount": taxable_amount,
+				"non_taxable_amount": non_taxable_amount,
+			}
+		)
 
 	return {
+		"earnings": enriched_lines,
 		"gross_earnings": gross,
 		"taxable_earnings": taxable,
 		"non_taxable_earnings": non_taxable,

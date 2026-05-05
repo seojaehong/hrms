@@ -52,6 +52,34 @@ class TestKoreaPayrollSalarySlipAdapter(unittest.TestCase):
 		self.assertEqual(payload["deduction_rows"][0], {"salary_component": "National Pension", "amount": 150750})
 		self.assertEqual(payload["employer_contribution_rows"][-1], {"salary_component": "Employment Insurance", "amount": 38525})
 
+	def test_includes_employer_only_industrial_accident_contribution_row(self):
+		policy = {
+			**self.policy,
+			"industrial_accident_insurance": {
+				"basis": "monthly_taxable_wage",
+				"employer_rate": "0.007",
+			},
+		}
+		salary_slip = {
+			"name": "SAL-SLIP-IAI",
+			"employee": "EMP-IAI",
+			"company": "Korea Demo Co",
+			"start_date": "2026-05-01",
+			"end_date": "2026-05-31",
+			"earnings": [{"salary_component": "Basic Pay", "amount": 3000000}],
+		}
+
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=policy)
+
+		self.assertNotIn(
+			{"salary_component": "Industrial Accident Insurance", "amount": 0},
+			payload["deduction_rows"],
+		)
+		self.assertIn(
+			{"salary_component": "Industrial Accident Insurance", "amount": 21000},
+			payload["employer_contribution_rows"],
+		)
+
 	def test_builds_vendor_ready_verification_request_without_public_api_default(self):
 		salary_slip = {
 			"name": "SAL-SLIP-0002",

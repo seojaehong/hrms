@@ -6,6 +6,7 @@ import pathlib
 import unittest
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "regional" / "south_korea" / "statutory_payroll.py"
+DEMO_SEED_PATH = pathlib.Path(__file__).resolve().parents[1] / "regional" / "south_korea" / "demo_seed.py"
 
 
 def load_module():
@@ -113,12 +114,61 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertEqual(snapshot["taxable_earnings"], 9007199254740993)
 		self.assertEqual(snapshot["ordinary_wage"], 9007199254740993)
 
+	def test_optional_industrial_accident_insurance_is_employer_only(self):
+		policy = {
+			**self.policy,
+			"industrial_accident_insurance": {
+				"basis": "monthly_taxable_wage",
+				"employer_rate": "0.007",
+			},
+		}
+
+		snapshot = self.mod.build_statutory_payroll_snapshot(
+			earnings=[{"component": "Basic Pay", "amount": 3000000}],
+			policy=policy,
+		)
+
+		self.assertNotIn("Industrial Accident Insurance", snapshot["employee_deductions"])
+		self.assertEqual(snapshot["employer_contributions"]["Industrial Accident Insurance"], 21000)
+		self.assertEqual(snapshot["total_employer_contributions"], 310622)
+
+	def test_industrial_accident_insurance_requires_explicit_basis_and_rejects_employee_rate(self):
+		missing_basis_policy = {
+			**self.policy,
+			"industrial_accident_insurance": {
+				"employer_rate": "0.007",
+			},
+		}
+		with self.assertRaisesRegex(ValueError, "industrial_accident_insurance.basis is required"):
+			self.mod.build_statutory_payroll_snapshot(earnings=[{"component": "Basic Pay", "amount": 3000000}], policy=missing_basis_policy)
+
+		policy = {
+			**self.policy,
+			"industrial_accident_insurance": {
+				"basis": "monthly_taxable_wage",
+				"employee_rate": "0.001",
+				"employer_rate": "0.007",
+			},
+		}
+
+		with self.assertRaisesRegex(ValueError, "industrial_accident_insurance.employee_rate is not supported"):
+			self.mod.build_statutory_payroll_snapshot(earnings=[{"component": "Basic Pay", "amount": 3000000}], policy=policy)
+
 	def test_component_presets_are_available_for_safe_salary_component_mapping(self):
 		presets = self.mod.load_korea_salary_component_presets()
 
 		self.assertEqual(presets["Basic Pay"]["korea_component_category"], "Ordinary Wage")
 		self.assertEqual(presets["National Pension"]["type"], "Deduction")
 		self.assertIn("Employment Insurance", presets)
+		self.assertEqual(presets["Industrial Accident Insurance"]["korea_component_category"], "Employer Statutory Contribution")
+		self.assertEqual(presets["Industrial Accident Insurance"].get("is_company_contribution_only"), 1)
+
+	def test_demo_seed_includes_employer_only_industrial_accident_salary_component(self):
+		source = DEMO_SEED_PATH.read_text()
+
+		self.assertIn('"Industrial Accident Insurance"', source)
+		self.assertIn('"korea_component_category": "Employer Statutory Contribution"', source)
+		self.assertIn('"is_company_contribution_only": 1', source)
 
 
 if __name__ == "__main__":

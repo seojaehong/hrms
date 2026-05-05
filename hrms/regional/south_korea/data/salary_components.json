@@ -86,5 +86,14 @@
     "type": "Deduction",
     "exempted_from_income_tax": 1,
     "korea_component_category": "Statutory Deduction"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Industrial Accident Insurance",
+    "description": "산재보험",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "is_company_contribution_only": 1,
+    "korea_component_category": "Employer Statutory Contribution"
   }
 ]

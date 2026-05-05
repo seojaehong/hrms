@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import pathlib
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -55,6 +56,19 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		}
 		self.assertTrue(expected_targets.issubset(set(targets)), set(expected_targets).difference(targets))
 		self.assertEqual(targets, sorted(targets))
+
+	def test_dynamic_discovery_includes_new_korea_direct_tests_without_static_registration(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			repo_root = pathlib.Path(tempdir)
+			(repo_root / "hrms" / "tests").mkdir(parents=True)
+			(repo_root / "hrms" / "tests" / "test_korea_new_contract.py").write_text(
+				"#!/usr/bin/env python3\nimport unittest\n",
+				encoding="utf-8",
+			)
+
+			targets = self.mod.korea_direct_test_targets(repo_root)
+
+		self.assertEqual(targets, ["hrms/tests/test_korea_new_contract.py"])
 
 	def test_builds_direct_and_optional_bench_commands_without_requiring_bench(self):
 		direct = self.mod.build_direct_test_commands(ROOT)

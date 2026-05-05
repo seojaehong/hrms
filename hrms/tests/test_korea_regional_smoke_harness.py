@@ -32,6 +32,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertIn("hrms/tests/test_korea_approval_inbox.py", targets)
 		self.assertIn("hrms/tests/test_korea_kakao_notification.py", targets)
 		self.assertIn("hrms/tests/test_korea_mobile_ess_mss_contracts.py", targets)
+		self.assertIn("hrms/tests/test_korea_mobile_ess_mss_api.py", targets)
 		self.assertEqual(targets, sorted(targets))
 
 	def test_builds_direct_and_optional_bench_commands_without_requiring_bench(self):
@@ -40,6 +41,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 
 		self.assertIn(["python3", "hrms/tests/test_korea_closing_center.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
+		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
 		self.assertTrue(all(command[0] == "python3" for command in direct))
 		self.assertEqual(
 			bench,

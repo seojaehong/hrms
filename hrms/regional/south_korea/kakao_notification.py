@@ -145,6 +145,7 @@ def build_kakao_send_queue_item(
 		raise ValueError("recipient_consent is required before queueing Kakao messages")
 	if opted_out:
 		raise ValueError("recipient has opted out of Kakao notifications")
+	max_attempts = _to_strict_integer(max_attempts, "max_attempts")
 	if max_attempts < 1:
 		raise ValueError("max_attempts must be at least 1")
 	if not provider_key:
@@ -160,7 +161,7 @@ def build_kakao_send_queue_item(
 		"dedupe_key": _build_dedupe_key(payload),
 		"payload": payload,
 		"attempt_count": 0,
-		"max_attempts": int(max_attempts),
+		"max_attempts": max_attempts,
 		"next_attempt_at": scheduled_at,
 		"requires_runtime_send": True,
 	}
@@ -392,11 +393,19 @@ def _retry_delay_seconds(
 	base_retry_delay_seconds: int,
 	max_retry_delay_seconds: int,
 ) -> int:
+	base_retry_delay_seconds = _to_strict_integer(base_retry_delay_seconds, "base_retry_delay_seconds")
+	max_retry_delay_seconds = _to_strict_integer(max_retry_delay_seconds, "max_retry_delay_seconds")
 	if base_retry_delay_seconds < 1:
 		raise ValueError("base_retry_delay_seconds must be at least 1")
 	if max_retry_delay_seconds < base_retry_delay_seconds:
 		raise ValueError("max_retry_delay_seconds must be greater than or equal to base_retry_delay_seconds")
 	return min(max_retry_delay_seconds, base_retry_delay_seconds * (2 ** max(0, attempt_number - 1)))
+
+
+def _to_strict_integer(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool) or not isinstance(value, int):
+		raise ValueError(f"{fieldname} must be an integer")
+	return value
 
 
 __all__ = [

@@ -95,6 +95,38 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "recipient has opted out"):
 			self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True, opted_out=True)
 
+	def test_queue_item_rejects_non_strict_integer_max_attempts(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+
+		for invalid in (True, 3.7, "not-a-number"):
+			with self.subTest(invalid=invalid):
+				with self.assertRaisesRegex(ValueError, "max_attempts must be an integer"):
+					self.mod.build_kakao_send_queue_item(
+						payload=payload,
+						recipient_consent=True,
+						max_attempts=invalid,
+					)
+
+	def test_delivery_audit_rejects_non_strict_integer_retry_controls(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True)
+
+		for fieldname in ("base_retry_delay_seconds", "max_retry_delay_seconds"):
+			for invalid in (True, 3.7, "not-a-number"):
+				with self.subTest(fieldname=fieldname, invalid=invalid):
+					kwargs = {fieldname: invalid}
+					with self.assertRaisesRegex(ValueError, f"{fieldname} must be an integer"):
+						self.mod.build_kakao_delivery_audit_event(
+							queue_item=queue_item,
+							attempted_at="2026-05-31T09:00:02+09:00",
+							provider_status="retryable_error",
+							**kwargs,
+						)
+
 	def test_delivery_attempt_audit_event_records_provider_result_without_mutating_queue_item(self):
 		payload = self.mod.build_kakao_template_payload(
 			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}

@@ -26,8 +26,16 @@ def build_korea_salary_slip_statutory_payload(*, salary_slip: Any, policy: dict[
 		"company": _get_value(salary_slip, "company"),
 		"period": _extract_period(salary_slip),
 		"snapshot": snapshot,
-		"deduction_rows": _to_salary_component_rows(snapshot["employee_deductions"]),
-		"employer_contribution_rows": _to_salary_component_rows(snapshot["employer_contributions"]),
+		"deduction_rows": _to_salary_component_rows(
+			snapshot["employee_deductions"],
+			basis_by_component=snapshot.get("contribution_bases", {}),
+			basis_side="employee",
+		),
+		"employer_contribution_rows": _to_salary_component_rows(
+			snapshot["employer_contributions"],
+			basis_by_component=snapshot.get("contribution_bases", {}),
+			basis_side="employer",
+		),
 	}
 
 
@@ -80,8 +88,20 @@ def _extract_period(salary_slip: Any) -> dict[str, Any]:
 	return {"start_date": start_date, "end_date": end_date}
 
 
-def _to_salary_component_rows(amounts: dict[str, int]) -> list[dict[str, int | str]]:
-	return [{"salary_component": component, "amount": amount} for component, amount in amounts.items()]
+def _to_salary_component_rows(
+	amounts: dict[str, int],
+	*,
+	basis_by_component: dict[str, dict[str, int]] | None = None,
+	basis_side: str | None = None,
+) -> list[dict[str, int | str]]:
+	rows = []
+	for component, amount in amounts.items():
+		row = {"salary_component": component, "amount": amount}
+		basis = (basis_by_component or {}).get(component, {})
+		if basis_side and basis_side in basis:
+			row["contribution_basis"] = basis[basis_side]
+		rows.append(row)
+	return rows
 
 
 def _get_value(source: Any, key: str, default: Any = None) -> Any:

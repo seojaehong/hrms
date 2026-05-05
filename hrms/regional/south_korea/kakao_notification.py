@@ -12,6 +12,7 @@ VARIABLE_RE = re.compile(r"{{\s*([a-zA-Z0-9_]+)\s*}}")
 RETRYABLE_PROVIDER_STATUSES = {"retryable_error", "rate_limited", "timeout"}
 TERMINAL_PROVIDER_STATUSES = {"delivered", "accepted", "permanent_error", "opted_out"}
 SUPPORTED_PROVIDER_STATUSES = RETRYABLE_PROVIDER_STATUSES | TERMINAL_PROVIDER_STATUSES
+SUPPORTED_PROVIDER_TYPES = {"paid_vendor", "partner_api", "delegated_rpa", "owned_connector"}
 
 
 def build_kakao_template_payload(
@@ -128,6 +129,45 @@ def build_kakao_delivery_audit_event(
 	}
 
 
+def build_kakao_provider_dispatch_request(
+	*,
+	queue_item: dict[str, Any],
+	provider: dict[str, Any],
+	requested_at: str,
+) -> dict[str, Any]:
+	"""Build a provider dispatch request contract without calling the provider.
+
+	The supported provider types reflect practical production routes: paid vendor,
+	partner API, delegated/RPA connector, or an owned connector service. Public or
+	government API routes are deliberately not accepted here.
+	"""
+
+	_validate_queue_item(queue_item)
+	_parse_iso_datetime(requested_at, "requested_at")
+	provider = _validate_provider(provider, queue_item["provider_key"])
+	payload = _validate_payload(queue_item["payload"])
+	attempt_number = int(queue_item.get("attempt_count", 0)) + 1
+
+	return {
+		"request_type": "korea_kakao_provider_dispatch_v1",
+		"runtime_action": "send_via_provider",
+		"requires_runtime_send": True,
+		"provider_key": provider["provider_key"],
+		"provider_type": provider["provider_type"],
+		"endpoint_key": provider["endpoint_key"],
+		"dispatch_request_id": _build_dispatch_request_id(
+			queue_item=queue_item,
+			provider=provider,
+			attempt_number=attempt_number,
+			requested_at=requested_at,
+		),
+		"dedupe_key": queue_item["dedupe_key"],
+		"attempt_number": attempt_number,
+		"requested_at": requested_at,
+		"payload": payload,
+	}
+
+
 def _normalize_phone(value: str) -> str:
 	digits = "".join(ch for ch in str(value or "") if ch.isdigit())
 	if not (10 <= len(digits) <= 11) or not digits.startswith("01"):
@@ -157,15 +197,56 @@ def _validate_queue_item(queue_item: dict[str, Any]) -> None:
 		raise TypeError("queue_item must be a dict")
 	if queue_item.get("queue_type") != "korea_kakao_send_queue_v1":
 		raise ValueError("queue_item.queue_type must be korea_kakao_send_queue_v1")
-	for fieldname in ("dedupe_key", "provider_key", "attempt_count", "max_attempts"):
+	for fieldname in ("dedupe_key", "provider_key", "attempt_count", "max_attempts", "payload"):
 		if fieldname not in queue_item:
 			raise ValueError(f"queue_item.{fieldname} is required")
+
+
+def _validate_provider(provider: dict[str, Any], expected_provider_key: str) -> dict[str, str]:
+	if not isinstance(provider, dict):
+		raise TypeError("provider must be a dict")
+	provider_key = str(provider.get("provider_key") or "").strip()
+	if not provider_key:
+		raise ValueError("provider.provider_key is required")
+	if provider_key != expected_provider_key:
+		raise ValueError("provider.provider_key must match queue_item.provider_key")
+	provider_type = str(provider.get("provider_type") or "").strip()
+	if provider_type not in SUPPORTED_PROVIDER_TYPES:
+		raise ValueError(f"provider_type must be one of {sorted(SUPPORTED_PROVIDER_TYPES)}")
+	endpoint_key = str(provider.get("endpoint_key") or "").strip()
+	if not endpoint_key:
+		raise ValueError("provider.endpoint_key is required")
+	return {"provider_key": provider_key, "provider_type": provider_type, "endpoint_key": endpoint_key}
 
 
 def _build_dedupe_key(payload: dict[str, Any]) -> str:
 	body = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 	digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
 	return f"kakao:{digest}"
+
+
+def _build_dispatch_request_id(
+	*,
+	queue_item: dict[str, Any],
+	provider: dict[str, str],
+	attempt_number: int,
+	requested_at: str,
+) -> str:
+	body = json.dumps(
+		{
+			"dedupe_key": queue_item["dedupe_key"],
+			"provider_key": provider["provider_key"],
+			"provider_type": provider["provider_type"],
+			"endpoint_key": provider["endpoint_key"],
+			"attempt_number": attempt_number,
+			"requested_at": requested_at,
+		},
+		ensure_ascii=False,
+		sort_keys=True,
+		separators=(",", ":"),
+	)
+	digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+	return f"kakao-dispatch:{digest}"
 
 
 def _parse_iso_datetime(value: str, fieldname: str) -> dt.datetime:
@@ -202,4 +283,5 @@ __all__ = [
 	"render_kakao_preview",
 	"build_kakao_send_queue_item",
 	"build_kakao_delivery_audit_event",
+	"build_kakao_provider_dispatch_request",
 ]

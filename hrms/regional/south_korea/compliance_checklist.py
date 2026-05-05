@@ -12,6 +12,8 @@ DEFAULT_CHECKS = (
 	("labor-contract-review", "Review labor contract changes", "labor", 0),
 )
 
+CRITICAL_CHECK_CODES = {"payroll-close", "payslip-issue"}
+
 
 def build_compliance_checklist(
 	*,
@@ -76,6 +78,60 @@ def summarize_checklist(items: list[dict[str, Any]]) -> dict[str, int]:
 	return summary
 
 
+def build_compliance_diagnosis(
+	items: list[dict[str, Any]],
+	*,
+	evidence: dict[str, list[str]] | None = None,
+	reviewer: str = "HR Compliance Review Queue",
+) -> dict[str, Any]:
+	"""Build a human-review compliance diagnosis contract.
+
+	This intentionally returns deterministic findings and actions, not a legal
+	opinion or numeric risk score. Evidence is caller-supplied so runtime adapters
+	can attach documents later without this helper importing Frappe.
+	"""
+
+	if not isinstance(items, list):
+		raise TypeError("items must be a list")
+	reviewer = _require_text(reviewer, "reviewer")
+	evidence = _normalize_evidence(evidence or {})
+	item_rows = [_require_item_dict(item) for item in items]
+	item_codes = {_require_text(item.get("code"), "item.code") for item in item_rows}
+	unknown_codes = set(evidence) - item_codes
+	if unknown_codes:
+		raise ValueError(f"evidence contains unknown checklist codes: {sorted(unknown_codes)}")
+
+	findings: list[dict[str, Any]] = []
+	for item in item_rows:
+		code = _require_text(item.get("code"), "item.code")
+		status = _require_text(item.get("status", "Open"), "item.status")
+		attached_evidence = list(evidence.get(code) or [])
+		evidence_status = "attached" if attached_evidence else "missing"
+		severity = _severity_for_item(code=code, status=status, evidence_status=evidence_status)
+		findings.append(
+			{
+				"code": code,
+				"label": _require_text(item.get("label"), "item.label"),
+				"category": _require_text(item.get("category"), "item.category"),
+				"status": status,
+				"due_date": _require_text(item.get("due_date"), "item.due_date"),
+				"owner": _require_text(item.get("owner"), "item.owner"),
+				"severity": severity,
+				"evidence_status": evidence_status,
+				"evidence": attached_evidence,
+				"action": _diagnosis_action(status=status, evidence_status=evidence_status),
+			}
+		)
+
+	return {
+		"contract_type": "korea_compliance_diagnosis_v1",
+		"reviewer": reviewer,
+		"summary": summarize_checklist(items),
+		"requires_human_review": any(finding["severity"] in {"critical", "warning"} for finding in findings),
+		"findings": findings,
+	}
+
+
 def _validate_period(period_start: dt.date, period_end: dt.date) -> None:
 	if not isinstance(period_start, dt.date) or not isinstance(period_end, dt.date):
 		raise TypeError("period_start and period_end must be datetime.date values")
@@ -83,8 +139,58 @@ def _validate_period(period_start: dt.date, period_end: dt.date) -> None:
 		raise ValueError("period_start cannot be after period_end")
 
 
+def _severity_for_item(*, code: str, status: str, evidence_status: str) -> str:
+	if status == "Overdue" and code in CRITICAL_CHECK_CODES:
+		return "critical"
+	if status == "Overdue":
+		return "warning"
+	if status == "Completed" and evidence_status == "missing":
+		return "warning"
+	return "ok"
+
+
+def _diagnosis_action(*, status: str, evidence_status: str) -> dict[str, Any]:
+	if status == "Overdue" and evidence_status == "missing":
+		return {"action": "attach_evidence", "enabled": True, "requires_runtime_apply": True}
+	if status == "Overdue":
+		return {"action": "complete_overdue_check", "enabled": True, "requires_runtime_apply": True}
+	if status == "Completed" and evidence_status == "missing":
+		return {"action": "attach_evidence", "enabled": True, "requires_runtime_apply": True}
+	return {"action": "review", "enabled": False, "requires_runtime_apply": False}
+
+
+def _normalize_evidence(evidence: dict[str, list[str]]) -> dict[str, list[str]]:
+	if not isinstance(evidence, dict):
+		raise TypeError("evidence must be a dict")
+	normalized: dict[str, list[str]] = {}
+	for code, entries in evidence.items():
+		code_text = _require_text(code, "evidence code")
+		if not isinstance(entries, list):
+			raise TypeError("evidence values must be lists")
+		normalized[code_text] = [_require_text(entry, "evidence entry") for entry in entries]
+	return normalized
+
+
+def _require_item_dict(item: Any) -> dict[str, Any]:
+	if not isinstance(item, dict):
+		raise TypeError("items must contain dictionaries")
+	return item
+
+
+def _require_text(value: Any, fieldname: str) -> str:
+	text = str(value or "").strip()
+	if not text:
+		raise ValueError(f"{fieldname} is required")
+	return text
+
+
 def _parse_date(value: str) -> dt.date:
 	return dt.date.fromisoformat(value)
 
 
-__all__ = ["build_compliance_checklist", "evaluate_compliance_checklist", "summarize_checklist"]
+__all__ = [
+	"build_compliance_checklist",
+	"build_compliance_diagnosis",
+	"evaluate_compliance_checklist",
+	"summarize_checklist",
+]

@@ -22,6 +22,7 @@ _KOREA_DIRECT_TEST_TARGETS = (
 	"hrms/tests/test_korea_annual_leave.py",
 	"hrms/tests/test_korea_approval_inbox.py",
 	"hrms/tests/test_korea_approval_inbox_api.py",
+	"hrms/tests/test_korea_attendance_closing_api.py",
 	"hrms/tests/test_korea_attendance_summary.py",
 	"hrms/tests/test_korea_closing_center.py",
 	"hrms/tests/test_korea_closing_center_api.py",

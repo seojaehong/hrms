@@ -80,14 +80,14 @@ def _coerce_list(value: Any, fieldname: str) -> list[dict[str, Any]]:
 		raise ValueError(f"{fieldname} must be a list or JSON array")
 	if not all(isinstance(item, dict) for item in coerced):
 		raise ValueError(f"{fieldname} entries must be dict objects")
-	return coerced
+	return deepcopy(coerced)
 
 
 def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:
 	coerced = _coerce_json_if_needed(value)
 	if not isinstance(coerced, dict):
 		raise ValueError(f"{fieldname} must be a dict or JSON object")
-	return coerced
+	return deepcopy(coerced)
 
 
 def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:

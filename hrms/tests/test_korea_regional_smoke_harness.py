@@ -66,6 +66,13 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertEqual(result["failed_count"], 1)
 		self.assertEqual(result["direct_results"][0]["reason"], "no Korea direct test targets found")
 
+	def test_run_smoke_dry_run_includes_mobile_ess_mss_api_direct_result(self):
+		result = self.mod.run_smoke(repo_root=ROOT, dry_run=True)
+
+		commands = [row["command"] for row in result["direct_results"]]
+		self.assertTrue(result["passed"])
+		self.assertIn("python3 hrms/tests/test_korea_mobile_ess_mss_api.py", commands)
+
 	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):
 		result = self.mod.run_command(["python3", "--version"], dry_run=True)
 

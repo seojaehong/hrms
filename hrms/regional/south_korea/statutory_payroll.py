@@ -67,8 +67,15 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 		_STATUTORY_COMPONENTS["long_term_care_insurance"]: long_term_care["employer"],
 		_STATUTORY_COMPONENTS["employment_insurance"]: employment_insurance["employer"],
 	}
+	contribution_bases = {
+		_STATUTORY_COMPONENTS["national_pension"]: _basis_pair(national_pension),
+		_STATUTORY_COMPONENTS["health_insurance"]: _basis_pair(health_insurance),
+		_STATUTORY_COMPONENTS["long_term_care_insurance"]: _basis_pair(long_term_care),
+		_STATUTORY_COMPONENTS["employment_insurance"]: _basis_pair(employment_insurance),
+	}
 	if industrial_accident is not None:
-		employer_contributions[_STATUTORY_COMPONENTS["industrial_accident_insurance"]] = industrial_accident
+		employer_contributions[_STATUTORY_COMPONENTS["industrial_accident_insurance"]] = industrial_accident["employer"]
+		contribution_bases[_STATUTORY_COMPONENTS["industrial_accident_insurance"]] = _basis_pair(industrial_accident)
 
 	return {
 		"earnings": lines,
@@ -78,6 +85,7 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 		"non_taxable_earnings": tax_summary["non_taxable_earnings"],
 		"employee_deductions": employee_deductions,
 		"employer_contributions": employer_contributions,
+		"contribution_bases": contribution_bases,
 		"total_employee_deductions": sum(employee_deductions.values()),
 		"total_employer_contributions": sum(employer_contributions.values()),
 		"net_reference_pay": tax_summary["gross_earnings"] - sum(employee_deductions.values()),
@@ -193,17 +201,27 @@ def _split_contribution(policy: dict[str, Any], employee_basis: int, *, employer
 	return {
 		"employee": _round_decimal_to_won(Decimal(basis) * _to_decimal(policy["employee_rate"], "employee_rate")),
 		"employer": _round_decimal_to_won(Decimal(employer_basis) * _to_decimal(policy["employer_rate"], "employer_rate")),
+		"employee_basis": basis,
+		"employer_basis": employer_basis,
 	}
 
 
-def _employer_only_contribution(policy: dict[str, Any] | None, basis: int) -> int | None:
+def _employer_only_contribution(policy: dict[str, Any] | None, basis: int) -> dict[str, int] | None:
 	if policy is None:
 		return None
 	contribution_basis = _apply_floor_ceiling(basis, policy)
-	return _round_decimal_to_won(
-		Decimal(contribution_basis) * _to_decimal(policy["employer_rate"], "industrial_accident_insurance.employer_rate")
-	)
+	return {
+		"employee": 0,
+		"employer": _round_decimal_to_won(
+			Decimal(contribution_basis) * _to_decimal(policy["employer_rate"], "industrial_accident_insurance.employer_rate")
+		),
+		"employee_basis": 0,
+		"employer_basis": contribution_basis,
+	}
 
+
+def _basis_pair(contribution: dict[str, int]) -> dict[str, int]:
+	return {"employee": contribution["employee_basis"], "employer": contribution["employer_basis"]}
 
 def _apply_floor_ceiling(value: int, policy: dict[str, Any]) -> int:
 	basis = value

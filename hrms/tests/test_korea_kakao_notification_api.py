@@ -90,6 +90,44 @@ class TestKakaoNotificationPreviewAPI(unittest.TestCase):
 		self.assertNotIn("01012345678", preview["dispatch_request"]["dispatch_request_id"])
 		self.assertEqual(queue_item["payload"]["variables"]["employee"], "홍길동")
 
+	def test_previews_delivery_audit_event_from_json_without_mutating_queue_item(self):
+		queue_item = {
+			"queue_type": "korea_kakao_send_queue_v1",
+			"status": "queued",
+			"channel": "kakao_alimtalk",
+			"provider_key": "partner_alimtalk",
+			"dedupe_key": "kakao:abc123",
+			"payload": {
+				"channel": "kakao_alimtalk",
+				"recipient_phone": "01012345678",
+				"template_code": "PAYSLIP_READY",
+				"variables": {"employee": "홍길동"},
+			},
+			"attempt_count": 1,
+			"max_attempts": 3,
+			"next_attempt_at": None,
+			"requires_runtime_send": True,
+		}
+
+		preview = self.mod.preview_korea_kakao_delivery_audit_event(
+			queue_item=json.dumps(queue_item, ensure_ascii=False),
+			attempted_at="2026-05-31T09:02:00+09:00",
+			provider_status="timeout",
+			provider_message_id="provider-msg-001",
+			error_code="TIMEOUT",
+			base_retry_delay_seconds="120",
+			max_retry_delay_seconds="600",
+		)
+		preview["audit_event"]["dedupe_key"] = "mutated"
+
+		self.assertEqual(preview["contract_type"], "korea_kakao_delivery_audit_preview_v1")
+		self.assertEqual(preview["runtime_action"], "preview_only")
+		self.assertTrue(preview["requires_runtime_send"])
+		self.assertEqual(preview["audit_event"]["attempt_number"], 2)
+		self.assertEqual(preview["audit_event"]["provider_status"], "timeout")
+		self.assertEqual(preview["audit_event"]["next_retry_at"], "2026-05-31T09:06:00+09:00")
+		self.assertEqual(queue_item["dedupe_key"], "kakao:abc123")
+
 	def test_rejects_invalid_json_and_non_mapping_inputs(self):
 		with self.assertRaisesRegex(ValueError, "JSON payload is invalid"):
 			self.mod.preview_korea_kakao_provider_dispatch(
@@ -104,6 +142,21 @@ class TestKakaoNotificationPreviewAPI(unittest.TestCase):
 				template_registry_entry={},
 				variables=[],
 				recipient_consent=True,
+			)
+
+		with self.assertRaisesRegex(ValueError, "base_retry_delay_seconds must be an integer"):
+			self.mod.preview_korea_kakao_delivery_audit_event(
+				queue_item={
+					"queue_type": "korea_kakao_send_queue_v1",
+					"provider_key": "partner_alimtalk",
+					"dedupe_key": "kakao:abc123",
+					"payload": {"channel": "kakao_alimtalk", "recipient_phone": "01012345678", "template_code": "PAYSLIP_READY"},
+					"attempt_count": 0,
+					"max_attempts": 3,
+				},
+				attempted_at="2026-05-31T09:02:00+09:00",
+				provider_status="timeout",
+				base_retry_delay_seconds="not-a-number",
 			)
 
 

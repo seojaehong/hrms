@@ -129,10 +129,17 @@ def get_custom_fields():
                 "fieldname": "korea_component_category",
                 "label": "Korea Component Category",
                 "fieldtype": "Select",
-                "options": "\nOrdinary Wage\nAllowance\nStatutory Deduction\nCompany-specific Deduction",
+                "options": "\nOrdinary Wage\nAllowance\nStatutory Deduction\nEmployer Statutory Contribution\nCompany-specific Deduction",
                 "insert_after": "description",
                 "depends_on": 'eval:doc.country == "South Korea" || !doc.country',
                 "translatable": 0,
-            }
+            },
+            {
+                "fieldname": "is_company_contribution_only",
+                "label": "Company Contribution Only",
+                "fieldtype": "Check",
+                "insert_after": "korea_component_category",
+                "depends_on": 'eval:doc.country == "South Korea" || !doc.country',
+            },
         ],
     }

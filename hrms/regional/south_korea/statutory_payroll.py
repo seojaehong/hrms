@@ -24,6 +24,7 @@ _STATUTORY_COMPONENTS = {
 	"health_insurance": "Health Insurance",
 	"long_term_care_insurance": "Long-term Care Insurance",
 	"employment_insurance": "Employment Insurance",
+	"industrial_accident_insurance": "Industrial Accident Insurance",
 }
 
 _ORDINARY_WAGE_COMPONENTS = {"Basic Pay"}
@@ -52,6 +53,7 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 		employer_basis=health_insurance["employer"],
 	)
 	employment_insurance = _split_contribution(policy["employment_insurance"], basis)
+	industrial_accident = _employer_only_contribution(policy.get("industrial_accident_insurance"), basis)
 
 	employee_deductions = {
 		_STATUTORY_COMPONENTS["national_pension"]: national_pension["employee"],
@@ -65,6 +67,8 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 		_STATUTORY_COMPONENTS["long_term_care_insurance"]: long_term_care["employer"],
 		_STATUTORY_COMPONENTS["employment_insurance"]: employment_insurance["employer"],
 	}
+	if industrial_accident is not None:
+		employer_contributions[_STATUTORY_COMPONENTS["industrial_accident_insurance"]] = industrial_accident
 
 	return {
 		"earnings": lines,
@@ -122,6 +126,35 @@ def _validate_policy(policy: dict[str, Any]) -> None:
 	limit_won = _to_integer_won(limit, "meal_allowance_monthly_non_taxable_limit")
 	if limit_won < 0:
 		raise ValueError("meal_allowance_monthly_non_taxable_limit cannot be negative")
+	if policy.get("industrial_accident_insurance") is not None:
+		_validate_industrial_accident_policy(policy["industrial_accident_insurance"])
+
+
+def _validate_industrial_accident_policy(entry: dict[str, Any]) -> None:
+	if not isinstance(entry, dict):
+		raise ValueError("industrial_accident_insurance policy must be a dict")
+	if "basis" not in entry:
+		raise ValueError("industrial_accident_insurance.basis is required")
+	basis = entry["basis"]
+	if basis != "monthly_taxable_wage":
+		raise ValueError("industrial_accident_insurance.basis must be monthly_taxable_wage")
+	if "employee_rate" in entry:
+		raise ValueError("industrial_accident_insurance.employee_rate is not supported")
+	rate = _to_decimal(entry.get("employer_rate"), "industrial_accident_insurance.employer_rate")
+	if rate < 0:
+		raise ValueError("industrial_accident_insurance.employer_rate cannot be negative")
+	for limit_key in ("floor", "ceiling"):
+		if entry.get(limit_key) is not None:
+			limit = _to_integer_won(entry[limit_key], f"industrial_accident_insurance.{limit_key}")
+			if limit < 0:
+				raise ValueError(f"industrial_accident_insurance.{limit_key} cannot be negative")
+	if (
+		entry.get("floor") is not None
+		and entry.get("ceiling") is not None
+		and _to_integer_won(entry["floor"], "industrial_accident_insurance.floor")
+		> _to_integer_won(entry["ceiling"], "industrial_accident_insurance.ceiling")
+	):
+		raise ValueError("industrial_accident_insurance.floor cannot exceed industrial_accident_insurance.ceiling")
 
 
 def _build_taxable_summary(lines: list[dict[str, Any]], policy: dict[str, Any], component_presets: dict[str, dict[str, Any]]) -> dict[str, int]:
@@ -161,6 +194,15 @@ def _split_contribution(policy: dict[str, Any], employee_basis: int, *, employer
 		"employee": _round_decimal_to_won(Decimal(basis) * _to_decimal(policy["employee_rate"], "employee_rate")),
 		"employer": _round_decimal_to_won(Decimal(employer_basis) * _to_decimal(policy["employer_rate"], "employer_rate")),
 	}
+
+
+def _employer_only_contribution(policy: dict[str, Any] | None, basis: int) -> int | None:
+	if policy is None:
+		return None
+	contribution_basis = _apply_floor_ceiling(basis, policy)
+	return _round_decimal_to_won(
+		Decimal(contribution_basis) * _to_decimal(policy["employer_rate"], "industrial_accident_insurance.employer_rate")
+	)
 
 
 def _apply_floor_ceiling(value: int, policy: dict[str, Any]) -> int:

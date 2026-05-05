@@ -31,6 +31,7 @@ _BASIS_FIELDS = (
 	"total_employee_deductions",
 	"total_employer_contributions",
 	"net_reference_pay",
+	"contribution_bases",
 	"policy_reference",
 )
 
@@ -131,7 +132,24 @@ def _extract_basis(snapshot: dict[str, Any]) -> dict[str, Any]:
 	for map_field in ("employee_deductions", "employer_contributions"):
 		if map_field in basis:
 			basis[map_field] = _normalize_amount_deltas(basis[map_field], prefix=f"snapshot.{map_field}")
+	if "contribution_bases" in basis:
+		basis["contribution_bases"] = _normalize_contribution_bases(basis["contribution_bases"])
 	return basis
+
+
+def _normalize_contribution_bases(value: Any) -> dict[str, dict[str, int]]:
+	_validate_dict(value, "snapshot.contribution_bases")
+	normalized: dict[str, dict[str, int]] = {}
+	for component, split in value.items():
+		component_name = str(component).strip()
+		if not component_name:
+			raise ValueError("snapshot.contribution_bases component name is required")
+		_validate_dict(split, f"snapshot.contribution_bases.{component_name}")
+		normalized[component_name] = {
+			"employee": _to_integer_won(split.get("employee"), f"snapshot.contribution_bases.{component_name}.employee"),
+			"employer": _to_integer_won(split.get("employer"), f"snapshot.contribution_bases.{component_name}.employer"),
+		}
+	return normalized
 
 
 def _normalize_amount_deltas(amount_deltas: Any, *, prefix: str = "amount_deltas") -> dict[str, int]:

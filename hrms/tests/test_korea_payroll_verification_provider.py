@@ -23,6 +23,10 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 			"gross_earnings": 3350000,
 			"taxable_earnings": 3150000,
 			"non_taxable_earnings": 200000,
+			"contribution_bases": {
+				"National Pension": {"employee": 3150000, "employer": 3150000},
+				"Health Insurance": {"employee": 3150000, "employer": 3150000},
+			},
 			"employee_deductions": {"National Pension": 141750, "Health Insurance": 111668},
 			"employer_contributions": {"National Pension": 141750, "Health Insurance": 111668},
 			"total_employee_deductions": 253418,
@@ -43,6 +47,7 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 		self.assertEqual(request["provider"]["type"], "paid_vendor_api")
 		self.assertEqual(request["status"], "pending_external_verification")
 		self.assertEqual(request["basis"]["total_employee_deductions"], 253418)
+		self.assertEqual(request["basis"]["contribution_bases"]["National Pension"]["employee"], 3150000)
 		self.assertEqual(request["basis"]["net_reference_pay"], 3096582)
 		self.assertEqual(request["consent_reference"], "consent-2026-05")
 		self.assertNotIn("public_government_api", repr(request).lower())
@@ -98,6 +103,18 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 		snapshot["net_reference_pay"] = "3096582.5"
 
 		with self.assertRaisesRegex(ValueError, "snapshot.net_reference_pay must be an integer KRW amount"):
+			self.mod.build_payroll_verification_request(
+				snapshot=snapshot,
+				period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+				workplace={"company": "Seoul Manufacturing"},
+				provider={"type": "owned_connector_service", "name": "internal verifier"},
+			)
+
+	def test_verification_request_rejects_fractional_contribution_basis_amounts(self):
+		snapshot = dict(self.snapshot)
+		snapshot["contribution_bases"] = {"National Pension": {"employee": "3150000.5", "employer": 3150000}}
+
+		with self.assertRaisesRegex(ValueError, "snapshot.contribution_bases.National Pension.employee must be an integer KRW amount"):
 			self.mod.build_payroll_verification_request(
 				snapshot=snapshot,
 				period={"from_date": "2026-05-01", "to_date": "2026-05-31"},

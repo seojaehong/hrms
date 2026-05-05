@@ -46,6 +46,10 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertEqual(snapshot["employee_deductions"]["Long-term Care Insurance"], 15379)
 		self.assertEqual(snapshot["employee_deductions"]["Employment Insurance"], 30150)
 		self.assertEqual(snapshot["employer_contributions"]["Employment Insurance"], 38525)
+		self.assertEqual(snapshot["contribution_bases"]["National Pension"]["employee"], 3350000)
+		self.assertEqual(snapshot["contribution_bases"]["Health Insurance"]["employer"], 3350000)
+		self.assertEqual(snapshot["contribution_bases"]["Long-term Care Insurance"]["employee"], 118758)
+		self.assertEqual(snapshot["contribution_bases"]["Employment Insurance"]["employer"], 3350000)
 		self.assertEqual(snapshot["net_reference_pay"], 3234963)
 
 	def test_policy_must_provide_explicit_rates_for_every_statutory_component(self):

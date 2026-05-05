@@ -144,20 +144,44 @@ class TestKakaoNotificationPreviewAPI(unittest.TestCase):
 				recipient_consent=True,
 			)
 
-		with self.assertRaisesRegex(ValueError, "base_retry_delay_seconds must be an integer"):
-			self.mod.preview_korea_kakao_delivery_audit_event(
-				queue_item={
-					"queue_type": "korea_kakao_send_queue_v1",
-					"provider_key": "partner_alimtalk",
-					"dedupe_key": "kakao:abc123",
-					"payload": {"channel": "kakao_alimtalk", "recipient_phone": "01012345678", "template_code": "PAYSLIP_READY"},
-					"attempt_count": 0,
-					"max_attempts": 3,
-				},
-				attempted_at="2026-05-31T09:02:00+09:00",
-				provider_status="timeout",
-				base_retry_delay_seconds="not-a-number",
-			)
+		for invalid_max_attempts in ("not-a-number", True, 3.7):
+			with self.subTest(max_attempts=invalid_max_attempts):
+				with self.assertRaisesRegex(ValueError, "max_attempts must be an integer"):
+					self.mod.preview_korea_kakao_registered_queue_item(
+						recipient_phone="01012345678",
+						template_registry_entry={
+							"registry_type": "korea_kakao_template_registry_v1",
+							"channel": "kakao_alimtalk",
+							"template_code": "PAYSLIP_READY",
+							"template_name": "급여명세서 발송",
+							"template_body": "{{employee}}님 급여명세서가 준비되었습니다.",
+							"required_variables": ["employee"],
+							"consent_purpose": "payroll_notification",
+							"provider_template_keys": {"partner_alimtalk": "tpl-001"},
+							"active": True,
+							"requires_runtime_send": False,
+						},
+						variables={"employee": "홍길동"},
+						recipient_consent=True,
+						max_attempts=invalid_max_attempts,
+					)
+
+		for invalid_retry_delay in ("not-a-number", True, 3.7):
+			with self.subTest(base_retry_delay_seconds=invalid_retry_delay):
+				with self.assertRaisesRegex(ValueError, "base_retry_delay_seconds must be an integer"):
+					self.mod.preview_korea_kakao_delivery_audit_event(
+						queue_item={
+							"queue_type": "korea_kakao_send_queue_v1",
+							"provider_key": "partner_alimtalk",
+							"dedupe_key": "kakao:abc123",
+							"payload": {"channel": "kakao_alimtalk", "recipient_phone": "01012345678", "template_code": "PAYSLIP_READY"},
+							"attempt_count": 0,
+							"max_attempts": 3,
+						},
+						attempted_at="2026-05-31T09:02:00+09:00",
+						provider_status="timeout",
+						base_retry_delay_seconds=invalid_retry_delay,
+					)
 
 
 if __name__ == "__main__":

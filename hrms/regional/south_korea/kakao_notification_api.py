@@ -53,7 +53,7 @@ def preview_korea_kakao_registered_queue_item(
 		opted_out=_coerce_bool(opted_out, "opted_out"),
 		scheduled_at=scheduled_at,
 		provider_key=provider_key,
-		max_attempts=int(max_attempts),
+		max_attempts=_coerce_int(max_attempts, "max_attempts"),
 	)
 	return {
 		"contract_type": "korea_kakao_queue_preview_v1",
@@ -144,10 +144,19 @@ def _coerce_bool(value: Any, fieldname: str) -> bool:
 
 
 def _coerce_int(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool):
+		raise ValueError(f"{fieldname} must be an integer")
 	try:
-		return int(value)
-	except (TypeError, ValueError) as exc:
+		if isinstance(value, str):
+			text = value.strip()
+			if not text or "." in text:
+				raise ValueError
+			return int(text)
+		if isinstance(value, int):
+			return value
+	except ValueError as exc:
 		raise ValueError(f"{fieldname} must be an integer") from exc
+	raise ValueError(f"{fieldname} must be an integer")
 
 
 def _load_sibling_module(filename: str, module_name: str):

@@ -38,6 +38,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 			"hrms/tests/test_korea_hrms_profiles.py",
 			"hrms/tests/test_korea_kakao_notification.py",
 			"hrms/tests/test_korea_leave_allocation_adapter.py",
+			"hrms/tests/test_korea_leave_allocation_api.py",
 			"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
 			"hrms/tests/test_korea_mobile_ess_mss_api.py",
 			"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
@@ -54,6 +55,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		bench = self.mod.build_optional_bench_command(site="test.localhost")
 
 		self.assertIn(["python3", "hrms/tests/test_korea_closing_center.py"], direct)
+		self.assertIn(["python3", "hrms/tests/test_korea_leave_allocation_api.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
 		self.assertTrue(all(command[0] == "python3" for command in direct))
@@ -80,11 +82,12 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertEqual(result["failed_count"], 1)
 		self.assertEqual(result["direct_results"][0]["reason"], "no Korea direct test targets found")
 
-	def test_run_smoke_dry_run_includes_mobile_ess_mss_api_direct_result(self):
+	def test_run_smoke_dry_run_includes_leave_allocation_and_mobile_api_direct_results(self):
 		result = self.mod.run_smoke(repo_root=ROOT, dry_run=True)
 
 		commands = [row["command"] for row in result["direct_results"]]
 		self.assertTrue(result["passed"])
+		self.assertIn("python3 hrms/tests/test_korea_leave_allocation_api.py", commands)
 		self.assertIn("python3 hrms/tests/test_korea_mobile_ess_mss_api.py", commands)
 
 	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):

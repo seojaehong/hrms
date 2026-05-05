@@ -216,6 +216,13 @@ def ensure_salary_components():
         "Health Insurance": {"type": "Deduction", "description": "건강보험", "korea_component_category": "Statutory Deduction", "exempted_from_income_tax": 1},
         "Long-term Care Insurance": {"type": "Deduction", "description": "장기요양보험", "korea_component_category": "Statutory Deduction", "exempted_from_income_tax": 1},
         "Employment Insurance": {"type": "Deduction", "description": "고용보험", "korea_component_category": "Statutory Deduction", "exempted_from_income_tax": 1},
+        "Industrial Accident Insurance": {
+            "type": "Deduction",
+            "description": "산재보험(사업주 부담)",
+            "korea_component_category": "Employer Statutory Contribution",
+            "exempted_from_income_tax": 1,
+            "is_company_contribution_only": 1,
+        },
         "Income Tax": {"type": "Deduction", "description": "원천세", "korea_component_category": "Statutory Deduction", "exempted_from_income_tax": 0},
     }
 

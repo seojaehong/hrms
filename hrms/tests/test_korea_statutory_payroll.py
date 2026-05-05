@@ -6,6 +6,7 @@ import pathlib
 import unittest
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "regional" / "south_korea" / "statutory_payroll.py"
+DEMO_SEED_PATH = pathlib.Path(__file__).resolve().parents[1] / "regional" / "south_korea" / "demo_seed.py"
 
 
 def load_module():
@@ -161,6 +162,13 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertIn("Employment Insurance", presets)
 		self.assertEqual(presets["Industrial Accident Insurance"]["korea_component_category"], "Employer Statutory Contribution")
 		self.assertEqual(presets["Industrial Accident Insurance"].get("is_company_contribution_only"), 1)
+
+	def test_demo_seed_includes_employer_only_industrial_accident_salary_component(self):
+		source = DEMO_SEED_PATH.read_text()
+
+		self.assertIn('"Industrial Accident Insurance"', source)
+		self.assertIn('"korea_component_category": "Employer Statutory Contribution"', source)
+		self.assertIn('"is_company_contribution_only": 1', source)
 
 
 if __name__ == "__main__":

@@ -47,6 +47,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 			"hrms/tests/test_korea_mobile_ess_mss_api.py",
 			"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
 			"hrms/tests/test_korea_payroll_entry_adapter.py",
+			"hrms/tests/test_korea_payroll_entry_api.py",
 			"hrms/tests/test_korea_payroll_salary_slip_api.py",
 			"hrms/tests/test_korea_payroll_verification_provider.py",
 			"hrms/tests/test_korea_payslip.py",
@@ -64,6 +65,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
 		self.assertIn(["python3", "hrms/tests/test_korea_payroll_entry_adapter.py"], direct)
+		self.assertIn(["python3", "hrms/tests/test_korea_payroll_entry_api.py"], direct)
 		self.assertTrue(all(command[0] == "python3" for command in direct))
 		self.assertEqual(
 			bench,
@@ -95,6 +97,7 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		self.assertTrue(result["passed"])
 		self.assertIn("python3 hrms/tests/test_korea_leave_allocation_api.py", commands)
 		self.assertIn("python3 hrms/tests/test_korea_mobile_ess_mss_api.py", commands)
+		self.assertIn("python3 hrms/tests/test_korea_payroll_entry_api.py", commands)
 
 	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):
 		result = self.mod.run_command(["python3", "--version"], dry_run=True)

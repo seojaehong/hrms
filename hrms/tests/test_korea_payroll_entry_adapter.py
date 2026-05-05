@@ -70,6 +70,14 @@ class TestKoreaPayrollEntryAdapter(unittest.TestCase):
 		self.assertEqual(batch["totals"]["non_taxable_earnings"], 200000)
 		self.assertEqual(batch["totals"]["deductions_by_component"]["National Pension"], 227250)
 		self.assertEqual(batch["totals"]["employer_contributions_by_component"]["Employment Insurance"], 58075)
+		self.assertEqual(
+			batch["totals"]["contribution_bases"]["National Pension"],
+			{"employee": 5050000, "employer": 5050000},
+		)
+		self.assertEqual(
+			batch["totals"]["contribution_bases"]["Long-term Care Insurance"],
+			{"employee": 179023, "employer": 179023},
+		)
 		self.assertTrue(batch["requires_runtime_apply"])
 
 	def test_builds_vendor_ready_batch_verification_request_without_public_api_route(self):
@@ -105,6 +113,10 @@ class TestKoreaPayrollEntryAdapter(unittest.TestCase):
 		self.assertEqual(request["source"]["doctype"], "Payroll Entry")
 		self.assertEqual(request["batch_summary"]["salary_slip_count"], 1)
 		self.assertEqual(request["batch_summary"]["total_gross_earnings"], 3000000)
+		self.assertEqual(
+			request["basis"]["contribution_bases"]["National Pension"],
+			{"employee": 3000000, "employer": 3000000},
+		)
 		self.assertTrue(request["requires_human_approval"])
 
 		with self.assertRaisesRegex(ValueError, "public_government_api"):

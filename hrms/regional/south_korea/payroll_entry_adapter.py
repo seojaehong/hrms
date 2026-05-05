@@ -64,6 +64,7 @@ def build_korea_payroll_entry_verification_batch_request(
 		"non_taxable_earnings": batch["totals"]["non_taxable_earnings"],
 		"employee_deductions": batch["totals"]["deductions_by_component"],
 		"employer_contributions": batch["totals"]["employer_contributions_by_component"],
+		"contribution_bases": deepcopy(batch["totals"]["contribution_bases"]),
 		"total_employee_deductions": batch["totals"]["total_employee_deductions"],
 		"total_employer_contributions": batch["totals"]["total_employer_contributions"],
 		"net_reference_pay": batch["totals"]["net_reference_pay"],
@@ -115,6 +116,7 @@ def _extract_period(payroll_entry: Any) -> dict[str, str | None]:
 def _aggregate_payload_totals(payloads: list[dict[str, Any]]) -> dict[str, Any]:
 	deductions: dict[str, int] = {}
 	employer_contributions: dict[str, int] = {}
+	contribution_bases: dict[str, dict[str, int]] = {}
 	totals = {
 		"gross_earnings": 0,
 		"taxable_earnings": 0,
@@ -143,14 +145,24 @@ def _aggregate_payload_totals(payloads: list[dict[str, Any]]) -> dict[str, Any]:
 			raise ValueError("salary slip policy references must match within a payroll entry batch")
 		_add_component_amounts(deductions, snapshot["employee_deductions"])
 		_add_component_amounts(employer_contributions, snapshot["employer_contributions"])
+		_add_component_bases(contribution_bases, snapshot.get("contribution_bases", {}))
 	totals["deductions_by_component"] = deductions
 	totals["employer_contributions_by_component"] = employer_contributions
+	totals["contribution_bases"] = contribution_bases
 	return totals
 
 
 def _add_component_amounts(target: dict[str, int], amounts: dict[str, int]) -> None:
 	for component, amount in amounts.items():
 		target[component] = target.get(component, 0) + int(amount)
+
+
+def _add_component_bases(target: dict[str, dict[str, int]], bases: dict[str, dict[str, int]]) -> None:
+	for component, sides in bases.items():
+		if component not in target:
+			target[component] = {"employee": 0, "employer": 0}
+		for side in ("employee", "employer"):
+			target[component][side] += int(sides.get(side, 0))
 
 
 def _get_value(source: Any, key: str, default: Any = None) -> Any:

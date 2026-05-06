@@ -141,6 +141,37 @@ class KoreaAnnualLeaveEngineTest(unittest.TestCase):
                 employment_end_date=dt.date(2026, 4, 30),
             )
 
+    def test_fiscal_year_start_controls_must_be_plain_integers_not_bool(self):
+        with self.assertRaisesRegex(ValueError, "fiscal_year_start_month must be an integer"):
+            self.annual_leave.calculate_annual_leave_entitlement(
+                hire_date=dt.date(2026, 1, 1),
+                as_of_date=dt.date(2026, 12, 31),
+                basis="Fiscal Year",
+                fiscal_year_start_month=True,
+            )
+
+        with self.assertRaisesRegex(ValueError, "fiscal_year_start_day must be an integer"):
+            self.annual_leave.calculate_annual_leave_entitlement(
+                hire_date=dt.date(2026, 1, 1),
+                as_of_date=dt.date(2026, 12, 31),
+                basis="Fiscal Year",
+                fiscal_year_start_day=False,
+            )
+
+    def test_fiscal_year_start_controls_must_reject_non_integral_values(self):
+        for fieldname, kwargs in (
+            ("fiscal_year_start_month", {"fiscal_year_start_month": 3.5}),
+            ("fiscal_year_start_day", {"fiscal_year_start_day": "1.5"}),
+        ):
+            with self.subTest(fieldname=fieldname):
+                with self.assertRaisesRegex(ValueError, f"{fieldname} must be an integer"):
+                    self.annual_leave.calculate_annual_leave_entitlement(
+                        hire_date=dt.date(2026, 1, 1),
+                        as_of_date=dt.date(2026, 12, 31),
+                        basis="Fiscal Year",
+                        **kwargs,
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

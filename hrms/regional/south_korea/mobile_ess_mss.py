@@ -79,6 +79,7 @@ def build_mobile_manager_worklist(
 	period_end = dt.date.fromisoformat(period_payload["end_date"])
 	if not isinstance(records, list):
 		raise TypeError("records must be a list")
+	overdue_after_days = _require_int(overdue_after_days, "overdue_after_days")
 	if overdue_after_days < 0:
 		raise ValueError("overdue_after_days cannot be negative")
 	if today is None:
@@ -177,6 +178,12 @@ def _normalize_non_negative_number(value: Any, fieldname: str) -> int | float:
 	if number == number.to_integral_value():
 		return int(number)
 	return float(number)
+
+
+def _require_int(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool) or not isinstance(value, int):
+		raise ValueError(f"{fieldname} must be an integer")
+	return value
 
 
 def _require_record_dict(record: Any) -> dict[str, Any]:

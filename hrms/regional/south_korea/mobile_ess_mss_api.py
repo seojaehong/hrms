@@ -64,7 +64,7 @@ def preview_korea_mobile_manager_worklist(
 		workplace=workplace,
 		records=_coerce_list(records, "records"),
 		today=_coerce_optional_date(today, "today"),
-		overdue_after_days=int(overdue_after_days),
+		overdue_after_days=_coerce_int(overdue_after_days, "overdue_after_days"),
 	)
 	return {
 		"contract_type": "korea_mobile_mss_worklist_preview_v1",
@@ -103,6 +103,18 @@ def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:
 		except ValueError as exc:
 			raise ValueError(f"{fieldname} must be an ISO date string") from exc
 	raise ValueError(f"{fieldname} must be a date or ISO date string")
+
+
+def _coerce_int(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool):
+		raise ValueError(f"{fieldname} must be an integer")
+	if isinstance(value, int):
+		return value
+	if isinstance(value, str):
+		text = value.strip()
+		if text and text.isdecimal():
+			return int(text)
+	raise ValueError(f"{fieldname} must be an integer")
 
 
 def _coerce_json_if_needed(value: Any) -> Any:

@@ -67,6 +67,39 @@ class TestKoreaMobileEssMssApi(unittest.TestCase):
 		self.assertFalse(result["requires_runtime_apply"])
 		self.assertEqual(result["worklist"]["summary"], {"total": 1, "overdue": 1, "by_doctype": {"Leave Application": 1}})
 
+	def test_manager_worklist_overdue_control_accepts_integral_string_and_rejects_ambiguous_values(self):
+		result = self.mod.preview_korea_mobile_manager_worklist(
+			manager="MGR-001",
+			period=self.period,
+			workplace="SEOUL-01",
+			today="2026-05-10",
+			overdue_after_days="6",
+			records=[
+				{
+					"doctype": "Leave Application",
+					"name": "LA-1",
+					"employee": "EMP-001",
+					"manager": "MGR-001",
+					"workplace": "SEOUL-01",
+					"status": "Pending",
+					"posting_date": "2026-05-04",
+				}
+			],
+		)
+		self.assertFalse(result["worklist"]["items"][0]["overdue"])
+
+		for invalid_value in (True, False, 2.5, "2.5", "not-a-number"):
+			with self.subTest(invalid_value=invalid_value):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
+					self.mod.preview_korea_mobile_manager_worklist(
+						manager="MGR-001",
+						period=self.period,
+						workplace="SEOUL-01",
+						today="2026-05-10",
+						overdue_after_days=invalid_value,
+						records=[],
+					)
+
 	def test_preview_wrappers_do_not_let_downstream_helpers_mutate_caller_inputs(self):
 		period = {"start_date": "2026-05-01", "end_date": "2026-05-31"}
 		records = [{"record_type": "attendance", "employee": "EMP-001", "status": "Checked In", "workplace": "SEOUL-01"}]

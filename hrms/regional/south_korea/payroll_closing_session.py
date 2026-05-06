@@ -213,6 +213,74 @@ def build_korea_payroll_closing_session(
 	}
 
 
+_ALLOWED_AUDIT_ACTIONS = {"review_blockers", "request_human_approval", "record_human_review"}
+
+
+def build_korea_payroll_closing_audit_event(
+	session: dict[str, Any],
+	*,
+	actor: str,
+	action: str,
+	note: str | None = None,
+) -> dict[str, Any]:
+	"""Build a side-effect-free audit event preview for a closing session.
+
+	This function creates a runtime-ready payload that a later Frappe adapter can
+	persist as an audit log. It does not approve, close, save, submit, or send
+	anything; payroll-sensitive decisions remain human-approved.
+	"""
+
+	if not isinstance(session, dict):
+		raise ValueError("session must be a dict")
+	if session.get("contract_type") != CONTRACT_TYPE:
+		raise ValueError(f"session.contract_type must be {CONTRACT_TYPE}")
+	if session.get("requires_human_approval") is not True:
+		raise ValueError("session.requires_human_approval must be true")
+	if session.get("ai_role") != AI_ROLE:
+		raise ValueError(f"session.ai_role must be {AI_ROLE}")
+
+	actor_text = _require_text(actor, "actor")
+	action_text = _require_text(action, "action")
+	if action_text not in _ALLOWED_AUDIT_ACTIONS:
+		allowed = ", ".join(sorted(_ALLOWED_AUDIT_ACTIONS))
+		raise ValueError(f"action must be one of: {allowed}")
+	if "blockers" not in session:
+		raise ValueError("session.blockers is required")
+	blockers = session.get("blockers")
+	if not isinstance(blockers, list):
+		raise ValueError("session.blockers must be a list")
+	blocker_codes = []
+	for blocker in blockers:
+		if not isinstance(blocker, dict):
+			raise ValueError("session.blockers must contain dict items")
+		code = blocker.get("code")
+		if not isinstance(code, str):
+			raise ValueError("session.blockers.code must be a string")
+		code = code.strip()
+		if not code:
+			raise ValueError("session.blockers.code is required")
+		blocker_codes.append(code)
+	note_text = _optional_note(note)
+
+	return {
+		"contract_type": "korea_payroll_closing_audit_event_v1",
+		"session_contract_type": CONTRACT_TYPE,
+		"company": _require_text(session.get("company"), "session.company"),
+		"workplace": _require_text(session.get("workplace"), "session.workplace"),
+		"period_start": _parse_iso_date(session.get("period_start"), "session.period_start").isoformat(),
+		"period_end": _parse_iso_date(session.get("period_end"), "session.period_end").isoformat(),
+		"session_status": _require_text(session.get("status"), "session.status"),
+		"action": action_text,
+		"actor": actor_text,
+		"note": note_text,
+		"blocker_codes": blocker_codes,
+		"runtime_action": "preview_only",
+		"requires_runtime_apply": True,
+		"requires_human_approval": True,
+		"ai_role": AI_ROLE,
+	}
+
+
 def _normalize_attendance_state(
 	attendance_summary: dict[str, Any],
 	*,
@@ -517,6 +585,17 @@ def _optional_payload(value: dict[str, Any] | None, fieldname: str) -> dict[str,
 	return value
 
 
+def _optional_note(value: Any) -> str | None:
+	if value is None:
+		return None
+	if not isinstance(value, str):
+		raise ValueError("note must be a string")
+	text = value.strip()
+	if not text:
+		raise ValueError("note must not be blank")
+	return text
+
+
 def _optional_bool(value: Any, fieldname: str) -> bool:
 	if value is None:
 		return False
@@ -535,4 +614,4 @@ def _optional_int(value: Any) -> int | None:
 	return value
 
 
-__all__ = ["build_korea_payroll_closing_session"]
+__all__ = ["build_korea_payroll_closing_session", "build_korea_payroll_closing_audit_event"]

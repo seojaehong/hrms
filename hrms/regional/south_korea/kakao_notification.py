@@ -13,7 +13,6 @@ RETRYABLE_PROVIDER_STATUSES = {"retryable_error", "rate_limited", "timeout"}
 TERMINAL_PROVIDER_STATUSES = {"delivered", "accepted", "permanent_error", "opted_out"}
 SUPPORTED_PROVIDER_STATUSES = RETRYABLE_PROVIDER_STATUSES | TERMINAL_PROVIDER_STATUSES
 SUPPORTED_PROVIDER_TYPES = {"paid_vendor", "partner_api", "delegated_rpa", "owned_connector"}
-PHONE_NUMBER_RE = re.compile(r"01\d{8,9}")
 
 
 def build_kakao_template_registry_entry(
@@ -150,6 +149,9 @@ def build_kakao_send_queue_item(
 		raise ValueError("max_attempts must be at least 1")
 	if not provider_key:
 		raise ValueError("provider_key is required")
+	provider_key = str(provider_key)
+	if _contains_korean_mobile_number(provider_key):
+		raise ValueError("provider_key must not contain phone numbers")
 	if scheduled_at is not None:
 		_parse_iso_datetime(scheduled_at, "scheduled_at")
 
@@ -281,6 +283,9 @@ def _validate_queue_item(queue_item: dict[str, Any]) -> dict[str, int]:
 	for fieldname in ("dedupe_key", "provider_key", "attempt_count", "max_attempts", "payload"):
 		if fieldname not in queue_item:
 			raise ValueError(f"queue_item.{fieldname} is required")
+	provider_key = str(queue_item["provider_key"])
+	if _contains_korean_mobile_number(provider_key):
+		raise ValueError("queue_item.provider_key must not contain phone numbers")
 	attempt_count = _to_strict_integer(queue_item["attempt_count"], "queue_item.attempt_count")
 	max_attempts = _to_strict_integer(queue_item["max_attempts"], "queue_item.max_attempts")
 	if attempt_count < 0:
@@ -298,6 +303,8 @@ def _validate_provider(provider: dict[str, Any], expected_provider_key: str) -> 
 	provider_key = str(provider.get("provider_key") or "").strip()
 	if not provider_key:
 		raise ValueError("provider.provider_key is required")
+	if _contains_korean_mobile_number(provider_key):
+		raise ValueError("provider.provider_key must not contain phone numbers")
 	if provider_key != expected_provider_key:
 		raise ValueError("provider.provider_key must match queue_item.provider_key")
 	provider_type = str(provider.get("provider_type") or "").strip()
@@ -306,6 +313,8 @@ def _validate_provider(provider: dict[str, Any], expected_provider_key: str) -> 
 	endpoint_key = str(provider.get("endpoint_key") or "").strip()
 	if not endpoint_key:
 		raise ValueError("provider.endpoint_key is required")
+	if _contains_korean_mobile_number(endpoint_key):
+		raise ValueError("provider.endpoint_key must not contain phone numbers")
 	return {"provider_key": provider_key, "provider_type": provider_type, "endpoint_key": endpoint_key}
 
 
@@ -326,7 +335,7 @@ def _validate_provider_template_keys(provider_template_keys: dict[str, Any]) -> 
 
 def _contains_korean_mobile_number(value: str) -> bool:
 	digits = "".join(ch for ch in value if ch.isdigit())
-	return PHONE_NUMBER_RE.search(digits) is not None
+	return re.search(r"(?:01\d{8,9}|821\d{8,9})", digits) is not None
 
 
 def _validate_template_registry_entry(entry: dict[str, Any]) -> dict[str, Any]:

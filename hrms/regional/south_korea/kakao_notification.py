@@ -334,8 +334,10 @@ def _validate_provider_template_keys(provider_template_keys: dict[str, Any]) -> 
 
 
 def _contains_korean_mobile_number(value: str) -> bool:
-	digits = "".join(ch for ch in value if ch.isdigit())
-	return re.search(r"(?:01\d{8,9}|821\d{8,9})", digits) is not None
+	text = str(value or "")
+	local_mobile = re.compile(r"(?<!\d)01\d[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)")
+	country_mobile = re.compile(r"(?<!\d)(?:\+?82[-\s.]?10|8210)[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)")
+	return bool(local_mobile.search(text) or country_mobile.search(text))
 
 
 def _validate_template_registry_entry(entry: dict[str, Any]) -> dict[str, Any]:

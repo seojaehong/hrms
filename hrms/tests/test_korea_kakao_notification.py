@@ -109,6 +109,19 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 						provider_key=provider_key,
 					)
 
+	def test_provider_key_phone_guard_allows_date_like_opaque_identifiers(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="provider-20260101123456",
+		)
+
+		self.assertEqual(queue_item["provider_key"], "provider-20260101123456")
+
 	def test_audit_rejects_phone_numbers_in_existing_queue_provider_key(self):
 		payload = self.mod.build_kakao_template_payload(
 			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}

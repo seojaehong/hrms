@@ -105,6 +105,17 @@ class TestKoreaApprovalInboxApi(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "item must be a dict or JSON object"):
 			self.mod.preview_korea_approval_action(item="[]", action="approve", actor="manager@example.com")
 
+	def test_overdue_after_days_rejects_bool_and_non_integral_values(self):
+		for value in (True, 3.7, "not-a-number"):
+			with self.subTest(value=value):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
+					self.mod.preview_korea_approval_inbox(
+						records=json.dumps(self.records),
+						actor="manager@example.com",
+						today="2026-05-05",
+						overdue_after_days=value,
+					)
+
 	def test_wrong_actor_and_closed_items_stay_blocked_in_api_wrapper(self):
 		with self.assertRaisesRegex(ValueError, "actor is not the assigned approver"):
 			self.mod.preview_korea_approval_action(

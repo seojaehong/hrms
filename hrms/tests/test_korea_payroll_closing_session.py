@@ -508,6 +508,92 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				notification_state={},
 			)
 
+	def test_builds_human_review_audit_event_preview_from_session(self):
+		session = self.mod.build_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary={"status": "blocked", "unmarked_days": ["2026-05-03"]},
+			payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31"},
+			approval_state={"approver": "branch-manager@example.com"},
+			notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+		)
+
+		event = self.mod.build_korea_payroll_closing_audit_event(
+			session,
+			actor="branch-manager@example.com",
+			action="review_blockers",
+			note="Attendance exception reviewed with store manager.",
+		)
+
+		self.assertEqual(event["contract_type"], "korea_payroll_closing_audit_event_v1")
+		self.assertEqual(event["session_contract_type"], "korea_payroll_closing_session_v1")
+		self.assertEqual(event["company"], "Korea Demo Co")
+		self.assertEqual(event["workplace"], "Seoul HQ")
+		self.assertEqual(event["period_start"], "2026-05-01")
+		self.assertEqual(event["period_end"], "2026-05-31")
+		self.assertEqual(event["session_status"], "blocked")
+		self.assertEqual(event["action"], "review_blockers")
+		self.assertEqual(event["actor"], "branch-manager@example.com")
+		self.assertEqual(event["blocker_codes"], ["attendance_not_ready", "statutory_artifacts_missing"])
+		self.assertEqual(event["runtime_action"], "preview_only")
+		self.assertTrue(event["requires_runtime_apply"])
+		self.assertTrue(event["requires_human_approval"])
+		self.assertEqual(event["ai_role"], "assistant_only")
+		self.assertFalse(self._contains_forbidden_numeric_score(event))
+
+	def test_audit_event_rejects_invalid_session_actor_and_action(self):
+		with self.assertRaisesRegex(ValueError, "session must be a dict"):
+			self.mod.build_korea_payroll_closing_audit_event([], actor="ops@example.com", action="review_blockers")
+
+		with self.assertRaisesRegex(ValueError, "session.contract_type must be korea_payroll_closing_session_v1"):
+			self.mod.build_korea_payroll_closing_audit_event({"contract_type": "bad"}, actor="ops@example.com", action="review_blockers")
+
+		valid_session = {
+			"contract_type": "korea_payroll_closing_session_v1",
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"status": "blocked",
+			"blockers": [{"code": "attendance_not_ready"}],
+			"requires_human_approval": True,
+			"ai_role": "assistant_only",
+		}
+		with self.assertRaisesRegex(ValueError, "actor is required"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor=" ", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "actor must be a string"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor=123, action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "action must be one of"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor="ops@example.com", action="close_without_review")
+		with self.assertRaisesRegex(ValueError, "session.requires_human_approval must be true"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "requires_human_approval": False}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers is required"):
+			self.mod.build_korea_payroll_closing_audit_event({key: value for key, value in valid_session.items() if key != "blockers"}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers must be a list"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": None}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers must be a list"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": ""}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers must contain dict items"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": ["bad"]}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers.code is required"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": [{"code": " "}]}, actor="ops@example.com", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "session.blockers.code must be a string"):
+			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": [{"code": 123}]}, actor="ops@example.com", action="review_blockers")
+		for malformed_code in [" bad code ", "SAVE()", "unknown_code"]:
+			with self.subTest(malformed_code=malformed_code):
+				with self.assertRaisesRegex(ValueError, "session.blockers.code must be a known blocker code"):
+					self.mod.build_korea_payroll_closing_audit_event(
+						{**valid_session, "blockers": [{"code": malformed_code}]},
+						actor="ops@example.com",
+						action="review_blockers",
+					)
+		with self.assertRaisesRegex(ValueError, "note must be a string"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor="ops@example.com", action="review_blockers", note={"bad": True})
+		with self.assertRaisesRegex(ValueError, "note must not be blank"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor="ops@example.com", action="review_blockers", note="   ")
+
 	def _contains_forbidden_numeric_score(self, value):
 		forbidden = {"risk_score", "score", "probability", "success_rate"}
 		if isinstance(value, dict):

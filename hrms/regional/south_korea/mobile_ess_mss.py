@@ -181,7 +181,7 @@ def _normalize_non_negative_number(value: Any, fieldname: str) -> int | float:
 
 
 def _require_int(value: Any, fieldname: str) -> int:
-	if isinstance(value, bool) or not isinstance(value, int):
+	if type(value) is not int:
 		raise ValueError(f"{fieldname} must be an integer")
 	return value
 

@@ -25,7 +25,16 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 			metrics={"open_approvals": 3, "overdue_compliance": 2, "pending_payslips": 10, "unclosed_attendance": 1}
 		)
 
-		self.assertEqual([card["key"] for card in dashboard["cards"]], ["open_approvals", "overdue_compliance", "pending_payslips", "unclosed_attendance"])
+		self.assertEqual(
+			[card["key"] for card in dashboard["cards"]],
+			[
+				"open_approvals",
+				"overdue_compliance",
+				"pending_payslips",
+				"unclosed_attendance",
+				"blocked_payroll_closings",
+			],
+		)
 		self.assertEqual(dashboard["cards"][1]["severity"], "danger")
 		self.assertEqual(dashboard["cards"][2]["value"], 10)
 
@@ -50,6 +59,18 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 		self.assertTrue(approvals["action"]["enabled"])
 		self.assertFalse(approvals["action"]["requires_runtime_apply"])
 		self.assertEqual(payslips["action"]["action"], "open_payroll_closing_center")
+
+	def test_payroll_closing_session_blocker_card_routes_to_session_review(self):
+		dashboard = self.mod.build_admin_dashboard(metrics={"blocked_payroll_closings": 1})
+
+		closing = next(card for card in dashboard["cards"] if card["key"] == "blocked_payroll_closings")
+		self.assertEqual(closing["label"], "Blocked Payroll Closings")
+		self.assertEqual(closing["severity"], "danger")
+		self.assertEqual(closing["value"], 1)
+		self.assertEqual(closing["action"]["action"], "open_payroll_closing_session")
+		self.assertEqual(closing["action"]["route"], "korea-payroll-closing-session")
+		self.assertTrue(closing["action"]["enabled"])
+		self.assertFalse(closing["action"]["requires_runtime_apply"])
 
 	def test_zero_count_cards_keep_disabled_navigation_actions(self):
 		dashboard = self.mod.build_admin_dashboard(metrics={})

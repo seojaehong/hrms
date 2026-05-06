@@ -31,6 +31,7 @@ class TestKoreaAdminDashboardPreviewApi(unittest.TestCase):
 					"overdue_compliance": 0,
 					"pending_payslips": 4,
 					"unclosed_attendance": 1,
+					"blocked_payroll_closings": 2,
 				}
 			)
 		)
@@ -39,10 +40,25 @@ class TestKoreaAdminDashboardPreviewApi(unittest.TestCase):
 		self.assertEqual(preview["runtime_action"], "preview_only")
 		self.assertFalse(preview["requires_runtime_apply"])
 		self.assertEqual(preview["dashboard"]["status"], "Needs Attention")
-		self.assertEqual([card["key"] for card in preview["dashboard"]["cards"]], ["open_approvals", "overdue_compliance", "pending_payslips", "unclosed_attendance"])
+		self.assertEqual(
+			[card["key"] for card in preview["dashboard"]["cards"]],
+			[
+				"open_approvals",
+				"overdue_compliance",
+				"pending_payslips",
+				"unclosed_attendance",
+				"blocked_payroll_closings",
+			],
+		)
 		approvals = next(card for card in preview["dashboard"]["cards"] if card["key"] == "open_approvals")
+		closing = next(card for card in preview["dashboard"]["cards"] if card["key"] == "blocked_payroll_closings")
 		self.assertEqual(approvals["value"], 2)
 		self.assertEqual(approvals["action"], {"action": "review_approval_inbox", "route": "korea-approval-inbox", "enabled": True, "requires_runtime_apply": False})
+		self.assertEqual(closing["value"], 2)
+		self.assertEqual(
+			closing["action"],
+			{"action": "open_payroll_closing_session", "route": "korea-payroll-closing-session", "enabled": True, "requires_runtime_apply": False},
+		)
 
 	def test_preview_does_not_let_downstream_builder_mutate_caller_input_or_return_reference(self):
 		metrics = {"open_approvals": 1, "nested": {"value": "original"}}

@@ -10,13 +10,15 @@ CARD_DEFINITIONS = (
 	("overdue_compliance", "Overdue Compliance", "danger"),
 	("pending_payslips", "Pending Payslips", "warning"),
 	("unclosed_attendance", "Unclosed Attendance", "danger"),
+	("blocked_payroll_closings", "Blocked Payroll Closings", "danger"),
 )
-CRITICAL_KEYS = {"overdue_compliance", "unclosed_attendance"}
+CRITICAL_KEYS = {"overdue_compliance", "unclosed_attendance", "blocked_payroll_closings"}
 ACTION_DEFINITIONS = {
 	"open_approvals": ("review_approval_inbox", "korea-approval-inbox"),
 	"overdue_compliance": ("open_compliance_diagnosis", "korea-compliance-diagnosis"),
 	"pending_payslips": ("open_payroll_closing_center", "korea-closing-center"),
 	"unclosed_attendance": ("open_attendance_closing_center", "korea-closing-center"),
+	"blocked_payroll_closings": ("open_payroll_closing_session", "korea-payroll-closing-session"),
 }
 
 

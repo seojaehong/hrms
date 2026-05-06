@@ -127,6 +127,37 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 							**kwargs,
 						)
 
+	def test_audit_and_dispatch_reject_non_strict_queue_attempt_counters(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		base_queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="partner_alimtalk",
+		)
+
+		for fieldname in ("attempt_count", "max_attempts"):
+			for invalid in (True, 1.5, "2"):
+				with self.subTest(fieldname=fieldname, invalid=invalid):
+					queue_item = {**base_queue_item, fieldname: invalid}
+					with self.assertRaisesRegex(ValueError, f"queue_item.{fieldname} must be an integer"):
+						self.mod.build_kakao_delivery_audit_event(
+							queue_item=queue_item,
+							attempted_at="2026-05-31T09:00:02+09:00",
+							provider_status="retryable_error",
+						)
+					with self.assertRaisesRegex(ValueError, f"queue_item.{fieldname} must be an integer"):
+						self.mod.build_kakao_provider_dispatch_request(
+							queue_item=queue_item,
+							provider={
+								"provider_key": "partner_alimtalk",
+								"provider_type": "partner_api",
+								"endpoint_key": "kakao-partner-send",
+							},
+							requested_at="2026-05-31T09:00:02+09:00",
+						)
+
 	def test_delivery_attempt_audit_event_records_provider_result_without_mutating_queue_item(self):
 		payload = self.mod.build_kakao_template_payload(
 			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}

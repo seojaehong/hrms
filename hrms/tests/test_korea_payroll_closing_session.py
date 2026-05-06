@@ -175,6 +175,69 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 		self.assertIn("prepare_statutory_artifacts", [action["action"] for action in session["next_actions"]])
 		self.assertIn("prepare_kakao_queue", [action["action"] for action in session["next_actions"]])
 
+	def test_unsettled_expenses_create_closing_blocker_and_readiness_card(self):
+		session = self.mod.build_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary={"status": "ready", "unmarked_days": []},
+			payroll_entry={
+				"name": "PAY-ENTRY-0001",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"start_date": "2026-05-01",
+				"end_date": "2026-05-31",
+				"statutory_batch_payload": {"totals": {"gross_earnings": 5250000}},
+			},
+			approval_state={"approver": "branch-manager@example.com"},
+			notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+			expense_state={
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"settlement_ready": False,
+				"open_claim_count": 3,
+				"approved_unpaid_count": 1,
+			},
+		)
+
+		self.assertEqual(session["status"], "blocked")
+		self.assertIn("expense_settlement_not_ready", [blocker["code"] for blocker in session["blockers"]])
+		self.assertIn("resolve_expense_settlements", [action["action"] for action in session["next_actions"]])
+		expense_card = next(card for card in session["readiness_cards"] if card["key"] == "expense_settlements")
+		self.assertEqual(expense_card["state"], "blocked")
+		self.assertEqual(expense_card["summary"], {"open_claim_count": 3, "approved_unpaid_count": 1})
+		self.assertEqual(session["expense_state"]["requires_runtime_apply"], False)
+
+	def test_expense_state_scope_and_boolean_validation_fail_closed(self):
+		with self.assertRaisesRegex(ValueError, "expense_state.workplace must match session workplace"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+				expense_state={"company": "Korea Demo Co", "workplace": "Busan Branch", "settlement_ready": True},
+			)
+
+		with self.assertRaisesRegex(ValueError, "expense_state.settlement_ready must be a boolean"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+				expense_state={"settlement_ready": "false"},
+			)
+
 	def test_salary_slip_period_mismatch_fails_closed(self):
 		with self.assertRaisesRegex(ValueError, "salary_slip.period_end must match session period_end"):
 			self.mod.build_korea_payroll_closing_session(

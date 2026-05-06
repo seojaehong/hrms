@@ -37,6 +37,7 @@ def preview_korea_payroll_closing_session(
 	payroll_entry: Any,
 	approval_state: Any,
 	notification_state: Any,
+	expense_state: Any | None = None,
 ) -> dict[str, Any]:
 	"""Return a side-effect-free payroll closing session preview."""
 
@@ -44,6 +45,7 @@ def preview_korea_payroll_closing_session(
 	payroll_payload = deepcopy(_coerce_mapping(payroll_entry, "payroll_entry"))
 	approval_payload = deepcopy(_coerce_mapping(approval_state, "approval_state"))
 	notification_payload = deepcopy(_coerce_mapping(notification_state, "notification_state"))
+	expense_payload = deepcopy(_coerce_mapping({} if expense_state is None else expense_state, "expense_state"))
 	core = _load_sibling_module("payroll_closing_session.py", "korea_payroll_closing_session")
 
 	session = core.build_korea_payroll_closing_session(
@@ -55,6 +57,7 @@ def preview_korea_payroll_closing_session(
 		payroll_entry=payroll_payload,
 		approval_state=approval_payload,
 		notification_state=notification_payload,
+		expense_state=expense_payload,
 	)
 	session = deepcopy(session)
 	session_contract_type = session.get("contract_type")

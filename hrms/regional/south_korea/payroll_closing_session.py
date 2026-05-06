@@ -27,6 +27,7 @@ def build_korea_payroll_closing_session(
 	payroll_entry: dict[str, Any] | None,
 	approval_state: dict[str, Any] | None,
 	notification_state: dict[str, Any] | None,
+	expense_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
 	"""Build a payroll-closing session read model for one workplace/month.
 
@@ -67,6 +68,13 @@ def build_korea_payroll_closing_session(
 	)
 	notifications = _normalize_notification_state(
 		_optional_payload(notification_state, "notification_state"),
+		company=company,
+		workplace=workplace,
+		period_start=period_start_text,
+		period_end=period_end_text,
+	)
+	expenses = _normalize_expense_state(
+		_optional_payload(expense_state, "expense_state"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
@@ -123,6 +131,18 @@ def build_korea_payroll_closing_session(
 				"message": "Kakao notification queue readiness must be confirmed before closing.",
 			}
 		)
+	if not expenses["settlement_ready"]:
+		blockers.append(
+			{
+				"code": "expense_settlement_not_ready",
+				"severity": "blocking",
+				"message": "Expense settlements must be reviewed before payroll closing.",
+				"details": {
+					"open_claim_count": expenses["open_claim_count"],
+					"approved_unpaid_count": expenses["approved_unpaid_count"],
+				},
+			}
+		)
 
 	status = "blocked" if blockers else "review_ready"
 	return {
@@ -139,10 +159,12 @@ def build_korea_payroll_closing_session(
 			payroll_artifacts=payroll_artifacts,
 			approval_state=approval,
 			notification_state=notifications,
+			expense_state=expenses,
 		),
 		"payroll_artifacts": payroll_artifacts,
 		"approval_state": approval,
 		"notification_state": notifications,
+		"expense_state": expenses,
 		"audit_preview": {
 			"event_type": "korea_payroll_closing_session_review_v1",
 			"runtime_action": "preview_only",
@@ -260,6 +282,31 @@ def _normalize_notification_state(
 	}
 
 
+def _normalize_expense_state(
+	expense_state: dict[str, Any],
+	*,
+	company: str,
+	workplace: str,
+	period_start: str,
+	period_end: str,
+) -> dict[str, Any]:
+	_validate_optional_scope(expense_state, company=company, workplace=workplace, label="expense_state")
+	_validate_optional_period(expense_state, period_start=period_start, period_end=period_end, label="expense_state")
+	if not expense_state:
+		return {
+			"settlement_ready": True,
+			"open_claim_count": 0,
+			"approved_unpaid_count": 0,
+			"requires_runtime_apply": False,
+		}
+	return {
+		"settlement_ready": _optional_bool(expense_state.get("settlement_ready"), "expense_state.settlement_ready"),
+		"open_claim_count": _optional_int(expense_state.get("open_claim_count")) or 0,
+		"approved_unpaid_count": _optional_int(expense_state.get("approved_unpaid_count")) or 0,
+		"requires_runtime_apply": False,
+	}
+
+
 def _build_next_actions(blockers: list[dict[str, Any]]) -> list[dict[str, str]]:
 	if not blockers:
 		return [
@@ -280,6 +327,8 @@ def _build_next_actions(blockers: list[dict[str, Any]]) -> list[dict[str, str]]:
 			actions.append({"action": "prepare_payslip_artifacts", "label": "Prepare payslip artifacts"})
 		elif code == "kakao_queue_not_ready":
 			actions.append({"action": "prepare_kakao_queue", "label": "Prepare Kakao notification queue"})
+		elif code == "expense_settlement_not_ready":
+			actions.append({"action": "resolve_expense_settlements", "label": "Resolve expense settlements"})
 	return actions
 
 
@@ -289,6 +338,7 @@ def _build_readiness_cards(
 	payroll_artifacts: dict[str, Any],
 	approval_state: dict[str, Any],
 	notification_state: dict[str, Any],
+	expense_state: dict[str, Any],
 ) -> list[dict[str, Any]]:
 	return [
 		{
@@ -316,6 +366,15 @@ def _build_readiness_cards(
 			"summary": {
 				"payslip_artifacts_ready": notification_state["payslip_artifacts_ready"],
 				"kakao_queue_ready": notification_state["kakao_queue_ready"],
+			},
+		},
+		{
+			"key": "expense_settlements",
+			"label": "Expense settlement readiness",
+			"state": "ready" if expense_state["settlement_ready"] else "blocked",
+			"summary": {
+				"open_claim_count": expense_state["open_claim_count"],
+				"approved_unpaid_count": expense_state["approved_unpaid_count"],
 			},
 		},
 	]

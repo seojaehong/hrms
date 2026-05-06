@@ -142,7 +142,13 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 		payroll = json.loads(json.dumps(self.payroll_entry))
 		approval = json.loads(json.dumps(self.approval_state))
 		notification = json.loads(json.dumps(self.notification_state))
-		contract = {"company": "Korea Demo Co", "workplace": "Seoul HQ", "contracts_reviewed": True}
+		contract = {
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"contracts_reviewed": True,
+		}
 		originals = json.loads(json.dumps([attendance, payroll, approval, notification, contract]))
 
 		session = self.mod.preview_korea_payroll_closing_session(

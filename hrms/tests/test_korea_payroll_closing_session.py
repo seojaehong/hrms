@@ -456,6 +456,22 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				"payslip_artifacts_ready": True,
 				"kakao_queue_ready": True,
 			},
+			"expense_state": {
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"settlement_ready": True,
+			},
+			"contract_state": {
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"contracts_reviewed": True,
+				"missing_contract_count": 0,
+				"stale_contract_count": 0,
+			},
 		}
 
 		for fieldname, expected_error in [
@@ -463,6 +479,8 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 			("payroll_entry", "payroll_entry.company is required"),
 			("approval_state", "approval_state.company is required"),
 			("notification_state", "notification_state.company is required"),
+			("expense_state", "expense_state.company is required"),
+			("contract_state", "contract_state.company is required"),
 		]:
 			with self.subTest(fieldname=fieldname):
 				kwargs = {key: dict(value) if isinstance(value, dict) else value for key, value in base_kwargs.items()}
@@ -475,6 +493,8 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 			("payroll_entry", "payroll_entry.period_start is required"),
 			("approval_state", "approval_state.period_start is required"),
 			("notification_state", "notification_state.period_start is required"),
+			("expense_state", "expense_state.period_start is required"),
+			("contract_state", "contract_state.period_start is required"),
 		]:
 			with self.subTest(fieldname=fieldname):
 				kwargs = {key: dict(value) if isinstance(value, dict) else value for key, value in base_kwargs.items()}

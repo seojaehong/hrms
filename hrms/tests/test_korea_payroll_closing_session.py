@@ -220,6 +220,70 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				notification_state={},
 			)
 
+	def test_notification_readiness_rejects_string_boolean_values(self):
+		with self.assertRaisesRegex(ValueError, "notification_state.payslip_artifacts_ready must be a boolean"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={
+					"name": "PAY-ENTRY-0001",
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"start_date": "2026-05-01",
+					"end_date": "2026-05-31",
+					"statutory_batch_payload": {"totals": {"gross_earnings": 5250000}},
+				},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": "false", "kakao_queue_ready": True},
+			)
+
+		with self.assertRaisesRegex(ValueError, "notification_state.kakao_queue_ready must be a boolean"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={
+					"name": "PAY-ENTRY-0001",
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"start_date": "2026-05-01",
+					"end_date": "2026-05-31",
+					"statutory_batch_payload": {"totals": {"gross_earnings": 5250000}},
+				},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": "false"},
+			)
+
+	def test_top_level_payloads_must_be_dicts(self):
+		with self.assertRaisesRegex(ValueError, "attendance_summary must be a dict"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary=[],
+				payroll_entry={},
+				approval_state={},
+				notification_state={},
+			)
+
+		with self.assertRaisesRegex(ValueError, "payroll_entry must be a dict"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={},
+				payroll_entry="bad",
+				approval_state={},
+				notification_state={},
+			)
+
 	def _contains_forbidden_numeric_score(self, value):
 		forbidden = {"risk_score", "score", "probability", "success_rate"}
 		if isinstance(value, dict):

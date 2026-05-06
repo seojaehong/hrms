@@ -45,28 +45,28 @@ def build_korea_payroll_closing_session(
 	period_end_text = period_end_date.isoformat()
 
 	attendance_state = _normalize_attendance_state(
-		attendance_summary or {},
+		_optional_payload(attendance_summary, "attendance_summary"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
 		period_end=period_end_text,
 	)
 	payroll_artifacts = _normalize_payroll_artifacts(
-		payroll_entry or {},
+		_optional_payload(payroll_entry, "payroll_entry"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
 		period_end=period_end_text,
 	)
 	approval = _normalize_approval_state(
-		approval_state or {},
+		_optional_payload(approval_state, "approval_state"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
 		period_end=period_end_text,
 	)
 	notifications = _normalize_notification_state(
-		notification_state or {},
+		_optional_payload(notification_state, "notification_state"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
@@ -251,10 +251,12 @@ def _normalize_notification_state(
 	_validate_optional_scope(notification_state, company=company, workplace=workplace, label="notification_state")
 	_validate_optional_period(notification_state, period_start=period_start, period_end=period_end, label="notification_state")
 	return {
-		"payslip_artifacts_ready": bool(notification_state.get("payslip_artifacts_ready")),
-		"kakao_queue_ready": bool(notification_state.get("kakao_queue_ready")),
+		"payslip_artifacts_ready": _optional_bool(
+			notification_state.get("payslip_artifacts_ready"), "notification_state.payslip_artifacts_ready"
+		),
+		"kakao_queue_ready": _optional_bool(notification_state.get("kakao_queue_ready"), "notification_state.kakao_queue_ready"),
 		"recipient_count": _optional_int(notification_state.get("recipient_count")),
-		"requires_runtime_send": bool(notification_state.get("kakao_queue_ready")),
+		"requires_runtime_send": _optional_bool(notification_state.get("kakao_queue_ready"), "notification_state.kakao_queue_ready"),
 	}
 
 
@@ -356,6 +358,22 @@ def _require_text(value: Any, fieldname: str) -> str:
 	if not text:
 		raise ValueError(f"{fieldname} is required")
 	return text
+
+
+def _optional_payload(value: dict[str, Any] | None, fieldname: str) -> dict[str, Any]:
+	if value is None:
+		return {}
+	if not isinstance(value, dict):
+		raise ValueError(f"{fieldname} must be a dict")
+	return value
+
+
+def _optional_bool(value: Any, fieldname: str) -> bool:
+	if value is None:
+		return False
+	if type(value) is not bool:
+		raise ValueError(f"{fieldname} must be a boolean")
+	return value
 
 
 def _optional_int(value: Any) -> int | None:

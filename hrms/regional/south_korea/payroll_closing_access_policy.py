@@ -64,6 +64,10 @@ def build_payroll_closing_access_decision(
 		raise ValueError(f"action must be one of: {allowed}")
 
 	allowed_actions = list(_ROLE_ALLOWED_ACTIONS[role])
+	workplaces: list[str] | None = None
+	if role in _WORKPLACE_SCOPED_ROLES:
+		workplaces = _normalize_workplaces(actor.get("workplaces"), "actor.workplaces")
+
 	reason = "allowed"
 	decision = "allow"
 
@@ -71,7 +75,6 @@ def build_payroll_closing_access_decision(
 		decision = "deny"
 		reason = "role_not_allowed"
 	elif role in _WORKPLACE_SCOPED_ROLES:
-		workplaces = _normalize_workplaces(actor.get("workplaces"), "actor.workplaces")
 		if workplace not in workplaces:
 			decision = "deny"
 			reason = "workplace_scope_mismatch"

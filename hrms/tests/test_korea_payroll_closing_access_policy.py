@@ -107,6 +107,8 @@ class TestKoreaPayrollClosingAccessPolicy(unittest.TestCase):
 			self.mod.build_payroll_closing_access_decision(self.session, actor={"user": "hq@example.com", "role": "hq_hr_admin", "company": "Other Co"}, action="review_session")
 		with self.assertRaisesRegex(ValueError, "actor.workplaces must be a list"):
 			self.mod.build_payroll_closing_access_decision(self.session, actor={"user": "manager@example.com", "role": "branch_manager", "company": "Korea Demo Co", "workplaces": "Seoul HQ"}, action="review_session")
+		with self.assertRaisesRegex(ValueError, "actor.workplaces must be a list"):
+			self.mod.build_payroll_closing_access_decision(self.session, actor={"user": "emp@example.com", "role": "employee", "company": "Korea Demo Co", "workplaces": "Seoul HQ"}, action="review_session")
 		with self.assertRaisesRegex(ValueError, "session.name must be a string"):
 			self.mod.build_payroll_closing_access_decision({**self.session, "name": {"bad": "ref"}}, actor={"user": "hq@example.com", "role": "hq_hr_admin", "company": "Korea Demo Co"}, action="review_session")
 

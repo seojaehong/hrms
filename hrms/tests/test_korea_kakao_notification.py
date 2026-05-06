@@ -95,6 +95,78 @@ class TestKakaoNotificationAdapter(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "recipient has opted out"):
 			self.mod.build_kakao_send_queue_item(payload=payload, recipient_consent=True, opted_out=True)
 
+	def test_queue_item_rejects_phone_numbers_in_provider_key(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+
+		for provider_key in ("01012345678", "partner-010-1234-5678", "+82-10-1234-5678", "partner-821012345678"):
+			with self.subTest(provider_key=provider_key):
+				with self.assertRaisesRegex(ValueError, "provider_key must not contain phone numbers"):
+					self.mod.build_kakao_send_queue_item(
+						payload=payload,
+						recipient_consent=True,
+						provider_key=provider_key,
+					)
+
+	def test_audit_rejects_phone_numbers_in_existing_queue_provider_key(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="partner_alimtalk",
+		)
+		queue_item["provider_key"] = "+82-10-1234-5678"
+
+		with self.assertRaisesRegex(ValueError, "queue_item.provider_key must not contain phone numbers"):
+			self.mod.build_kakao_delivery_audit_event(
+				queue_item=queue_item,
+				attempted_at="2026-05-31T09:00:02+09:00",
+				provider_status="retryable_error",
+			)
+
+	def test_provider_dispatch_rejects_phone_numbers_in_provider_and_endpoint_keys(self):
+		payload = self.mod.build_kakao_template_payload(
+			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}
+		)
+		queue_item = self.mod.build_kakao_send_queue_item(
+			payload=payload,
+			recipient_consent=True,
+			provider_key="partner_alimtalk",
+		)
+
+		for fieldname in ("provider_key", "endpoint_key"):
+			provider = {
+				"provider_key": "partner_alimtalk",
+				"provider_type": "partner_api",
+				"endpoint_key": "kakao-partner-send",
+			}
+			provider[fieldname] = "partner-010-1234-5678"
+			with self.subTest(fieldname=fieldname):
+				with self.assertRaisesRegex(ValueError, f"provider.{fieldname} must not contain phone numbers"):
+					self.mod.build_kakao_provider_dispatch_request(
+						queue_item=queue_item,
+						provider=provider,
+						requested_at="2026-05-31T09:00:02+09:00",
+					)
+
+		for fieldname in ("provider_key", "endpoint_key"):
+			provider = {
+				"provider_key": "partner_alimtalk",
+				"provider_type": "partner_api",
+				"endpoint_key": "kakao-partner-send",
+			}
+			provider[fieldname] = "+82-10-1234-5678"
+			with self.subTest(fieldname=fieldname, country_code=True):
+				with self.assertRaisesRegex(ValueError, f"provider.{fieldname} must not contain phone numbers"):
+					self.mod.build_kakao_provider_dispatch_request(
+						queue_item=queue_item,
+						provider=provider,
+						requested_at="2026-05-31T09:00:02+09:00",
+					)
+
 	def test_queue_item_rejects_non_strict_integer_max_attempts(self):
 		payload = self.mod.build_kakao_template_payload(
 			recipient_phone="01012345678", template_code="PAYSLIP_READY", variables={}

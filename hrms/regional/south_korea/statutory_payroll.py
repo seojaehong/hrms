@@ -8,6 +8,7 @@ inputs they want to apply for a payroll period.
 from __future__ import annotations
 
 import json
+import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,7 @@ _STATUTORY_COMPONENTS = {
 
 _ORDINARY_WAGE_COMPONENTS = {"Basic Pay"}
 _MEAL_ALLOWANCE_COMPONENT = "Meal Allowance"
+_EXPONENT_STYLE_NUMBER_PATTERN = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)[eE][+-]?\d+$")
 
 
 def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: dict[str, Any]) -> dict[str, Any]:
@@ -257,6 +259,8 @@ def _normalize_earning(line: dict[str, Any]) -> dict[str, Any]:
 
 
 def _to_integer_won(value: Any, name: str) -> int:
+	if isinstance(value, str) and _EXPONENT_STYLE_NUMBER_PATTERN.fullmatch(value.strip()):
+		raise ValueError(f"{name} must be a plain integer KRW amount")
 	amount = _to_decimal(value, name)
 	if amount != amount.to_integral_value():
 		raise ValueError(f"{name} must be an integer KRW amount")

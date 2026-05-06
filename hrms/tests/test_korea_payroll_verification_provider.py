@@ -172,6 +172,30 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 
 		self.assertEqual(request["basis"]["gross_earnings"], 9007199254740993)
 
+	def test_verification_request_rejects_exponent_style_money_strings(self):
+		snapshot = dict(self.snapshot)
+		snapshot["gross_earnings"] = "1e6"
+
+		with self.assertRaisesRegex(ValueError, "snapshot.gross_earnings must be a plain integer KRW amount"):
+			self.mod.build_payroll_verification_request(
+				snapshot=snapshot,
+				period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+				workplace={"company": "Seoul Manufacturing"},
+				provider={"type": "owned_connector_service", "name": "internal verifier"},
+			)
+
+	def test_verification_request_non_numeric_money_strings_keep_finite_number_error(self):
+		snapshot = dict(self.snapshot)
+		snapshot["gross_earnings"] = "ten"
+
+		with self.assertRaisesRegex(ValueError, "snapshot.gross_earnings must be a finite number"):
+			self.mod.build_payroll_verification_request(
+				snapshot=snapshot,
+				period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+				workplace={"company": "Seoul Manufacturing"},
+				provider={"type": "owned_connector_service", "name": "internal verifier"},
+			)
+
 	def test_fractional_money_inputs_are_rejected_instead_of_bankers_rounded(self):
 		snapshot = dict(self.snapshot)
 		snapshot["net_reference_pay"] = "3096582.5"

@@ -129,6 +129,28 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 				policy=policy,
 			)
 
+	def test_exponent_style_krw_strings_are_rejected_before_integer_conversion(self):
+		with self.assertRaisesRegex(ValueError, "earning amount must be a plain integer KRW amount"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": "1e6"}],
+				policy=self.policy,
+			)
+
+		policy = dict(self.policy)
+		policy["meal_allowance_monthly_non_taxable_limit"] = "2e5"
+		with self.assertRaisesRegex(ValueError, "meal_allowance_monthly_non_taxable_limit must be a plain integer KRW amount"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": 1000000}],
+				policy=policy,
+			)
+
+	def test_non_numeric_krw_strings_keep_finite_number_error(self):
+		with self.assertRaisesRegex(ValueError, "earning amount must be a finite number"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": "ten"}],
+				policy=self.policy,
+			)
+
 	def test_large_integer_like_krw_values_are_preserved_without_float_normalization(self):
 		policy = {
 			"meal_allowance_monthly_non_taxable_limit": 0,

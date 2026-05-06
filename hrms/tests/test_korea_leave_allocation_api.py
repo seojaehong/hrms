@@ -94,6 +94,24 @@ class TestKoreaLeaveAllocationApi(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "employee must be a dict or JSON object"):
 			self.mod.preview_korea_leave_allocation_draft(employee=[], as_of_date="2026-12-31")
 
+	def test_rejects_bool_and_non_integral_fiscal_year_controls(self):
+		employee = {"name": "EMP-0003", "date_of_joining": "2026-01-01"}
+
+		with self.assertRaisesRegex(ValueError, "fiscal_year_start_month must be an integer"):
+			self.mod.preview_korea_leave_allocation_draft(
+				employee=employee,
+				as_of_date="2026-12-31",
+				basis="Fiscal Year",
+				fiscal_year_start_month=True,
+			)
+
+		with self.assertRaisesRegex(ValueError, "fiscal_year_start_day must be an integer"):
+			self.mod.preview_korea_leave_allocation_draft(
+				employee=employee,
+				as_of_date="2026-12-31",
+				basis="Fiscal Year",
+				fiscal_year_start_day=1.5,
+			)
 
 if __name__ == "__main__":
 	unittest.main()

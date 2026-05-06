@@ -39,7 +39,16 @@ class TestKoreaAdminDashboardPreviewApi(unittest.TestCase):
 		self.assertEqual(preview["runtime_action"], "preview_only")
 		self.assertFalse(preview["requires_runtime_apply"])
 		self.assertEqual(preview["dashboard"]["status"], "Needs Attention")
-		self.assertEqual([card["key"] for card in preview["dashboard"]["cards"]], ["open_approvals", "overdue_compliance", "pending_payslips", "unclosed_attendance"])
+		self.assertEqual(
+			[card["key"] for card in preview["dashboard"]["cards"]],
+			[
+				"open_approvals",
+				"overdue_compliance",
+				"pending_payslips",
+				"unclosed_attendance",
+				"blocked_payroll_closings",
+			],
+		)
 		approvals = next(card for card in preview["dashboard"]["cards"] if card["key"] == "open_approvals")
 		self.assertEqual(approvals["value"], 2)
 		self.assertEqual(approvals["action"], {"action": "review_approval_inbox", "route": "korea-approval-inbox", "enabled": True, "requires_runtime_apply": False})

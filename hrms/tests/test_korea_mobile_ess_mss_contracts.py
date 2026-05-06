@@ -106,6 +106,19 @@ class TestKoreaMobileEssMssContracts(unittest.TestCase):
 
 		self.assertEqual([item["name"] for item in worklist["items"]], ["MAY"])
 
+	def test_manager_worklist_rejects_bool_and_non_integral_overdue_controls(self):
+		for invalid_value in (True, False, 2.5, "3"):
+			with self.subTest(invalid_value=invalid_value):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
+					self.mod.build_mobile_manager_worklist(
+						manager="MGR-001",
+						period=self.period,
+						workplace="SEOUL-01",
+						today=dt.date(2026, 5, 10),
+						overdue_after_days=invalid_value,
+						records=[],
+					)
+
 	def test_rejects_invalid_period_non_numeric_leave_balance_missing_actor_and_future_posting(self):
 		with self.assertRaisesRegex(ValueError, "period.start_date cannot be after period.end_date"):
 			self.mod.build_mobile_employee_home(employee="EMP-001", period={"start_date": "2026-06-01", "end_date": "2026-05-31"}, records=[])

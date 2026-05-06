@@ -134,23 +134,28 @@ def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:
 
 
 def _coerce_integer(value: Any, fieldname: str) -> int:
+	def validate_non_negative(integer: int) -> int:
+		if integer < 0:
+			raise ValueError(f"{fieldname} must be a non-negative integer")
+		return integer
+
 	if isinstance(value, bool):
-		raise ValueError(f"{fieldname} must be an integer")
+		raise ValueError(f"{fieldname} must be a non-negative integer")
 	if isinstance(value, int):
-		return value
+		return validate_non_negative(value)
 	if isinstance(value, float):
 		if not value.is_integer():
-			raise ValueError(f"{fieldname} must be an integer")
-		return int(value)
+			raise ValueError(f"{fieldname} must be a non-negative integer")
+		return validate_non_negative(int(value))
 	if isinstance(value, str):
 		text = value.strip()
 		if not text or any(ch not in "0123456789+-" for ch in text) or text in {"+", "-"}:
-			raise ValueError(f"{fieldname} must be an integer")
+			raise ValueError(f"{fieldname} must be a non-negative integer")
 		try:
-			return int(text)
+			return validate_non_negative(int(text))
 		except ValueError as exc:
-			raise ValueError(f"{fieldname} must be an integer") from exc
-	raise ValueError(f"{fieldname} must be an integer")
+			raise ValueError(f"{fieldname} must be a non-negative integer") from exc
+	raise ValueError(f"{fieldname} must be a non-negative integer")
 
 
 def _coerce_json_if_needed(value: Any) -> Any:

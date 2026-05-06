@@ -59,9 +59,9 @@ class TestUnifiedApprovalInbox(unittest.TestCase):
 		class IntSubclass(int):
 			pass
 
-		for value in (True, 3.0, "3", IntSubclass(3)):
+		for value in (True, 3.0, "3", IntSubclass(3), -1):
 			with self.subTest(value=value):
-				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days must be a non-negative integer"):
 					self.mod.build_approval_inbox(
 						records,
 						actor="manager@example.com",

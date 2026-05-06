@@ -47,6 +47,17 @@ class TestKoreaExpenseSettlement(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			self.mod.build_cost_settlement(claims=[{"employee": "EMP-1", "cost_center": "Sales", "tax_category": "Taxable", "amount": -1}])
 
+	def test_bool_and_fractional_claim_amounts_are_rejected(self):
+		with self.assertRaisesRegex(ValueError, "claim amount must be an integer KRW amount"):
+			self.mod.build_cost_settlement(claims=[{"employee": "EMP-1", "amount": True}])
+
+		with self.assertRaisesRegex(ValueError, "claim amount must be an integer KRW amount"):
+			self.mod.build_reimbursement_batch([{"employee": "EMP-1", "amount": 1000.5}])
+
+	def test_exponent_claim_amount_strings_are_rejected_before_integer_conversion(self):
+		with self.assertRaisesRegex(ValueError, "claim amount must be a plain integer KRW amount"):
+			self.mod.build_cost_settlement(claims=[{"employee": "EMP-1", "amount": "1e6"}])
+
 
 if __name__ == "__main__":
 	unittest.main()

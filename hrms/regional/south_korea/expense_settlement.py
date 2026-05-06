@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
+import re
 from typing import Any
+
+_AMOUNT_PATTERN = re.compile(r"^[0-9]+$")
 
 
 def build_cost_settlement(*, claims: list[dict[str, Any]]) -> dict[str, Any]:
@@ -39,10 +43,25 @@ def build_reimbursement_batch(claims: list[dict[str, Any]]) -> list[dict[str, in
 
 
 def _amount(claim: dict[str, Any]) -> int:
-	amount = int(claim.get("amount", 0))
-	if amount < 0:
+	value = claim.get("amount", 0)
+	if isinstance(value, bool):
+		raise ValueError("claim amount must be an integer KRW amount")
+	if isinstance(value, str):
+		value = value.strip()
+		if not _AMOUNT_PATTERN.fullmatch(value):
+			raise ValueError("claim amount must be a plain integer KRW amount")
+	try:
+		amount = Decimal(str(value))
+	except (InvalidOperation, ValueError) as exc:
+		raise ValueError("claim amount must be a finite number") from exc
+	if not amount.is_finite():
+		raise ValueError("claim amount must be a finite number")
+	if amount != amount.to_integral_value():
+		raise ValueError("claim amount must be an integer KRW amount")
+	amount_int = int(amount)
+	if amount_int < 0:
 		raise ValueError("claim amount cannot be negative")
-	return amount
+	return amount_int
 
 
 __all__ = ["build_cost_settlement", "build_reimbursement_batch"]

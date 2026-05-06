@@ -179,13 +179,13 @@ def build_kakao_delivery_audit_event(
 ) -> dict[str, Any]:
 	"""Build a provider delivery audit event without mutating the queue item."""
 
-	_validate_queue_item(queue_item)
+	queue_state = _validate_queue_item(queue_item)
 	attempted_dt = _parse_iso_datetime(attempted_at, "attempted_at")
 	if provider_status not in SUPPORTED_PROVIDER_STATUSES:
 		raise ValueError(f"provider_status must be one of {sorted(SUPPORTED_PROVIDER_STATUSES)}")
-	attempt_number = int(queue_item.get("attempt_count", 0)) + 1
+	attempt_number = queue_state["attempt_count"] + 1
 	next_retry_at = None
-	if provider_status in RETRYABLE_PROVIDER_STATUSES and attempt_number < int(queue_item["max_attempts"]):
+	if provider_status in RETRYABLE_PROVIDER_STATUSES and attempt_number < queue_state["max_attempts"]:
 		next_retry_at = _format_iso_datetime(
 			attempted_dt
 			+ dt.timedelta(
@@ -223,11 +223,11 @@ def build_kakao_provider_dispatch_request(
 	government API routes are deliberately not accepted here.
 	"""
 
-	_validate_queue_item(queue_item)
+	queue_state = _validate_queue_item(queue_item)
 	_parse_iso_datetime(requested_at, "requested_at")
 	provider = _validate_provider(provider, queue_item["provider_key"])
 	payload = _validate_payload(queue_item["payload"])
-	attempt_number = int(queue_item.get("attempt_count", 0)) + 1
+	attempt_number = queue_state["attempt_count"] + 1
 
 	return {
 		"request_type": "korea_kakao_provider_dispatch_v1",
@@ -273,7 +273,7 @@ def _validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
-def _validate_queue_item(queue_item: dict[str, Any]) -> None:
+def _validate_queue_item(queue_item: dict[str, Any]) -> dict[str, int]:
 	if not isinstance(queue_item, dict):
 		raise TypeError("queue_item must be a dict")
 	if queue_item.get("queue_type") != "korea_kakao_send_queue_v1":
@@ -281,6 +281,15 @@ def _validate_queue_item(queue_item: dict[str, Any]) -> None:
 	for fieldname in ("dedupe_key", "provider_key", "attempt_count", "max_attempts", "payload"):
 		if fieldname not in queue_item:
 			raise ValueError(f"queue_item.{fieldname} is required")
+	attempt_count = _to_strict_integer(queue_item["attempt_count"], "queue_item.attempt_count")
+	max_attempts = _to_strict_integer(queue_item["max_attempts"], "queue_item.max_attempts")
+	if attempt_count < 0:
+		raise ValueError("queue_item.attempt_count must be at least 0")
+	if max_attempts < 1:
+		raise ValueError("queue_item.max_attempts must be at least 1")
+	if attempt_count > max_attempts:
+		raise ValueError("queue_item.attempt_count must not exceed queue_item.max_attempts")
+	return {"attempt_count": attempt_count, "max_attempts": max_attempts}
 
 
 def _validate_provider(provider: dict[str, Any], expected_provider_key: str) -> dict[str, str]:

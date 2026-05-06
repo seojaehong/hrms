@@ -29,6 +29,7 @@ class TestUnifiedApprovalInbox(unittest.TestCase):
 				{"doctype": "Shift Request", "name": "SR-1", "employee": "EMP-3", "approver": "manager@example.com", "posting_date": dt.date(2026, 5, 3), "status": "Approved"},
 			],
 			actor="manager@example.com",
+			today=dt.date(2026, 5, 3),
 		)
 
 		self.assertEqual([item["name"] for item in items], ["LA-1"])

@@ -175,6 +175,11 @@ def build_korea_payroll_closing_session(
 			scoped_source = _optional_payload(source, label)
 			_require_explicit_scope(scoped_source, label=label)
 			_require_explicit_period(scoped_source, label=label)
+		for label, source in [("expense_state", expense_state), ("contract_state", contract_state)]:
+			scoped_source = _optional_payload(source, label)
+			if scoped_source:
+				_require_explicit_scope(scoped_source, label=label)
+				_require_explicit_period(scoped_source, label=label)
 	return {
 		"contract_type": CONTRACT_TYPE,
 		"company": company,

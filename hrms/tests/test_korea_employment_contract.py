@@ -142,6 +142,25 @@ class TestKoreaEmploymentContract(unittest.TestCase):
 				pay_day=25,
 			)
 
+	def test_contract_dates_reject_datetime_values(self):
+		base = {
+			"employee": "EMP-001",
+			"company": "Seo Co",
+			"workplace": "Seoul HQ",
+			"start_date": dt.date(2026, 1, 1),
+			"job_title": "Engineer",
+			"employment_type": "Regular",
+			"working_hours_per_week": 40,
+			"monthly_wage": 3_000_000,
+			"pay_day": 25,
+		}
+
+		for fieldname in ("start_date", "end_date"):
+			with self.subTest(fieldname=fieldname):
+				payload = {**base, fieldname: dt.datetime(2026, 1, 1, 9, 30)}
+				with self.assertRaisesRegex(TypeError, f"{fieldname} must be a datetime.date"):
+					self.mod.build_contract_snapshot(**payload)
+
 
 if __name__ == "__main__":
 	unittest.main()

@@ -99,7 +99,7 @@ def _is_missing(value: Any) -> bool:
 
 
 def _validate_date(fieldname: str, value: dt.date) -> None:
-	if not isinstance(value, dt.date):
+	if type(value) is not dt.date:
 		raise TypeError(f"{fieldname} must be a datetime.date")
 
 

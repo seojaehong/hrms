@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import json
 import pathlib
@@ -87,6 +88,36 @@ class TestKoreaEmploymentContractPreviewAPI(unittest.TestCase):
 					"company": "Seo Co",
 					"workplace": "Seoul HQ",
 					"start_date": "2026/01/01",
+					"job_title": "Engineer",
+					"employment_type": "Regular",
+					"working_hours_per_week": 40,
+					"monthly_wage": 3000000,
+					"pay_day": 25,
+				}
+			)
+
+		with self.assertRaisesRegex(ValueError, "start_date must be an ISO date"):
+			self.mod.preview_korea_employment_contract_snapshot(
+				employment_profile={
+					"employee": "EMP-003",
+					"company": "Seo Co",
+					"workplace": "Seoul HQ",
+					"start_date": "2026-01-01T09:30:00",
+					"job_title": "Engineer",
+					"employment_type": "Regular",
+					"working_hours_per_week": 40,
+					"monthly_wage": 3000000,
+					"pay_day": 25,
+				}
+			)
+
+		with self.assertRaisesRegex(ValueError, "start_date must be an ISO date"):
+			self.mod.preview_korea_employment_contract_snapshot(
+				employment_profile={
+					"employee": "EMP-003",
+					"company": "Seo Co",
+					"workplace": "Seoul HQ",
+					"start_date": dt.datetime(2026, 1, 1, 9, 30),
 					"job_title": "Engineer",
 					"employment_type": "Regular",
 					"working_hours_per_week": 40,

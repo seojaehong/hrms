@@ -28,6 +28,37 @@ def _whitelist(fn):
 
 
 @_whitelist
+def preview_korea_kakao_template_registry_entry(
+	*,
+	template_code: str,
+	template_name: str,
+	template_body: str,
+	required_variables: Any,
+	consent_purpose: str,
+	provider_template_keys: Any | None = None,
+	active: bool | str = True,
+) -> dict[str, Any]:
+	"""Return a side-effect-free Kakao approved-template registry preview."""
+
+	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
+	registry_entry = kakao.build_kakao_template_registry_entry(
+		template_code=template_code,
+		template_name=template_name,
+		template_body=template_body,
+		required_variables=_coerce_list(required_variables, "required_variables"),
+		consent_purpose=consent_purpose,
+		provider_template_keys=_coerce_optional_mapping(provider_template_keys, "provider_template_keys"),
+		active=_coerce_bool(active, "active"),
+	)
+	return {
+		"contract_type": "korea_kakao_template_registry_preview_v1",
+		"runtime_action": "preview_only",
+		"requires_runtime_send": False,
+		"registry_entry": deepcopy(registry_entry),
+	}
+
+
+@_whitelist
 def preview_korea_kakao_registered_queue_item(
 	*,
 	recipient_phone: str,
@@ -120,6 +151,19 @@ def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:
 	return coerced
 
 
+def _coerce_optional_mapping(value: Any | None, fieldname: str) -> dict[str, Any]:
+	if value is None:
+		return {}
+	return _coerce_mapping(value, fieldname)
+
+
+def _coerce_list(value: Any, fieldname: str) -> list[Any]:
+	coerced = _coerce_json_if_needed(value)
+	if not isinstance(coerced, list):
+		raise ValueError(f"{fieldname} must be a list")
+	return list(coerced)
+
+
 def _coerce_json_if_needed(value: Any) -> Any:
 	if isinstance(value, str):
 		text = value.strip()
@@ -169,6 +213,7 @@ def _load_sibling_module(filename: str, module_name: str):
 
 
 __all__ = [
+	"preview_korea_kakao_template_registry_entry",
 	"preview_korea_kakao_registered_queue_item",
 	"preview_korea_kakao_provider_dispatch",
 	"preview_korea_kakao_delivery_audit_event",

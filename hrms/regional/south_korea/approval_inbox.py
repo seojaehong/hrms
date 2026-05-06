@@ -20,6 +20,7 @@ def build_approval_inbox(
 
 	if not actor:
 		raise ValueError("actor is required")
+	overdue_after_days = _require_int(overdue_after_days, "overdue_after_days")
 	today = today or dt.date.today()
 	items: list[dict[str, Any]] = []
 	for record in records:
@@ -129,6 +130,12 @@ def _parse_date(value: Any) -> dt.date:
 	if isinstance(value, str):
 		return dt.date.fromisoformat(value)
 	raise TypeError("posting_date must be a date or ISO date string")
+
+
+def _require_int(value: Any, fieldname: str) -> int:
+	if type(value) is not int:
+		raise ValueError(f"{fieldname} must be an integer")
+	return value
 
 
 __all__ = [

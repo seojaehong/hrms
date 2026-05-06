@@ -134,7 +134,9 @@ def _parse_date(value: Any) -> dt.date:
 
 def _require_int(value: Any, fieldname: str) -> int:
 	if type(value) is not int:
-		raise ValueError(f"{fieldname} must be an integer")
+		raise ValueError(f"{fieldname} must be a non-negative integer")
+	if value < 0:
+		raise ValueError(f"{fieldname} must be a non-negative integer")
 	return value
 
 

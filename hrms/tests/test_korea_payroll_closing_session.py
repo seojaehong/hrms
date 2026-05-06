@@ -563,6 +563,8 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 		}
 		with self.assertRaisesRegex(ValueError, "actor is required"):
 			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor=" ", action="review_blockers")
+		with self.assertRaisesRegex(ValueError, "actor must be a string"):
+			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor=123, action="review_blockers")
 		with self.assertRaisesRegex(ValueError, "action must be one of"):
 			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor="ops@example.com", action="close_without_review")
 		with self.assertRaisesRegex(ValueError, "session.requires_human_approval must be true"):
@@ -579,6 +581,14 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": [{"code": " "}]}, actor="ops@example.com", action="review_blockers")
 		with self.assertRaisesRegex(ValueError, "session.blockers.code must be a string"):
 			self.mod.build_korea_payroll_closing_audit_event({**valid_session, "blockers": [{"code": 123}]}, actor="ops@example.com", action="review_blockers")
+		for malformed_code in [" bad code ", "SAVE()", "unknown_code"]:
+			with self.subTest(malformed_code=malformed_code):
+				with self.assertRaisesRegex(ValueError, "session.blockers.code must be a known blocker code"):
+					self.mod.build_korea_payroll_closing_audit_event(
+						{**valid_session, "blockers": [{"code": malformed_code}]},
+						actor="ops@example.com",
+						action="review_blockers",
+					)
 		with self.assertRaisesRegex(ValueError, "note must be a string"):
 			self.mod.build_korea_payroll_closing_audit_event(valid_session, actor="ops@example.com", action="review_blockers", note={"bad": True})
 		with self.assertRaisesRegex(ValueError, "note must not be blank"):

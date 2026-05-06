@@ -214,6 +214,16 @@ def build_korea_payroll_closing_session(
 
 
 _ALLOWED_AUDIT_ACTIONS = {"review_blockers", "request_human_approval", "record_human_review"}
+_ALLOWED_SESSION_BLOCKER_CODES = {
+	"attendance_not_ready",
+	"approver_missing",
+	"payroll_entry_missing",
+	"statutory_artifacts_missing",
+	"payslip_artifacts_missing",
+	"kakao_queue_not_ready",
+	"expense_settlement_not_ready",
+	"employment_contracts_not_ready",
+}
 
 
 def build_korea_payroll_closing_audit_event(
@@ -239,8 +249,8 @@ def build_korea_payroll_closing_audit_event(
 	if session.get("ai_role") != AI_ROLE:
 		raise ValueError(f"session.ai_role must be {AI_ROLE}")
 
-	actor_text = _require_text(actor, "actor")
-	action_text = _require_text(action, "action")
+	actor_text = _require_string_text(actor, "actor")
+	action_text = _require_string_text(action, "action")
 	if action_text not in _ALLOWED_AUDIT_ACTIONS:
 		allowed = ", ".join(sorted(_ALLOWED_AUDIT_ACTIONS))
 		raise ValueError(f"action must be one of: {allowed}")
@@ -256,10 +266,12 @@ def build_korea_payroll_closing_audit_event(
 		code = blocker.get("code")
 		if not isinstance(code, str):
 			raise ValueError("session.blockers.code must be a string")
-		code = code.strip()
-		if not code:
+		code_text = code.strip()
+		if not code_text:
 			raise ValueError("session.blockers.code is required")
-		blocker_codes.append(code)
+		if code != code_text or code_text not in _ALLOWED_SESSION_BLOCKER_CODES:
+			raise ValueError("session.blockers.code must be a known blocker code")
+		blocker_codes.append(code_text)
 	note_text = _optional_note(note)
 
 	return {
@@ -572,6 +584,15 @@ def _parse_iso_date(value: str | dt.date, fieldname: str) -> dt.date:
 
 def _require_text(value: Any, fieldname: str) -> str:
 	text = str(value or "").strip()
+	if not text:
+		raise ValueError(f"{fieldname} is required")
+	return text
+
+
+def _require_string_text(value: Any, fieldname: str) -> str:
+	if not isinstance(value, str):
+		raise ValueError(f"{fieldname} must be a string")
+	text = value.strip()
 	if not text:
 		raise ValueError(f"{fieldname} is required")
 	return text

@@ -41,8 +41,23 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 			],
 			"statutory_batch_payload": {"totals": {"gross_earnings": 5250000, "total_employee_deductions": 420000}},
 		}
-		self.approval_state = {"company": "Korea Demo Co", "workplace": "Seoul HQ", "approver": "branch-manager@example.com", "status": "pending_review"}
-		self.notification_state = {"company": "Korea Demo Co", "workplace": "Seoul HQ", "payslip_artifacts_ready": True, "kakao_queue_ready": True, "recipient_count": 2}
+		self.approval_state = {
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"approver": "branch-manager@example.com",
+			"status": "pending_review",
+		}
+		self.notification_state = {
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"payslip_artifacts_ready": True,
+			"kakao_queue_ready": True,
+			"recipient_count": 2,
+		}
 
 	def test_preview_api_builds_payroll_closing_session_from_json_payloads(self):
 		session = self.mod.preview_korea_payroll_closing_session(
@@ -94,12 +109,41 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 		self.assertEqual(session["expense_state"]["open_claim_count"], 2)
 		self.assertEqual(session["runtime_action"], "preview_only")
 
+	def test_preview_api_accepts_contract_state_json_payload(self):
+		session = self.mod.preview_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary=self.attendance_summary,
+			payroll_entry=self.payroll_entry,
+			approval_state=self.approval_state,
+			notification_state=self.notification_state,
+			contract_state=json.dumps(
+				{
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"contracts_reviewed": False,
+					"missing_contract_count": 1,
+					"stale_contract_count": 0,
+				}
+			),
+		)
+
+		self.assertEqual(session["status"], "blocked")
+		self.assertIn("employment_contracts_not_ready", [blocker["code"] for blocker in session["blockers"]])
+		self.assertEqual(session["contract_state"]["missing_contract_count"], 1)
+		self.assertEqual(session["runtime_action"], "preview_only")
+
 	def test_preview_api_does_not_mutate_caller_payloads(self):
 		attendance = json.loads(json.dumps(self.attendance_summary))
 		payroll = json.loads(json.dumps(self.payroll_entry))
 		approval = json.loads(json.dumps(self.approval_state))
 		notification = json.loads(json.dumps(self.notification_state))
-		originals = json.loads(json.dumps([attendance, payroll, approval, notification]))
+		contract = {"company": "Korea Demo Co", "workplace": "Seoul HQ", "contracts_reviewed": True}
+		originals = json.loads(json.dumps([attendance, payroll, approval, notification, contract]))
 
 		session = self.mod.preview_korea_payroll_closing_session(
 			company="Korea Demo Co",
@@ -110,9 +154,10 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 			payroll_entry=payroll,
 			approval_state=approval,
 			notification_state=notification,
+			contract_state=contract,
 		)
 
-		self.assertEqual([attendance, payroll, approval, notification], originals)
+		self.assertEqual([attendance, payroll, approval, notification, contract], originals)
 		session["payroll_artifacts"]["salary_slips"][0]["name"] = "MUTATED"
 		self.assertEqual(payroll["salary_slips"][0]["name"], "SAL-API-0001")
 
@@ -152,6 +197,19 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 				approval_state=self.approval_state,
 				notification_state=self.notification_state,
 				expense_state=[],
+			)
+
+		with self.assertRaisesRegex(ValueError, "contract_state must be a dict or JSON object"):
+			self.mod.preview_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary=self.attendance_summary,
+				payroll_entry=self.payroll_entry,
+				approval_state=self.approval_state,
+				notification_state=self.notification_state,
+				contract_state="[]",
 			)
 
 	def test_preview_api_preserves_core_fail_closed_validation(self):

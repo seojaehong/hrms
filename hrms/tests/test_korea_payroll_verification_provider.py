@@ -157,7 +157,85 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 		self.assertEqual(result["status"], "needs_review")
 		self.assertEqual(result["provider"]["type"], "partner_api")
 		self.assertEqual(result["amount_deltas"]["National Pension"], -500)
+		self.assertEqual(result["external_reference"], "partner-run-17")
 		self.assertEqual(result["evidence"][0]["kind"], "partner_report")
+
+	def test_verification_result_rejects_phone_numbers_in_external_reference(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={"type": "partner_api", "name": "labor partner"},
+		)
+
+		with self.assertRaisesRegex(ValueError, "external_reference must not contain phone numbers"):
+			self.mod.normalize_payroll_verification_result(
+				request=request,
+				provider_result={
+					"external_reference": "partner-010-1234-5678",
+					"status": "needs_review",
+					"amount_deltas": {},
+					"evidence": [],
+				},
+			)
+
+	def test_verification_result_rejects_phone_numbers_in_evidence_references(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={"type": "partner_api", "name": "labor partner"},
+		)
+
+		with self.assertRaisesRegex(ValueError, "evidence.reference must not contain phone numbers"):
+			self.mod.normalize_payroll_verification_result(
+				request=request,
+				provider_result={
+					"external_reference": "partner-run-17",
+					"status": "needs_review",
+					"amount_deltas": {},
+					"evidence": [{"kind": "partner_report", "reference": "evidence-821012345678"}],
+				},
+			)
+
+	def test_verification_result_rejects_phone_numbers_anywhere_in_evidence_payload(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={"type": "partner_api", "name": "labor partner"},
+		)
+
+		with self.assertRaisesRegex(ValueError, "evidence must not contain phone numbers"):
+			self.mod.normalize_payroll_verification_result(
+				request=request,
+				provider_result={
+					"external_reference": "partner-run-17",
+					"status": "needs_review",
+					"amount_deltas": {},
+					"evidence": [{"kind": "partner_report", "description": "담당자 010-1234-5678 확인"}],
+				},
+			)
+
+	def test_verification_result_rejects_phone_numbers_in_review_notes(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={"type": "partner_api", "name": "labor partner"},
+		)
+
+		with self.assertRaisesRegex(ValueError, "review_notes must not contain phone numbers"):
+			self.mod.normalize_payroll_verification_result(
+				request=request,
+				provider_result={
+					"external_reference": "partner-run-17",
+					"status": "needs_review",
+					"amount_deltas": {},
+					"evidence": [],
+					"review_notes": "담당자 010-1234-5678 확인",
+				},
+			)
 
 	def test_verification_request_preserves_large_integer_money_without_float_corruption(self):
 		snapshot = dict(self.snapshot)

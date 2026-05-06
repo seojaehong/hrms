@@ -86,21 +86,55 @@ def normalize_payroll_verification_result(*, request: dict[str, Any], provider_r
 		raise ValueError(f"status must be one of {sorted(_ALLOWED_RESULT_STATUSES)}")
 
 	amount_deltas = _normalize_amount_deltas(provider_result.get("amount_deltas", {}))
-	evidence = provider_result.get("evidence", [])
-	if not isinstance(evidence, list):
-		raise ValueError("evidence must be a list")
+	external_reference = _normalize_opaque_reference(
+		provider_result.get("external_reference"), "external_reference"
+	)
+	evidence = _normalize_evidence(provider_result.get("evidence", []))
+	review_notes = _normalize_opaque_reference(provider_result.get("review_notes"), "review_notes")
 
 	provider_payload = _normalize_provider(request.get("provider"))
 	return {
 		"result_type": "korea_payroll_verification_result_v1",
 		"status": status,
 		"provider": provider_payload,
-		"external_reference": provider_result.get("external_reference"),
+		"external_reference": external_reference,
 		"amount_deltas": amount_deltas,
-		"evidence": deepcopy(evidence),
-		"review_notes": provider_result.get("review_notes"),
+		"evidence": evidence,
+		"review_notes": review_notes,
 		"requires_human_approval": True,
 	}
+
+
+def _normalize_evidence(evidence: Any) -> list[Any]:
+	if not isinstance(evidence, list):
+		raise ValueError("evidence must be a list")
+	normalized = deepcopy(evidence)
+	for item in normalized:
+		if isinstance(item, dict) and item.get("reference") is not None:
+			item["reference"] = _normalize_opaque_reference(item.get("reference"), "evidence.reference")
+	_validate_no_phone_numbers(normalized, "evidence")
+	return normalized
+
+
+def _normalize_opaque_reference(value: Any, name: str) -> Any:
+	if value is None:
+		return None
+	_validate_no_phone_numbers(value, name)
+	return value
+
+
+def _validate_no_phone_numbers(value: Any, name: str) -> None:
+	if isinstance(value, str):
+		if _contains_korean_mobile_number(value):
+			raise ValueError(f"{name} must not contain phone numbers")
+		return
+	if isinstance(value, dict):
+		for nested in value.values():
+			_validate_no_phone_numbers(nested, name)
+		return
+	if isinstance(value, list):
+		for nested in value:
+			_validate_no_phone_numbers(nested, name)
 
 
 def _normalize_provider(provider: dict[str, Any] | None) -> dict[str, Any]:

@@ -193,11 +193,18 @@ def _validate_inputs(
 		raise ValueError("employment_end_date cannot be before hire_date")
 	if basis not in SUPPORTED_BASES:
 		raise ValueError(f"basis must be one of {sorted(SUPPORTED_BASES)}")
+	_validate_plain_integer(fiscal_year_start_month, "fiscal_year_start_month")
+	_validate_plain_integer(fiscal_year_start_day, "fiscal_year_start_day")
 	if not 1 <= fiscal_year_start_month <= 12:
 		raise ValueError("fiscal_year_start_month must be between 1 and 12")
 	last_day = monthrange(2024, fiscal_year_start_month)[1]
 	if not 1 <= fiscal_year_start_day <= last_day:
 		raise ValueError("fiscal_year_start_day is not valid for fiscal_year_start_month")
+
+
+def _validate_plain_integer(value: object, fieldname: str) -> None:
+	if isinstance(value, bool) or not isinstance(value, int):
+		raise ValueError(f"{fieldname} must be an integer")
 
 
 __all__ = [

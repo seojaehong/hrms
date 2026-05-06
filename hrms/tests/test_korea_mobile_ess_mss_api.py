@@ -103,6 +103,18 @@ class TestKoreaMobileEssMssApi(unittest.TestCase):
 						records=[],
 					)
 
+		for negative_value in (-1, "-1"):
+			with self.subTest(negative_value=negative_value):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days cannot be negative"):
+					self.mod.preview_korea_mobile_manager_worklist(
+						manager="MGR-001",
+						period=self.period,
+						workplace="SEOUL-01",
+						today="2026-05-10",
+						overdue_after_days=negative_value,
+						records=[],
+					)
+
 	def test_preview_wrappers_do_not_let_downstream_helpers_mutate_caller_inputs(self):
 		period = {"start_date": "2026-05-01", "end_date": "2026-05-31"}
 		records = [{"record_type": "attendance", "employee": "EMP-001", "status": "Checked In", "workplace": "SEOUL-01"}]

@@ -106,15 +106,21 @@ def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:
 
 
 def _coerce_int(value: Any, fieldname: str) -> int:
-	if isinstance(value, bool):
-		raise ValueError(f"{fieldname} must be an integer")
-	if isinstance(value, int):
-		return value
-	if isinstance(value, str):
+	if type(value) is int:
+		coerced = value
+	elif isinstance(value, str):
 		text = value.strip()
-		if text and text.isdecimal():
-			return int(text)
-	raise ValueError(f"{fieldname} must be an integer")
+		if not text:
+			raise ValueError(f"{fieldname} must be an integer")
+		signed_text = text[1:] if text[0] in "+-" else text
+		if not signed_text.isdecimal():
+			raise ValueError(f"{fieldname} must be an integer")
+		coerced = int(text)
+	else:
+		raise ValueError(f"{fieldname} must be an integer")
+	if coerced < 0:
+		raise ValueError(f"{fieldname} cannot be negative")
+	return coerced
 
 
 def _coerce_json_if_needed(value: Any) -> Any:

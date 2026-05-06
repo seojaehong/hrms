@@ -12,6 +12,10 @@
 
 **Runway length:** `500 hours = 1,000 half-hour cycles`
 
+**Daily target:** raise commercial SaaS readiness by about `+10 points/day` when enough verified product-layer evidence exists. From the current 38/100 baseline, the arithmetic gap is 62 points, so +10/day implies roughly 7 days / 168 hours / 336 half-hour cycles to reach 100 if the team is converting stack work into real product readiness. The remaining 500-hour runway is still useful for consolidation, pilot hardening, and not faking readiness.
+
+**Live test surface:** keep a Vercel deployment available for operator testing. Current public static preview URL: `https://hrms-vercel-static.vercel.app`. This is a built frontend/static preview, not a full Frappe backend runtime. Any UI/runtime work must state whether it is visible on this URL, requires backend APIs, or needs Docker/Bench.
+
 **Operating philosophy:** Do not force a fake 100-point sprint. Build the stack correctly. Keep the current 100-point SaaS scorecard, but treat it as a long-horizon product score, not a promise that every 30-minute run must visibly increase the score.
 
 ---
@@ -204,8 +208,9 @@ A PR is low priority if it only hardens an isolated helper without linking to a 
 8. Run `python3 scripts/run_korea_regional_smoke.py` when Korea tests changed.
 9. Run `python3 -m py_compile` for touched Python files where useful.
 10. Commit and push.
-11. Create PR if tooling allows; otherwise report compare/new PR URL.
-12. Report score movement conservatively.
+11. If frontend/UI changed, build and deploy or explain why Vercel preview cannot show the change. Verify the public URL with HTTP 200 and critical asset checks.
+12. Create PR if tooling allows; otherwise report compare/new PR URL.
+13. Report score movement conservatively against the +10/day target.
 
 ---
 
@@ -213,7 +218,7 @@ A PR is low priority if it only hardens an isolated helper without linking to a 
 
 Every PDCA briefing must answer:
 
-1. **결론** — current score, current milestone, on/off track.
+1. **결론** — current score, daily +10 target status, current milestone, on/off track.
 2. **근거** — repo path, branch, HEAD, latest commits/PRs, tests, cron status.
 3. **리스크** — top 3 product risks, not generic engineering worries.
 4. **다음 행동** — exact next PR slice, files, tests.

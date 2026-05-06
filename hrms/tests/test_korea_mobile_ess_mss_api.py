@@ -88,7 +88,10 @@ class TestKoreaMobileEssMssApi(unittest.TestCase):
 		)
 		self.assertFalse(result["worklist"]["items"][0]["overdue"])
 
-		for invalid_value in (True, False, 2.5, "2.5", "not-a-number"):
+		class IntSubclass(int):
+			pass
+
+		for invalid_value in (True, False, 2.5, "2.5", "not-a-number", IntSubclass(2)):
 			with self.subTest(invalid_value=invalid_value):
 				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
 					self.mod.preview_korea_mobile_manager_worklist(

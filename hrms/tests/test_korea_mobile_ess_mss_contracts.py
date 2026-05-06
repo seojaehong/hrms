@@ -106,8 +106,11 @@ class TestKoreaMobileEssMssContracts(unittest.TestCase):
 
 		self.assertEqual([item["name"] for item in worklist["items"]], ["MAY"])
 
-	def test_manager_worklist_rejects_bool_and_non_integral_overdue_controls(self):
-		for invalid_value in (True, False, 2.5, "3"):
+	def test_manager_worklist_rejects_bool_non_integral_and_int_subclass_overdue_controls(self):
+		class IntSubclass(int):
+			pass
+
+		for invalid_value in (True, False, 2.5, "3", IntSubclass(3)):
 			with self.subTest(invalid_value=invalid_value):
 				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
 					self.mod.build_mobile_manager_worklist(

@@ -28,6 +28,7 @@ def build_korea_payroll_closing_session(
 	approval_state: dict[str, Any] | None,
 	notification_state: dict[str, Any] | None,
 	expense_state: dict[str, Any] | None = None,
+	contract_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
 	"""Build a payroll-closing session read model for one workplace/month.
 
@@ -75,6 +76,13 @@ def build_korea_payroll_closing_session(
 	)
 	expenses = _normalize_expense_state(
 		_optional_payload(expense_state, "expense_state"),
+		company=company,
+		workplace=workplace,
+		period_start=period_start_text,
+		period_end=period_end_text,
+	)
+	contracts = _normalize_contract_state(
+		_optional_payload(contract_state, "contract_state"),
 		company=company,
 		workplace=workplace,
 		period_start=period_start_text,
@@ -143,8 +151,30 @@ def build_korea_payroll_closing_session(
 				},
 			}
 		)
+	if not contracts["ready"]:
+		blockers.append(
+			{
+				"code": "employment_contracts_not_ready",
+				"severity": "blocking",
+				"message": "Employment contract artifacts must be reviewed before payroll closing.",
+				"details": {
+					"missing_contract_count": contracts["missing_contract_count"],
+					"stale_contract_count": contracts["stale_contract_count"],
+				},
+			}
+		)
 
 	status = "blocked" if blockers else "review_ready"
+	if status == "review_ready":
+		for label, source in [
+			("attendance_summary", attendance_summary),
+			("payroll_entry", payroll_entry),
+			("approval_state", approval_state),
+			("notification_state", notification_state),
+		]:
+			scoped_source = _optional_payload(source, label)
+			_require_explicit_scope(scoped_source, label=label)
+			_require_explicit_period(scoped_source, label=label)
 	return {
 		"contract_type": CONTRACT_TYPE,
 		"company": company,
@@ -160,11 +190,13 @@ def build_korea_payroll_closing_session(
 			approval_state=approval,
 			notification_state=notifications,
 			expense_state=expenses,
+			contract_state=contracts,
 		),
 		"payroll_artifacts": payroll_artifacts,
 		"approval_state": approval,
 		"notification_state": notifications,
 		"expense_state": expenses,
+		"contract_state": contracts,
 		"audit_preview": {
 			"event_type": "korea_payroll_closing_session_review_v1",
 			"runtime_action": "preview_only",
@@ -272,13 +304,15 @@ def _normalize_notification_state(
 ) -> dict[str, Any]:
 	_validate_optional_scope(notification_state, company=company, workplace=workplace, label="notification_state")
 	_validate_optional_period(notification_state, period_start=period_start, period_end=period_end, label="notification_state")
+	payslip_artifacts_ready = _optional_bool(
+		notification_state.get("payslip_artifacts_ready"), "notification_state.payslip_artifacts_ready"
+	)
+	kakao_queue_ready = _optional_bool(notification_state.get("kakao_queue_ready"), "notification_state.kakao_queue_ready")
 	return {
-		"payslip_artifacts_ready": _optional_bool(
-			notification_state.get("payslip_artifacts_ready"), "notification_state.payslip_artifacts_ready"
-		),
-		"kakao_queue_ready": _optional_bool(notification_state.get("kakao_queue_ready"), "notification_state.kakao_queue_ready"),
+		"payslip_artifacts_ready": payslip_artifacts_ready,
+		"kakao_queue_ready": kakao_queue_ready,
 		"recipient_count": _optional_int(notification_state.get("recipient_count")),
-		"requires_runtime_send": _optional_bool(notification_state.get("kakao_queue_ready"), "notification_state.kakao_queue_ready"),
+		"requires_runtime_send": kakao_queue_ready,
 	}
 
 
@@ -307,6 +341,36 @@ def _normalize_expense_state(
 	}
 
 
+def _normalize_contract_state(
+	contract_state: dict[str, Any],
+	*,
+	company: str,
+	workplace: str,
+	period_start: str,
+	period_end: str,
+) -> dict[str, Any]:
+	_validate_optional_scope(contract_state, company=company, workplace=workplace, label="contract_state")
+	_validate_optional_period(contract_state, period_start=period_start, period_end=period_end, label="contract_state")
+	if not contract_state:
+		return {
+			"ready": True,
+			"contracts_reviewed": True,
+			"missing_contract_count": 0,
+			"stale_contract_count": 0,
+			"requires_runtime_apply": False,
+		}
+	contracts_reviewed = _optional_bool(contract_state.get("contracts_reviewed"), "contract_state.contracts_reviewed")
+	missing_contract_count = _optional_int(contract_state.get("missing_contract_count")) or 0
+	stale_contract_count = _optional_int(contract_state.get("stale_contract_count")) or 0
+	return {
+		"ready": contracts_reviewed and missing_contract_count == 0 and stale_contract_count == 0,
+		"contracts_reviewed": contracts_reviewed,
+		"missing_contract_count": missing_contract_count,
+		"stale_contract_count": stale_contract_count,
+		"requires_runtime_apply": False,
+	}
+
+
 def _build_next_actions(blockers: list[dict[str, Any]]) -> list[dict[str, str]]:
 	if not blockers:
 		return [
@@ -329,6 +393,8 @@ def _build_next_actions(blockers: list[dict[str, Any]]) -> list[dict[str, str]]:
 			actions.append({"action": "prepare_kakao_queue", "label": "Prepare Kakao notification queue"})
 		elif code == "expense_settlement_not_ready":
 			actions.append({"action": "resolve_expense_settlements", "label": "Resolve expense settlements"})
+		elif code == "employment_contracts_not_ready":
+			actions.append({"action": "review_employment_contracts", "label": "Review employment contract artifacts"})
 	return actions
 
 
@@ -339,6 +405,7 @@ def _build_readiness_cards(
 	approval_state: dict[str, Any],
 	notification_state: dict[str, Any],
 	expense_state: dict[str, Any],
+	contract_state: dict[str, Any],
 ) -> list[dict[str, Any]]:
 	return [
 		{
@@ -377,6 +444,15 @@ def _build_readiness_cards(
 				"approved_unpaid_count": expense_state["approved_unpaid_count"],
 			},
 		},
+		{
+			"key": "employment_contracts",
+			"label": "Employment contract readiness",
+			"state": "ready" if contract_state["ready"] else "blocked",
+			"summary": {
+				"missing_contract_count": contract_state["missing_contract_count"],
+				"stale_contract_count": contract_state["stale_contract_count"],
+			},
+		},
 	]
 
 
@@ -396,6 +472,20 @@ def _validate_optional_period(source: dict[str, Any], *, period_start: str, peri
 		raise ValueError(f"{label}.period_start must match session period_start")
 	if end is not None and _parse_iso_date(end, f"{label}.period_end").isoformat() != period_end:
 		raise ValueError(f"{label}.period_end must match session period_end")
+
+
+def _require_explicit_scope(source: dict[str, Any], *, label: str) -> None:
+	if not str(source.get("company") or "").strip():
+		raise ValueError(f"{label}.company is required")
+	if not str(source.get("workplace") or "").strip():
+		raise ValueError(f"{label}.workplace is required")
+
+
+def _require_explicit_period(source: dict[str, Any], *, label: str) -> None:
+	if source.get("period_start", source.get("start_date")) is None:
+		raise ValueError(f"{label}.period_start is required")
+	if source.get("period_end", source.get("end_date")) is None:
+		raise ValueError(f"{label}.period_end is required")
 
 
 def _parse_iso_date(value: str | dt.date, fieldname: str) -> dt.date:

@@ -47,8 +47,24 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				],
 				"statutory_batch_payload": {"totals": {"gross_earnings": 5250000, "total_employee_deductions": 420000}},
 			},
-			approval_state={"approver": "branch-manager@example.com", "status": "pending_review", "open_items": 1},
-			notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True, "recipient_count": 2},
+			approval_state={
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"approver": "branch-manager@example.com",
+				"status": "pending_review",
+				"open_items": 1,
+			},
+			notification_state={
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"payslip_artifacts_ready": True,
+				"kakao_queue_ready": True,
+				"recipient_count": 2,
+			},
 		)
 
 		self.assertEqual(session["contract_type"], "korea_payroll_closing_session_v1")
@@ -211,6 +227,87 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 		self.assertEqual(expense_card["summary"], {"open_claim_count": 3, "approved_unpaid_count": 1})
 		self.assertEqual(session["expense_state"]["requires_runtime_apply"], False)
 
+	def test_contract_state_creates_blocker_and_readiness_card_when_missing_artifacts(self):
+		session = self.mod.build_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary={"status": "ready", "unmarked_days": []},
+			payroll_entry={
+				"name": "PAY-ENTRY-0001",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"start_date": "2026-05-01",
+				"end_date": "2026-05-31",
+				"statutory_batch_payload": {"totals": {"gross_earnings": 5250000}},
+			},
+			approval_state={"approver": "branch-manager@example.com"},
+			notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+			contract_state={
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"contracts_reviewed": False,
+				"missing_contract_count": 2,
+				"stale_contract_count": 1,
+			},
+		)
+
+		self.assertEqual(session["status"], "blocked")
+		self.assertIn("employment_contracts_not_ready", [blocker["code"] for blocker in session["blockers"]])
+		self.assertIn("review_employment_contracts", [action["action"] for action in session["next_actions"]])
+		contract_card = next(card for card in session["readiness_cards"] if card["key"] == "employment_contracts")
+		self.assertEqual(contract_card["state"], "blocked")
+		self.assertEqual(contract_card["summary"], {"missing_contract_count": 2, "stale_contract_count": 1})
+		self.assertEqual(session["contract_state"]["requires_runtime_apply"], False)
+
+	def test_contract_state_conflicting_counts_fail_closed_when_marked_reviewed(self):
+		session = self.mod.build_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary={"status": "ready", "unmarked_days": []},
+			payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+			approval_state={"approver": "branch-manager@example.com"},
+			notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+			contract_state={"contracts_reviewed": True, "missing_contract_count": 1, "stale_contract_count": 0},
+		)
+
+		self.assertEqual(session["status"], "blocked")
+		self.assertIn("employment_contracts_not_ready", [blocker["code"] for blocker in session["blockers"]])
+		contract_card = next(card for card in session["readiness_cards"] if card["key"] == "employment_contracts")
+		self.assertEqual(contract_card["state"], "blocked")
+
+	def test_contract_state_scope_and_boolean_validation_fail_closed(self):
+		with self.assertRaisesRegex(ValueError, "contract_state.workplace must match session workplace"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+				contract_state={"company": "Korea Demo Co", "workplace": "Busan Branch", "contracts_reviewed": True},
+			)
+
+		with self.assertRaisesRegex(ValueError, "contract_state.contracts_reviewed must be a boolean"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={"status": "ready", "unmarked_days": []},
+				payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+				approval_state={"approver": "branch-manager@example.com"},
+				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": True},
+				contract_state={"contracts_reviewed": "true"},
+			)
+
 	def test_expense_state_scope_and_boolean_validation_fail_closed(self):
 		with self.assertRaisesRegex(ValueError, "expense_state.workplace must match session workplace"):
 			self.mod.build_korea_payroll_closing_session(
@@ -321,6 +418,70 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				approval_state={"approver": "branch-manager@example.com"},
 				notification_state={"payslip_artifacts_ready": True, "kakao_queue_ready": "false"},
 			)
+
+	def test_ready_source_artifacts_require_explicit_scope_and_period(self):
+		base_kwargs = {
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"attendance_summary": {
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"status": "ready",
+				"unmarked_days": [],
+			},
+			"payroll_entry": {
+				"name": "PAY-ENTRY-0001",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"start_date": "2026-05-01",
+				"end_date": "2026-05-31",
+				"statutory_batch_payload": {"totals": {"gross_earnings": 5250000}},
+			},
+			"approval_state": {
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"approver": "branch-manager@example.com",
+			},
+			"notification_state": {
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"payslip_artifacts_ready": True,
+				"kakao_queue_ready": True,
+			},
+		}
+
+		for fieldname, expected_error in [
+			("attendance_summary", "attendance_summary.company is required"),
+			("payroll_entry", "payroll_entry.company is required"),
+			("approval_state", "approval_state.company is required"),
+			("notification_state", "notification_state.company is required"),
+		]:
+			with self.subTest(fieldname=fieldname):
+				kwargs = {key: dict(value) if isinstance(value, dict) else value for key, value in base_kwargs.items()}
+				kwargs[fieldname].pop("company", None)
+				with self.assertRaisesRegex(ValueError, expected_error):
+					self.mod.build_korea_payroll_closing_session(**kwargs)
+
+		for fieldname, expected_error in [
+			("attendance_summary", "attendance_summary.period_start is required"),
+			("payroll_entry", "payroll_entry.period_start is required"),
+			("approval_state", "approval_state.period_start is required"),
+			("notification_state", "notification_state.period_start is required"),
+		]:
+			with self.subTest(fieldname=fieldname):
+				kwargs = {key: dict(value) if isinstance(value, dict) else value for key, value in base_kwargs.items()}
+				kwargs[fieldname].pop("period_start", None)
+				kwargs[fieldname].pop("start_date", None)
+				with self.assertRaisesRegex(ValueError, expected_error):
+					self.mod.build_korea_payroll_closing_session(**kwargs)
 
 	def test_top_level_payloads_must_be_dicts(self):
 		with self.assertRaisesRegex(ValueError, "attendance_summary must be a dict"):

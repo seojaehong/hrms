@@ -21,6 +21,48 @@ class TestKakaoNotificationPreviewAPI(unittest.TestCase):
 	def setUp(self):
 		self.mod = load_module()
 
+	def test_previews_template_registry_entry_from_json_inputs_without_mutating_caller_data(self):
+		provider_template_keys = {"partner_alimtalk": "tpl-001"}
+		preview = self.mod.preview_korea_kakao_template_registry_entry(
+			template_code="PAYSLIP_READY",
+			template_name="급여명세서 발송",
+			template_body="{{employee}}님 {{period}} 급여명세서가 준비되었습니다.",
+			required_variables=json.dumps(["employee", "period"], ensure_ascii=False),
+			consent_purpose="payroll_notification",
+			provider_template_keys=provider_template_keys,
+			active="true",
+		)
+
+		self.assertEqual(preview["contract_type"], "korea_kakao_template_registry_preview_v1")
+		self.assertEqual(preview["runtime_action"], "preview_only")
+		self.assertFalse(preview["requires_runtime_send"])
+		self.assertEqual(preview["registry_entry"]["template_code"], "PAYSLIP_READY")
+		self.assertEqual(preview["registry_entry"]["required_variables"], ["employee", "period"])
+		self.assertEqual(preview["registry_entry"]["provider_template_keys"], {"partner_alimtalk": "tpl-001"})
+
+		preview["registry_entry"]["provider_template_keys"]["partner_alimtalk"] = "mutated"
+		self.assertEqual(provider_template_keys, {"partner_alimtalk": "tpl-001"})
+
+	def test_template_registry_preview_rejects_wrong_json_shapes_and_non_bool_active(self):
+		with self.assertRaisesRegex(ValueError, "required_variables must be a list"):
+			self.mod.preview_korea_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님 급여명세서가 준비되었습니다.",
+				required_variables='{"employee": true}',
+				consent_purpose="payroll_notification",
+			)
+
+		with self.assertRaisesRegex(ValueError, "active must be a bool"):
+			self.mod.preview_korea_kakao_template_registry_entry(
+				template_code="PAYSLIP_READY",
+				template_name="급여명세서 발송",
+				template_body="{{employee}}님 급여명세서가 준비되었습니다.",
+				required_variables=["employee"],
+				consent_purpose="payroll_notification",
+				active="not-bool",
+			)
+
 	def test_previews_registered_template_queue_item_from_json_inputs_without_sending(self):
 		registry_entry = {
 			"registry_type": "korea_kakao_template_registry_v1",

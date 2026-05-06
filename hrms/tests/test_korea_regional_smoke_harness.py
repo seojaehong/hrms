@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import importlib.util
 import pathlib
+import shlex
+import sys
 import tempfile
 import unittest
 
@@ -74,13 +76,13 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		direct = self.mod.build_direct_test_commands(ROOT)
 		bench = self.mod.build_optional_bench_command(site="test.localhost")
 
-		self.assertIn(["python3", "hrms/tests/test_korea_closing_center.py"], direct)
-		self.assertIn(["python3", "hrms/tests/test_korea_leave_allocation_api.py"], direct)
-		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
-		self.assertIn(["python3", "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
-		self.assertIn(["python3", "hrms/tests/test_korea_payroll_entry_adapter.py"], direct)
-		self.assertIn(["python3", "hrms/tests/test_korea_payroll_entry_api.py"], direct)
-		self.assertTrue(all(command[0] == "python3" for command in direct))
+		self.assertIn([sys.executable, "hrms/tests/test_korea_closing_center.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_leave_allocation_api.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_payroll_entry_adapter.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_payroll_entry_api.py"], direct)
+		self.assertTrue(all(command[0] == sys.executable for command in direct))
 		self.assertEqual(
 			bench,
 			[
@@ -109,9 +111,9 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 
 		commands = [row["command"] for row in result["direct_results"]]
 		self.assertTrue(result["passed"])
-		self.assertIn("python3 hrms/tests/test_korea_leave_allocation_api.py", commands)
-		self.assertIn("python3 hrms/tests/test_korea_mobile_ess_mss_api.py", commands)
-		self.assertIn("python3 hrms/tests/test_korea_payroll_entry_api.py", commands)
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_leave_allocation_api.py"]), commands)
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_api.py"]), commands)
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_payroll_entry_api.py"]), commands)
 
 	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):
 		result = self.mod.run_command(["python3", "--version"], dry_run=True)

@@ -15,6 +15,7 @@ import pathlib
 import shlex
 import shutil
 import subprocess
+import sys
 from typing import Any
 
 _EXCLUDED_DIRECT_TEST_FILENAMES = {
@@ -46,7 +47,7 @@ def build_direct_test_commands(repo_root: pathlib.Path) -> list[list[str]]:
 	Frappe in cron/no-bench environments.
 	"""
 
-	return [["python3", target] for target in korea_direct_test_targets(repo_root)]
+	return [[sys.executable, target] for target in korea_direct_test_targets(repo_root)]
 
 
 def build_optional_bench_command(*, site: str) -> list[str]:

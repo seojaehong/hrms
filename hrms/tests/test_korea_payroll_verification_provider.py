@@ -61,6 +61,80 @@ class TestKoreaPayrollVerificationProvider(unittest.TestCase):
 				provider={"type": "public_government_api", "name": "unsupported public route"},
 			)
 
+	def test_provider_route_metadata_preserves_opaque_keys_for_later_adapters(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={
+				"type": "owned_connector_service",
+				"name": "internal verifier",
+				"provider_key": "provider_seoul_payroll_v1",
+				"endpoint_key": "monthly_statutory_review",
+			},
+		)
+
+		self.assertEqual(request["provider"]["provider_key"], "provider_seoul_payroll_v1")
+		self.assertEqual(request["provider"]["endpoint_key"], "monthly_statutory_review")
+
+	def test_provider_route_metadata_rejects_phone_like_pii(self):
+		for provider in (
+			{
+				"type": "paid_vendor_api",
+				"name": "vendor",
+				"provider_key": "vendor-010-1234-5678",
+			},
+			{
+				"type": "partner_api",
+				"name": "partner",
+				"endpoint_key": "route-821012345678",
+			},
+			{
+				"type": "delegated_rpa_connector",
+				"name": "rpa",
+				"provider_key": "legacy-01112345678",
+			},
+		):
+			with self.subTest(provider=provider):
+				with self.assertRaisesRegex(ValueError, "must not contain phone numbers"):
+					self.mod.build_payroll_verification_request(
+						snapshot=self.snapshot,
+						period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+						workplace={"company": "Seoul Manufacturing"},
+						provider=provider,
+					)
+
+	def test_provider_route_metadata_allows_non_phone_opaque_ids_with_date_digits(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={
+				"type": "owned_connector_service",
+				"name": "internal verifier",
+				"provider_key": "provider-20260101001",
+				"endpoint_key": "payroll-run-20260101123456",
+			},
+		)
+
+		self.assertEqual(request["provider"]["provider_key"], "provider-20260101001")
+		self.assertEqual(request["provider"]["endpoint_key"], "payroll-run-20260101123456")
+
+	def test_verification_result_revalidates_request_provider_metadata_before_echoing_it(self):
+		request = self.mod.build_payroll_verification_request(
+			snapshot=self.snapshot,
+			period={"from_date": "2026-05-01", "to_date": "2026-05-31"},
+			workplace={"company": "Seoul Manufacturing"},
+			provider={"type": "manual_review", "name": "manual payroll verification"},
+		)
+		request["provider"]["provider_key"] = "manual-010-1234-5678"
+
+		with self.assertRaisesRegex(ValueError, "provider.provider_key must not contain phone numbers"):
+			self.mod.normalize_payroll_verification_result(
+				request=request,
+				provider_result={"status": "needs_review", "amount_deltas": {}, "evidence": []},
+			)
+
 	def test_verification_result_accepts_provider_evidence_and_finite_amount_deltas(self):
 		request = self.mod.build_payroll_verification_request(
 			snapshot=self.snapshot,

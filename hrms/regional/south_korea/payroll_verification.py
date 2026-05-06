@@ -8,6 +8,7 @@ owned connector services, or manual review.
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -88,10 +89,11 @@ def normalize_payroll_verification_result(*, request: dict[str, Any], provider_r
 	if not isinstance(evidence, list):
 		raise ValueError("evidence must be a list")
 
+	provider_payload = _normalize_provider(request.get("provider"))
 	return {
 		"result_type": "korea_payroll_verification_result_v1",
 		"status": status,
-		"provider": deepcopy(request.get("provider", {})),
+		"provider": provider_payload,
 		"external_reference": provider_result.get("external_reference"),
 		"amount_deltas": amount_deltas,
 		"evidence": deepcopy(evidence),
@@ -110,6 +112,14 @@ def _normalize_provider(provider: dict[str, Any] | None) -> dict[str, Any]:
 		raise ValueError(f"provider.type must be one of {sorted(_ALLOWED_PROVIDER_TYPES)}")
 	if not str(provider.get("name") or "").strip():
 		raise ValueError("provider.name is required")
+	for fieldname in ("provider_key", "endpoint_key"):
+		if fieldname in provider and provider[fieldname] is not None:
+			value = str(provider[fieldname]).strip()
+			if not value:
+				raise ValueError(f"provider.{fieldname} is required when provided")
+			if _contains_korean_mobile_number(value):
+				raise ValueError(f"provider.{fieldname} must not contain phone numbers")
+			provider[fieldname] = value
 	return provider
 
 
@@ -166,6 +176,14 @@ def _normalize_amount_deltas(amount_deltas: Any, *, prefix: str = "amount_deltas
 def _validate_dict(value: Any, name: str) -> None:
 	if not isinstance(value, dict):
 		raise ValueError(f"{name} must be a dict")
+
+
+def _contains_korean_mobile_number(value: str) -> bool:
+	pattern = (
+		r"(?<!\d)(?:01\d[-\s]?\d{3,4}[-\s]?\d{4}"
+		r"|\+?82[-\s]?1\d[-\s]?\d{3,4}[-\s]?\d{4})(?!\d)"
+	)
+	return re.search(pattern, value) is not None
 
 
 def _to_integer_won(value: Any, name: str) -> int:

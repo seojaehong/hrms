@@ -45,8 +45,8 @@ def preview_korea_leave_allocation_draft(
 		as_of_date=as_of_date,
 		basis=basis,
 		leave_type=leave_type,
-		fiscal_year_start_month=int(fiscal_year_start_month),
-		fiscal_year_start_day=int(fiscal_year_start_day),
+		fiscal_year_start_month=_coerce_int(fiscal_year_start_month, "fiscal_year_start_month"),
+		fiscal_year_start_day=_coerce_int(fiscal_year_start_day, "fiscal_year_start_day"),
 		existing_allocated_days=existing_allocated_days,
 	)
 	return {
@@ -73,6 +73,22 @@ def _coerce_json_if_needed(value: Any) -> Any:
 			except json.JSONDecodeError as exc:
 				raise ValueError("JSON payload is invalid") from exc
 	return value
+
+
+def _coerce_int(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool):
+		raise ValueError(f"{fieldname} must be an integer")
+	try:
+		if isinstance(value, str):
+			text = value.strip()
+			if not text or "." in text:
+				raise ValueError
+			return int(text)
+		if isinstance(value, int):
+			return value
+	except ValueError as exc:
+		raise ValueError(f"{fieldname} must be an integer") from exc
+	raise ValueError(f"{fieldname} must be an integer")
 
 
 def _load_sibling_module(filename: str, module_name: str):

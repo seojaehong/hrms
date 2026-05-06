@@ -51,6 +51,24 @@ class TestUnifiedApprovalInbox(unittest.TestCase):
 		self.assertEqual(items[0]["priority"], "High")
 		self.assertTrue(items[0]["overdue"])
 
+	def test_overdue_after_days_requires_plain_integer_in_core_helper(self):
+		records = [
+			{"doctype": "Leave Application", "name": "LA-INT", "employee": "EMP-1", "approver": "manager@example.com", "posting_date": "2026-05-01", "status": "Open"}
+		]
+
+		class IntSubclass(int):
+			pass
+
+		for value in (True, 3.0, "3", IntSubclass(3)):
+			with self.subTest(value=value):
+				with self.assertRaisesRegex(ValueError, "overdue_after_days must be an integer"):
+					self.mod.build_approval_inbox(
+						records,
+						actor="manager@example.com",
+						today=dt.date(2026, 5, 3),
+						overdue_after_days=value,
+					)
+
 	def test_inbox_summary_counts_items_by_source(self):
 		self.assertEqual(self.mod.summarize_inbox([{"source_doctype": "Leave Application"}, {"source_doctype": "Leave Application"}, {"source_doctype": "Expense Claim"}]), {"Leave Application": 2, "Expense Claim": 1})
 

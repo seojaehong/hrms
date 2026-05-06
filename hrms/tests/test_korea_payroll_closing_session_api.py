@@ -66,6 +66,34 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 		self.assertEqual(session["source"], {"doctype": "Payroll Entry", "name": "PAY-ENTRY-API-0001"})
 		self.assertEqual(session["audit_preview"]["runtime_action"], "preview_only")
 
+	def test_preview_api_accepts_expense_state_json_payload(self):
+		session = self.mod.preview_korea_payroll_closing_session(
+			company="Korea Demo Co",
+			workplace="Seoul HQ",
+			period_start="2026-05-01",
+			period_end="2026-05-31",
+			attendance_summary=self.attendance_summary,
+			payroll_entry=self.payroll_entry,
+			approval_state=self.approval_state,
+			notification_state=self.notification_state,
+			expense_state=json.dumps(
+				{
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"settlement_ready": False,
+					"open_claim_count": 2,
+					"approved_unpaid_count": 1,
+				}
+			),
+		)
+
+		self.assertEqual(session["status"], "blocked")
+		self.assertIn("expense_settlement_not_ready", [blocker["code"] for blocker in session["blockers"]])
+		self.assertEqual(session["expense_state"]["open_claim_count"], 2)
+		self.assertEqual(session["runtime_action"], "preview_only")
+
 	def test_preview_api_does_not_mutate_caller_payloads(self):
 		attendance = json.loads(json.dumps(self.attendance_summary))
 		payroll = json.loads(json.dumps(self.payroll_entry))
@@ -111,6 +139,19 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 				payroll_entry="[]",
 				approval_state=self.approval_state,
 				notification_state=self.notification_state,
+			)
+
+		with self.assertRaisesRegex(ValueError, "expense_state must be a dict or JSON object"):
+			self.mod.preview_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary=self.attendance_summary,
+				payroll_entry=self.payroll_entry,
+				approval_state=self.approval_state,
+				notification_state=self.notification_state,
+				expense_state=[],
 			)
 
 	def test_preview_api_preserves_core_fail_closed_validation(self):

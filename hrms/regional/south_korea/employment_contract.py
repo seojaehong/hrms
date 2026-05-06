@@ -49,9 +49,12 @@ def build_contract_snapshot(
 		if end_date < start_date:
 			raise ValueError("end_date cannot be before start_date")
 	_validate_positive_finite("working_hours_per_week", working_hours_per_week)
+	monthly_wage = _require_plain_int("monthly_wage", monthly_wage)
+	pay_day = _require_plain_int("pay_day", pay_day)
+	probation_months = _require_plain_int("probation_months", probation_months)
 	if monthly_wage < 0:
 		raise ValueError("monthly_wage cannot be negative")
-	if not 1 <= int(pay_day) <= 31:
+	if not 1 <= pay_day <= 31:
 		raise ValueError("pay_day must be between 1 and 31")
 	if probation_months < 0:
 		raise ValueError("probation_months cannot be negative")
@@ -101,12 +104,20 @@ def _validate_date(fieldname: str, value: dt.date) -> None:
 
 
 def _validate_positive_finite(fieldname: str, value: float) -> None:
+	if isinstance(value, bool):
+		raise ValueError(f"{fieldname} must be numeric")
 	try:
 		number = float(value)
 	except (TypeError, ValueError) as exc:
 		raise ValueError(f"{fieldname} must be numeric") from exc
 	if number <= 0 or number in {float("inf"), float("-inf")} or number != number:
 		raise ValueError(f"{fieldname} must be a positive finite number")
+
+
+def _require_plain_int(fieldname: str, value: int) -> int:
+	if type(value) is not int:
+		raise ValueError(f"{fieldname} must be an integer")
+	return value
 
 
 __all__ = ["REQUIRED_TERMS", "build_contract_snapshot", "contract_signature_hash"]

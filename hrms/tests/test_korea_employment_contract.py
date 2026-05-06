@@ -96,6 +96,52 @@ class TestKoreaEmploymentContract(unittest.TestCase):
 
 		self.assertEqual(first["signature_hash"], self.mod.contract_signature_hash(second))
 
+	def test_contract_numeric_controls_reject_bool_and_non_plain_integer_values(self):
+		class IntSubclass(int):
+			pass
+
+		base = {
+			"employee": "EMP-001",
+			"company": "Seo Co",
+			"workplace": "Seoul HQ",
+			"start_date": dt.date(2026, 1, 1),
+			"job_title": "Engineer",
+			"employment_type": "Regular",
+			"working_hours_per_week": 40,
+			"monthly_wage": 3_000_000,
+			"pay_day": 25,
+		}
+
+		for fieldname, invalid_value in (
+			("monthly_wage", True),
+			("monthly_wage", 3_000_000.5),
+			("monthly_wage", IntSubclass(3_000_000)),
+			("pay_day", False),
+			("pay_day", 25.5),
+			("pay_day", IntSubclass(25)),
+			("probation_months", True),
+			("probation_months", 1.5),
+			("probation_months", IntSubclass(3)),
+		):
+			with self.subTest(fieldname=fieldname, invalid_value=invalid_value):
+				payload = {**base, fieldname: invalid_value}
+				with self.assertRaisesRegex(ValueError, f"{fieldname} must be an integer"):
+					self.mod.build_contract_snapshot(**payload)
+
+	def test_contract_working_hours_rejects_bool(self):
+		with self.assertRaisesRegex(ValueError, "working_hours_per_week must be numeric"):
+			self.mod.build_contract_snapshot(
+				employee="EMP-001",
+				company="Seo Co",
+				workplace="Seoul HQ",
+				start_date=dt.date(2026, 1, 1),
+				job_title="Engineer",
+				employment_type="Regular",
+				working_hours_per_week=True,
+				monthly_wage=3_000_000,
+				pay_day=25,
+			)
+
 
 if __name__ == "__main__":
 	unittest.main()

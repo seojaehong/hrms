@@ -91,7 +91,7 @@ def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:
 
 
 def _coerce_int(value: Any, fieldname: str) -> int:
-	if isinstance(value, bool):
+	if isinstance(value, bool) or (type(value) is not int and not isinstance(value, str)):
 		raise ValueError(f"{fieldname} must be an integer")
 	try:
 		if isinstance(value, str):
@@ -101,7 +101,7 @@ def _coerce_int(value: Any, fieldname: str) -> int:
 			if "." in text:
 				raise ValueError
 			return int(text)
-		if isinstance(value, int):
+		if type(value) is int:
 			return value
 	except ValueError as exc:
 		raise ValueError(f"{fieldname} must be an integer") from exc

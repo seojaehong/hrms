@@ -98,6 +98,39 @@ class TestKoreaEmploymentContractPreviewAPI(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "employment_profile must be a dict or JSON object"):
 			self.mod.preview_korea_employment_contract_snapshot(employment_profile=[])
 
+	def test_numeric_api_controls_reject_bool_int_subclasses_and_non_integral_values(self):
+		class IntSubclass(int):
+			pass
+
+		profile = {
+			"employee": "EMP-001",
+			"company": "Seo Co",
+			"workplace": "Seoul HQ",
+			"start_date": "2026-01-01",
+			"job_title": "Engineer",
+			"employment_type": "Regular",
+			"working_hours_per_week": 40,
+			"monthly_wage": 3000000,
+			"pay_day": 25,
+			"probation_months": 0,
+		}
+
+		for fieldname, invalid_value, message in (
+			("monthly_wage", True, "monthly_wage must be an integer"),
+			("monthly_wage", IntSubclass(3000000), "monthly_wage must be an integer"),
+			("monthly_wage", "3000000.0", "monthly_wage must be an integer"),
+			("pay_day", False, "pay_day must be an integer"),
+			("pay_day", IntSubclass(25), "pay_day must be an integer"),
+			("pay_day", 25.5, "pay_day must be an integer"),
+			("probation_months", True, "probation_months must be an integer"),
+			("probation_months", IntSubclass(3), "probation_months must be an integer"),
+			("working_hours_per_week", True, "working_hours_per_week must be numeric"),
+		):
+			with self.subTest(fieldname=fieldname, invalid_value=invalid_value):
+				payload = {**profile, fieldname: invalid_value}
+				with self.assertRaisesRegex(ValueError, message):
+					self.mod.preview_korea_employment_contract_snapshot(employment_profile=payload)
+
 
 if __name__ == "__main__":
 	unittest.main()

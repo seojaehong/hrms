@@ -74,7 +74,7 @@ def _coerce_json_if_needed(value: Any) -> Any:
 
 
 def _coerce_date(value: Any, fieldname: str) -> dt.date:
-	if isinstance(value, dt.date):
+	if type(value) is dt.date:
 		return value
 	if isinstance(value, str):
 		try:

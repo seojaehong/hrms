@@ -22,6 +22,7 @@ _ALLOWED_PROVIDER_TYPES = {
 }
 
 _ALLOWED_RESULT_STATUSES = {"verified", "needs_review", "rejected"}
+_EXPONENT_STYLE_NUMBER_PATTERN = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)[eE][+-]?\d+$")
 
 _BASIS_FIELDS = (
 	"gross_earnings",
@@ -189,6 +190,8 @@ def _contains_korean_mobile_number(value: str) -> bool:
 def _to_integer_won(value: Any, name: str) -> int:
 	if isinstance(value, bool):
 		raise ValueError(f"{name} must be a finite number")
+	if isinstance(value, str) and _EXPONENT_STYLE_NUMBER_PATTERN.fullmatch(value.strip()):
+		raise ValueError(f"{name} must be a plain integer KRW amount")
 	try:
 		amount = Decimal(str(value))
 	except (InvalidOperation, ValueError) as exc:

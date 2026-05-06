@@ -42,7 +42,7 @@ def preview_korea_approval_inbox(
 		_coerce_list(records, "records"),
 		actor=actor,
 		today=_coerce_optional_date(today, "today"),
-		overdue_after_days=int(overdue_after_days),
+		overdue_after_days=_coerce_integer(overdue_after_days, "overdue_after_days"),
 	)
 	return {
 		"contract_type": "korea_approval_inbox_preview_v1",
@@ -131,6 +131,26 @@ def _coerce_optional_date(value: Any, fieldname: str) -> dt.date | None:
 		except ValueError as exc:
 			raise ValueError(f"{fieldname} must be an ISO date string") from exc
 	raise ValueError(f"{fieldname} must be a date or ISO date string")
+
+
+def _coerce_integer(value: Any, fieldname: str) -> int:
+	if isinstance(value, bool):
+		raise ValueError(f"{fieldname} must be an integer")
+	if isinstance(value, int):
+		return value
+	if isinstance(value, float):
+		if not value.is_integer():
+			raise ValueError(f"{fieldname} must be an integer")
+		return int(value)
+	if isinstance(value, str):
+		text = value.strip()
+		if not text or any(ch not in "0123456789+-" for ch in text) or text in {"+", "-"}:
+			raise ValueError(f"{fieldname} must be an integer")
+		try:
+			return int(text)
+		except ValueError as exc:
+			raise ValueError(f"{fieldname} must be an integer") from exc
+	raise ValueError(f"{fieldname} must be an integer")
 
 
 def _coerce_json_if_needed(value: Any) -> Any:

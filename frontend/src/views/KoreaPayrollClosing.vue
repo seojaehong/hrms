@@ -42,6 +42,28 @@
 						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
 						<p class="mt-1 text-xs text-gray-300">Blockers: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : 'none' }}</p>
 					</div>
+					<div class="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+						<div class="flex items-start justify-between gap-3">
+							<div>
+								<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Evidence packet</p>
+								<p class="mt-1 text-sm font-bold text-blue-950">{{ selectedSession.evidence_packet.contract_type }}</p>
+							</div>
+							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">preview only</span>
+						</div>
+						<div class="mt-3 grid grid-cols-1 gap-2">
+							<div
+								v-for="item in selectedSession.evidence_packet.evidence_items"
+								:key="`${selectedSession.name}-${item.key}`"
+								class="rounded-lg bg-white p-2 text-sm"
+							>
+								<p class="font-semibold text-gray-900">{{ item.label }}</p>
+								<p class="mt-1 text-xs text-gray-500">{{ formatEvidenceSummary(item.summary) }}</p>
+							</div>
+						</div>
+						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-gray-600">
+							Human checklist: {{ selectedSession.evidence_packet.review_checklist.length }} item(s) · requires_runtime_apply={{ selectedSession.evidence_packet.review_checklist.every((item) => item.requires_runtime_apply) }} · AI={{ selectedSession.evidence_packet.ai_role }}
+						</div>
+					</div>
 				</section>
 				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
 					<p class="font-semibold">Session fixture not found</p>
@@ -140,4 +162,13 @@ import {
 
 const route = useRoute()
 const selectedSession = computed(() => findKoreaPayrollClosingSession(route.params.name))
+
+function formatEvidenceSummary(summary) {
+	if (!summary) return "missing"
+	if (typeof summary === "string") return summary
+	if (typeof summary !== "object") return String(summary)
+	return Object.entries(summary)
+		.map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+		.join(" · ")
+}
 </script>

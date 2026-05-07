@@ -45,6 +45,23 @@ assert.equal(selectedSession.ai_role, "assistant_only")
 assert.ok(selectedSession.audit_preview)
 assert.equal(selectedSession.audit_preview.runtime_action, "preview_only")
 assert.deepEqual(selectedSession.audit_preview.blocker_codes, selectedSession.blocker_codes)
+assert.equal(selectedSession.evidence_packet.contract_type, "korea_payroll_closing_evidence_packet_v1")
+assert.equal(selectedSession.evidence_packet.source_session_contract_type, "korea_payroll_closing_session_v1")
+assert.equal(selectedSession.evidence_packet.runtime_action, "preview_only")
+assert.equal(selectedSession.evidence_packet.requires_runtime_apply, false)
+assert.equal(selectedSession.evidence_packet.requires_human_approval, true)
+assert.equal(selectedSession.evidence_packet.ai_role, "assistant_only")
+assert.deepEqual(selectedSession.evidence_packet.blocker_codes, selectedSession.blocker_codes)
+assert.deepEqual(
+	selectedSession.evidence_packet.evidence_items.map((item) => item.key),
+	["attendance", "payroll_artifacts", "approval", "notification", "expense_settlement", "employment_contracts", "audit_preview"],
+)
+assert.ok(selectedSession.evidence_packet.evidence_items.some((item) => item.key === "attendance"))
+assert.ok(selectedSession.evidence_packet.evidence_items.some((item) => item.key === "audit_preview"))
+assert.equal(selectedSession.evidence_packet.source_session.contract_type, "korea_payroll_closing_session_v1")
+assert.deepEqual(selectedSession.evidence_packet.source_session.blockers.map((blocker) => blocker.code), selectedSession.blocker_codes)
+assert.deepEqual(selectedSession.evidence_packet.next_actions.map((action) => action.action), [selectedSession.primary_action.action])
+assert.ok(selectedSession.evidence_packet.review_checklist.every((item) => item.requires_runtime_apply === true))
 assert.equal(findKoreaPayrollClosingSession("missing-session"), null)
 
 const sourceSession = koreaPayrollClosingOperatorFixture.items.find((item) => item.name === selectedSession.name)

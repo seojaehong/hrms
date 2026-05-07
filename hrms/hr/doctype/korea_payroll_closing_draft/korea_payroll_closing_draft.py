@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 
 import frappe
 from frappe.model.document import Document
@@ -14,6 +15,15 @@ EXPECTED_STATUS = "draft_pending_human_approval"
 EXPECTED_SESSION_CONTRACT_TYPE = "korea_payroll_closing_session_v1"
 EXPECTED_MUTATION_BOUNDARY = "draft_only_no_submit_no_approve_no_send"
 EXPECTED_AI_ROLE = "assistant_only"
+FORBIDDEN_SCORE_FRAGMENTS = (
+	"score",
+	"riskscore",
+	"legalriskscore",
+	"probability",
+	"probabilityscore",
+	"successrate",
+	"closingsuccessrate",
+)
 
 
 class KoreaPayrollClosingDraft(Document):
@@ -30,6 +40,8 @@ class KoreaPayrollClosingDraft(Document):
 		self._validate_safety_boundary()
 		payload = _parse_json_object(self.payload, "Payload")
 		audit_preview = _parse_json_object(self.audit_preview, "Audit Preview")
+		_reject_forbidden_score_keys(payload, "Payload")
+		_reject_forbidden_score_keys(audit_preview, "Audit Preview")
 		self._validate_embedded_scope(payload.get("session"), "Payload session")
 		self._validate_embedded_scope(audit_preview, "Audit preview")
 		self.payload = json.dumps(payload, ensure_ascii=False, sort_keys=True)
@@ -85,6 +97,28 @@ def _parse_json_object(value, label: str) -> dict:
 	if not isinstance(parsed, dict):
 		frappe.throw(frappe._(f"{label} must be a JSON object."))
 	return parsed
+
+
+def _reject_forbidden_score_keys(value, label: str):
+	for key in _iter_json_keys(value):
+		normalized_key = _normalize_score_key(key)
+		if any(fragment in normalized_key for fragment in FORBIDDEN_SCORE_FRAGMENTS):
+			frappe.throw(frappe._(f"{label} must not contain numeric risk/probability/success-rate score fields."))
+
+
+def _iter_json_keys(value):
+	if isinstance(value, dict):
+		for key, nested in value.items():
+			if isinstance(key, str):
+				yield key
+			yield from _iter_json_keys(nested)
+	elif isinstance(value, list):
+		for item in value:
+			yield from _iter_json_keys(item)
+
+
+def _normalize_score_key(key: str) -> str:
+	return re.sub(r"[^a-z0-9]+", "_", key.strip().lower()).strip("_").replace("_", "")
 
 
 def _parse_iso_date(value, label: str) -> dt.date:

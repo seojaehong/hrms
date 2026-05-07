@@ -124,3 +124,33 @@ export const koreaPayrollClosingOperatorFixture = {
 		},
 	],
 }
+
+export function findKoreaPayrollClosingSession(name) {
+	if (!name) return null
+	const item = koreaPayrollClosingOperatorFixture.items.find((candidate) => candidate.name === name)
+	if (!item) return null
+	return {
+		...item,
+		blocker_codes: [...item.blocker_codes],
+		primary_action: { ...item.primary_action },
+		readiness_cards: item.readiness_cards.map((card) => ({ ...card })),
+		contract_type: "korea_payroll_closing_session_static_preview_v1",
+		session_contract_type: "korea_payroll_closing_session_v1",
+		runtime_action: koreaPayrollClosingOperatorFixture.runtime_action,
+		preview_source: koreaPayrollClosingOperatorFixture.preview_source,
+		requires_runtime_apply: false,
+		requires_human_approval: true,
+		ai_role: "assistant_only",
+		audit_preview: {
+			event_type: "korea_payroll_closing_session_review_v1",
+			runtime_action: "preview_only",
+			requires_runtime_apply: false,
+			company: item.company,
+			workplace: item.workplace,
+			period_start: item.period_start,
+			period_end: item.period_end,
+			status: item.status,
+			blocker_codes: [...item.blocker_codes],
+		},
+	}
+}

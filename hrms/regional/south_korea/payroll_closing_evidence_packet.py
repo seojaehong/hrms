@@ -9,6 +9,7 @@ or legal numeric scoring. Human approval remains the final authority.
 from __future__ import annotations
 
 import datetime as dt
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -50,6 +51,7 @@ _FORBIDDEN_SCORE_KEYS = {
 	"closingsuccessrate",
 	"closing-success-rate",
 }
+_FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS = ("riskscore", "probability", "successrate")
 
 
 def build_korea_payroll_closing_evidence_packet(
@@ -264,7 +266,7 @@ def _validate_audit_preview_scope(
 def _validate_no_forbidden_scores(value: Any) -> None:
 	if isinstance(value, dict):
 		for key, nested in value.items():
-			if isinstance(key, str) and _normalized_key(key) in _FORBIDDEN_SCORE_KEYS:
+			if _is_forbidden_score_key(key):
 				raise ValueError(f"{key} is not allowed in payroll closing evidence packets")
 			_validate_no_forbidden_scores(nested)
 	elif isinstance(value, list):
@@ -272,8 +274,11 @@ def _validate_no_forbidden_scores(value: Any) -> None:
 			_validate_no_forbidden_scores(item)
 
 
-def _normalized_key(value: str) -> str:
-	return "".join(value.strip().replace("_", "").replace("-", "").split()).lower()
+def _is_forbidden_score_key(key: Any) -> bool:
+	if not isinstance(key, str):
+		return False
+	normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+	return normalized in _FORBIDDEN_SCORE_KEYS or any(fragment in normalized for fragment in _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS)
 
 
 def _require_blocker_code(blocker: Any, index: int) -> str:

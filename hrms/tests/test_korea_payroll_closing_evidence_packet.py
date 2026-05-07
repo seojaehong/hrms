@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import pathlib
+import re
 import unittest
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "regional" / "south_korea" / "payroll_closing_evidence_packet.py"
@@ -136,11 +137,19 @@ class TestKoreaPayrollClosingEvidencePacket(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "session.audit_preview.company must match session.company"):
 			self.mod.build_korea_payroll_closing_evidence_packet(session, actor="hr-ops@example.com")
 
-		for key in ["legal_risk_score", "risk score", "Success Rate", "probability score"]:
+		for key in [
+			"legal_risk_score",
+			"risk score",
+			"Risk Score (%)",
+			"risk.score",
+			"Success Rate",
+			"success rate score",
+			"probability score",
+		]:
 			session = blocked_session()
 			session["payroll_artifacts"][key] = 0.8
 			with self.subTest(key=key):
-				with self.assertRaisesRegex(ValueError, f"{key} is not allowed in payroll closing evidence packets"):
+				with self.assertRaisesRegex(ValueError, re.escape(f"{key} is not allowed in payroll closing evidence packets")):
 					self.mod.build_korea_payroll_closing_evidence_packet(session, actor="hr-ops@example.com")
 
 	def test_rejects_unsafe_or_malformed_next_actions(self):

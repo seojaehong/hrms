@@ -232,6 +232,21 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "Audit Preview must not contain numeric risk/probability/success-rate score fields"):
 			doc.validate()
 
+		doc = self._valid_doc(module)
+		doc.payload = json.dumps(
+			{
+				"session": {
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"legal": {"score": 0.91},
+				}
+			}
+		)
+		with self.assertRaisesRegex(ValueError, "Payload must not contain numeric risk/probability/success-rate score fields"):
+			doc.validate()
+
 	def _valid_doc(self, module):
 		doc = module.KoreaPayrollClosingDraft()
 		doc.company = "Korea Demo Co"

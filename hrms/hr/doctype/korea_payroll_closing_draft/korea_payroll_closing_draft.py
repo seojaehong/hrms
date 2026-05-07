@@ -16,6 +16,7 @@ EXPECTED_SESSION_CONTRACT_TYPE = "korea_payroll_closing_session_v1"
 EXPECTED_MUTATION_BOUNDARY = "draft_only_no_submit_no_approve_no_send"
 EXPECTED_AI_ROLE = "assistant_only"
 FORBIDDEN_SCORE_FRAGMENTS = (
+	"score",
 	"riskscore",
 	"legalriskscore",
 	"probability",

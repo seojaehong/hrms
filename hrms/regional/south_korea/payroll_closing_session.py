@@ -198,6 +198,7 @@ def build_korea_payroll_closing_session(
 			expense_state=expenses,
 			contract_state=contracts,
 		),
+		"review_checklist": _build_review_checklist(),
 		"payroll_artifacts": payroll_artifacts,
 		"approval_state": approval,
 		"notification_state": notifications,
@@ -482,6 +483,52 @@ def _build_next_actions(blockers: list[dict[str, Any]]) -> list[dict[str, str]]:
 		elif code == "employment_contracts_not_ready":
 			actions.append({"action": "review_employment_contracts", "label": "Review employment contract artifacts"})
 	return actions
+
+
+def _build_review_checklist() -> list[dict[str, Any]]:
+	return [
+		_review_checklist_item(
+			key="attendance_reviewed",
+			label="Attendance exceptions reviewed",
+			source_card="attendance",
+		),
+		_review_checklist_item(
+			key="statutory_bases_reviewed",
+			label="Statutory payroll bases and totals reviewed",
+			source_card="payroll_artifacts",
+		),
+		_review_checklist_item(
+			key="expense_settlements_reviewed",
+			label="Expense settlements reviewed",
+			source_card="expense_settlements",
+		),
+		_review_checklist_item(
+			key="employment_contracts_reviewed",
+			label="Employment contract artifacts reviewed",
+			source_card="employment_contracts",
+		),
+		_review_checklist_item(
+			key="payslip_kakao_artifacts_reviewed",
+			label="Payslip artifacts and Kakao queue reviewed",
+			source_card="notifications",
+		),
+		_review_checklist_item(
+			key="human_approver_assigned",
+			label="Human approver assigned for final authority",
+			source_card="approval",
+		),
+	]
+
+
+def _review_checklist_item(*, key: str, label: str, source_card: str) -> dict[str, Any]:
+	return {
+		"key": key,
+		"label": label,
+		"source_card": source_card,
+		"checked": False,
+		"requires_human_review": True,
+		"ai_role": AI_ROLE,
+	}
 
 
 def _build_readiness_cards(

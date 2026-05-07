@@ -171,6 +171,67 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "Audit preview company is required"):
 			doc.validate()
 
+	def test_controller_rejects_forbidden_numeric_score_keys_in_embedded_json(self):
+		module = load_controller_with_frappe_stub()
+
+		doc = self._valid_doc(module)
+		doc.payload = json.dumps(
+			{
+				"session": {
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"payroll_artifacts": {"statutory_totals": {"risk_score": 0.82}},
+				}
+			}
+		)
+		with self.assertRaisesRegex(ValueError, "Payload must not contain numeric risk/probability/success-rate score fields"):
+			doc.validate()
+
+		doc = self._valid_doc(module)
+		doc.payload = json.dumps(
+			{
+				"session": {
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"approval": {"legalRiskScoreCandidate": "high"},
+				}
+			}
+		)
+		with self.assertRaisesRegex(ValueError, "Payload must not contain numeric risk/probability/success-rate score fields"):
+			doc.validate()
+
+		doc = self._valid_doc(module)
+		doc.audit_preview = json.dumps(
+			{
+				"runtime_action": "preview_only",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"closing success rate": 99,
+			}
+		)
+		with self.assertRaisesRegex(ValueError, "Audit Preview must not contain numeric risk/probability/success-rate score fields"):
+			doc.validate()
+
+		doc = self._valid_doc(module)
+		doc.audit_preview = json.dumps(
+			{
+				"runtime_action": "preview_only",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"probabilityScorePct": 75,
+			}
+		)
+		with self.assertRaisesRegex(ValueError, "Audit Preview must not contain numeric risk/probability/success-rate score fields"):
+			doc.validate()
+
 	def _valid_doc(self, module):
 		doc = module.KoreaPayrollClosingDraft()
 		doc.company = "Korea Demo Co"

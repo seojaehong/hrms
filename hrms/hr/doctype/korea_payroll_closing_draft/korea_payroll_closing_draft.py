@@ -40,6 +40,7 @@ class KoreaPayrollClosingDraft(Document):
 		self._normalize_scope_text()
 		self._validate_period_order()
 		self._validate_safety_boundary()
+		self._validate_no_duplicate_open_draft()
 		payload = _parse_json_object(self.payload, "Payload")
 		audit_preview = _parse_json_object(self.audit_preview, "Audit Preview")
 		_reject_forbidden_score_keys(payload, "Payload")
@@ -88,6 +89,17 @@ class KoreaPayrollClosingDraft(Document):
 		if getattr(self, "requires_human_approval", None) not in (1, True):
 			frappe.throw(frappe._("Human approval is required for Korea payroll closing drafts."))
 
+	def _validate_no_duplicate_open_draft(self):
+		_ensure_no_duplicate_open_draft(
+			{
+				"company": self.company,
+				"workplace": self.workplace,
+				"period_start": _parse_iso_date(getattr(self, "period_start", None), "Period start").isoformat(),
+				"period_end": _parse_iso_date(getattr(self, "period_end", None), "Period end").isoformat(),
+			},
+			exclude_name=getattr(self, "name", None),
+		)
+
 
 def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any], *, actor: str) -> dict[str, Any]:
 	"""Persist a reviewed Korea payroll closing draft from a validated apply plan.
@@ -99,6 +111,7 @@ def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any
 
 	actor_text = _require_string_text(actor, "actor")
 	fields = _validated_apply_plan_fields(apply_plan, actor=actor_text)
+	_ensure_no_duplicate_open_draft(fields)
 	created = frappe.get_doc(fields).insert()
 	return {
 		"contract_type": "korea_payroll_closing_draft_runtime_insert_v1",
@@ -120,6 +133,24 @@ def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any
 		"requires_human_approval": True,
 		"ai_role": EXPECTED_AI_ROLE,
 	}
+
+
+def _ensure_no_duplicate_open_draft(fields: dict[str, Any], *, exclude_name: str | None = None) -> None:
+	db = getattr(frappe, "db", None)
+	if db is None:
+		return
+	filters = {
+		"company": fields["company"],
+		"workplace": fields["workplace"],
+		"period_start": fields["period_start"],
+		"period_end": fields["period_end"],
+		"docstatus": 0,
+	}
+	if exclude_name:
+		filters["name"] = ["!=", exclude_name]
+	existing = db.exists("Korea Payroll Closing Draft", filters)
+	if existing:
+		frappe.throw(frappe._("Korea Payroll Closing Draft already exists for this company/workplace/period."))
 
 
 def _parse_json_object(value, label: str) -> dict:

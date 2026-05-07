@@ -45,6 +45,16 @@ const routes = [
 				name: "SalarySlipsDashboard",
 				component: () => import("@/views/salary_slip/Dashboard.vue"),
 			},
+			{
+				path: "/dashboard/korea-payroll-closing",
+				name: "KoreaPayrollClosingDashboard",
+				component: () => import("@/views/KoreaPayrollClosing.vue"),
+			},
+			{
+				path: "/korea-payroll-closing-session/:name",
+				name: "KoreaPayrollClosingSessionPreview",
+				component: () => import("@/views/KoreaPayrollClosing.vue"),
+			},
 		],
 	},
 	{

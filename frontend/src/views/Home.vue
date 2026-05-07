@@ -3,6 +3,25 @@
 		<template #body>
 			<div class="flex flex-col items-center my-7 p-4 gap-7">
 				<CheckInPanel />
+				<router-link
+					:to="{ name: 'KoreaPayrollClosingOperatorPreview' }"
+					class="w-full rounded-2xl bg-gray-900 p-5 text-white shadow-sm transition hover:bg-gray-800"
+				>
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<div class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-300">
+								{{ __("Korea Payroll") }}
+							</div>
+							<div class="mt-2 text-xl font-bold leading-tight">
+								{{ __("Monthly Closing Center") }}
+							</div>
+							<div class="mt-2 text-sm leading-5 text-gray-300">
+								{{ __("Review blocked workplaces, evidence packets, and draft readiness before human approval.") }}
+							</div>
+						</div>
+						<FeatherIcon name="arrow-up-right" class="h-5 w-5 shrink-0 text-gray-300" />
+					</div>
+				</router-link>
 				<QuickLinks :items="quickLinks" :title="__('Quick Links')" />
 				<RequestPanel />
 			</div>
@@ -12,6 +31,7 @@
 
 <script setup>
 import { inject, markRaw } from "vue"
+import { FeatherIcon } from "frappe-ui"
 
 import CheckInPanel from "@/components/CheckInPanel.vue"
 import QuickLinks from "@/components/QuickLinks.vue"

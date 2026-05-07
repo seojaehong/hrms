@@ -9,6 +9,7 @@ runtime lookup happens here.
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 from copy import deepcopy
 from typing import Any
@@ -62,6 +63,14 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 	payload = _require_dict(draft.get("payload"), "draft.payload")
 	_validate_payload_scope(payload, company=company, workplace=workplace, period_start=period_start, period_end=period_end)
 	_validate_review_checklist(payload.get("review_checklist"))
+	audit_preview = _require_dict(payload.get("audit_preview"), "draft.payload.audit_preview")
+	_validate_audit_preview_scope(
+		audit_preview,
+		company=company,
+		workplace=workplace,
+		period_start=period_start,
+		period_end=period_end,
+	)
 
 	field_values = {
 		"company": company,
@@ -73,6 +82,29 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 		"approver": approver,
 		"source_session_contract_type": source_session_contract_type,
 		"payload": deepcopy(payload),
+		"audit_preview": deepcopy(audit_preview),
+	}
+	doctype_insert_preview = {
+		"doctype": DRAFT_DOCTYPE,
+		"runtime_action": "preview_only",
+		"requires_runtime_apply": True,
+		"mutation_boundary": MUTATION_BOUNDARY,
+		"fields": {
+			"docstatus": 0,
+			"company": company,
+			"workplace": workplace,
+			"period_start": period_start,
+			"period_end": period_end,
+			"status": "draft_pending_human_approval",
+			"source_payroll_entry": source_payroll_entry,
+			"approver": approver,
+			"source_session_contract_type": source_session_contract_type,
+			"mutation_boundary": MUTATION_BOUNDARY,
+			"requires_human_approval": 1,
+			"ai_role": AI_ROLE,
+			"payload": _json_dumps(payload),
+			"audit_preview": _json_dumps(audit_preview),
+		},
 	}
 
 	return {
@@ -92,6 +124,7 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 		"approver": approver,
 		"actor": actor_text,
 		"field_values": field_values,
+		"doctype_insert_preview": doctype_insert_preview,
 		"requires_human_approval": True,
 		"ai_role": AI_ROLE,
 	}
@@ -124,6 +157,36 @@ def _validate_payload_scope(
 		raise ValueError("draft.payload.session.requires_human_approval must be true")
 	if session.get("ai_role") != AI_ROLE:
 		raise ValueError(f"draft.payload.session.ai_role must be {AI_ROLE}")
+
+
+def _validate_audit_preview_scope(
+	audit_preview: dict[str, Any],
+	*,
+	company: str,
+	workplace: str,
+	period_start: str,
+	period_end: str,
+) -> None:
+	if audit_preview.get("event_type") != "korea_payroll_closing_session_review_v1":
+		raise ValueError(
+			"draft.payload.audit_preview.event_type must be korea_payroll_closing_session_review_v1"
+		)
+	if audit_preview.get("runtime_action") != "preview_only":
+		raise ValueError("draft.payload.audit_preview.runtime_action must be preview_only")
+	if audit_preview.get("requires_runtime_apply") is not True:
+		raise ValueError("draft.payload.audit_preview.requires_runtime_apply must be true")
+	if audit_preview.get("status") != "review_ready":
+		raise ValueError("draft.payload.audit_preview.status must be review_ready")
+	if audit_preview.get("blocker_codes") != []:
+		raise ValueError("draft.payload.audit_preview.blocker_codes must be empty")
+	for key, expected in {
+		"company": company,
+		"workplace": workplace,
+		"period_start": period_start,
+		"period_end": period_end,
+	}.items():
+		if audit_preview.get(key) != expected:
+			raise ValueError(f"draft.payload.audit_preview.{key} must match draft.{key}")
 
 
 def _validate_review_checklist(value: Any) -> None:
@@ -169,30 +232,39 @@ def _require_list(value: Any, fieldname: str) -> list[Any]:
 	return value
 
 
+def _json_dumps(value: dict[str, Any]) -> str:
+	return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
 _FORBIDDEN_SCORE_KEYS = {"risk_score", "probability", "success_rate", "legal_risk_score"}
 _FORBIDDEN_SCORE_KEY_FRAGMENTS = ("risk_score", "probability", "success_rate")
 _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS = ("riskscore", "probability", "successrate")
 
 
-def _forbid_numeric_score_fields(value: Any) -> None:
+def _forbid_numeric_score_fields(value: Any, *, path: tuple[str, ...] = ()) -> None:
 	if isinstance(value, dict):
 		for key, nested in value.items():
-			if _is_forbidden_score_key(key):
-				raise ValueError(f"{key} is not allowed in payroll closing draft apply payloads")
-			_forbid_numeric_score_fields(nested)
+			display_path = (*path, key) if isinstance(key, str) else path
+			if _is_forbidden_score_key(key, parent_path=path):
+				raise ValueError(
+					f"{'.'.join(display_path) if display_path else key} is not allowed in payroll closing draft apply payloads"
+				)
+			_forbid_numeric_score_fields(nested, path=display_path)
 	elif isinstance(value, list):
 		for item in value:
-			_forbid_numeric_score_fields(item)
+			_forbid_numeric_score_fields(item, path=path)
 
 
-def _is_forbidden_score_key(key: Any) -> bool:
+def _is_forbidden_score_key(key: Any, *, parent_path: tuple[str, ...] = ()) -> bool:
 	if not isinstance(key, str):
 		return False
 	normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+	parent_normalized = re.sub(r"[^a-z0-9]", "", "".join(parent_path).lower())
 	return (
 		key in _FORBIDDEN_SCORE_KEYS
 		or any(fragment in key for fragment in _FORBIDDEN_SCORE_KEY_FRAGMENTS)
 		or any(fragment in normalized for fragment in _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS)
+		or (normalized == "score" and any(fragment in parent_normalized for fragment in ("legal", "risk", "probability", "success")))
 	)
 
 

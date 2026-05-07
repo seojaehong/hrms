@@ -129,7 +129,7 @@ export function findKoreaPayrollClosingSession(name) {
 	if (!name) return null
 	const item = koreaPayrollClosingOperatorFixture.items.find((candidate) => candidate.name === name)
 	if (!item) return null
-	return {
+	const session = {
 		...item,
 		blocker_codes: [...item.blocker_codes],
 		primary_action: { ...item.primary_action },
@@ -153,4 +153,121 @@ export function findKoreaPayrollClosingSession(name) {
 			blocker_codes: [...item.blocker_codes],
 		},
 	}
+	return {
+		...session,
+		evidence_packet: buildStaticEvidencePacket(session),
+	}
+}
+
+function buildStaticEvidencePacket(session) {
+	const sourceSession = buildSourceSession(session)
+	return {
+		contract_type: "korea_payroll_closing_evidence_packet_v1",
+		source_session_contract_type: "korea_payroll_closing_session_v1",
+		runtime_action: "preview_only",
+		requires_runtime_apply: false,
+		preview_source: koreaPayrollClosingOperatorFixture.preview_source,
+		company: session.company,
+		workplace: session.workplace,
+		period_start: session.period_start,
+		period_end: session.period_end,
+		status: session.status,
+		actor: session.role,
+		purpose: "payroll closing human review static preview",
+		blocker_codes: [...session.blocker_codes],
+		evidence_items: [
+			{
+				key: "attendance",
+				label: "Attendance readiness",
+				summary: copyCard(session.readiness_cards.find((card) => card.key === "attendance")),
+			},
+			{
+				key: "payroll_artifacts",
+				label: "Payroll and statutory artifacts",
+				summary: {
+					payroll_entry: session.payroll_entry,
+					employee_count: session.employee_count,
+					statutory_basis_visible: true,
+				},
+			},
+			{
+				key: "approval",
+				label: "Approval readiness",
+				summary: copyCard(session.readiness_cards.find((card) => card.key === "approval")),
+			},
+			{
+				key: "notification",
+				label: "Payslip/Kakao notification readiness",
+				summary: copyCard(session.readiness_cards.find((card) => card.key === "notification")),
+			},
+			{
+				key: "expense_settlement",
+				label: "Expense settlement readiness",
+				summary: copyCard(session.readiness_cards.find((card) => card.key === "expense")),
+			},
+			{
+				key: "employment_contracts",
+				label: "Employment contract readiness",
+				summary: copyCard(session.readiness_cards.find((card) => card.key === "contract")),
+			},
+			{
+				key: "audit_preview",
+				label: "Audit preview boundary",
+				summary: {
+					...session.audit_preview,
+					blocker_codes: [...session.audit_preview.blocker_codes],
+				},
+			},
+		],
+		review_checklist: buildStaticReviewChecklist(session),
+		next_actions: [{ ...session.primary_action }],
+		source_session: sourceSession,
+		requires_human_approval: true,
+		ai_role: "assistant_only",
+	}
+}
+
+function buildSourceSession(session) {
+	return {
+		contract_type: "korea_payroll_closing_session_v1",
+		company: session.company,
+		workplace: session.workplace,
+		period_start: session.period_start,
+		period_end: session.period_end,
+		status: session.status,
+		blockers: session.blocker_codes.map((code) => ({
+			code,
+			severity: "blocking",
+			message: code,
+		})),
+		next_actions: [{ ...session.primary_action }],
+		readiness_cards: session.readiness_cards.map((card) => ({ ...card })),
+		payroll_artifacts: {
+			payroll_entry: session.payroll_entry,
+			salary_slip_count: session.employee_count,
+		},
+		approval_state: copyCard(session.readiness_cards.find((card) => card.key === "approval")),
+		notification_state: copyCard(session.readiness_cards.find((card) => card.key === "notification")),
+		audit_preview: {
+			...session.audit_preview,
+			blocker_codes: [...session.audit_preview.blocker_codes],
+		},
+		requires_human_approval: true,
+		ai_role: "assistant_only",
+	}
+}
+
+function buildStaticReviewChecklist(session) {
+	if (!session.blocker_codes.length) {
+		return [{ status: "needs_human_approval", action: "record_human_review", requires_runtime_apply: true }]
+	}
+	return session.blocker_codes.map((code) => ({
+		status: "needs_human_review",
+		blocker_code: code,
+		requires_runtime_apply: true,
+	}))
+}
+
+function copyCard(card) {
+	return card ? { ...card } : { status: "missing" }
 }

@@ -171,6 +171,99 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "Audit preview company is required"):
 			doc.validate()
 
+	def test_runtime_insert_adapter_persists_only_valid_apply_plan_fields(self):
+		module = load_controller_with_frappe_stub()
+		inserted_docs = []
+
+		class FakeDraftDoc:
+			def __init__(self, fields):
+				self.fields = dict(fields)
+				self.name = "KPCD-0001"
+				self.submitted = False
+
+			def insert(self):
+				inserted_docs.append(self)
+				return self
+
+		def fake_get_doc(fields):
+			return FakeDraftDoc(fields)
+
+		module.frappe.get_doc = fake_get_doc
+		apply_plan = self._valid_apply_plan()
+
+		result = module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		self.assertEqual(len(inserted_docs), 1)
+		created_fields = inserted_docs[0].fields
+		self.assertEqual(created_fields["doctype"], "Korea Payroll Closing Draft")
+		self.assertEqual(created_fields["docstatus"], 0)
+		self.assertEqual(created_fields["status"], "draft_pending_human_approval")
+		self.assertEqual(created_fields["mutation_boundary"], "draft_only_no_submit_no_approve_no_send")
+		self.assertEqual(created_fields["requires_human_approval"], 1)
+		self.assertEqual(created_fields["ai_role"], "assistant_only")
+		self.assertIsInstance(created_fields["payload"], str)
+		self.assertIsInstance(created_fields["audit_preview"], str)
+		self.assertEqual(json.loads(created_fields["payload"])["session"]["company"], "Korea Demo Co")
+		self.assertEqual(result["runtime_action"], "runtime_draft_created")
+		self.assertEqual(result["doctype"], "Korea Payroll Closing Draft")
+		self.assertEqual(result["name"], "KPCD-0001")
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+
+	def test_runtime_insert_adapter_rejects_tampered_or_mutating_apply_plans(self):
+		module = load_controller_with_frappe_stub()
+		module.frappe.get_doc = lambda fields: self.fail("invalid plan must not be inserted")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["doctype_insert_preview"]["fields"]["docstatus"] = 1
+		with self.assertRaisesRegex(ValueError, "doctype_insert_preview.fields.docstatus must be 0"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["doctype_insert_preview"]["fields"]["mutation_boundary"] = "submit_and_send"
+		with self.assertRaisesRegex(ValueError, "mutation_boundary must remain draft_only_no_submit_no_approve_no_send"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["requires_human_approval"] = False
+		with self.assertRaisesRegex(ValueError, "apply_plan.requires_human_approval must be true"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["doctype_insert_preview"]["fields"]["payload"] = json.dumps(
+			{"session": {"company": "Korea Demo Co", "workplace": "Seoul HQ", "period_start": "2026-05-01", "period_end": "2026-05-31", "legal": {"score": 0.91}}}
+		)
+		with self.assertRaisesRegex(ValueError, "Payload must not contain numeric risk/probability/success-rate score fields"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["doctype_insert_preview"]["fields"]["name"] = "ATTACK-NAME"
+		with self.assertRaisesRegex(ValueError, "doctype_insert_preview.fields.name is not allowed"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["doctype_insert_preview"]["fields"]["owner"] = "attacker@example.com"
+		with self.assertRaisesRegex(ValueError, "doctype_insert_preview.fields.owner is not allowed"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["company"] = "Other Co"
+		with self.assertRaisesRegex(ValueError, "apply_plan.company must match doctype_insert_preview.fields.company"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["source_draft_contract_type"] = "unexpected"
+		with self.assertRaisesRegex(ValueError, "apply_plan.source_draft_contract_type must be korea_payroll_closing_draft_v1"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		apply_plan = self._valid_apply_plan()
+		apply_plan["actor"] = "other@example.com"
+		with self.assertRaisesRegex(ValueError, "apply_plan.actor must match actor"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
+
+		with self.assertRaisesRegex(ValueError, "actor must be a non-empty string"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(self._valid_apply_plan(), actor=" ")
+
 	def test_controller_rejects_forbidden_numeric_score_keys_in_embedded_json(self):
 		module = load_controller_with_frappe_stub()
 
@@ -246,6 +339,76 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		)
 		with self.assertRaisesRegex(ValueError, "Payload must not contain numeric risk/probability/success-rate score fields"):
 			doc.validate()
+
+	def _valid_apply_plan(self):
+		payload = {
+			"session": {
+				"contract_type": "korea_payroll_closing_session_v1",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"status": "review_ready",
+				"blockers": [],
+				"requires_human_approval": True,
+				"ai_role": "assistant_only",
+			},
+			"review_checklist": [
+				{"key": "attendance", "checked": True, "requires_human_review": True, "ai_role": "assistant_only"}
+			],
+			"audit_preview": {
+				"event_type": "korea_payroll_closing_session_review_v1",
+				"runtime_action": "preview_only",
+				"requires_runtime_apply": True,
+				"status": "review_ready",
+				"blocker_codes": [],
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+			},
+		}
+		return {
+			"contract_type": "korea_payroll_closing_draft_apply_plan_v1",
+			"source_draft_contract_type": "korea_payroll_closing_draft_v1",
+			"runtime_action": "preview_runtime_draft_apply",
+			"requires_runtime_apply": True,
+			"mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+			"would_create_doctype": "Korea Payroll Closing Draft",
+			"docstatus": 0,
+			"status": "draft_pending_human_approval",
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"source_payroll_entry": "PAY-ENTRY-2026-05",
+			"approver": "hr.manager@example.com",
+			"actor": "hr.manager@example.com",
+			"requires_human_approval": True,
+			"ai_role": "assistant_only",
+			"doctype_insert_preview": {
+				"doctype": "Korea Payroll Closing Draft",
+				"runtime_action": "preview_only",
+				"requires_runtime_apply": True,
+				"mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+				"fields": {
+					"docstatus": 0,
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"status": "draft_pending_human_approval",
+					"source_payroll_entry": "PAY-ENTRY-2026-05",
+					"approver": "hr.manager@example.com",
+					"source_session_contract_type": "korea_payroll_closing_session_v1",
+					"mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+					"requires_human_approval": 1,
+					"ai_role": "assistant_only",
+					"payload": json.dumps(payload, ensure_ascii=False, sort_keys=True),
+					"audit_preview": json.dumps(payload["audit_preview"], ensure_ascii=False, sort_keys=True),
+				},
+			},
+		}
 
 	def _valid_doc(self, module):
 		doc = module.KoreaPayrollClosingDraft()

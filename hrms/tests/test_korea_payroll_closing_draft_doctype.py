@@ -171,6 +171,32 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "Audit preview company is required"):
 			doc.validate()
 
+	def test_controller_rejects_duplicate_open_draft_during_validation(self):
+		module = load_controller_with_frappe_stub()
+		doc = self._valid_doc(module)
+
+		outer = self
+
+		class FakeDB:
+			def exists(self, doctype, filters):
+				outer.assertEqual(doctype, "Korea Payroll Closing Draft")
+				outer.assertEqual(
+					filters,
+					{
+						"company": "Korea Demo Co",
+						"workplace": "Seoul HQ",
+						"period_start": "2026-05-01",
+						"period_end": "2026-05-31",
+						"docstatus": 0,
+					},
+				)
+				return "KPCD-EXISTING"
+
+		module.frappe.db = FakeDB()
+
+		with self.assertRaisesRegex(ValueError, "Korea Payroll Closing Draft already exists for this company/workplace/period"):
+			doc.validate()
+
 	def test_runtime_insert_adapter_persists_only_valid_apply_plan_fields(self):
 		module = load_controller_with_frappe_stub()
 		inserted_docs = []
@@ -188,7 +214,12 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		def fake_get_doc(fields):
 			return FakeDraftDoc(fields)
 
+		class FakeDB:
+			def exists(self, doctype, filters):
+				return None
+
 		module.frappe.get_doc = fake_get_doc
+		module.frappe.db = FakeDB()
 		apply_plan = self._valid_apply_plan()
 
 		result = module.create_korea_payroll_closing_draft_from_apply_plan(apply_plan, actor="hr.manager@example.com")
@@ -209,6 +240,34 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		self.assertEqual(result["name"], "KPCD-0001")
 		self.assertTrue(result["requires_human_approval"])
 		self.assertEqual(result["ai_role"], "assistant_only")
+
+	def test_runtime_insert_adapter_rejects_duplicate_workplace_period_draft_before_insert(self):
+		module = load_controller_with_frappe_stub()
+		module.frappe.get_doc = lambda fields: self.fail("duplicate draft must not be inserted")
+
+		outer = self
+
+		class FakeDB:
+			def exists(self, doctype, filters):
+				outer.assertEqual(doctype, "Korea Payroll Closing Draft")
+				outer.assertEqual(
+					filters,
+					{
+						"company": "Korea Demo Co",
+						"workplace": "Seoul HQ",
+						"period_start": "2026-05-01",
+						"period_end": "2026-05-31",
+						"docstatus": 0,
+					},
+				)
+				return "KPCD-EXISTING"
+
+		module.frappe.db = FakeDB()
+
+		with self.assertRaisesRegex(ValueError, "Korea Payroll Closing Draft already exists for this company/workplace/period"):
+			module.create_korea_payroll_closing_draft_from_apply_plan(
+				self._valid_apply_plan(), actor="hr.manager@example.com"
+			)
 
 	def test_runtime_insert_adapter_rejects_tampered_or_mutating_apply_plans(self):
 		module = load_controller_with_frappe_stub()

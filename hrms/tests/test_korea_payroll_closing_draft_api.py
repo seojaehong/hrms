@@ -29,6 +29,22 @@ def review_ready_session():
 		"blockers": [],
 		"next_actions": [{"action": "request_human_approval", "enabled": True}],
 		"readiness_cards": [{"key": "attendance", "status": "ready"}],
+		"review_checklist": [
+			{
+				"key": "attendance_reviewed",
+				"source_card": "attendance",
+				"checked": True,
+				"requires_human_review": True,
+				"ai_role": "assistant_only",
+			},
+			{
+				"key": "statutory_bases_reviewed",
+				"source_card": "payroll_artifacts",
+				"checked": True,
+				"requires_human_review": True,
+				"ai_role": "assistant_only",
+			},
+		],
 		"payroll_artifacts": {
 			"payroll_entry": "PAY-ENTRY-0001",
 			"salary_slip_count": 2,
@@ -75,6 +91,14 @@ class TestKoreaPayrollClosingDraftApi(unittest.TestCase):
 		self.assertTrue(draft["requires_human_approval"])
 		self.assertEqual(draft["ai_role"], "assistant_only")
 		self.assertEqual(draft["payload"]["session"]["status"], "review_ready")
+		self.assertEqual(draft["payload"]["review_checklist"][0]["key"], "attendance_reviewed")
+
+	def test_preview_api_rejects_unchecked_review_checklist_before_draft_boundary(self):
+		session = review_ready_session()
+		session["review_checklist"][0]["checked"] = False
+
+		with self.assertRaisesRegex(ValueError, "session.review_checklist must be fully checked before draft creation"):
+			self.mod.preview_korea_payroll_closing_draft(session=session, actor="hr-ops@example.com")
 
 	def test_preview_api_does_not_mutate_caller_session_or_output_alias(self):
 		session = review_ready_session()

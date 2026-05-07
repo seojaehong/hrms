@@ -9,10 +9,10 @@
 								{{ __("Korea Closing Center") }}
 							</div>
 							<h1 class="mt-2 text-2xl font-bold leading-tight">
-								{{ __("This month is not ready to close") }}
+								{{ demo.company }}
 							</h1>
 							<p class="mt-2 text-sm leading-6 text-gray-300">
-								{{ __("Preview-only operator queue for multi-workplace payroll closing. Runtime save, approval, and sending remain blocked until human review.") }}
+								{{ demo.industry }} · {{ demo.period }} · {{ __("Preview-only operator queue. Runtime save, approval, and sending remain blocked until human review.") }}
 							</p>
 						</div>
 						<div class="rounded-full bg-red-500 px-3 py-1 text-sm font-semibold text-white">
@@ -24,6 +24,22 @@
 						<div v-for="metric in metrics" :key="metric.label" class="rounded-xl bg-white/10 p-3">
 							<div class="text-xl font-bold">{{ metric.value }}</div>
 							<div class="mt-1 text-xs leading-4 text-gray-300">{{ metric.label }}</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+					<div class="flex items-center justify-between">
+						<h2 class="text-lg font-bold text-gray-900">{{ __("Demo operating roles") }}</h2>
+						<span class="text-xs font-medium text-gray-500">{{ demo.roles.length }} {{ __("roles") }}</span>
+					</div>
+					<div class="mt-3 grid gap-2">
+						<div v-for="role in demo.roles" :key="role.label" class="rounded-xl bg-gray-50 p-3">
+							<div class="flex items-center justify-between gap-3">
+								<div class="text-sm font-semibold text-gray-900">{{ role.label }}</div>
+								<div class="text-xs text-gray-500">{{ role.scope }}</div>
+							</div>
+							<div class="mt-1 text-sm text-gray-600">{{ role.name }}</div>
 						</div>
 					</div>
 				</section>
@@ -57,7 +73,9 @@
 							<div>
 								<div class="text-xs font-medium text-gray-500">{{ session.period }}</div>
 								<div class="mt-1 text-lg font-bold text-gray-900">{{ session.workplace }}</div>
-								<div class="mt-1 text-sm text-gray-600">{{ session.company }}</div>
+								<div class="mt-1 text-sm text-gray-600">
+									{{ session.company }} · {{ session.employeeCount }} {{ __("employees") }} · {{ session.manager }}
+								</div>
 							</div>
 							<span
 								class="rounded-full px-3 py-1 text-xs font-semibold"
@@ -84,11 +102,15 @@
 							</ul>
 						</div>
 
+						<div class="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-900">
+							<span class="font-semibold">{{ __("Next action") }}:</span> {{ session.nextAction }}
+						</div>
+
 						<div class="mt-4 flex flex-col gap-2 sm:flex-row">
 							<Button class="w-full justify-center" variant="solid">
 								{{ __("Review evidence packet") }}
 							</Button>
-							<Button class="w-full justify-center" variant="subtle" :disabled="session.status !== 'review_ready'">
+							<Button class="w-full justify-center" variant="subtle" :disabled="!['review_ready', 'draft_ready'].includes(session.status)">
 								{{ __("Prepare draft") }}
 							</Button>
 						</div>
@@ -104,41 +126,12 @@ import { computed, inject } from "vue"
 import { FeatherIcon } from "frappe-ui"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { koreaPayrollClosingDemo } from "@/data/koreaPayrollClosingDemo"
 
 const __ = inject("$translate")
 
-const sessions = [
-	{
-		name: "YE-2026-04-GANGNAM",
-		company: "Winners HR Demo",
-		workplace: "Gangnam Store",
-		period: "2026-04-01 → 2026-04-30",
-		status: "blocked",
-		statusLabel: "Blocked",
-		readiness: [
-			{ label: "Attendance", detail: "2 missing confirmations", ready: false },
-			{ label: "Payroll", detail: "Salary Slip draft ready", ready: true },
-			{ label: "Approval", detail: "Manager approval pending", ready: false },
-			{ label: "Kakao", detail: "Template preview ready", ready: true },
-		],
-		blockers: ["Close two unconfirmed attendance rows", "Manager approval is still pending"],
-	},
-	{
-		name: "YE-2026-04-HONGDAE",
-		company: "Winners HR Demo",
-		workplace: "Hongdae Store",
-		period: "2026-04-01 → 2026-04-30",
-		status: "review_ready",
-		statusLabel: "Review ready",
-		readiness: [
-			{ label: "Attendance", detail: "Monthly closing confirmed", ready: true },
-			{ label: "Payroll", detail: "Statutory deductions prepared", ready: true },
-			{ label: "Approval", detail: "Human review required", ready: true },
-			{ label: "Kakao", detail: "Send remains disabled", ready: true },
-		],
-		blockers: [],
-	},
-]
+const demo = koreaPayrollClosingDemo
+const sessions = demo.sessions
 
 const blockedCount = computed(() => sessions.filter((session) => session.status === "blocked").length)
 
@@ -149,8 +142,8 @@ const metrics = computed(() => [
 ])
 
 function statusClass(status) {
-	return status === "review_ready"
-		? "bg-green-100 text-green-700"
-		: "bg-red-100 text-red-700"
+	if (status === "review_ready") return "bg-green-100 text-green-700"
+	if (status === "draft_ready") return "bg-blue-100 text-blue-700"
+	return "bg-red-100 text-red-700"
 }
 </script>

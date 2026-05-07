@@ -1,0 +1,77 @@
+"""Frappe-facing preview API for Korea payroll closing access decisions.
+
+This module wraps the framework-free payroll closing access-policy contract in a
+preview-only whitelisted API. It accepts JSON/dict session and actor payloads,
+delegates to the pure helper by file-path import for no-bench execution, and
+never saves, submits, approves, sends, calls providers, or mutates runtime
+documents.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
+
+try:  # pragma: no cover - exercised only inside a Frappe bench
+	import frappe  # type: ignore
+except ImportError:  # pragma: no cover - direct-run no-bench mode
+	frappe = None  # type: ignore
+
+
+def _whitelist(fn):
+	if frappe is None:
+		return fn
+	return frappe.whitelist()(fn)
+
+
+@_whitelist
+def preview_korea_payroll_closing_access_decision(*, session: Any, actor: Any, action: Any) -> dict[str, Any]:
+	"""Return a side-effect-free preview of a payroll closing access decision."""
+
+	session_payload = deepcopy(_coerce_mapping(session, "session"))
+	actor_payload = deepcopy(_coerce_mapping(actor, "actor"))
+	core = _load_sibling_module("payroll_closing_access_policy.py", "korea_payroll_closing_access_policy")
+	decision = deepcopy(core.build_payroll_closing_access_decision(session_payload, actor=actor_payload, action=action))
+	access_decision_contract_type = decision.get("contract_type")
+	decision.update(
+		{
+			"contract_type": "korea_payroll_closing_access_decision_preview_v1",
+			"access_decision_contract_type": access_decision_contract_type,
+			"runtime_action": "preview_only",
+			"requires_runtime_apply": False,
+		}
+	)
+	return decision
+
+
+def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:
+	coerced = _coerce_json_if_needed(value, fieldname)
+	if not isinstance(coerced, dict):
+		raise ValueError(f"{fieldname} must be a dict or JSON object")
+	return coerced
+
+
+def _coerce_json_if_needed(value: Any, fieldname: str) -> Any:
+	if isinstance(value, str):
+		text = value.strip()
+		if text.startswith("{") or text.startswith("["):
+			try:
+				return json.loads(text)
+			except json.JSONDecodeError as exc:
+				raise ValueError(f"{fieldname} JSON payload is invalid") from exc
+	return value
+
+
+def _load_sibling_module(filename: str, module_name: str):
+	path = Path(__file__).with_name(filename)
+	spec = importlib.util.spec_from_file_location(module_name, path)
+	module = importlib.util.module_from_spec(spec)
+	assert spec.loader is not None
+	spec.loader.exec_module(module)
+	return module
+
+
+__all__ = ["preview_korea_payroll_closing_access_decision"]

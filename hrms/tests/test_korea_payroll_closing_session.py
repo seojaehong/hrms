@@ -380,6 +380,81 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 				notification_state={},
 			)
 
+	def test_rejects_forbidden_numeric_score_keys_in_source_payloads(self):
+		for alias in ["risk_score", "probabilityScore", "probability_score", "legal_risk_score", "closing_success_rate", "success rate"]:
+			with self.subTest(alias=alias):
+				with self.assertRaisesRegex(ValueError, "payroll_entry.statutory_batch_payload.totals must not include numeric score fields"):
+					self.mod.build_korea_payroll_closing_session(
+						company="Korea Demo Co",
+						workplace="Seoul HQ",
+						period_start="2026-05-01",
+						period_end="2026-05-31",
+						attendance_summary={
+							"company": "Korea Demo Co",
+							"workplace": "Seoul HQ",
+							"period_start": "2026-05-01",
+							"period_end": "2026-05-31",
+							"status": "ready",
+							"unmarked_days": [],
+						},
+						payroll_entry={
+							"name": "PAY-ENTRY-0001",
+							"company": "Korea Demo Co",
+							"workplace": "Seoul HQ",
+							"start_date": "2026-05-01",
+							"end_date": "2026-05-31",
+							"statutory_batch_payload": {"totals": {"gross_earnings": 5250000, alias: 7}},
+						},
+						approval_state={
+							"company": "Korea Demo Co",
+							"workplace": "Seoul HQ",
+							"period_start": "2026-05-01",
+							"period_end": "2026-05-31",
+							"approver": "branch-manager@example.com",
+						},
+						notification_state={
+							"company": "Korea Demo Co",
+							"workplace": "Seoul HQ",
+							"period_start": "2026-05-01",
+							"period_end": "2026-05-31",
+							"payslip_artifacts_ready": True,
+							"kakao_queue_ready": True,
+						},
+					)
+
+		with self.assertRaisesRegex(ValueError, "attendance_summary must not include numeric score fields"):
+			self.mod.build_korea_payroll_closing_session(
+				company="Korea Demo Co",
+				workplace="Seoul HQ",
+				period_start="2026-05-01",
+				period_end="2026-05-31",
+				attendance_summary={
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"status": "ready",
+					"unmarked_days": [],
+					"success rate": 0.8,
+				},
+				payroll_entry={"name": "PAY-ENTRY-0001", "company": "Korea Demo Co", "workplace": "Seoul HQ", "start_date": "2026-05-01", "end_date": "2026-05-31", "statutory_batch_payload": {"totals": {"gross_earnings": 5250000}}},
+				approval_state={
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"approver": "branch-manager@example.com",
+				},
+				notification_state={
+					"company": "Korea Demo Co",
+					"workplace": "Seoul HQ",
+					"period_start": "2026-05-01",
+					"period_end": "2026-05-31",
+					"payslip_artifacts_ready": True,
+					"kakao_queue_ready": True,
+				},
+			)
+
 	def test_notification_readiness_rejects_string_boolean_values(self):
 		with self.assertRaisesRegex(ValueError, "notification_state.payslip_artifacts_ready must be a boolean"):
 			self.mod.build_korea_payroll_closing_session(

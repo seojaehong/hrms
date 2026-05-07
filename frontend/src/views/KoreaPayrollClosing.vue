@@ -2,6 +2,51 @@
 	<BaseLayout pageTitle="Korea Payroll Closing">
 		<template #body>
 			<div class="flex flex-col gap-4 overflow-y-auto bg-gray-50 p-4 pb-24">
+				<section v-if="selectedSession" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-gray-600">← Back to closing queue</router-link>
+					<div class="mt-4 flex items-start justify-between gap-3">
+						<div>
+							<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Session preview</p>
+							<h1 class="mt-1 text-2xl font-bold text-gray-900">{{ selectedSession.workplace }}</h1>
+							<p class="mt-1 text-sm text-gray-500">{{ selectedSession.name }} · {{ selectedSession.period_start }} → {{ selectedSession.period_end }}</p>
+						</div>
+						<span
+							class="rounded-full px-3 py-1 text-xs font-semibold"
+							:class="selectedSession.status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+						>
+							{{ selectedSession.status === 'blocked' ? 'Blocked' : 'Review ready' }}
+						</span>
+					</div>
+					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+						<p class="font-semibold">Preview-only static fixture</p>
+						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · human approval required · AI={{ selectedSession.ai_role }}</p>
+					</div>
+					<div class="mt-4 grid grid-cols-2 gap-2">
+						<div
+							v-for="card in selectedSession.readiness_cards"
+							:key="`${selectedSession.name}-${card.key}`"
+							class="rounded-xl border p-3"
+							:class="card.state === 'blocked' ? 'border-red-100 bg-red-50' : 'border-gray-100 bg-gray-50'"
+						>
+							<p class="text-xs font-semibold text-gray-500">{{ card.label }}</p>
+							<p class="mt-1 text-sm font-medium text-gray-900">{{ card.summary }}</p>
+						</div>
+					</div>
+					<div class="mt-4 rounded-xl bg-gray-50 p-3">
+						<p class="text-xs font-semibold text-gray-500">Primary next action</p>
+						<p class="mt-1 text-base font-bold text-gray-900">{{ selectedSession.primary_action.label }}</p>
+						<p class="mt-1 text-xs text-gray-500">{{ selectedSession.payroll_entry }} · no save/approve/send mutation in static preview</p>
+					</div>
+					<div class="mt-4 rounded-xl bg-gray-900 p-3 text-white">
+						<p class="text-xs font-semibold uppercase tracking-wide text-gray-300">Audit preview</p>
+						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
+						<p class="mt-1 text-xs text-gray-300">Blockers: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : 'none' }}</p>
+					</div>
+				</section>
+				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
+					<p class="font-semibold">Session fixture not found</p>
+					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the static payroll closing fixture.</p>
+				</section>
 				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">Static fixture preview</p>
 					<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
@@ -85,6 +130,14 @@
 </template>
 
 <script setup>
+import { computed } from "vue"
+import { useRoute } from "vue-router"
 import BaseLayout from "@/components/BaseLayout.vue"
-import { koreaPayrollClosingOperatorFixture as fixture } from "@/data/koreaPayrollClosingFixture"
+import {
+	findKoreaPayrollClosingSession,
+	koreaPayrollClosingOperatorFixture as fixture,
+} from "@/data/koreaPayrollClosingFixture"
+
+const route = useRoute()
+const selectedSession = computed(() => findKoreaPayrollClosingSession(route.params.name))
 </script>

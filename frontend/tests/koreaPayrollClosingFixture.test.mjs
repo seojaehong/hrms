@@ -1,5 +1,8 @@
 import assert from "node:assert/strict"
-import { koreaPayrollClosingOperatorFixture } from "../src/data/koreaPayrollClosingFixture.js"
+import {
+	findKoreaPayrollClosingSession,
+	koreaPayrollClosingOperatorFixture,
+} from "../src/data/koreaPayrollClosingFixture.js"
 
 assert.equal(koreaPayrollClosingOperatorFixture.contract_type, "korea_payroll_closing_worklist_preview_v1")
 assert.equal(koreaPayrollClosingOperatorFixture.runtime_action, "preview_only")
@@ -30,6 +33,31 @@ assert.ok(blockedSession.blocker_codes.includes("attendance_not_ready") || block
 const readySession = koreaPayrollClosingOperatorFixture.items.find((item) => item.status === "review_ready")
 assert.ok(readySession, "fixture should include a review-ready workplace")
 assert.equal(readySession.blocker_codes.length, 0)
+
+const selectedSession = findKoreaPayrollClosingSession("KPCS-2026-05-SEOUL-HQ")
+assert.equal(selectedSession.name, "KPCS-2026-05-SEOUL-HQ")
+assert.equal(selectedSession.route, "korea-payroll-closing-session/KPCS-2026-05-SEOUL-HQ")
+assert.equal(selectedSession.runtime_action, "preview_only")
+assert.equal(selectedSession.preview_source, "static_fixture")
+assert.equal(selectedSession.requires_runtime_apply, false)
+assert.equal(selectedSession.requires_human_approval, true)
+assert.equal(selectedSession.ai_role, "assistant_only")
+assert.ok(selectedSession.audit_preview)
+assert.equal(selectedSession.audit_preview.runtime_action, "preview_only")
+assert.deepEqual(selectedSession.audit_preview.blocker_codes, selectedSession.blocker_codes)
+assert.equal(findKoreaPayrollClosingSession("missing-session"), null)
+
+const sourceSession = koreaPayrollClosingOperatorFixture.items.find((item) => item.name === selectedSession.name)
+assert.notEqual(selectedSession.blocker_codes, sourceSession.blocker_codes)
+assert.notEqual(selectedSession.primary_action, sourceSession.primary_action)
+assert.notEqual(selectedSession.readiness_cards, sourceSession.readiness_cards)
+assert.notEqual(selectedSession.readiness_cards[0], sourceSession.readiness_cards[0])
+selectedSession.blocker_codes.push("mutation_leak")
+selectedSession.primary_action.label = "mutation leak"
+selectedSession.readiness_cards[0].summary = "mutation leak"
+assert.ok(!sourceSession.blocker_codes.includes("mutation_leak"))
+assert.notEqual(sourceSession.primary_action.label, "mutation leak")
+assert.notEqual(sourceSession.readiness_cards[0].summary, "mutation leak")
 
 function walk(value) {
 	if (Array.isArray(value)) return value.forEach(walk)

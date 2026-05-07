@@ -9,6 +9,7 @@ later persist or mutate from this read model behind human approval.
 from __future__ import annotations
 
 import datetime as dt
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -608,7 +609,32 @@ def _optional_payload(value: dict[str, Any] | None, fieldname: str) -> dict[str,
 		return {}
 	if not isinstance(value, dict):
 		raise ValueError(f"{fieldname} must be a dict")
+	_reject_forbidden_score_fields(value, fieldname)
 	return value
+
+
+_FORBIDDEN_SCORE_KEYS = {"risk_score", "score", "probability", "success_rate", "legal_risk_score"}
+_FORBIDDEN_SCORE_KEY_FRAGMENTS = ("risk_score", "probability", "success_rate")
+_FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS = ("riskscore", "probability", "successrate")
+
+
+def _reject_forbidden_score_fields(value: Any, path: str) -> None:
+	if isinstance(value, dict):
+		for key, child in value.items():
+			key_text = str(key)
+			normalized_key = key_text.strip().lower().replace(" ", "_").replace("-", "_")
+			compact_key = re.sub(r"[^a-z0-9]", "", key_text.lower())
+			child_path = f"{path}.{key_text}"
+			if (
+				normalized_key in _FORBIDDEN_SCORE_KEYS
+				or any(fragment in normalized_key for fragment in _FORBIDDEN_SCORE_KEY_FRAGMENTS)
+				or any(fragment in compact_key for fragment in _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS)
+			):
+				raise ValueError(f"{path} must not include numeric score fields")
+			_reject_forbidden_score_fields(child, child_path)
+	elif isinstance(value, list):
+		for index, child in enumerate(value):
+			_reject_forbidden_score_fields(child, f"{path}[{index}]")
 
 
 def _optional_note(value: Any) -> str | None:

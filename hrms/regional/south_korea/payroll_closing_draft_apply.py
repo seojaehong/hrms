@@ -9,6 +9,7 @@ runtime lookup happens here.
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 from copy import deepcopy
 from typing import Any
@@ -62,6 +63,14 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 	payload = _require_dict(draft.get("payload"), "draft.payload")
 	_validate_payload_scope(payload, company=company, workplace=workplace, period_start=period_start, period_end=period_end)
 	_validate_review_checklist(payload.get("review_checklist"))
+	audit_preview = _require_dict(payload.get("audit_preview"), "draft.payload.audit_preview")
+	_validate_audit_preview_scope(
+		audit_preview,
+		company=company,
+		workplace=workplace,
+		period_start=period_start,
+		period_end=period_end,
+	)
 
 	field_values = {
 		"company": company,
@@ -73,6 +82,29 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 		"approver": approver,
 		"source_session_contract_type": source_session_contract_type,
 		"payload": deepcopy(payload),
+		"audit_preview": deepcopy(audit_preview),
+	}
+	doctype_insert_preview = {
+		"doctype": DRAFT_DOCTYPE,
+		"runtime_action": "preview_only",
+		"requires_runtime_apply": True,
+		"mutation_boundary": MUTATION_BOUNDARY,
+		"fields": {
+			"docstatus": 0,
+			"company": company,
+			"workplace": workplace,
+			"period_start": period_start,
+			"period_end": period_end,
+			"status": "draft_pending_human_approval",
+			"source_payroll_entry": source_payroll_entry,
+			"approver": approver,
+			"source_session_contract_type": source_session_contract_type,
+			"mutation_boundary": MUTATION_BOUNDARY,
+			"requires_human_approval": 1,
+			"ai_role": AI_ROLE,
+			"payload": _json_dumps(payload),
+			"audit_preview": _json_dumps(audit_preview),
+		},
 	}
 
 	return {
@@ -92,6 +124,7 @@ def build_korea_payroll_closing_draft_apply_plan(draft: dict[str, Any], *, actor
 		"approver": approver,
 		"actor": actor_text,
 		"field_values": field_values,
+		"doctype_insert_preview": doctype_insert_preview,
 		"requires_human_approval": True,
 		"ai_role": AI_ROLE,
 	}
@@ -124,6 +157,26 @@ def _validate_payload_scope(
 		raise ValueError("draft.payload.session.requires_human_approval must be true")
 	if session.get("ai_role") != AI_ROLE:
 		raise ValueError(f"draft.payload.session.ai_role must be {AI_ROLE}")
+
+
+def _validate_audit_preview_scope(
+	audit_preview: dict[str, Any],
+	*,
+	company: str,
+	workplace: str,
+	period_start: str,
+	period_end: str,
+) -> None:
+	if audit_preview.get("runtime_action") != "preview_only":
+		raise ValueError("draft.payload.audit_preview.runtime_action must be preview_only")
+	for key, expected in {
+		"company": company,
+		"workplace": workplace,
+		"period_start": period_start,
+		"period_end": period_end,
+	}.items():
+		if audit_preview.get(key) != expected:
+			raise ValueError(f"draft.payload.audit_preview.{key} must match draft.{key}")
 
 
 def _validate_review_checklist(value: Any) -> None:
@@ -167,6 +220,10 @@ def _require_list(value: Any, fieldname: str) -> list[Any]:
 	if not isinstance(value, list):
 		raise ValueError(f"{fieldname} must be a list")
 	return value
+
+
+def _json_dumps(value: dict[str, Any]) -> str:
+	return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 _FORBIDDEN_SCORE_KEYS = {"risk_score", "probability", "success_rate", "legal_risk_score"}

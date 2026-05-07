@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import pathlib
 import unittest
 
@@ -99,10 +100,34 @@ class TestKoreaPayrollClosingDraftApply(unittest.TestCase):
 		self.assertEqual(plan["workplace"], "Seoul HQ")
 		self.assertEqual(plan["field_values"]["source_payroll_entry"], "PAY-ENTRY-0001")
 		self.assertEqual(plan["field_values"]["payload"]["review_checklist"][0]["key"], "attendance_reviewed")
+		self.assertEqual(plan["field_values"]["audit_preview"]["runtime_action"], "preview_only")
 		self.assertTrue(plan["requires_human_approval"])
 		self.assertEqual(plan["ai_role"], "assistant_only")
 		self.assertEqual(draft, original)
 		self.assertFalse(self._contains_forbidden_numeric_score(plan))
+
+	def test_builds_json_safe_doctype_insert_preview_for_runtime_adapter(self):
+		plan = self.mod.build_korea_payroll_closing_draft_apply_plan(
+			draft_payload(), actor="payroll-ops@example.com"
+		)
+
+		insert_preview = plan["doctype_insert_preview"]
+		fields = insert_preview["fields"]
+
+		self.assertEqual(insert_preview["doctype"], "Korea Payroll Closing Draft")
+		self.assertEqual(insert_preview["runtime_action"], "preview_only")
+		self.assertTrue(insert_preview["requires_runtime_apply"])
+		self.assertEqual(insert_preview["mutation_boundary"], "draft_only_no_submit_no_approve_no_send")
+		self.assertEqual(fields["docstatus"], 0)
+		self.assertEqual(fields["company"], "Korea Demo Co")
+		self.assertEqual(fields["workplace"], "Seoul HQ")
+		self.assertEqual(fields["source_payroll_entry"], "PAY-ENTRY-0001")
+		self.assertIsInstance(fields["payload"], str)
+		self.assertIsInstance(fields["audit_preview"], str)
+		self.assertEqual(json.loads(fields["payload"])["review_checklist"][0]["key"], "attendance_reviewed")
+		self.assertEqual(json.loads(fields["audit_preview"])["runtime_action"], "preview_only")
+		for forbidden in ["name", "owner", "submitted", "submit", "send", "approve"]:
+			self.assertNotIn(forbidden, fields)
 
 	def test_rejects_preview_api_drafts_instead_of_runtime_draft_contract(self):
 		draft = draft_payload()

@@ -6,6 +6,8 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
+from copy import deepcopy
+from typing import Any
 
 import frappe
 from frappe.model.document import Document
@@ -87,6 +89,39 @@ class KoreaPayrollClosingDraft(Document):
 			frappe.throw(frappe._("Human approval is required for Korea payroll closing drafts."))
 
 
+def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any], *, actor: str) -> dict[str, Any]:
+	"""Persist a reviewed Korea payroll closing draft from a validated apply plan.
+
+	This is the first controlled runtime persistence boundary. It creates only a
+	draft DocType row; it does not submit, approve, send Kakao notifications, call
+	providers, or create payroll documents.
+	"""
+
+	actor_text = _require_string_text(actor, "actor")
+	fields = _validated_apply_plan_fields(apply_plan, actor=actor_text)
+	created = frappe.get_doc(fields).insert()
+	return {
+		"contract_type": "korea_payroll_closing_draft_runtime_insert_v1",
+		"source_apply_plan_contract_type": "korea_payroll_closing_draft_apply_plan_v1",
+		"runtime_action": "runtime_draft_created",
+		"requires_runtime_apply": False,
+		"mutation_boundary": EXPECTED_MUTATION_BOUNDARY,
+		"doctype": "Korea Payroll Closing Draft",
+		"name": getattr(created, "name", None),
+		"status": EXPECTED_STATUS,
+		"company": fields["company"],
+		"workplace": fields["workplace"],
+		"period_start": fields["period_start"],
+		"period_end": fields["period_end"],
+		"source_payroll_entry": fields["source_payroll_entry"],
+		"approver": fields["approver"],
+		"actor": actor_text,
+		"docstatus": 0,
+		"requires_human_approval": True,
+		"ai_role": EXPECTED_AI_ROLE,
+	}
+
+
 def _parse_json_object(value, label: str) -> dict:
 	if not isinstance(value, str) or not value.strip():
 		frappe.throw(frappe._(f"{label} must be valid JSON."))
@@ -119,6 +154,132 @@ def _iter_json_keys(value):
 
 def _normalize_score_key(key: str) -> str:
 	return re.sub(r"[^a-z0-9]+", "_", key.strip().lower()).strip("_").replace("_", "")
+
+
+def _validated_apply_plan_fields(apply_plan: dict[str, Any], *, actor: str) -> dict[str, Any]:
+	if not isinstance(apply_plan, dict):
+		frappe.throw(frappe._("apply_plan must be a JSON object."))
+	if apply_plan.get("contract_type") != "korea_payroll_closing_draft_apply_plan_v1":
+		frappe.throw(frappe._("apply_plan.contract_type must be korea_payroll_closing_draft_apply_plan_v1."))
+	if apply_plan.get("source_draft_contract_type") != "korea_payroll_closing_draft_v1":
+		frappe.throw(frappe._("apply_plan.source_draft_contract_type must be korea_payroll_closing_draft_v1."))
+	if apply_plan.get("runtime_action") != "preview_runtime_draft_apply":
+		frappe.throw(frappe._("apply_plan.runtime_action must be preview_runtime_draft_apply."))
+	if apply_plan.get("requires_runtime_apply") is not True:
+		frappe.throw(frappe._("apply_plan.requires_runtime_apply must be true."))
+	if apply_plan.get("requires_human_approval") is not True:
+		frappe.throw(frappe._("apply_plan.requires_human_approval must be true."))
+	if apply_plan.get("ai_role") != EXPECTED_AI_ROLE:
+		frappe.throw(frappe._("apply_plan.ai_role must be assistant_only."))
+	if apply_plan.get("mutation_boundary") != EXPECTED_MUTATION_BOUNDARY:
+		frappe.throw(frappe._("mutation_boundary must remain draft_only_no_submit_no_approve_no_send."))
+	if apply_plan.get("would_create_doctype") != "Korea Payroll Closing Draft":
+		frappe.throw(frappe._("apply_plan.would_create_doctype must be Korea Payroll Closing Draft."))
+	if apply_plan.get("docstatus") != 0:
+		frappe.throw(frappe._("apply_plan.docstatus must be 0."))
+
+	preview = apply_plan.get("doctype_insert_preview")
+	if not isinstance(preview, dict):
+		frappe.throw(frappe._("doctype_insert_preview must be a JSON object."))
+	if preview.get("doctype") != "Korea Payroll Closing Draft":
+		frappe.throw(frappe._("doctype_insert_preview.doctype must be Korea Payroll Closing Draft."))
+	if preview.get("runtime_action") != "preview_only":
+		frappe.throw(frappe._("doctype_insert_preview.runtime_action must be preview_only."))
+	if preview.get("requires_runtime_apply") is not True:
+		frappe.throw(frappe._("doctype_insert_preview.requires_runtime_apply must be true."))
+	if preview.get("mutation_boundary") != EXPECTED_MUTATION_BOUNDARY:
+		frappe.throw(frappe._("mutation_boundary must remain draft_only_no_submit_no_approve_no_send."))
+	fields = preview.get("fields")
+	if not isinstance(fields, dict):
+		frappe.throw(frappe._("doctype_insert_preview.fields must be a JSON object."))
+
+	allowed_fields = {
+		"doctype",
+		"docstatus",
+		"company",
+		"workplace",
+		"period_start",
+		"period_end",
+		"status",
+		"source_payroll_entry",
+		"approver",
+		"source_session_contract_type",
+		"mutation_boundary",
+		"requires_human_approval",
+		"ai_role",
+		"payload",
+		"audit_preview",
+	}
+	for fieldname in fields:
+		if fieldname not in allowed_fields:
+			frappe.throw(frappe._(f"doctype_insert_preview.fields.{fieldname} is not allowed."))
+	validated = deepcopy(fields)
+	if validated.get("doctype") not in (None, "Korea Payroll Closing Draft"):
+		frappe.throw(frappe._("doctype_insert_preview.fields.doctype must be Korea Payroll Closing Draft."))
+	validated["doctype"] = "Korea Payroll Closing Draft"
+	if validated.get("docstatus") != 0:
+		frappe.throw(frappe._("doctype_insert_preview.fields.docstatus must be 0."))
+	if validated.get("status") != EXPECTED_STATUS:
+		frappe.throw(frappe._("Korea Payroll Closing Draft stays draft_pending_human_approval."))
+	if validated.get("source_session_contract_type") != EXPECTED_SESSION_CONTRACT_TYPE:
+		frappe.throw(frappe._("Source session contract type must be korea_payroll_closing_session_v1."))
+	if validated.get("mutation_boundary") != EXPECTED_MUTATION_BOUNDARY:
+		frappe.throw(frappe._("mutation_boundary must remain draft_only_no_submit_no_approve_no_send."))
+	if validated.get("requires_human_approval") not in (1, True):
+		frappe.throw(frappe._("Human approval is required for Korea payroll closing drafts."))
+	if validated.get("ai_role") != EXPECTED_AI_ROLE:
+		frappe.throw(frappe._("AI role must be assistant_only."))
+
+	for fieldname in ("company", "workplace", "source_payroll_entry", "approver"):
+		validated[fieldname] = _require_string_text(validated.get(fieldname), f"doctype_insert_preview.fields.{fieldname}")
+	validated["period_start"] = _parse_iso_date(validated.get("period_start"), "Period start").isoformat()
+	validated["period_end"] = _parse_iso_date(validated.get("period_end"), "Period end").isoformat()
+	if dt.date.fromisoformat(validated["period_start"]) > dt.date.fromisoformat(validated["period_end"]):
+		frappe.throw(frappe._("Period start must be on or before period end."))
+	for fieldname in (
+		"company",
+		"workplace",
+		"period_start",
+		"period_end",
+		"status",
+		"source_payroll_entry",
+		"approver",
+		"docstatus",
+		"requires_human_approval",
+		"ai_role",
+	):
+		if apply_plan.get(fieldname) != validated[fieldname]:
+			frappe.throw(
+				frappe._(f"apply_plan.{fieldname} must match doctype_insert_preview.fields.{fieldname}.")
+			)
+	if _require_string_text(apply_plan.get("actor"), "apply_plan.actor") != actor:
+		frappe.throw(frappe._("apply_plan.actor must match actor."))
+
+	payload = _parse_json_object(validated.get("payload"), "Payload")
+	audit_preview = _parse_json_object(validated.get("audit_preview"), "Audit Preview")
+	_reject_forbidden_score_keys(payload, "Payload")
+	_reject_forbidden_score_keys(audit_preview, "Audit Preview")
+	_validate_scope_dict(payload.get("session"), "Payload session", validated)
+	_validate_scope_dict(audit_preview, "Audit preview", validated)
+	validated["payload"] = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+	validated["audit_preview"] = json.dumps(audit_preview, ensure_ascii=False, sort_keys=True)
+	return validated
+
+
+def _validate_scope_dict(value: Any, label: str, expected_fields: dict[str, Any]) -> None:
+	if not isinstance(value, dict):
+		frappe.throw(frappe._(f"{label} must be a JSON object."))
+	for fieldname in ("company", "workplace", "period_start", "period_end"):
+		if fieldname not in value:
+			frappe.throw(frappe._(f"{label} {fieldname} is required."))
+		if value.get(fieldname) != expected_fields[fieldname]:
+			frappe.throw(frappe._(f"{label} {fieldname} must match the draft {fieldname}."))
+
+
+def _require_string_text(value: Any, label: str) -> str:
+	if not isinstance(value, str) or not value.strip():
+		frappe.throw(frappe._(f"{label} must be a non-empty string."))
+	return value.strip()
 
 
 def _parse_iso_date(value, label: str) -> dt.date:

@@ -80,6 +80,21 @@ class TestKoreaPayrollClosingSessionApi(unittest.TestCase):
 		self.assertEqual(session["ai_role"], "assistant_only")
 		self.assertEqual(session["source"], {"doctype": "Payroll Entry", "name": "PAY-ENTRY-API-0001"})
 		self.assertEqual(session["audit_preview"]["runtime_action"], "preview_only")
+		self.assertEqual(
+			[item["key"] for item in session["review_checklist"]],
+			[
+				"attendance_reviewed",
+				"statutory_bases_reviewed",
+				"expense_settlements_reviewed",
+				"employment_contracts_reviewed",
+				"payslip_kakao_artifacts_reviewed",
+				"human_approver_assigned",
+			],
+		)
+		self.assertEqual(session["review_checklist"][0]["source_card"], "attendance")
+		self.assertTrue(all(item["requires_human_review"] is True for item in session["review_checklist"]))
+		self.assertTrue(all(item["checked"] is False for item in session["review_checklist"]))
+		self.assertTrue(all(item["ai_role"] == "assistant_only" for item in session["review_checklist"]))
 
 	def test_preview_api_accepts_expense_state_json_payload(self):
 		session = self.mod.preview_korea_payroll_closing_session(

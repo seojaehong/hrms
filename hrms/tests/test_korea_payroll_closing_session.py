@@ -83,6 +83,20 @@ class TestKoreaPayrollClosingSession(unittest.TestCase):
 		self.assertEqual(session["notification_state"]["recipient_count"], 2)
 		self.assertIn("review_payroll_artifacts", [action["action"] for action in session["next_actions"]])
 		self.assertEqual(session["audit_preview"]["event_type"], "korea_payroll_closing_session_review_v1")
+		self.assertEqual(
+			[item["key"] for item in session["review_checklist"]],
+			[
+				"attendance_reviewed",
+				"statutory_bases_reviewed",
+				"expense_settlements_reviewed",
+				"employment_contracts_reviewed",
+				"payslip_kakao_artifacts_reviewed",
+				"human_approver_assigned",
+			],
+		)
+		self.assertTrue(all(item["checked"] is False for item in session["review_checklist"]))
+		self.assertTrue(all(item["requires_human_review"] is True for item in session["review_checklist"]))
+		self.assertTrue(all(item["ai_role"] == "assistant_only" for item in session["review_checklist"]))
 		self.assertFalse(self._contains_forbidden_numeric_score(session))
 
 	def test_missing_attendance_creates_blocker(self):

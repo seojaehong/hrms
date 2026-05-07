@@ -167,8 +167,18 @@ def _validate_audit_preview_scope(
 	period_start: str,
 	period_end: str,
 ) -> None:
+	if audit_preview.get("event_type") != "korea_payroll_closing_session_review_v1":
+		raise ValueError(
+			"draft.payload.audit_preview.event_type must be korea_payroll_closing_session_review_v1"
+		)
 	if audit_preview.get("runtime_action") != "preview_only":
 		raise ValueError("draft.payload.audit_preview.runtime_action must be preview_only")
+	if audit_preview.get("requires_runtime_apply") is not True:
+		raise ValueError("draft.payload.audit_preview.requires_runtime_apply must be true")
+	if audit_preview.get("status") != "review_ready":
+		raise ValueError("draft.payload.audit_preview.status must be review_ready")
+	if audit_preview.get("blocker_codes") != []:
+		raise ValueError("draft.payload.audit_preview.blocker_codes must be empty")
 	for key, expected in {
 		"company": company,
 		"workplace": workplace,
@@ -231,25 +241,30 @@ _FORBIDDEN_SCORE_KEY_FRAGMENTS = ("risk_score", "probability", "success_rate")
 _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS = ("riskscore", "probability", "successrate")
 
 
-def _forbid_numeric_score_fields(value: Any) -> None:
+def _forbid_numeric_score_fields(value: Any, *, path: tuple[str, ...] = ()) -> None:
 	if isinstance(value, dict):
 		for key, nested in value.items():
-			if _is_forbidden_score_key(key):
-				raise ValueError(f"{key} is not allowed in payroll closing draft apply payloads")
-			_forbid_numeric_score_fields(nested)
+			display_path = (*path, key) if isinstance(key, str) else path
+			if _is_forbidden_score_key(key, parent_path=path):
+				raise ValueError(
+					f"{'.'.join(display_path) if display_path else key} is not allowed in payroll closing draft apply payloads"
+				)
+			_forbid_numeric_score_fields(nested, path=display_path)
 	elif isinstance(value, list):
 		for item in value:
-			_forbid_numeric_score_fields(item)
+			_forbid_numeric_score_fields(item, path=path)
 
 
-def _is_forbidden_score_key(key: Any) -> bool:
+def _is_forbidden_score_key(key: Any, *, parent_path: tuple[str, ...] = ()) -> bool:
 	if not isinstance(key, str):
 		return False
 	normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+	parent_normalized = re.sub(r"[^a-z0-9]", "", "".join(parent_path).lower())
 	return (
 		key in _FORBIDDEN_SCORE_KEYS
 		or any(fragment in key for fragment in _FORBIDDEN_SCORE_KEY_FRAGMENTS)
 		or any(fragment in normalized for fragment in _FORBIDDEN_NORMALIZED_SCORE_FRAGMENTS)
+		or (normalized == "score" and any(fragment in parent_normalized for fragment in ("legal", "risk", "probability", "success")))
 	)
 
 

@@ -174,6 +174,19 @@ class TestKoreaPayrollClosingDraftApply(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "draft.payload.session.contract_type must be korea_payroll_closing_session_v1"):
 			self.mod.build_korea_payroll_closing_draft_apply_plan(draft, actor="payroll-ops@example.com")
 
+	def test_rejects_audit_preview_that_no_longer_matches_review_ready_session(self):
+		for field, value, message in [
+			("event_type", "custom_event", "draft.payload.audit_preview.event_type must be korea_payroll_closing_session_review_v1"),
+			("requires_runtime_apply", False, "draft.payload.audit_preview.requires_runtime_apply must be true"),
+			("blocker_codes", ["attendance_not_ready"], "draft.payload.audit_preview.blocker_codes must be empty"),
+			("status", "blocked", "draft.payload.audit_preview.status must be review_ready"),
+		]:
+			draft = draft_payload()
+			draft["payload"]["audit_preview"][field] = value
+			with self.subTest(field=field):
+				with self.assertRaisesRegex(ValueError, message):
+					self.mod.build_korea_payroll_closing_draft_apply_plan(draft, actor="payroll-ops@example.com")
+
 	def test_rejects_invalid_or_reversed_periods_at_apply_boundary(self):
 		for period_start, period_end, message in [
 			("not-a-date", "2026-05-31", "draft.period_start must be an ISO date"),
@@ -195,6 +208,13 @@ class TestKoreaPayrollClosingDraftApply(unittest.TestCase):
 			with self.subTest(key=key):
 				with self.assertRaisesRegex(ValueError, f"{key} is not allowed in payroll closing draft apply payloads"):
 					self.mod.build_korea_payroll_closing_draft_apply_plan(draft, actor="payroll-ops@example.com")
+
+	def test_rejects_split_nested_legal_score_fields_before_payload_copy(self):
+		draft = draft_payload()
+		draft["payload"]["payroll_artifacts"]["legal"] = {"score": 0.75}
+
+		with self.assertRaisesRegex(ValueError, "legal.score is not allowed in payroll closing draft apply payloads"):
+			self.mod.build_korea_payroll_closing_draft_apply_plan(draft, actor="payroll-ops@example.com")
 
 	def test_actor_must_be_actual_non_empty_string(self):
 		for actor in [None, 123, "   "]:

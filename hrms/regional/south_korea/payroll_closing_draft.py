@@ -49,6 +49,7 @@ def build_korea_payroll_closing_draft(session: dict[str, Any], *, actor: str) ->
 	period_end = _parse_iso_date_text(session.get("period_end"), "session.period_end")
 	if dt.date.fromisoformat(period_start) > dt.date.fromisoformat(period_end):
 		raise ValueError("session.period_start must be on or before session.period_end")
+	review_checklist = _validate_review_checklist(session.get("review_checklist"))
 	payroll_artifacts = _require_dict(session.get("payroll_artifacts"), "session.payroll_artifacts")
 	payroll_entry_value = payroll_artifacts.get("payroll_entry")
 	if not isinstance(payroll_entry_value, str) or not payroll_entry_value.strip():
@@ -73,6 +74,7 @@ def build_korea_payroll_closing_draft(session: dict[str, Any], *, actor: str) ->
 		"approval_state": deepcopy(approval_state),
 		"notification_state": deepcopy(_require_dict(session.get("notification_state"), "session.notification_state")),
 		"readiness_cards": deepcopy(_require_list(session.get("readiness_cards"), "session.readiness_cards")),
+		"review_checklist": review_checklist,
 		"next_actions": deepcopy(_require_list(session.get("next_actions"), "session.next_actions")),
 		"audit_preview": deepcopy(audit_preview),
 	}
@@ -125,6 +127,31 @@ def _parse_iso_date_text(value: Any, fieldname: str) -> str:
 	except ValueError as exc:
 		raise ValueError(f"{fieldname} must be an ISO date") from exc
 	return parsed.isoformat()
+
+
+def _validate_review_checklist(value: Any) -> list[dict[str, Any]]:
+	items = _require_list(value, "session.review_checklist")
+	if not items:
+		raise ValueError("session.review_checklist must include at least one item")
+	validated = []
+	unchecked = []
+	for item in items:
+		if not isinstance(item, dict):
+			raise ValueError("session.review_checklist must contain dict items")
+		key = _require_string_text(item.get("key"), "session.review_checklist.key")
+		if item.get("requires_human_review") is not True:
+			raise ValueError("session.review_checklist.requires_human_review must be true")
+		if item.get("ai_role") != AI_ROLE:
+			raise ValueError(f"session.review_checklist.ai_role must be {AI_ROLE}")
+		checked = item.get("checked")
+		if not isinstance(checked, bool):
+			raise ValueError("session.review_checklist.checked must be a boolean")
+		if checked is not True:
+			unchecked.append(key)
+		validated.append(deepcopy(item))
+	if unchecked:
+		raise ValueError("session.review_checklist must be fully checked before draft creation")
+	return validated
 
 
 def _validate_audit_preview(

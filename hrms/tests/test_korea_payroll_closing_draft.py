@@ -28,6 +28,22 @@ def review_ready_session():
 		"blockers": [],
 		"next_actions": [{"action": "request_human_approval", "enabled": True}],
 		"readiness_cards": [{"key": "attendance", "status": "ready"}],
+		"review_checklist": [
+			{
+				"key": "attendance_reviewed",
+				"source_card": "attendance",
+				"checked": True,
+				"requires_human_review": True,
+				"ai_role": "assistant_only",
+			},
+			{
+				"key": "statutory_bases_reviewed",
+				"source_card": "payroll_artifacts",
+				"checked": True,
+				"requires_human_review": True,
+				"ai_role": "assistant_only",
+			},
+		],
 		"payroll_artifacts": {
 			"payroll_entry": "PAY-ENTRY-0001",
 			"salary_slip_count": 2,
@@ -78,8 +94,31 @@ class TestKoreaPayrollClosingDraft(unittest.TestCase):
 		self.assertEqual(draft["mutation_boundary"], "draft_only_no_submit_no_approve_no_send")
 		self.assertEqual(draft["payload"]["payroll_artifacts"]["salary_slip_count"], 2)
 		self.assertEqual(draft["payload"]["audit_preview"]["event_type"], "korea_payroll_closing_session_review_v1")
+		self.assertEqual(
+			[item["key"] for item in draft["payload"]["review_checklist"]],
+			["attendance_reviewed", "statutory_bases_reviewed"],
+		)
 		self.assertEqual(session, original)
 		self.assertFalse(self._contains_forbidden_numeric_score(draft))
+
+	def test_review_checklist_must_be_fully_checked_before_draft_creation(self):
+		session = review_ready_session()
+		session["review_checklist"][1]["checked"] = False
+
+		with self.assertRaisesRegex(ValueError, "session.review_checklist must be fully checked before draft creation"):
+			self.mod.build_korea_payroll_closing_draft(session, actor="hr-ops@example.com")
+
+	def test_review_checklist_items_must_preserve_human_review_and_assistant_only_role(self):
+		for field, value, message in [
+			("requires_human_review", False, "session.review_checklist.requires_human_review must be true"),
+			("ai_role", "autonomous_agent", "session.review_checklist.ai_role must be assistant_only"),
+			("checked", "true", "session.review_checklist.checked must be a boolean"),
+		]:
+			session = review_ready_session()
+			session["review_checklist"][0][field] = value
+			with self.subTest(field=field):
+				with self.assertRaisesRegex(ValueError, message):
+					self.mod.build_korea_payroll_closing_draft(session, actor="hr-ops@example.com")
 
 	def test_blocked_session_cannot_create_runtime_draft(self):
 		session = review_ready_session()

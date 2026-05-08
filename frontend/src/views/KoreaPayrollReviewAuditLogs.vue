@@ -39,25 +39,25 @@
 						v-for="item in fixture.items"
 						:key="item.name"
 						class="rounded-2xl border bg-white p-4 shadow-sm"
-						:class="statusClass(item.review_status)"
+						:class="statusClass(item.status)"
 					>
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.workplace }}</p>
 								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.name }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.source_draft }}</p>
+								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.draft_name }}</p>
 							</div>
-							<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(item.review_status)">
-								{{ statusLabel(item.review_status) }}
+							<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(item.status)">
+								{{ statusLabel(item.status) }}
 							</span>
 						</div>
 
 						<div class="mt-4 rounded-xl bg-gray-50 p-3 text-sm">
 							<div class="flex items-center justify-between gap-3">
-								<p class="font-semibold text-gray-900">{{ item.review_action }}</p>
-								<p class="text-xs text-gray-500">{{ item.reviewed_at }}</p>
+								<p class="font-semibold text-gray-900">{{ item.action }}</p>
+								<p class="text-xs text-gray-500">{{ item.source_payroll_entry }}</p>
 							</div>
-							<p class="mt-2 text-gray-700">{{ item.note }}</p>
+							<p class="mt-2 text-gray-700">{{ item.previous_status }} → {{ item.status }}</p>
 						</div>
 
 						<div class="mt-3 grid grid-cols-1 gap-2 text-xs text-gray-600">
@@ -78,25 +78,25 @@ import { koreaPayrollReviewAuditFixture as fixture } from "@/data/koreaPayrollRe
 
 function statusLabel(status) {
 	return {
-		approved: "Approved",
-		rejected: "Rejected",
-		changes_requested: "Changes requested",
+		draft_human_approved: "Approved",
+		draft_human_rejected: "Rejected",
+		draft_changes_requested: "Changes requested",
 	}[status]
 }
 
 function statusClass(status) {
 	return {
-		approved: "border-green-100",
-		rejected: "border-red-100",
-		changes_requested: "border-amber-100",
+		draft_human_approved: "border-green-100",
+		draft_human_rejected: "border-red-100",
+		draft_changes_requested: "border-amber-100",
 	}[status]
 }
 
 function badgeClass(status) {
 	return {
-		approved: "bg-green-100 text-green-700",
-		rejected: "bg-red-100 text-red-700",
-		changes_requested: "bg-amber-100 text-amber-700",
+		draft_human_approved: "bg-green-100 text-green-700",
+		draft_human_rejected: "bg-red-100 text-red-700",
+		draft_changes_requested: "bg-amber-100 text-amber-700",
 	}[status]
 }
 </script>

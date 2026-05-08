@@ -17,6 +17,8 @@ Current verified state
   - `4226bc967 feat: add Korea payroll closing runtime read UI bridge (#151)`
 - `develop` includes Gate 2:
   - `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
+- `develop` includes Gate 3:
+  - `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
@@ -27,6 +29,11 @@ Current verified state
   - `frontend/src/data/koreaPayrollClosingRuntime.js` and `frontend/src/views/KoreaPayrollClosing.vue` bind runtime worklist/session rows when present.
   - static fixture fallback remains in place when runtime worklist data is unavailable.
   - evidence packet/session display remains read-only; no save/approve/send/DB mutation was added in the UI bridge.
+- Gate 3 result:
+  - `hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_statutory_to_salary_slip` applies Korea statutory deduction rows idempotently to draft Salary Slip-shaped documents.
+  - `hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook` is opt-in via operator-set Korea statutory fields and rejects non-KR/malformed inputs.
+  - `hrms/hooks.py` registers a narrow `Salary Slip.before_validate` hook.
+  - mutation boundary remains row-only: no save/submit/approve/send/provider call was introduced.
 
 Autonomous cron runway
 - Implementation cron:
@@ -39,14 +46,14 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 3: Salary Slip statutory apply hook.
+- Gate 4: Demo seed blocker realism.
 - Likely branch:
-  - `feat/korea-salary-slip-statutory-apply-hook`
+  - `feat/korea-demo-seed-blocker-realism`
 - Goal:
-  - add an idempotent, scoped apply boundary from Korea statutory payroll previews into Salary Slip-shaped runtime rows
-  - keep the mutation boundary explicit and human/operator-controlled
-  - preserve preview/read-only contracts as the source of evidence before apply
-  - avoid payroll submission, approval, notification, or provider calls in this gate
+  - seed realistic blocker-generating transaction data for the Korea payroll closing operator flow
+  - include attendance absence/unclosed, overtime pending approval, and unsettled expense claim scenarios where feasible
+  - keep demo seed idempotent and clearly separated from runtime mutation/approval behavior
+  - preserve fixture/runtime fallback clarity until bench/browser runtime verification is green
 
 Useful commands
 - Repo status:

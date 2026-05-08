@@ -21,7 +21,11 @@ except ImportError:  # pragma: no cover - direct-run import without Frappe is un
 
 DRAFT_DOCTYPE = "Korea Payroll Closing Draft"
 AUDIT_LOG_DOCTYPE = "Korea Payroll Closing Review Audit Log"
+EMPLOYEE_DOCTYPE = "Employee"
+SALARY_SLIP_DOCTYPE = "Salary Slip"
+ATTENDANCE_DOCTYPE = "Attendance"
 PENDING_DRAFT_STATUS = "draft_pending_human_approval"
+RUNTIME_READ_DOCTYPES = (DRAFT_DOCTYPE, AUDIT_LOG_DOCTYPE, EMPLOYEE_DOCTYPE, SALARY_SLIP_DOCTYPE, ATTENDANCE_DOCTYPE)
 
 
 def _whitelist(fn):
@@ -56,9 +60,12 @@ def _build_runtime_metrics(*, company: str, workplaces: list[str] | None) -> dic
 	filters = _scope_filters(company=company, workplaces=workplaces)
 	draft_filters = {**filters, "status": PENDING_DRAFT_STATUS, "docstatus": 0}
 	audit_filters = {**filters, "docstatus": 0}
+	operational_filters = _operational_doctype_filters(company=company, workplaces=workplaces)
 	return {
 		"blocked_payroll_closings": _count_doctype(DRAFT_DOCTYPE, draft_filters),
 		"payroll_review_audit_logs": _count_doctype(AUDIT_LOG_DOCTYPE, audit_filters),
+		"pending_payslips": _count_doctype(SALARY_SLIP_DOCTYPE, {**operational_filters, "docstatus": 0}),
+		"unclosed_attendance": _count_doctype(ATTENDANCE_DOCTYPE, {**operational_filters, "docstatus": 0}),
 	}
 
 
@@ -66,6 +73,18 @@ def _scope_filters(*, company: str, workplaces: list[str] | None) -> dict[str, A
 	filters: dict[str, Any] = {"company": company}
 	if workplaces is not None:
 		filters["workplace"] = ("in", list(workplaces))
+	return filters
+
+
+def _operational_doctype_filters(*, company: str, workplaces: list[str] | None) -> dict[str, Any]:
+	filters: dict[str, Any] = {"company": company}
+	if workplaces is not None:
+		employees = frappe.get_all(  # type: ignore[union-attr]
+			EMPLOYEE_DOCTYPE,
+			filters={"company": company, "work_location_name": ("in", list(workplaces))},
+			pluck="name",
+		)
+		filters["employee"] = ("in", list(employees))
 	return filters
 
 
@@ -81,13 +100,15 @@ def _runtime_required() -> None:
 		raise RuntimeError("Frappe runtime is required for Korea admin dashboard runtime reads")
 	if not hasattr(frappe, "db") or not hasattr(frappe.db, "count"):
 		raise RuntimeError("Frappe database count API is required for Korea admin dashboard runtime reads")
+	if not hasattr(frappe, "get_all"):
+		raise RuntimeError("Frappe get_all API is required for Korea admin dashboard runtime reads")
 
 
 def _require_runtime_read_access() -> None:
 	if hasattr(frappe, "only_for"):
-		frappe.only_for(["HR Manager", "HR User"])  # type: ignore[union-attr]
+		frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
 	if hasattr(frappe, "has_permission"):
-		for doctype in (DRAFT_DOCTYPE, AUDIT_LOG_DOCTYPE):
+		for doctype in RUNTIME_READ_DOCTYPES:
 			if not frappe.has_permission(doctype, ptype="read"):  # type: ignore[union-attr]
 				raise PermissionError(f"read permission is required for {doctype}")
 

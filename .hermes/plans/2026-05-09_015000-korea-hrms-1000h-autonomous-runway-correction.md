@@ -1,13 +1,14 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 1 landed on `develop`.
+Status: active source-of-truth correction after Gate 2 landed on `develop`.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Current `develop` head: `4226bc967 feat: add Korea payroll closing runtime read UI bridge (#151)`
+- Current `develop` head: `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
 - Gate 1 is merged to `develop`.
+- Gate 2 is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -48,7 +49,7 @@ Evidence:
 
 ### Gate 2 — Worklist/session runtime bridge
 
-Status: next.
+Status: done and merged.
 
 Goal:
 - Bind actual payroll closing worklist/session rows to the Korea payroll closing queue/detail UI.
@@ -56,16 +57,22 @@ Goal:
 - Keep evidence packet preview read-only.
 - Keep session routes stable and route-safe.
 
-Implementation discipline:
-- Start from clean `develop`.
-- Create PR-sized branch, likely `feat/korea-payroll-closing-worklist-runtime-bridge`.
-- Write tests first where possible for data normalization/contract validation.
-- Do not remove static fixtures until runtime worklist is verified.
-- Do not add mutation paths in this gate.
+Evidence:
+- `develop` includes `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`.
+- `hrms/regional/south_korea/payroll_closing_worklist_runtime_api.py` reads scoped `Korea Payroll Closing Draft` rows into the existing worklist/session contracts.
+- `frontend/src/data/koreaPayrollClosingRuntime.js` normalizes runtime worklist/session payloads for the operator UI.
+- `frontend/src/views/KoreaPayrollClosing.vue` uses runtime worklist rows when available and keeps the static fixture fallback otherwise.
+- Boundary remains read-only for this gate: no save/approve/send/payroll submission/provider mutation.
+
+Closeout discipline:
+- Keep Gate 2 as a read-only/runtime-read bridge.
+- Preserve static fixture fallback until positive bench/browser runtime rows are verified.
+- Do not reinterpret Gate 2 as a mutation/apply boundary.
+- If hardening is needed, add focused tests around the runtime worklist/session normalizer before UI changes.
 
 ### Gate 3 — Salary Slip statutory apply hook
 
-Status: after Gate 2.
+Status: next.
 
 Notes:
 - Existing preview adapter exists in `payroll_salary_slip_adapter.py`.
@@ -99,15 +106,15 @@ Known issue:
 
 ## Next action
 
-Proceed with Gate 2 from `develop`:
+Proceed with Gate 3 from `develop`:
 
 ```text
-feat/korea-payroll-closing-worklist-runtime-bridge
+feat/korea-salary-slip-statutory-apply-hook
 ```
 
 Expected deliverables:
-- runtime worklist/session data adapter or normalizer
-- UI binding with runtime primary + fixture fallback
-- focused frontend/unit test
-- `yarn build` verification
+- failing direct Python tests first for an idempotent Salary Slip statutory apply boundary
+- scoped apply helper that consumes existing Korea statutory payroll preview/snapshot data
+- explicit mutation boundary: no submit/approve/send/provider calls
+- focused direct tests and Korea regional smoke verification
 - commit/push/PR URL

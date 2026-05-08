@@ -15,11 +15,18 @@ Current source of truth
 Current verified state
 - `develop` includes Gate 1:
   - `4226bc967 feat: add Korea payroll closing runtime read UI bridge (#151)`
+- `develop` includes Gate 2:
+  - `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
   - static fixture fallback is retained for Vercel/static preview.
   - no save/approve/send/DB mutation was introduced.
+- Gate 2 result:
+  - `hrms/regional/south_korea/payroll_closing_worklist_runtime_api.py` exposes a read-only runtime worklist/session bridge over `Korea Payroll Closing Draft` rows.
+  - `frontend/src/data/koreaPayrollClosingRuntime.js` and `frontend/src/views/KoreaPayrollClosing.vue` bind runtime worklist/session rows when present.
+  - static fixture fallback remains in place when runtime worklist data is unavailable.
+  - evidence packet/session display remains read-only; no save/approve/send/DB mutation was added in the UI bridge.
 
 Autonomous cron runway
 - Implementation cron:
@@ -32,14 +39,14 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 2: Worklist/session runtime bridge.
+- Gate 3: Salary Slip statutory apply hook.
 - Likely branch:
-  - `feat/korea-payroll-closing-worklist-runtime-bridge`
+  - `feat/korea-salary-slip-statutory-apply-hook`
 - Goal:
-  - bind actual payroll closing worklist/session rows to the Korea payroll closing queue/detail UI
-  - preserve fixture fallback until bench/browser runtime verification is green
-  - keep evidence packet read-only
-  - no mutation path in this gate
+  - add an idempotent, scoped apply boundary from Korea statutory payroll previews into Salary Slip-shaped runtime rows
+  - keep the mutation boundary explicit and human/operator-controlled
+  - preserve preview/read-only contracts as the source of evidence before apply
+  - avoid payroll submission, approval, notification, or provider calls in this gate
 
 Useful commands
 - Repo status:
@@ -48,6 +55,8 @@ Useful commands
   - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h/frontend && yarn build`
 - Gate 1 focused frontend test:
   - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && node frontend/tests/koreaPayrollClosingRuntime.test.mjs`
+- Korea regional smoke harness:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && python3 scripts/run_korea_regional_smoke.py`
 - Docker runtime status:
   - `docker compose -f /home/ubuntu/workspaces/seojaehong-hrms-100h/docker/docker-compose.yml ps`
 

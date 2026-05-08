@@ -33,6 +33,7 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 				"pending_payslips",
 				"unclosed_attendance",
 				"blocked_payroll_closings",
+				"payroll_review_audit_logs",
 			],
 		)
 		self.assertEqual(dashboard["cards"][1]["severity"], "danger")
@@ -71,6 +72,18 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 		self.assertEqual(closing["action"]["route"], "korea-payroll-closing-session")
 		self.assertTrue(closing["action"]["enabled"])
 		self.assertFalse(closing["action"]["requires_runtime_apply"])
+
+	def test_payroll_review_audit_log_card_routes_to_audit_trail(self):
+		dashboard = self.mod.build_admin_dashboard(metrics={"payroll_review_audit_logs": 3})
+
+		audit = next(card for card in dashboard["cards"] if card["key"] == "payroll_review_audit_logs")
+		self.assertEqual(audit["label"], "Payroll Review Audit Logs")
+		self.assertEqual(audit["severity"], "warning")
+		self.assertEqual(audit["value"], 3)
+		self.assertEqual(audit["action"]["action"], "open_payroll_review_audit_logs")
+		self.assertEqual(audit["action"]["route"], "korea-payroll-review-audit-logs")
+		self.assertTrue(audit["action"]["enabled"])
+		self.assertFalse(audit["action"]["requires_runtime_apply"])
 
 	def test_zero_count_cards_keep_disabled_navigation_actions(self):
 		dashboard = self.mod.build_admin_dashboard(metrics={})

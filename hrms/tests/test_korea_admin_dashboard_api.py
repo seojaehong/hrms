@@ -32,6 +32,7 @@ class TestKoreaAdminDashboardPreviewApi(unittest.TestCase):
 					"pending_payslips": 4,
 					"unclosed_attendance": 1,
 					"blocked_payroll_closings": 2,
+					"payroll_review_audit_logs": "5",
 				}
 			)
 		)
@@ -48,16 +49,23 @@ class TestKoreaAdminDashboardPreviewApi(unittest.TestCase):
 				"pending_payslips",
 				"unclosed_attendance",
 				"blocked_payroll_closings",
+				"payroll_review_audit_logs",
 			],
 		)
 		approvals = next(card for card in preview["dashboard"]["cards"] if card["key"] == "open_approvals")
 		closing = next(card for card in preview["dashboard"]["cards"] if card["key"] == "blocked_payroll_closings")
+		audit_logs = next(card for card in preview["dashboard"]["cards"] if card["key"] == "payroll_review_audit_logs")
 		self.assertEqual(approvals["value"], 2)
 		self.assertEqual(approvals["action"], {"action": "review_approval_inbox", "route": "korea-approval-inbox", "enabled": True, "requires_runtime_apply": False})
 		self.assertEqual(closing["value"], 2)
 		self.assertEqual(
 			closing["action"],
 			{"action": "open_payroll_closing_session", "route": "korea-payroll-closing-session", "enabled": True, "requires_runtime_apply": False},
+		)
+		self.assertEqual(audit_logs["value"], 5)
+		self.assertEqual(
+			audit_logs["action"],
+			{"action": "open_payroll_review_audit_logs", "route": "korea-payroll-review-audit-logs", "enabled": True, "requires_runtime_apply": False},
 		)
 
 	def test_preview_does_not_let_downstream_builder_mutate_caller_input_or_return_reference(self):

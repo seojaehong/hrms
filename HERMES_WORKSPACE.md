@@ -19,6 +19,8 @@ Current verified state
   - `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
 - `develop` includes Gate 3:
   - `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
+- `develop` includes Gate 4:
+  - `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
@@ -34,6 +36,10 @@ Current verified state
   - `hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook` is opt-in via operator-set Korea statutory fields and rejects non-KR/malformed inputs.
   - `hrms/hooks.py` registers a narrow `Salary Slip.before_validate` hook.
   - mutation boundary remains row-only: no save/submit/approve/send/provider call was introduced.
+- Gate 4 result:
+  - `hrms/regional/south_korea/demo_seed.py` seeds realistic Korea demo blocker transactions for the payroll closing operator flow.
+  - `hrms/tests/test_korea_demo_seed_blockers.py` covers idempotent blocker seed behavior and the no-submit/no-approve/no-send/no-provider mutation boundary.
+  - seed output remains explicitly demo-scoped with `ai_role: assistant_only` and no approval/submission/provider automation.
 
 Autonomous cron runway
 - Implementation cron:
@@ -46,14 +52,14 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 4: Demo seed blocker realism.
+- Gate 5: Korea test/CI harness.
 - Likely branch:
-  - `feat/korea-demo-seed-blocker-realism`
+  - `ci/korea-regional-smoke-harness`
 - Goal:
-  - seed realistic blocker-generating transaction data for the Korea payroll closing operator flow
-  - include attendance absence/unclosed, overtime pending approval, and unsettled expense claim scenarios where feasible
-  - keep demo seed idempotent and clearly separated from runtime mutation/approval behavior
-  - preserve fixture/runtime fallback clarity until bench/browser runtime verification is green
+  - make the Korea regional smoke harness more CI/cron-safe and easier to run consistently
+  - keep no-bench direct tests discovered dynamically and fail closed when no Korea targets are found
+  - preserve optional bench/runtime probes behind explicit runtime availability checks
+  - document any missing CI environment prerequisites without weakening the direct-run guardrail
 
 Useful commands
 - Repo status:

@@ -297,6 +297,176 @@ def ensure_salary_structure_assignment(employee, company, salary_structure):
     return ensure_doc("Salary Structure Assignment", filters={"employee": employee, "salary_structure": salary_structure, "docstatus": ("<", 2)}, values=values)
 
 
+def _employee_name(employee):
+    name = getattr(employee, "name", None)
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("employee.name must be a non-empty string")
+    return name.strip()
+
+
+def _employee_workplace(employee):
+    workplace = getattr(employee, "work_location_name", None) or getattr(employee, "branch", None) or "서울 본사"
+    if not isinstance(workplace, str) or not workplace.strip():
+        raise ValueError("employee.work_location_name must be a non-empty string when provided")
+    return workplace.strip()
+
+
+def ensure_demo_blocker_transactions(company, employees):
+    """Seed realistic blocker-generating rows for the Korea payroll closing demo.
+
+    These rows are intentionally unsubmitted/draft operational data. They make the
+    operator worklist visibly blocked without submitting payroll, approving
+    expenses, sending messages, or calling external providers.
+    """
+    if not isinstance(company, str) or not company.strip():
+        raise ValueError("company must be a non-empty string")
+    employee_list = list(employees or [])
+    if len(employee_list) < 2:
+        raise ValueError("at least two demo employees are required for blocker seed scenarios")
+
+    hq_employee = employee_list[0]
+    store_employee = employee_list[1]
+    hq_name = _employee_name(hq_employee)
+    store_name = _employee_name(store_employee)
+    hq_workplace = _employee_workplace(hq_employee)
+    store_workplace = _employee_workplace(store_employee)
+    company_name = company.strip()
+
+    overtime_type_name = "KR Demo Overtime Review"
+    expense_type_name = "KR Demo Meal Transport"
+    ensure_doc(
+        "Overtime Type",
+        name=overtime_type_name,
+        values={
+            "overtime_salary_component": "Overtime Allowance",
+            "maximum_overtime_hours_allowed": 4,
+            "overtime_calculation_method": "Fixed Hourly Rate",
+            "hourly_rate": 70000,
+            "standard_multiplier": 1.5,
+            "applicable_for_weekend": 0,
+            "applicable_for_public_holiday": 0,
+        },
+    )
+    ensure_doc(
+        "Expense Claim Type",
+        name=expense_type_name,
+        values={
+            "expense_type": expense_type_name,
+            "description": "Demo meal and transport expense used to show unsettled payroll closing blockers.",
+            "accounts": [
+                {
+                    "company": company_name,
+                    "default_account": "Administrative Expenses - NBG",
+                }
+            ],
+        },
+    )
+
+    scenarios = [
+        {
+            "doctype": "Attendance",
+            "name": "KR-DEMO-ATT-ABSENT-2026-05-15",
+            "workplace": hq_workplace,
+            "blocker_code": "attendance_not_ready",
+            "description": "Absent attendance remains unsubmitted before payroll close.",
+            "values": {
+                "naming_series": "HR-ATT-.YYYY.-",
+                "employee": hq_name,
+                "company": company_name,
+                "attendance_date": "2026-05-15",
+                "status": "Absent",
+                "working_hours": 0,
+                "docstatus": 0,
+            },
+        },
+        {
+            "doctype": "Overtime Slip",
+            "name": "KR-DEMO-OT-PENDING-2026-05",
+            "workplace": store_workplace,
+            "blocker_code": "overtime_pending_review",
+            "description": "Overtime slip remains draft for operator review before payroll close.",
+            "values": {
+                "employee": store_name,
+                "company": company_name,
+                "posting_date": "2026-05-31",
+                "start_date": "2026-05-01",
+                "end_date": "2026-05-31",
+                "total_overtime_duration": 2.5,
+                "docstatus": 0,
+                "overtime_details": [
+                    {
+                        "date": "2026-05-22",
+                        "overtime_type": overtime_type_name,
+                        "overtime_duration": 2.5,
+                        "standard_working_hours": 8,
+                    }
+                ],
+            },
+        },
+        {
+            "doctype": "Expense Claim",
+            "name": "KR-DEMO-EXP-UNSETTLED-2026-05",
+            "workplace": store_workplace,
+            "blocker_code": "expense_settlement_not_ready",
+            "description": "Expense claim remains draft/unsettled before payroll close.",
+            "values": {
+                "naming_series": "HR-EXP-.YYYY.-",
+                "employee": store_name,
+                "company": company_name,
+                "posting_date": "2026-05-28",
+                "approval_status": "Draft",
+                "currency": "KRW",
+                "exchange_rate": 1,
+                "total_claimed_amount": 86000,
+                "total_sanctioned_amount": 0,
+                "is_paid": 0,
+                "docstatus": 0,
+                "expenses": [
+                    {
+                        "expense_date": "2026-05-27",
+                        "expense_type": expense_type_name,
+                        "description": "Payroll-close demo unsettled meal and transport claim",
+                        "amount": 86000,
+                        "sanctioned_amount": 0,
+                    }
+                ],
+            },
+        },
+    ]
+
+    blocker_rows = []
+    for scenario in scenarios:
+        values = dict(scenario["values"])
+        doc, _created = ensure_doc(
+            scenario["doctype"],
+            name=scenario["name"],
+            values=values,
+        )
+        blocker_rows.append(
+            {
+                "doctype": scenario["doctype"],
+                "name": doc.name,
+                "company": company_name,
+                "workplace": scenario["workplace"],
+                "employee": values["employee"],
+                "docstatus": values["docstatus"],
+                "blocker_code": scenario["blocker_code"],
+                "description": scenario["description"],
+            }
+        )
+
+    return {
+        "contract_type": "korea_demo_blocker_seed_v1",
+        "runtime_action": "demo_seed_only",
+        "requires_runtime_apply": False,
+        "mutation_boundary": "demo_seed_idempotent_no_submit_no_approve_no_send_no_provider_call",
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+        "company": company_name,
+        "blocker_rows": blocker_rows,
+    }
+
+
 def main():
     created = []
     updated = []
@@ -395,6 +565,7 @@ def main():
         },
     ]
 
+    employee_docs = []
     employee_names = []
     for payload in employees:
         doc, was_created = ensure_employee(
@@ -410,8 +581,13 @@ def main():
             branch=payload["branch"],
             custom=payload["custom"],
         )
+        employee_docs.append(doc)
         employee_names.append(doc.name)
         (created if was_created else updated).append(f"Employee::{doc.name}")
+
+    blocker_seed = ensure_demo_blocker_transactions(company=company.name, employees=employee_docs)
+    for row in blocker_seed["blocker_rows"]:
+        updated.append(f"{row['doctype']}::{row['name']}")
 
     structure, was_created = ensure_salary_structure(company.name)
     (created if was_created else updated).append(f"Salary Structure::{structure.name}")
@@ -428,6 +604,7 @@ def main():
         "shift_type": shift.name,
         "salary_structure": structure.name,
         "employees": employee_names,
+        "demo_blocker_seed": blocker_seed,
         "demo_login": {
             "url": "http://10.0.0.58:8000/app",
             "username": "demo.hr.manager@node.pe.kr",

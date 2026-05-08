@@ -117,6 +117,42 @@ class TestKoreaPayrollReviewAuditLogListApi(unittest.TestCase):
 		result["items"][0]["source_audit_log"]["name"] = "MUTATED"
 		self.assertEqual(rows[1]["name"], "KPCRA-0002")
 
+	def test_preview_detail_api_builds_route_only_audit_log_detail_from_json_payload(self):
+		row = audit_row(name="AUDIT LOG/서울 1")
+		row["audit_event"] = {"action": "approve_draft", "status": "draft_human_approved"}
+		row["source_runtime_apply"] = {"action": "approve_draft", "status": "draft_human_approved"}
+
+		result = self.mod.preview_korea_payroll_review_audit_log_detail(
+			company="Korea Demo Co",
+			row=json.dumps(row),
+			workplaces=json.dumps(["Seoul HQ"]),
+		)
+
+		self.assertEqual(result["contract_type"], "korea_payroll_review_audit_log_detail_preview_v1")
+		self.assertEqual(result["audit_log_detail_contract_type"], "korea_payroll_review_audit_log_detail_v1")
+		self.assertEqual(result["runtime_action"], "preview_only")
+		self.assertFalse(result["requires_runtime_apply"])
+		self.assertEqual(result["route"], "korea-payroll-review-audit-logs/AUDIT%20LOG%2F%EC%84%9C%EC%9A%B8%201")
+		self.assertEqual(result["audit_event"], {"action": "approve_draft", "status": "draft_human_approved"})
+		self.assertEqual(result["source_runtime_apply"], {"action": "approve_draft", "status": "draft_human_approved"})
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+		self.assertFalse(self._contains_forbidden_numeric_score(result))
+
+	def test_preview_detail_api_rejects_invalid_row_payloads_and_cross_scope(self):
+		with self.assertRaisesRegex(ValueError, "JSON payload is invalid"):
+			self.mod.preview_korea_payroll_review_audit_log_detail(company="Korea Demo Co", row='{"bad":', workplaces=None)
+
+		with self.assertRaisesRegex(ValueError, "row must be a JSON object"):
+			self.mod.preview_korea_payroll_review_audit_log_detail(company="Korea Demo Co", row="[]", workplaces=None)
+
+		with self.assertRaisesRegex(ValueError, "audit row workplace is outside requested workplaces"):
+			self.mod.preview_korea_payroll_review_audit_log_detail(
+				company="Korea Demo Co",
+				row=audit_row(workplace="Busan Branch"),
+				workplaces=["Seoul HQ"],
+			)
+
 	def test_preview_api_rejects_invalid_payloads_before_delegation(self):
 		with self.assertRaisesRegex(ValueError, "JSON payload is invalid"):
 			self.mod.preview_korea_payroll_review_audit_log_list(company="Korea Demo Co", rows='[{"bad":', workplaces=None)
@@ -130,6 +166,8 @@ class TestKoreaPayrollReviewAuditLogListApi(unittest.TestCase):
 	def test_preview_api_is_whitelisted_when_frappe_is_available(self):
 		module = load_module(with_frappe=True)
 		self.assertTrue(module.preview_korea_payroll_review_audit_log_list.is_whitelisted_for_test)
+		self.assertTrue(module.preview_korea_payroll_review_audit_log_detail.is_whitelisted_for_test)
+		self.assertIn("preview_korea_payroll_review_audit_log_detail", module.__all__)
 
 	def _contains_forbidden_numeric_score(self, value):
 		forbidden = {"risk_score", "probability", "success_rate", "score"}

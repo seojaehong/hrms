@@ -18,7 +18,7 @@
 						</span>
 					</div>
 					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-						<p class="font-semibold">Preview-only static fixture</p>
+						<p class="font-semibold">Preview-only {{ selectedSession.preview_source === 'runtime_read_only' ? 'runtime read' : 'static fixture' }}</p>
 						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · human approval required · AI={{ selectedSession.ai_role }}</p>
 					</div>
 					<div class="mt-4 grid grid-cols-2 gap-2">
@@ -61,36 +61,44 @@
 							</div>
 						</div>
 						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-gray-600">
-							Human checklist: {{ selectedSession.evidence_packet.review_checklist.length }} item(s) · requires_runtime_apply={{ selectedSession.evidence_packet.review_checklist.every((item) => item.requires_runtime_apply) }} · AI={{ selectedSession.evidence_packet.ai_role }}
+							Human checklist: {{ selectedSession.evidence_packet.review_checklist.length }} item(s) · evidence requires_runtime_apply={{ selectedSession.evidence_packet.requires_runtime_apply }} · AI={{ selectedSession.evidence_packet.ai_role }}
 						</div>
 					</div>
 				</section>
 				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
 					<p class="font-semibold">Session fixture not found</p>
-					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the static payroll closing fixture.</p>
+					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the active payroll closing worklist.</p>
 				</section>
 				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">{{ dataSourceLabel }}</p>
-							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
+							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
 							<p class="mt-2 text-sm text-gray-300">
-								{{ activeCompany }} · {{ fixture.summary.total_employees }} employees · updated {{ fixture.updated_at }}
+								{{ activeCompany }} · {{ summaryCards.total_employees ?? 'runtime' }} employees · updated {{ activeWorklist.updated_at || 'runtime read' }}
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
 					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
-						Loading read-only Frappe runtime dashboard…
+						Loading read-only Frappe runtime data…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
-						Runtime read failed; static fixture fallback is active. {{ runtimeError }}
+						<p>Runtime read failed; static fixture fallback is active. {{ runtimeError }}</p>
+						<p v-if="runtimeWorklistError" class="mt-1">Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}</p>
+					</div>
+					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
+						Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}
 					</div>
 					<div v-else-if="runtimeDashboard && !runtimeHasData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
 						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
 					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
-						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }} · fixture worklist remains visible until Gate 2 runtime worklist bridge
+						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}
+						<span v-if="!runtimeHasWorklistData"> · fixture worklist remains visible until Gate 2 runtime worklist bridge is populated</span>
+					</div>
+					<div v-if="runtimeHasWorklistData" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
+						Runtime worklist loaded · runtime_action={{ runtimeWorklist.runtime_action }} · requires_runtime_apply={{ runtimeWorklist.requires_runtime_apply }} · evidence remains read-only
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
@@ -111,13 +119,13 @@
 				<section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
 					<p class="font-semibold">Preview boundary</p>
 					<p class="mt-1">
-						This screen is backed by static demo fixtures shaped like the payroll closing worklist preview API. It does not save, approve, send Kakao messages, or mutate Payroll Entry records. Human approval remains required and AI is assistant-only.
+						This screen uses the runtime read-only worklist when validated, then falls back to static demo fixtures shaped like the payroll closing worklist preview API. It does not save, approve, send Kakao messages, or mutate Payroll Entry records. Human approval remains required and AI is assistant-only.
 					</p>
 				</section>
 
 				<section class="flex flex-col gap-3">
 					<article
-						v-for="item in fixture.items"
+						v-for="item in activeWorklist.items"
 						:key="item.name"
 						class="rounded-2xl border bg-white p-4 shadow-sm"
 						:class="item.status === 'blocked' ? 'border-red-100' : 'border-green-100'"
@@ -126,7 +134,7 @@
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.role }}</p>
 								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.workplace }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count }} employees</p>
+								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? 'runtime' }} employees</p>
 							</div>
 							<span
 								class="rounded-full px-3 py-1 text-xs font-semibold"
@@ -178,28 +186,37 @@ import {
 } from "@/data/koreaPayrollClosingFixture"
 import {
 	hasKoreaAdminDashboardRuntimeData,
+	hasKoreaPayrollClosingRuntimeWorklistData,
 	loadKoreaAdminDashboardRuntime,
+	loadKoreaPayrollClosingRuntimeWorklist,
 } from "@/data/koreaPayrollClosingRuntime"
 
 const route = useRoute()
 const runtimeDashboard = ref(null)
+const runtimeWorklist = ref(null)
 const runtimeLoading = ref(false)
 const runtimeError = ref("")
-const selectedSession = computed(() => findKoreaPayrollClosingSession(route.params.name))
+const runtimeWorklistError = ref("")
+const activeWorklist = computed(() => (hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value) ? runtimeWorklist.value : fixture))
+const selectedSession = computed(() => buildSessionPreview(findActiveSessionItem(route.params.name)))
 const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
-const activeCompany = computed(() => runtimeDashboard.value?.company || fixture.company)
-const dataSourceLabel = computed(() => (runtimeDashboard.value ? "Runtime read-only dashboard" : "Static fixture preview"))
+const runtimeHasWorklistData = computed(() => hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value))
+const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || fixture.company)
+const dataSourceLabel = computed(() => (runtimeHasWorklistData.value ? "Runtime read-only worklist" : runtimeDashboard.value ? "Runtime read-only dashboard" : "Static fixture preview"))
 const dataSourceBadge = computed(() => {
 	if (runtimeLoading.value) return "loading"
+	if (runtimeHasWorklistData.value) return "runtime worklist"
 	if (runtimeDashboard.value) return "runtime_read_only"
 	return "static fixture"
 })
 const dataSourceBadgeClass = computed(() => {
+	if (runtimeHasWorklistData.value) return "bg-green-100 text-green-800"
 	if (runtimeDashboard.value) return "bg-blue-100 text-blue-800"
 	if (runtimeLoading.value) return "bg-white/20 text-white"
 	return "bg-amber-100 text-amber-900"
 })
 const summaryCards = computed(() => {
+	if (runtimeHasWorklistData.value) return activeWorklist.value.summary
 	const metrics = runtimeDashboard.value?.metrics
 	if (!metrics) return fixture.summary
 	return {
@@ -208,20 +225,103 @@ const summaryCards = computed(() => {
 		review_ready_count: Math.max(0, fixture.summary.total_count - (metrics.blocked_payroll_closings ?? fixture.summary.blocked_count)),
 	}
 })
+const activePeriodLabel = computed(() => {
+	if (!runtimeHasWorklistData.value) return fixture.period_label
+	const first = activeWorklist.value.items[0]
+	return first?.period_start && first?.period_end ? `${first.period_start} → ${first.period_end}` : fixture.period_label
+})
 
-onMounted(loadRuntimeDashboard)
+onMounted(loadRuntimeData)
 
-async function loadRuntimeDashboard() {
+async function loadRuntimeData() {
 	runtimeLoading.value = true
 	runtimeError.value = ""
+	runtimeWorklistError.value = ""
 	try {
-		const result = await loadKoreaAdminDashboardRuntime({ fallbackCompany: fixture.company })
-		runtimeDashboard.value = result.data
-	} catch (error) {
-		runtimeDashboard.value = null
-		runtimeError.value = error instanceof Error ? error.message : String(error)
+		const [dashboardResult, worklistResult] = await Promise.allSettled([
+			loadKoreaAdminDashboardRuntime({ fallbackCompany: fixture.company }),
+			loadKoreaPayrollClosingRuntimeWorklist({ fallbackCompany: fixture.company }),
+		])
+		if (dashboardResult.status === "fulfilled") runtimeDashboard.value = dashboardResult.value.data
+		else runtimeDashboard.value = null
+		if (worklistResult.status === "fulfilled") runtimeWorklist.value = worklistResult.value.data
+		else {
+			runtimeWorklist.value = null
+			runtimeWorklistError.value = worklistResult.reason instanceof Error ? worklistResult.reason.message : String(worklistResult.reason)
+		}
+		if (dashboardResult.status === "rejected" && worklistResult.status === "rejected") {
+			const error = worklistResult.reason || dashboardResult.reason
+			runtimeError.value = error instanceof Error ? error.message : String(error)
+		}
 	} finally {
 		runtimeLoading.value = false
+	}
+}
+
+function findActiveSessionItem(name) {
+	if (!name) return null
+	const runtimeItem = runtimeHasWorklistData.value ? runtimeWorklist.value.items.find((candidate) => candidate.name === name) : null
+	return runtimeItem || fixture.items.find((candidate) => candidate.name === name) || null
+}
+
+function buildSessionPreview(item) {
+	if (!item) return null
+	const fixtureSession = findKoreaPayrollClosingSession(item.name)
+	if (fixtureSession && !item.runtime_source_doctype) return fixtureSession
+	const auditPreview = item.audit_preview || { runtime_action: "preview_only", requires_runtime_apply: false, blocker_codes: item.blocker_codes || [] }
+	const session = {
+		...item,
+		role: item.role || item.draft_status || "Runtime Payroll Operator",
+		blocker_codes: Array.isArray(item.blocker_codes) ? [...item.blocker_codes] : [],
+		primary_action: { ...(item.primary_action || { action: "review_payroll_artifacts", label: "Review payroll artifacts", requires_runtime_apply: false }) },
+		readiness_cards: Array.isArray(item.readiness_cards) ? item.readiness_cards.map((card) => ({ ...card })) : [],
+		contract_type: "korea_payroll_closing_session_runtime_preview_v1",
+		session_contract_type: item.source_session?.contract_type || "korea_payroll_closing_session_v1",
+		preview_source: item.runtime_source_doctype ? "runtime_read_only" : "static_fixture",
+		runtime_action: item.runtime_action || "runtime_read_only",
+		requires_runtime_apply: false,
+		requires_human_approval: true,
+		ai_role: "assistant_only",
+		audit_preview: {
+			...auditPreview,
+			blocker_codes: Array.isArray(auditPreview.blocker_codes) ? [...auditPreview.blocker_codes] : [...(item.blocker_codes || [])],
+		},
+	}
+	return {
+		...session,
+		evidence_packet: buildRuntimeEvidencePacket(session),
+	}
+}
+
+function buildRuntimeEvidencePacket(session) {
+	return {
+		contract_type: "korea_payroll_closing_evidence_packet_runtime_read_v1",
+		source_session_contract_type: session.session_contract_type,
+		runtime_action: "preview_only",
+		requires_runtime_apply: false,
+		preview_source: "runtime_read_only",
+		company: session.company,
+		workplace: session.workplace,
+		period_start: session.period_start,
+		period_end: session.period_end,
+		status: session.status,
+		actor: session.role,
+		purpose: "payroll closing human review runtime read preview",
+		blocker_codes: [...session.blocker_codes],
+		evidence_items: [
+			{ key: "attendance", label: "Attendance readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "attendance")) },
+			{ key: "payroll_artifacts", label: "Payroll and statutory artifacts", summary: { payroll_entry: session.payroll_entry, employee_count: session.employee_count } },
+			{ key: "approval", label: "Approval readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "approval")) },
+			{ key: "notification", label: "Payslip/Kakao notification readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "notification")) },
+			{ key: "audit_preview", label: "Audit preview boundary", summary: { ...session.audit_preview, blocker_codes: [...session.audit_preview.blocker_codes] } },
+		],
+		review_checklist: session.blocker_codes.length
+			? session.blocker_codes.map((code) => ({ status: "needs_human_review", blocker_code: code, requires_runtime_apply: false }))
+			: [{ status: "needs_human_approval", action: "record_human_review", requires_runtime_apply: false }],
+		next_actions: [{ ...session.primary_action }],
+		source_session: session.source_session || null,
+		requires_human_approval: true,
+		ai_role: "assistant_only",
 	}
 }
 
@@ -232,5 +332,9 @@ function formatEvidenceSummary(summary) {
 	return Object.entries(summary)
 		.map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
 		.join(" · ")
+}
+
+function copyCard(card) {
+	return card ? { ...card } : { status: "missing" }
 }
 </script>

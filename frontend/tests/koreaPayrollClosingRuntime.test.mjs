@@ -5,11 +5,15 @@ import { fileURLToPath } from "node:url"
 import {
 	getKoreaPayrollClosingRuntimeCompany,
 	hasKoreaAdminDashboardRuntimeData,
+	hasKoreaPayrollClosingRuntimeWorklistData,
 	isFrappeRuntimeAvailable,
 	loadKoreaAdminDashboardRuntime,
+	loadKoreaPayrollClosingRuntimeWorklist,
+	assertKoreaPayrollClosingRuntimeWorklist,
 } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const method = "hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
+const worklistMethod = "hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const frontendRoot = resolve(__dirname, "..")
 
@@ -77,6 +81,65 @@ assert.equal(
 	false,
 )
 
+const worklistCalls = []
+const runtimeWorklistWindow = {
+	frappe: {
+		boot: { sysdefaults: { company: "Runtime Co" } },
+		call: async (payload) => {
+			worklistCalls.push(payload)
+			return {
+				message: {
+					contract_type: "korea_payroll_closing_worklist_runtime_api_v1",
+					worklist_contract_type: "korea_payroll_closing_worklist_v1",
+					runtime_action: "runtime_read_only",
+					requires_runtime_apply: false,
+					requires_human_approval: true,
+					ai_role: "assistant_only",
+					company: payload.args.company,
+					workplaces: ["Seoul HQ"],
+					summary: { total_count: 1, blocked_count: 1, review_ready_count: 0 },
+					items: [
+						{
+							name: "KPCS/서울 001",
+							company: payload.args.company,
+							workplace: "Seoul HQ",
+							period_start: "2026-05-01",
+							period_end: "2026-05-31",
+							status: "blocked",
+							blocker_codes: ["attendance_not_ready"],
+							primary_action: { action: "review_blockers", label: "Review blockers", requires_runtime_apply: false },
+							route: "korea-payroll-closing-session/KPCS%2F%EC%84%9C%EC%9A%B8%20001",
+							payroll_entry: "PAY-ENTRY-2026-05",
+							employee_count: 22,
+							readiness_cards: [{ key: "attendance", label: "Attendance", state: "blocked", summary: "1 open day" }],
+							audit_preview: { runtime_action: "preview_only", requires_runtime_apply: false, blocker_codes: ["attendance_not_ready"] },
+							source_session: { contract_type: "korea_payroll_closing_session_v1" },
+							runtime_action: "runtime_read_only",
+							requires_runtime_apply: false,
+							requires_human_approval: true,
+							ai_role: "assistant_only",
+						},
+					],
+				},
+			}
+		},
+	},
+}
+
+const worklistResult = await loadKoreaPayrollClosingRuntimeWorklist({ win: runtimeWorklistWindow, fallbackCompany: "Fallback Co", workplaces: ["Seoul HQ"] })
+assert.equal(worklistCalls.length, 1)
+assert.equal(worklistCalls[0].method, worklistMethod)
+assert.deepEqual(worklistCalls[0].args, { company: "Runtime Co", workplaces: JSON.stringify(["Seoul HQ"]) })
+assert.equal(worklistResult.source, "runtime_read_only")
+assert.equal(worklistResult.data.contract_type, "korea_payroll_closing_worklist_runtime_api_v1")
+assert.equal(worklistResult.data.runtime_action, "runtime_read_only")
+assert.equal(worklistResult.data.requires_runtime_apply, false)
+assert.equal(worklistResult.data.items[0].route, "korea-payroll-closing-session/KPCS%2F%EC%84%9C%EC%9A%B8%20001")
+assert.equal(worklistResult.data.items[0].runtime_action, "runtime_read_only")
+assert.equal(worklistResult.data.items[0].requires_runtime_apply, false)
+assert.equal(hasKoreaPayrollClosingRuntimeWorklistData(worklistResult.data), true)
+assert.equal(hasKoreaPayrollClosingRuntimeWorklistData({ contract_type: "korea_payroll_closing_worklist_runtime_api_v1", runtime_action: "runtime_read_only", requires_runtime_apply: false, items: [] }), false)
+
 await assert.rejects(
 	() => loadKoreaAdminDashboardRuntime({ win: {}, fallbackCompany: "Fallback Co" }),
 	/Frappe runtime is not available/,
@@ -108,10 +171,67 @@ await assert.rejects(
 	/Unexpected Korea admin dashboard runtime action/,
 )
 
+await assert.rejects(
+	() =>
+		loadKoreaPayrollClosingRuntimeWorklist({
+			win: {
+				frappe: {
+					call: async () => ({ message: { contract_type: "korea_payroll_closing_worklist_runtime_api_v1", runtime_action: "save", requires_runtime_apply: true } }),
+				},
+			},
+			fallbackCompany: "Fallback Co",
+		}),
+	/Unexpected Korea payroll closing worklist runtime action/,
+)
+
+await assert.rejects(
+	() =>
+		loadKoreaPayrollClosingRuntimeWorklist({
+			win: {
+				frappe: {
+					call: async () => ({
+						message: {
+							contract_type: "korea_payroll_closing_worklist_runtime_api_v1",
+							runtime_action: "runtime_read_only",
+							requires_runtime_apply: false,
+							requires_human_approval: true,
+							ai_role: "assistant_only",
+							items: [{ runtime_action: "runtime_read_only", requires_runtime_apply: false, requires_human_approval: true, ai_role: "assistant_only", legalRiskScore: 0.9 }],
+						},
+					}),
+				},
+			},
+			fallbackCompany: "Fallback Co",
+		}),
+	/score keys are not allowed/,
+)
+
+assert.throws(
+	() =>
+		assertKoreaPayrollClosingRuntimeWorklist({
+			contract_type: "korea_payroll_closing_worklist_runtime_api_v1",
+			runtime_action: "runtime_read_only",
+			requires_runtime_apply: false,
+			requires_human_approval: true,
+			ai_role: "assistant_only",
+			items: [{ runtime_action: "runtime_read_only", requires_runtime_apply: false, requires_human_approval: true, ai_role: "assistant_only", riskRating: "high" }],
+		}),
+	/score keys are not allowed/,
+)
+
 const viewSource = await readFile(resolve(frontendRoot, "src/views/KoreaPayrollClosing.vue"), "utf8")
 assert.match(viewSource, /loadKoreaAdminDashboardRuntime/)
+assert.match(viewSource, /loadKoreaPayrollClosingRuntimeWorklist/)
 assert.match(viewSource, /runtime_read_only/)
 assert.match(viewSource, /static fixture fallback is active/i)
 assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \}\}/)
 assert.match(viewSource, /No runtime dashboard rows were returned/i)
+assert.match(viewSource, /runtime worklist/i)
 assert.match(viewSource, /fixture worklist remains visible/i)
+assert.match(viewSource, /runtimeWorklistError/)
+assert.match(viewSource, /Runtime worklist read failed; fixture worklist fallback is active/i)
+assert.match(viewSource, /runtimeWorklistError\.value = worklistResult\.reason/)
+assert.match(viewSource, /summaryCards\.total_employees \?\? 'runtime'/)
+assert.match(viewSource, /item\.employee_count \?\? 'runtime'/)
+assert.match(viewSource, /findActiveSessionItem\(route\.params\.name\)/)
+assert.match(viewSource, /Loading read-only Frappe runtime data/i)

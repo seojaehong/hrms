@@ -1,16 +1,17 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 4 landed on `develop`.
+Status: active source-of-truth correction after Gate 5 landed on `develop`.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
+- Latest product gate commit on `develop`: `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
 - Gate 4 is merged to `develop`.
+- Gate 5 is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -21,7 +22,7 @@ Status: active source-of-truth correction after Gate 4 landed on `develop`.
 
 Previous roadmap/grill plan work existed on a plan branch and not all plan notes were present on `develop`. `HERMES_WORKSPACE.md` on `develop` was also stale and still referenced `/home/ubuntu/workspaces/frappe-hrms` as the primary repo.
 
-This correction makes `develop` the operational source of truth again and aligns cron with the already-merged Gate 1 state.
+The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 5 and aligns cron with the Gate 6 next action.
 
 ## Autonomous operating model
 
@@ -30,7 +31,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 5
+   - current priority: Gate 6
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -105,10 +106,29 @@ Evidence:
 
 ### Gate 5 — Korea test/CI harness
 
+Status: done and merged.
+
+Evidence:
+- `develop` includes `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`.
+- `scripts/run_korea_regional_smoke.py` discovers Korea direct-run tests dynamically, excludes the harness self-test, uses the current interpreter for subprocess commands, and fails closed when no direct targets are found.
+- The harness can write a JSON report artifact via `--report-file`, including `python_executable`, direct target count, per-command results, and pass/fail state for cron/CI diagnostics.
+- Optional bench smoke remains behind explicit `--include-bench --site ...`; no-bench direct coverage is not weakened.
+
+Closeout discipline:
+- Treat Gate 5 as harness/reporting hardening, not proof of bench/browser runtime health.
+- Keep using direct file execution for framework-free Korea tests in cron/no-bench environments.
+- Runtime verification remains a separate gate.
+
+### Gate 6 — Phase 1 runtime/bench verification checkpoint
+
 Status: next.
 
-Known issue:
-- The active Hermes Python previously lacked `pytest`; test execution environment must be explicit rather than assumed.
+Goal:
+- Verify the payroll closing runtime-read/worklist path against a real Bench/Docker runtime when available.
+- Confirm seeded demo blocker rows surface through the read-only operator worklist/session UI.
+- Preserve static fixture fallback when positive runtime rows are absent.
+- Document runtime prerequisites and blockers without weakening the no-bench smoke harness.
+- Keep evidence/session views read-only: no save/approve/send/payroll submit/provider calls.
 
 ## Guardrails
 
@@ -122,15 +142,16 @@ Known issue:
 
 ## Next action
 
-Proceed with Gate 5 from `develop`:
+Proceed with Gate 6 from `develop`:
 
 ```text
-ci/korea-regional-smoke-harness
+test/korea-payroll-closing-runtime-verification
 ```
 
 Expected deliverables:
-- failing direct Python tests first for any harness behavior changes
-- a cron/CI-safe Korea regional smoke command that uses the current interpreter and dynamic `test_korea*.py` discovery
-- fail-closed behavior when no direct Korea targets are found
-- optional bench/runtime probes kept behind explicit flags or availability checks
+- runtime/bench availability check before any browser/runtime claims
+- focused verification that `Korea Payroll Closing Draft` rows can drive the payroll closing worklist/session read path
+- confirmation that demo blocker seed data appears as read-only operator evidence when runtime rows exist
+- fixture fallback remains visible and labeled when runtime data is absent
+- no save/approve/send/payroll submit/provider mutation in the verification gate
 - commit/push/PR URL

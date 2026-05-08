@@ -21,6 +21,8 @@ Current verified state
   - `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
 - `develop` includes Gate 4:
   - `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
+- `develop` includes Gate 5:
+  - `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
@@ -40,6 +42,10 @@ Current verified state
   - `hrms/regional/south_korea/demo_seed.py` seeds realistic Korea demo blocker transactions for the payroll closing operator flow.
   - `hrms/tests/test_korea_demo_seed_blockers.py` covers idempotent blocker seed behavior and the no-submit/no-approve/no-send/no-provider mutation boundary.
   - seed output remains explicitly demo-scoped with `ai_role: assistant_only` and no approval/submission/provider automation.
+- Gate 5 result:
+  - `scripts/run_korea_regional_smoke.py` now reports the current Python executable, writes optional JSON reports for CI/cron artifacts, and continues to discover `hrms/tests/test_korea*.py` dynamically while excluding the harness self-test.
+  - `hrms/tests/test_korea_regional_smoke_harness.py` covers report-file output, current-interpreter command construction, fail-closed zero-target behavior, and dry-run reporting.
+  - optional bench probes remain explicit (`--include-bench --site ...`) and skipped safely when `bench` is unavailable.
 
 Autonomous cron runway
 - Implementation cron:
@@ -52,14 +58,15 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 5: Korea test/CI harness.
+- Gate 6: Phase 1 runtime/bench verification checkpoint.
 - Likely branch:
-  - `ci/korea-regional-smoke-harness`
+  - `test/korea-payroll-closing-runtime-verification`
 - Goal:
-  - make the Korea regional smoke harness more CI/cron-safe and easier to run consistently
-  - keep no-bench direct tests discovered dynamically and fail closed when no Korea targets are found
-  - preserve optional bench/runtime probes behind explicit runtime availability checks
-  - document any missing CI environment prerequisites without weakening the direct-run guardrail
+  - verify the payroll closing runtime-read/worklist path against a real Bench/Docker runtime when available
+  - confirm seeded demo blocker rows surface through the read-only operator worklist/session UI
+  - keep fixture fallback visible when positive runtime rows are absent
+  - document runtime prerequisites and blockers without weakening the no-bench smoke harness
+  - preserve read-only/evidence-only boundaries: no save/approve/send/payroll submit/provider calls
 
 Useful commands
 - Repo status:

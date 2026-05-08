@@ -46,9 +46,10 @@ Sass / UI entry points
 Korea HRMS commercialization roadmap
 - Active roadmap: 1,000-hour Korea HRMS SaaS commercialization and agentic HR runway.
 - Intake snapshot: `.hermes/plans/2026-05-08_161332-korea-hrms-1000h-commercialization-roadmap-intake.md`
-- Phase 1 priority: connect Korea Vue frontend/runtime API/DB flow while preserving static fixture fallback.
-- First implementation target: `frontend/src/views/KoreaPayrollClosing.vue` runtime-read boundary for `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
-- Guardrails: Korea business logic stays under `hrms/regional/south_korea/`; no AI direct DB mutation; preview-only before human-approved apply; no full resident-registration-number storage.
+- Revised /grill plan: `.hermes/plans/2026-05-08_161638-korea-hrms-1000h-grill-revised-development-plan.md`
+- Phase 1 is split into gates: runtime-read UI bridge, worklist/session runtime bridge, Salary Slip statutory apply hook, demo blocker seed, Korea test/CI harness.
+- First implementation target: `frontend/src/views/KoreaPayrollClosing.vue` runtime-read boundary for `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`; keep static fixture as fallback until bench/browser runtime verification passes.
+- Guardrails: Korea business logic stays under `hrms/regional/south_korea/`; no AI direct DB mutation; preview-only before human-approved apply; no full resident-registration-number storage; avoid numeric AI confidence in HR decisions and use evidence-status fields instead.
 
 Notes
 - `import hrms` alone will fail outside a Bench/Frappe runtime because `frappe` is not installed in the system Python. Use the Docker/Bench runtime for app execution.

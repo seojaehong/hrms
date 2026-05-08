@@ -6,7 +6,7 @@ Status: active source-of-truth correction after Gate 3 landed on `develop`.
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Current `develop` head: `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
+- Latest product gate commit on `develop`: `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.

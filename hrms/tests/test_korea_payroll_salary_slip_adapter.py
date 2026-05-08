@@ -86,6 +86,223 @@ class TestKoreaPayrollSalarySlipAdapter(unittest.TestCase):
 			payload["employer_contribution_rows"],
 		)
 
+	def test_applies_statutory_deductions_to_salary_slip_rows_without_submit_or_send(self):
+		salary_slip = SimpleNamespace(
+			name="SAL-SLIP-APPLY-1",
+			employee="EMP-APPLY",
+			company="Korea Demo Co",
+			start_date="2026-05-01",
+			end_date="2026-05-31",
+			earnings=[SimpleNamespace(salary_component="Basic Pay", amount=3000000)],
+			deductions=[],
+			docstatus=0,
+		)
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+
+		result = self.mod.apply_korea_statutory_to_salary_slip(
+			salary_slip=salary_slip,
+			statutory_payload=payload,
+			actor="payroll.manager@example.com",
+		)
+
+		self.assertEqual(result["contract_type"], "korea_salary_slip_statutory_apply_result_v1")
+		self.assertEqual(result["runtime_action"], "runtime_salary_slip_rows_applied")
+		self.assertEqual(result["mutation_boundary"], "salary_slip_rows_only_no_submit_no_approve_no_send_no_provider_call")
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+		self.assertEqual(result["applied_deduction_count"], 4)
+		self.assertEqual(result["salary_slip"], {"doctype": "Salary Slip", "name": "SAL-SLIP-APPLY-1"})
+		self.assertEqual(salary_slip.deductions[0].salary_component, "National Pension")
+		self.assertEqual(salary_slip.deductions[0].amount, 135000)
+		self.assertFalse(hasattr(salary_slip, "submit_called"))
+		self.assertFalse(hasattr(salary_slip, "save_called"))
+
+	def test_reapplying_statutory_rows_is_idempotent_and_preserves_unrelated_deductions(self):
+		salary_slip = SimpleNamespace(
+			name="SAL-SLIP-APPLY-2",
+			employee="EMP-APPLY",
+			company="Korea Demo Co",
+			start_date="2026-05-01",
+			end_date="2026-05-31",
+			earnings=[SimpleNamespace(salary_component="Basic Pay", amount=3000000)],
+			deductions=[SimpleNamespace(salary_component="Loan Repayment", amount=50000)],
+			docstatus=0,
+		)
+		first_payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+		self.mod.apply_korea_statutory_to_salary_slip(salary_slip=salary_slip, statutory_payload=first_payload, actor="payroll.manager@example.com")
+		second_payload = self.mod.build_korea_salary_slip_statutory_payload(
+			salary_slip={
+				"name": "SAL-SLIP-APPLY-2",
+				"employee": "EMP-APPLY",
+				"company": "Korea Demo Co",
+				"start_date": "2026-05-01",
+				"end_date": "2026-05-31",
+				"earnings": [{"salary_component": "Basic Pay", "amount": 4000000}],
+			},
+			policy=self.policy,
+		)
+
+		result = self.mod.apply_korea_statutory_to_salary_slip(
+			salary_slip=salary_slip,
+			statutory_payload=second_payload,
+			actor="payroll.manager@example.com",
+		)
+
+		deduction_components = [row.salary_component for row in salary_slip.deductions]
+		self.assertEqual(deduction_components.count("National Pension"), 1)
+		self.assertIn("Loan Repayment", deduction_components)
+		self.assertEqual(result["preserved_deduction_count"], 1)
+		self.assertEqual(next(row.amount for row in salary_slip.deductions if row.salary_component == "National Pension"), 180000)
+
+	def test_apply_validates_full_payload_before_mutating_deductions(self):
+		class BadEmployerRow:
+			def as_dict(self):
+				raise RuntimeError("bad employer row")
+
+		salary_slip = SimpleNamespace(
+			name="SAL-SLIP-VALIDATE-FIRST",
+			employee="EMP-APPLY",
+			company="Korea Demo Co",
+			start_date="2026-05-01",
+			end_date="2026-05-31",
+			earnings=[SimpleNamespace(salary_component="Basic Pay", amount=3000000)],
+			deductions=[SimpleNamespace(salary_component="Loan Repayment", amount=50000)],
+			docstatus=0,
+		)
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+		payload["employer_contribution_rows"] = "bad-payload"
+
+		with self.assertRaisesRegex(ValueError, "statutory_payload.employer_contribution_rows must be a list"):
+			self.mod.apply_korea_statutory_to_salary_slip(
+				salary_slip=salary_slip,
+				statutory_payload=payload,
+				actor="payroll.manager@example.com",
+			)
+
+		self.assertEqual(len(salary_slip.deductions), 1)
+		self.assertEqual(salary_slip.deductions[0].salary_component, "Loan Repayment")
+
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+		payload["employer_contribution_rows"] = [BadEmployerRow()]
+		with self.assertRaisesRegex(RuntimeError, "bad employer row"):
+			self.mod.apply_korea_statutory_to_salary_slip(
+				salary_slip=salary_slip,
+				statutory_payload=payload,
+				actor="payroll.manager@example.com",
+			)
+		self.assertEqual(len(salary_slip.deductions), 1)
+		self.assertEqual(salary_slip.deductions[0].salary_component, "Loan Repayment")
+
+	def test_uses_frappe_document_set_and_append_when_available(self):
+		class FakeChildRow(SimpleNamespace):
+			def as_dict(self):
+				return dict(vars(self))
+
+		class FakeSalarySlip(SimpleNamespace):
+			def set(self, key, value):
+				setattr(self, key, value)
+
+			def append(self, key, value):
+				getattr(self, key).append(SimpleNamespace(**value))
+
+		salary_slip = FakeSalarySlip(
+			name="SAL-SLIP-FRAPPE",
+			employee="EMP-FRAPPE",
+			company="Korea Demo Co",
+			start_date="2026-05-01",
+			end_date="2026-05-31",
+			earnings=[SimpleNamespace(salary_component="Basic Pay", amount=3000000)],
+			deductions=[FakeChildRow(salary_component="Loan Repayment", amount=50000, loan="LOAN-1", custom_note="keep me")],
+			docstatus=0,
+		)
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+
+		self.mod.apply_korea_statutory_to_salary_slip(
+			salary_slip=salary_slip,
+			statutory_payload=payload,
+			actor="payroll.manager@example.com",
+		)
+
+		self.assertEqual(salary_slip.deductions[0].salary_component, "Loan Repayment")
+		self.assertEqual(salary_slip.deductions[0].loan, "LOAN-1")
+		self.assertEqual(salary_slip.deductions[0].custom_note, "keep me")
+		self.assertEqual(salary_slip.deductions[1].salary_component, "National Pension")
+		self.assertEqual(salary_slip.deductions[1].amount, 135000)
+
+	def test_apply_rejects_scope_mismatch_submitted_slip_and_missing_human_actor(self):
+		salary_slip = {
+			"name": "SAL-SLIP-SCOPE",
+			"employee": "EMP-APPLY",
+			"company": "Korea Demo Co",
+			"start_date": "2026-05-01",
+			"end_date": "2026-05-31",
+			"earnings": [{"salary_component": "Basic Pay", "amount": 3000000}],
+			"deductions": [],
+		}
+		payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+
+		with self.assertRaisesRegex(ValueError, "actor is required"):
+			self.mod.apply_korea_statutory_to_salary_slip(salary_slip=salary_slip, statutory_payload=payload, actor="")
+
+		with self.assertRaisesRegex(ValueError, "salary_slip.name does not match statutory payload source"):
+			self.mod.apply_korea_statutory_to_salary_slip(
+				salary_slip={**salary_slip, "name": "SAL-SLIP-OTHER"},
+				statutory_payload=payload,
+				actor="payroll.manager@example.com",
+			)
+
+		with self.assertRaisesRegex(ValueError, "submitted Salary Slips cannot be mutated"):
+			self.mod.apply_korea_statutory_to_salary_slip(
+				salary_slip={**salary_slip, "docstatus": 1},
+				statutory_payload=payload,
+				actor="payroll.manager@example.com",
+			)
+
+		with self.assertRaisesRegex(ValueError, "draft Salary Slips only"):
+			self.mod.apply_korea_statutory_to_salary_slip(
+				salary_slip={**salary_slip, "docstatus": 2},
+				statutory_payload=payload,
+				actor="payroll.manager@example.com",
+			)
+
+	def test_hook_is_noop_until_operator_sets_strict_apply_flag(self):
+		salary_slip = SimpleNamespace(
+			name="SAL-SLIP-HOOK",
+			employee="EMP-HOOK",
+			company="Korea Demo Co",
+			start_date="2026-05-01",
+			end_date="2026-05-31",
+			earnings=[SimpleNamespace(salary_component="Basic Pay", amount=3000000)],
+			deductions=[],
+			docstatus=0,
+		)
+
+		result = self.mod.apply_korea_salary_slip_statutory_hook(salary_slip, method="before_validate")
+
+		self.assertEqual(result["runtime_action"], "skipped")
+		self.assertEqual(salary_slip.deductions, [])
+
+		salary_slip.apply_korea_statutory_payroll = 0
+		result = self.mod.apply_korea_salary_slip_statutory_hook(salary_slip, method="before_validate")
+		self.assertEqual(result["runtime_action"], "skipped")
+
+		salary_slip.apply_korea_statutory_payroll = "true"
+		with self.assertRaisesRegex(ValueError, "apply_korea_statutory_payroll must be a bool-like check value"):
+			self.mod.apply_korea_salary_slip_statutory_hook(salary_slip, method="before_validate")
+
+		salary_slip.apply_korea_statutory_payroll = True
+		salary_slip.korea_statutory_region = "US"
+		salary_slip.korea_statutory_payload = self.mod.build_korea_salary_slip_statutory_payload(salary_slip=salary_slip, policy=self.policy)
+		salary_slip.korea_statutory_apply_actor = "payroll.manager@example.com"
+		with self.assertRaisesRegex(ValueError, "korea_statutory_region must be KR"):
+			self.mod.apply_korea_salary_slip_statutory_hook(salary_slip, method="before_validate")
+
+		salary_slip.korea_statutory_region = "KR"
+		result = self.mod.apply_korea_salary_slip_statutory_hook(salary_slip, method="before_validate")
+
+		self.assertEqual(result["runtime_action"], "runtime_salary_slip_rows_applied")
+		self.assertEqual(len(salary_slip.deductions), 4)
+
 	def test_builds_vendor_ready_verification_request_without_public_api_default(self):
 		salary_slip = {
 			"name": "SAL-SLIP-0002",

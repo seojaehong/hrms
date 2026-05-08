@@ -7,7 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, "..")
 
 const fixtureModule = await import(pathToFileURL(resolve(root, "src/data/koreaPayrollReviewAuditFixture.js")))
-const { koreaPayrollReviewAuditFixture } = fixtureModule
+const { koreaPayrollReviewAuditFixture, getKoreaPayrollReviewAuditDetail } = fixtureModule
 
 assert.equal(koreaPayrollReviewAuditFixture.contract_type, "korea_payroll_review_audit_log_ui_fixture_v1")
 assert.equal(koreaPayrollReviewAuditFixture.runtime_action, "preview_only")
@@ -43,6 +43,8 @@ for (const item of koreaPayrollReviewAuditFixture.items) {
 	assert.ok(item.workplace)
 	assert.match(item.period_start, /^\d{4}-\d{2}-\d{2}$/)
 	assert.match(item.period_end, /^\d{4}-\d{2}-\d{2}$/)
+	assert.ok(item.route)
+	assert.match(item.route, /^\/korea-payroll-review-audit-logs\//)
 	assert.ok(!("source_draft" in item))
 	assert.ok(!("review_status" in item))
 	assert.ok(!("review_action" in item))
@@ -51,7 +53,22 @@ for (const item of koreaPayrollReviewAuditFixture.items) {
 
 const routerSource = await readFile(resolve(root, "src/router/index.js"), "utf8")
 assert.match(routerSource, /KoreaPayrollReviewAuditLogs/)
+assert.match(routerSource, /KoreaPayrollReviewAuditLogDetail/)
 assert.match(routerSource, /\/dashboard\/korea-payroll-review-audit-logs/)
+assert.match(routerSource, /\/korea-payroll-review-audit-logs\/:name/)
+
+const detail = getKoreaPayrollReviewAuditDetail("KPCRAL-2026-05-BUSAN-BRANCH-001")
+assert.equal(detail.contract_type, "korea_payroll_review_audit_log_detail_ui_fixture_v1")
+assert.equal(detail.source_audit_log.contract_type, "korea_payroll_closing_review_audit_log_runtime_insert_v1")
+assert.equal(detail.name, "KPCRAL-2026-05-BUSAN-BRANCH-001")
+assert.equal(detail.status, "draft_changes_requested")
+assert.equal(detail.runtime_action, "preview_only")
+assert.equal(detail.preview_source, "static_fixture")
+assert.equal(detail.requires_runtime_apply, false)
+assert.equal(detail.requires_human_approval, true)
+assert.equal(detail.ai_role, "assistant_only")
+assert.ok(!JSON.stringify(detail).match(/risk[_ -]?score|probability|success[_ -]?rate/i))
+assert.throws(() => getKoreaPayrollReviewAuditDetail("UNKNOWN"), /audit log fixture not found/)
 
 const homeSource = await readFile(resolve(root, "src/views/Home.vue"), "utf8")
 assert.match(homeSource, /Korea Payroll Review Audit Logs/)
@@ -60,3 +77,9 @@ assert.match(homeSource, /KoreaPayrollReviewAuditLogs/)
 const viewSource = await readFile(resolve(root, "src/views/KoreaPayrollReviewAuditLogs.vue"), "utf8")
 assert.match(viewSource, /Human review audit trail/)
 assert.match(viewSource, /preview-only/i)
+assert.match(viewSource, /item\.route/)
+
+const detailViewSource = await readFile(resolve(root, "src/views/KoreaPayrollReviewAuditLogDetail.vue"), "utf8")
+assert.match(detailViewSource, /Audit log detail/)
+assert.match(detailViewSource, /source_runtime_apply/i)
+assert.match(detailViewSource, /No submit · no send · no provider call/)

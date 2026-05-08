@@ -60,6 +60,11 @@ const routes = [
 				name: "KoreaPayrollReviewAuditLogs",
 				component: () => import("@/views/KoreaPayrollReviewAuditLogs.vue"),
 			},
+			{
+				path: "/korea-payroll-review-audit-logs/:name",
+				name: "KoreaPayrollReviewAuditLogDetail",
+				component: () => import("@/views/KoreaPayrollReviewAuditLogDetail.vue"),
+			},
 		],
 	},
 	{

@@ -24,6 +24,7 @@ export const koreaPayrollReviewAuditFixture = {
 			mutation_boundary: "audit_log_only_no_submit_no_send_no_provider_call",
 			doctype: "Korea Payroll Closing Review Audit Log",
 			name: "KPCRAL-2026-05-SEOUL-HQ-001",
+			route: "/korea-payroll-review-audit-logs/KPCRAL-2026-05-SEOUL-HQ-001",
 			draft_name: "KPCD-2026-05-SEOUL-HQ",
 			previous_status: "draft_pending_human_approval",
 			status: "draft_human_approved",
@@ -47,6 +48,7 @@ export const koreaPayrollReviewAuditFixture = {
 			mutation_boundary: "audit_log_only_no_submit_no_send_no_provider_call",
 			doctype: "Korea Payroll Closing Review Audit Log",
 			name: "KPCRAL-2026-05-BUSAN-BRANCH-001",
+			route: "/korea-payroll-review-audit-logs/KPCRAL-2026-05-BUSAN-BRANCH-001",
 			draft_name: "KPCD-2026-05-BUSAN-BRANCH",
 			previous_status: "draft_pending_human_approval",
 			status: "draft_changes_requested",
@@ -70,6 +72,7 @@ export const koreaPayrollReviewAuditFixture = {
 			mutation_boundary: "audit_log_only_no_submit_no_send_no_provider_call",
 			doctype: "Korea Payroll Closing Review Audit Log",
 			name: "KPCRAL-2026-05-INCHEON-FRANCHISE-001",
+			route: "/korea-payroll-review-audit-logs/KPCRAL-2026-05-INCHEON-FRANCHISE-001",
 			draft_name: "KPCD-2026-05-INCHEON-FRANCHISE",
 			previous_status: "draft_pending_human_approval",
 			status: "draft_human_rejected",
@@ -93,6 +96,7 @@ export const koreaPayrollReviewAuditFixture = {
 			mutation_boundary: "audit_log_only_no_submit_no_send_no_provider_call",
 			doctype: "Korea Payroll Closing Review Audit Log",
 			name: "KPCRAL-2026-05-DAEGU-STORE-001",
+			route: "/korea-payroll-review-audit-logs/KPCRAL-2026-05-DAEGU-STORE-001",
 			draft_name: "KPCD-2026-05-DAEGU-STORE",
 			previous_status: "draft_pending_human_approval",
 			status: "draft_human_approved",
@@ -114,3 +118,48 @@ export const koreaPayrollReviewAuditFixture = {
 export const pendingFollowUpItems = koreaPayrollReviewAuditFixture.items.filter((item) =>
 	["draft_human_rejected", "draft_changes_requested"].includes(item.status),
 )
+
+export function getKoreaPayrollReviewAuditDetail(name) {
+	const source = koreaPayrollReviewAuditFixture.items.find((item) => item.name === name)
+	if (!source) {
+		throw new Error("audit log fixture not found")
+	}
+	return {
+		contract_type: "korea_payroll_review_audit_log_detail_ui_fixture_v1",
+		runtime_action: "preview_only",
+		preview_source: "static_fixture",
+		requires_runtime_apply: false,
+		requires_human_approval: true,
+		ai_role: "assistant_only",
+		name: source.name,
+		draft_name: source.draft_name,
+		previous_status: source.previous_status,
+		status: source.status,
+		action: source.action,
+		review_actor: source.review_actor,
+		audit_actor: source.audit_actor,
+		company: source.company,
+		workplace: source.workplace,
+		period_start: source.period_start,
+		period_end: source.period_end,
+		source_payroll_entry: source.source_payroll_entry,
+		route: source.route,
+		mutation_boundary: source.mutation_boundary,
+		audit_event: {
+			action: source.action,
+			status: source.status,
+			draft_name: source.draft_name,
+			audit_actor: source.audit_actor,
+		},
+		source_runtime_apply: {
+			runtime_action: "runtime_draft_review_status_updated",
+			mutation_boundary: "human_review_status_only_no_submit_no_send_no_provider_call",
+			draft_name: source.draft_name,
+			previous_status: source.previous_status,
+			status: source.status,
+			action: source.action,
+			review_actor: source.review_actor,
+		},
+		source_audit_log: { ...source },
+	}
+}

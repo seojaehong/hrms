@@ -23,8 +23,10 @@ class FakeDB:
 
 
 class FakeFrappe:
-	def __init__(self, counts, *, allowed_roles=True, allowed_permissions=True):
+	def __init__(self, counts, *, employees=None, allowed_roles=True, allowed_permissions=True):
 		self.db = FakeDB(counts)
+		self.employees = list(employees or [])
+		self.get_all_calls = []
 		self.whitelisted = []
 		self.allowed_roles = allowed_roles
 		self.allowed_permissions = allowed_permissions
@@ -47,6 +49,12 @@ class FakeFrappe:
 	def has_permission(self, doctype, ptype="read"):
 		self.has_permission_calls.append({"doctype": doctype, "ptype": ptype})
 		return self.allowed_permissions
+
+	def get_all(self, doctype, filters=None, pluck=None):
+		self.get_all_calls.append({"doctype": doctype, "filters": copy.deepcopy(filters or {}), "pluck": pluck})
+		if doctype != "Employee" or pluck != "name":
+			raise AssertionError("unexpected get_all call")
+		return list(self.employees)
 
 
 def count_key(doctype, filters):
@@ -80,8 +88,16 @@ class TestKoreaAdminDashboardRuntimeApi(unittest.TestCase):
 				"Korea Payroll Closing Review Audit Log",
 				{"company": "Korea Demo Co", "docstatus": 0, "workplace": ("in", ["Seoul HQ", "Busan Branch"])},
 			): 5,
+			count_key(
+				"Salary Slip",
+				{"company": "Korea Demo Co", "docstatus": 0, "employee": ("in", ["EMP-0001", "EMP-0002"])},
+			): 7,
+			count_key(
+				"Attendance",
+				{"company": "Korea Demo Co", "docstatus": 0, "employee": ("in", ["EMP-0001", "EMP-0002"])},
+			): 4,
 		}
-		fake_frappe = FakeFrappe(counts)
+		fake_frappe = FakeFrappe(counts, employees=["EMP-0001", "EMP-0002"])
 		module = load_module(fake_frappe)
 
 		result = module.get_korea_admin_dashboard_runtime(
@@ -96,20 +112,39 @@ class TestKoreaAdminDashboardRuntimeApi(unittest.TestCase):
 		self.assertEqual(result["workplaces"], ["Seoul HQ", "Busan Branch"])
 		self.assertEqual(result["metrics"]["blocked_payroll_closings"], 3)
 		self.assertEqual(result["metrics"]["payroll_review_audit_logs"], 5)
+		self.assertEqual(result["metrics"]["pending_payslips"], 7)
+		self.assertEqual(result["metrics"]["unclosed_attendance"], 4)
 		cards = {card["key"]: card for card in result["dashboard"]["cards"]}
+		self.assertEqual(cards["pending_payslips"]["value"], 7)
+		self.assertEqual(cards["pending_payslips"]["action"]["route"], "korea-closing-center")
+		self.assertEqual(cards["unclosed_attendance"]["value"], 4)
+		self.assertEqual(cards["unclosed_attendance"]["severity"], "danger")
 		self.assertEqual(cards["blocked_payroll_closings"]["value"], 3)
 		self.assertEqual(cards["blocked_payroll_closings"]["severity"], "danger")
 		self.assertEqual(cards["blocked_payroll_closings"]["action"]["route"], "korea-payroll-closing-session")
 		self.assertFalse(cards["blocked_payroll_closings"]["action"]["requires_runtime_apply"])
 		self.assertEqual(cards["payroll_review_audit_logs"]["value"], 5)
 		self.assertEqual(cards["payroll_review_audit_logs"]["action"]["route"], "korea-payroll-review-audit-logs")
-		self.assertEqual(len(fake_frappe.db.count_calls), 2)
-		self.assertEqual(fake_frappe.only_for_calls, [["HR Manager", "HR User"]])
+		self.assertEqual(len(fake_frappe.db.count_calls), 4)
+		self.assertEqual(
+			fake_frappe.get_all_calls,
+			[
+				{
+					"doctype": "Employee",
+					"filters": {"company": "Korea Demo Co", "work_location_name": ("in", ["Seoul HQ", "Busan Branch"])},
+					"pluck": "name",
+				}
+			],
+		)
+		self.assertEqual(fake_frappe.only_for_calls, [["HR Manager"]])
 		self.assertEqual(
 			fake_frappe.has_permission_calls,
 			[
 				{"doctype": "Korea Payroll Closing Draft", "ptype": "read"},
 				{"doctype": "Korea Payroll Closing Review Audit Log", "ptype": "read"},
+				{"doctype": "Employee", "ptype": "read"},
+				{"doctype": "Salary Slip", "ptype": "read"},
+				{"doctype": "Attendance", "ptype": "read"},
 			],
 		)
 		self.assertIn("get_korea_admin_dashboard_runtime", fake_frappe.whitelisted)
@@ -148,6 +183,8 @@ class TestKoreaAdminDashboardRuntimeApi(unittest.TestCase):
 		self.assertEqual(result["dashboard"]["status"], "Ready")
 		self.assertEqual(result["metrics"]["blocked_payroll_closings"], 0)
 		self.assertEqual(result["metrics"]["payroll_review_audit_logs"], 0)
+		self.assertEqual(result["metrics"]["pending_payslips"], 0)
+		self.assertEqual(result["metrics"]["unclosed_attendance"], 0)
 		self.assertFalse(self._contains_forbidden_numeric_score(result))
 
 	def _contains_forbidden_numeric_score(self, value):

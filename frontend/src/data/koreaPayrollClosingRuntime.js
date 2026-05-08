@@ -1,6 +1,9 @@
 export const KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD =
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
 
+export const KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD =
+	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"
+
 export function isFrappeRuntimeAvailable(win = globalThis.window) {
 	return Boolean(win?.frappe && typeof win.frappe.call === "function")
 }
@@ -66,8 +69,97 @@ export function assertKoreaAdminDashboardRuntime(data) {
 	return data
 }
 
+export async function loadKoreaPayrollClosingRuntimeWorklist({
+	win = globalThis.window,
+	fallbackCompany = "Korea Demo Franchise Co",
+	workplaces,
+	limit,
+} = {}) {
+	if (!isFrappeRuntimeAvailable(win)) {
+		throw new Error("Frappe runtime is not available for Korea payroll closing worklist runtime reads")
+	}
+
+	const company = getKoreaPayrollClosingRuntimeCompany(win, fallbackCompany)
+	const args = { company }
+	if (Array.isArray(workplaces) && workplaces.length) args.workplaces = JSON.stringify(workplaces)
+	if (limit !== undefined) args.limit = limit
+
+	const response = await win.frappe.call({
+		method: KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD,
+		args,
+	})
+	const data = response?.message ?? response
+	assertKoreaPayrollClosingRuntimeWorklist(data)
+	return {
+		source: "runtime_read_only",
+		data,
+	}
+}
+
+export function assertKoreaPayrollClosingRuntimeWorklist(data) {
+	if (!data || typeof data !== "object") {
+		throw new Error("Korea payroll closing worklist runtime response must be an object")
+	}
+	if (data.contract_type !== "korea_payroll_closing_worklist_runtime_api_v1") {
+		throw new Error("Unexpected Korea payroll closing worklist runtime contract")
+	}
+	if (data.runtime_action !== "runtime_read_only") {
+		throw new Error("Unexpected Korea payroll closing worklist runtime action")
+	}
+	if (data.requires_runtime_apply !== false) {
+		throw new Error("Korea payroll closing worklist runtime read must not require runtime apply")
+	}
+	if (data.requires_human_approval !== true || data.ai_role !== "assistant_only") {
+		throw new Error("Korea payroll closing worklist runtime must preserve human approval and assistant-only AI")
+	}
+	if (!Array.isArray(data.items)) {
+		throw new Error("Korea payroll closing worklist runtime items must be a list")
+	}
+	assertNoForbiddenScoreKeys(data)
+	for (const item of data.items) {
+		if (!item || typeof item !== "object") throw new Error("Korea payroll closing worklist item must be an object")
+		if (item.runtime_action !== "runtime_read_only") throw new Error("Korea payroll closing worklist item must be runtime read-only")
+		if (item.requires_runtime_apply !== false) throw new Error("Korea payroll closing worklist item must not require runtime apply")
+		if (item.requires_human_approval !== true || item.ai_role !== "assistant_only") {
+			throw new Error("Korea payroll closing worklist item must preserve human approval and assistant-only AI")
+		}
+	}
+	return data
+}
+
 export function hasKoreaAdminDashboardRuntimeData(data) {
 	const metrics = data?.metrics
 	if (!metrics || typeof metrics !== "object") return false
 	return Object.values(metrics).some((value) => typeof value === "number" && value > 0)
+}
+
+export function hasKoreaPayrollClosingRuntimeWorklistData(data) {
+	return data?.contract_type === "korea_payroll_closing_worklist_runtime_api_v1" &&
+		data?.runtime_action === "runtime_read_only" &&
+		data?.requires_runtime_apply === false &&
+		Array.isArray(data?.items) &&
+		data.items.length > 0
+}
+
+const FORBIDDEN_SCORE_KEY_FRAGMENTS = ["riskscore", "legalscore", "legalriskscore", "probabilityscore", "successrate", "successscore"]
+
+function assertNoForbiddenScoreKeys(value) {
+	for (const key of iterObjectKeys(value)) {
+		const normalized = key.toLowerCase().replace(/[^a-z0-9]+/g, "")
+		if (normalized === "score" || normalized === "risk" || normalized === "probability" || FORBIDDEN_SCORE_KEY_FRAGMENTS.some((fragment) => normalized.includes(fragment))) {
+			throw new Error("score keys are not allowed in Korea payroll closing worklist runtime responses")
+		}
+	}
+}
+
+function* iterObjectKeys(value) {
+	if (Array.isArray(value)) {
+		for (const item of value) yield* iterObjectKeys(item)
+		return
+	}
+	if (!value || typeof value !== "object") return
+	for (const [key, nested] of Object.entries(value)) {
+		yield key
+		yield* iterObjectKeys(nested)
+	}
 }

@@ -163,6 +163,11 @@ class TestKoreaPayrollClosingDraftReviewRuntimeApi(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "review_action.contract_type must be korea_payroll_closing_draft_review_action_v1"):
 			module.apply_korea_payroll_closing_draft_review_runtime(review_action=wrapped)
 
+		forged = review_action()
+		forged["source_draft"]["approver"] = "other.approver@example.com"
+		with self.assertRaisesRegex(ValueError, "source_draft.approver must match review_action.actor"):
+			module.apply_korea_payroll_closing_draft_review_runtime(review_action=forged)
+
 		action = review_action()
 		original = copy.deepcopy(action)
 		class FakeDraftDoc:

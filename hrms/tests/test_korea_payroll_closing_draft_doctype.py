@@ -419,6 +419,36 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "review_action.actor must match actor"):
 			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
 
+	def test_runtime_review_adapter_rejects_non_approver_actor_at_source_and_target(self):
+		module = load_controller_with_frappe_stub()
+		module.frappe.get_doc = lambda doctype, name: self.fail("source approver mismatch must fail before doc lookup")
+
+		review_action = self._valid_review_action()
+		review_action["source_draft"]["approver"] = "other.approver@example.com"
+		with self.assertRaisesRegex(ValueError, "source_draft.approver must match review_action.actor"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+		class FakeDraftDoc:
+			name = "KPCD-0001"
+			company = "Korea Demo Co"
+			workplace = "Seoul HQ"
+			period_start = "2026-05-01"
+			period_end = "2026-05-31"
+			source_payroll_entry = "PAY-ENTRY-2026-05"
+			approver = "other.approver@example.com"
+			status = "draft_pending_human_approval"
+			docstatus = 0
+			requires_human_approval = 1
+			ai_role = "assistant_only"
+			mutation_boundary = "draft_only_no_submit_no_approve_no_send"
+
+			def save(self):
+				self.fail("target approver mismatch must fail before save")
+
+		module.frappe.get_doc = lambda doctype, name: FakeDraftDoc()
+		with self.assertRaisesRegex(ValueError, "target draft approver must match the review actor"):
+			module.apply_korea_payroll_closing_draft_review_action(self._valid_review_action(), actor="hr.manager@example.com")
+
 	def test_controller_rejects_forbidden_numeric_score_keys_in_embedded_json(self):
 		module = load_controller_with_frappe_stub()
 

@@ -276,6 +276,9 @@ def _validated_review_action_fields(review_action: dict[str, Any], *, actor: str
 		frappe.throw(frappe._("source_draft.requires_human_approval must be true."))
 	if source_draft.get("ai_role") != EXPECTED_AI_ROLE:
 		frappe.throw(frappe._("source_draft.ai_role must be assistant_only."))
+	source_approver = _require_string_text(source_draft.get("approver"), "source_draft.approver")
+	if source_approver != actor:
+		frappe.throw(frappe._("source_draft.approver must match review_action.actor."))
 
 	status = _require_string_text(review_action.get("would_set_status"), "review_action.would_set_status")
 	if status not in (ALLOWED_HUMAN_REVIEW_STATUSES - {EXPECTED_STATUS}):
@@ -289,6 +292,7 @@ def _validated_review_action_fields(review_action: dict[str, Any], *, actor: str
 		"period_start": _parse_iso_date(review_action.get("period_start"), "review_action.period_start").isoformat(),
 		"period_end": _parse_iso_date(review_action.get("period_end"), "review_action.period_end").isoformat(),
 		"source_payroll_entry": _require_string_text(review_action.get("source_payroll_entry"), "review_action.source_payroll_entry"),
+		"approver": source_approver,
 		"audit_preview": deepcopy(review_action.get("audit_preview")),
 	}
 	if not isinstance(fields["audit_preview"], dict):
@@ -314,6 +318,7 @@ def _validate_review_target_doc(doc: Any, fields: dict[str, Any]) -> None:
 		"period_start": fields["period_start"],
 		"period_end": fields["period_end"],
 		"source_payroll_entry": fields["source_payroll_entry"],
+		"approver": fields["approver"],
 		"status": EXPECTED_STATUS,
 		"docstatus": 0,
 		"requires_human_approval": 1,
@@ -326,6 +331,8 @@ def _validate_review_target_doc(doc: Any, fields: dict[str, Any]) -> None:
 			if actual not in (1, True):
 				frappe.throw(frappe._("target draft requires_human_approval must be true."))
 		elif str(actual) != str(expected):
+			if fieldname == "approver":
+				frappe.throw(frappe._("target draft approver must match the review actor."))
 			frappe.throw(frappe._(f"target draft {fieldname} must match the review action."))
 
 

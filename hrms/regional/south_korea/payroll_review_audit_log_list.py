@@ -14,6 +14,7 @@ from typing import Any
 from urllib.parse import quote
 
 CONTRACT_TYPE = "korea_payroll_review_audit_log_list_v1"
+DETAIL_CONTRACT_TYPE = "korea_payroll_review_audit_log_detail_v1"
 SOURCE_CONTRACT_TYPE = "korea_payroll_closing_review_audit_log_runtime_insert_v1"
 SOURCE_API_CONTRACT_TYPE = "korea_payroll_closing_review_audit_log_runtime_insert_api_v1"
 EXPECTED_RUNTIME_ACTION = "runtime_review_audit_log_created"
@@ -87,6 +88,60 @@ def build_korea_payroll_review_audit_log_list(
 			"enabled": bool(items),
 			"requires_runtime_apply": False,
 		},
+		"requires_human_approval": True,
+		"ai_role": EXPECTED_AI_ROLE,
+	}
+
+
+def build_korea_payroll_review_audit_log_detail(
+	row: dict[str, Any],
+	*,
+	company: str,
+	workplaces: list[str] | None = None,
+) -> dict[str, Any]:
+	"""Build a scoped route-only detail view for one persisted review audit row."""
+
+	if not isinstance(row, dict):
+		raise ValueError("audit row must be a JSON object")
+	_reject_forbidden_score_keys(row)
+	company_text = _require_text(company, "company")
+	workplace_scope = _normalize_workplaces(workplaces)
+	validated = _validate_row(row)
+	if validated["company"] != company_text:
+		raise ValueError("audit row company must match requested company")
+	if workplace_scope is not None and validated["workplace"] not in workplace_scope:
+		raise ValueError("audit row workplace is outside requested workplaces")
+
+	name = validated["name"]
+	route = f"korea-payroll-review-audit-logs/{quote(name, safe='')}"
+	return {
+		"contract_type": DETAIL_CONTRACT_TYPE,
+		"source_contract_type": validated["contract_type"],
+		"runtime_action": "preview_only",
+		"requires_runtime_apply": False,
+		"name": name,
+		"draft_name": validated["draft_name"],
+		"previous_status": validated["previous_status"],
+		"status": validated["status"],
+		"action_taken": validated["action"],
+		"review_actor": validated["review_actor"],
+		"audit_actor": validated["audit_actor"],
+		"company": validated["company"],
+		"workplace": validated["workplace"],
+		"period_start": validated["period_start"],
+		"period_end": validated["period_end"],
+		"source_payroll_entry": validated["source_payroll_entry"],
+		"created_at": validated["created_at"],
+		"route": route,
+		"action": {
+			"action": "open_payroll_review_audit_log",
+			"route": route,
+			"enabled": True,
+			"requires_runtime_apply": False,
+		},
+		"audit_event": deepcopy(row.get("audit_event", {})),
+		"source_runtime_apply": deepcopy(row.get("source_runtime_apply", {})),
+		"source_audit_log": deepcopy(row),
 		"requires_human_approval": True,
 		"ai_role": EXPECTED_AI_ROLE,
 	}
@@ -255,4 +310,4 @@ def _normalize_score_key(key: str) -> str:
 	return re.sub(r"[^a-z0-9]+", "_", key.strip().lower()).strip("_").replace("_", "")
 
 
-__all__ = ["build_korea_payroll_review_audit_log_list"]
+__all__ = ["build_korea_payroll_review_audit_log_list", "build_korea_payroll_review_audit_log_detail"]

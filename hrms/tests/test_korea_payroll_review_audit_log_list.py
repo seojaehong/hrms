@@ -140,6 +140,53 @@ class TestKoreaPayrollReviewAuditLogList(unittest.TestCase):
 
 		self.assertEqual(row, original)
 
+	def test_builds_route_only_audit_log_detail_for_selected_row(self):
+		row = audit_row(name="AUDIT LOG/서울 1", created_at="2026-05-31T18:00:00+09:00")
+		row["audit_event"] = {"action": "approve_draft", "status": "draft_human_approved"}
+		row["source_runtime_apply"] = {"status": "draft_human_approved", "action": "approve_draft"}
+
+		detail = self.mod.build_korea_payroll_review_audit_log_detail(
+			row,
+			company="Korea Demo Co",
+			workplaces=["Seoul HQ"],
+		)
+
+		self.assertEqual(detail["contract_type"], "korea_payroll_review_audit_log_detail_v1")
+		self.assertEqual(detail["source_contract_type"], "korea_payroll_closing_review_audit_log_runtime_insert_v1")
+		self.assertEqual(detail["runtime_action"], "preview_only")
+		self.assertFalse(detail["requires_runtime_apply"])
+		self.assertEqual(detail["name"], "AUDIT LOG/서울 1")
+		self.assertEqual(detail["route"], "korea-payroll-review-audit-logs/AUDIT%20LOG%2F%EC%84%9C%EC%9A%B8%201")
+		self.assertEqual(detail["audit_event"]["action"], "approve_draft")
+		self.assertEqual(detail["source_runtime_apply"]["status"], "draft_human_approved")
+		self.assertEqual(
+			detail["action"],
+			{
+				"action": "open_payroll_review_audit_log",
+				"route": "korea-payroll-review-audit-logs/AUDIT%20LOG%2F%EC%84%9C%EC%9A%B8%201",
+				"enabled": True,
+				"requires_runtime_apply": False,
+			},
+		)
+		self.assertTrue(detail["requires_human_approval"])
+		self.assertEqual(detail["ai_role"], "assistant_only")
+
+	def test_audit_log_detail_rejects_out_of_scope_workplace(self):
+		row = audit_row(workplace="Busan Branch")
+
+		with self.assertRaisesRegex(ValueError, "audit row workplace is outside requested workplaces"):
+			self.mod.build_korea_payroll_review_audit_log_detail(
+				row,
+				company="Korea Demo Co",
+				workplaces=["Seoul HQ"],
+			)
+
+	def test_audit_log_detail_rejects_forged_score_keys(self):
+		row = audit_row(source_runtime_apply={"closing success rate": 0.9})
+
+		with self.assertRaisesRegex(ValueError, "score keys are not allowed"):
+			self.mod.build_korea_payroll_review_audit_log_detail(row, company="Korea Demo Co")
+
 
 if __name__ == "__main__":
 	unittest.main()

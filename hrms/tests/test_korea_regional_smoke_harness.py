@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import pathlib
 import shlex
 import sys
@@ -111,9 +113,25 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 
 		commands = [row["command"] for row in result["direct_results"]]
 		self.assertTrue(result["passed"])
+		self.assertEqual(result["python_executable"], sys.executable)
+		self.assertEqual(result["direct_target_count"], len(commands))
 		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_leave_allocation_api.py"]), commands)
 		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_api.py"]), commands)
 		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_payroll_entry_api.py"]), commands)
+
+	def test_main_can_write_json_report_file_for_ci_artifacts(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			report_path = pathlib.Path(tempdir) / "nested" / "korea-smoke.json"
+
+			with contextlib.redirect_stdout(io.StringIO()):
+				exit_code = self.mod.main(["--repo-root", str(ROOT), "--dry-run", "--report-file", str(report_path)])
+
+			self.assertEqual(exit_code, 0)
+			self.assertTrue(report_path.exists())
+			payload = self.mod.json.loads(report_path.read_text(encoding="utf-8"))
+			self.assertEqual(payload["contract_type"], "korea_regional_smoke_harness_v1")
+			self.assertEqual(payload["python_executable"], sys.executable)
+			self.assertGreater(payload["direct_target_count"], 0)
 
 	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):
 		result = self.mod.run_command(["python3", "--version"], dry_run=True)

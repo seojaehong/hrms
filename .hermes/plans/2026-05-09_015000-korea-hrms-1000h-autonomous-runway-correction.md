@@ -1,14 +1,15 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 2 landed on `develop`.
+Status: active source-of-truth correction after Gate 3 landed on `develop`.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Current `develop` head: `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
+- Current `develop` head: `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
+- Gate 3 is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -28,7 +29,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 2
+   - current priority: Gate 4
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -72,20 +73,28 @@ Closeout discipline:
 
 ### Gate 3 — Salary Slip statutory apply hook
 
-Status: next.
+Status: done and merged.
 
-Notes:
-- Existing preview adapter exists in `payroll_salary_slip_adapter.py`.
-- Missing piece is idempotent `apply_korea_statutory_to_salary_slip` and scoped hook registration.
-- This is a real mutation path; TDD and small PR are mandatory.
+Evidence:
+- `develop` includes `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`.
+- `payroll_salary_slip_adapter.py` adds `apply_korea_statutory_to_salary_slip()` for idempotent draft Salary Slip deduction-row application.
+- `apply_korea_salary_slip_statutory_hook()` is opt-in, KR-scoped, actor-required, and rejects malformed payloads before row mutation.
+- `hrms/hooks.py` registers the hook on `Salary Slip.before_validate`.
+- Boundary remains row-only: no save/submit/approve/send/provider call.
+
+Closeout discipline:
+- Treat Gate 3 as a narrow apply-boundary hook, not payroll submission or approval automation.
+- Keep human/operator control around the opt-in flag and actor.
+- Runtime/bench verification is still needed before treating this as production payroll close automation.
 
 ### Gate 4 — Demo seed blocker realism
 
-Status: after Gate 3 or parallel only if isolated.
+Status: next.
 
 Goal:
 - Seed blocker-generating transaction data: Attendance absence/unclosed, overtime pending approval, unsettled Expense Claim.
 - Keep seed idempotent.
+- Preserve fixture/runtime fallback clarity until bench/browser runtime verification is green.
 
 ### Gate 5 — Korea test/CI harness
 
@@ -106,15 +115,15 @@ Known issue:
 
 ## Next action
 
-Proceed with Gate 3 from `develop`:
+Proceed with Gate 4 from `develop`:
 
 ```text
-feat/korea-salary-slip-statutory-apply-hook
+feat/korea-demo-seed-blocker-realism
 ```
 
 Expected deliverables:
-- failing direct Python tests first for an idempotent Salary Slip statutory apply boundary
-- scoped apply helper that consumes existing Korea statutory payroll preview/snapshot data
-- explicit mutation boundary: no submit/approve/send/provider calls
+- failing direct Python tests first for idempotent blocker-generating demo seed behavior
+- realistic Korea payroll closing blockers: Attendance absence/unclosed, overtime pending approval, and unsettled Expense Claim where feasible
+- no approval/submission/provider calls; seed behavior remains explicit and idempotent
 - focused direct tests and Korea regional smoke verification
 - commit/push/PR URL

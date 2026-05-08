@@ -1,15 +1,16 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 3 landed on `develop`.
+Status: active source-of-truth correction after Gate 4 landed on `develop`.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
+- Latest product gate commit on `develop`: `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
+- Gate 4 is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -29,7 +30,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 4
+   - current priority: Gate 5
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -89,16 +90,22 @@ Closeout discipline:
 
 ### Gate 4 — Demo seed blocker realism
 
-Status: next.
+Status: done and merged.
 
 Goal:
 - Seed blocker-generating transaction data: Attendance absence/unclosed, overtime pending approval, unsettled Expense Claim.
 - Keep seed idempotent.
 - Preserve fixture/runtime fallback clarity until bench/browser runtime verification is green.
 
+Evidence:
+- `develop` includes `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`.
+- `hrms/regional/south_korea/demo_seed.py` creates realistic demo blocker transactions for the Korea payroll closing operator flow.
+- `hrms/tests/test_korea_demo_seed_blockers.py` covers idempotency and the explicit demo-only/no-submit/no-approve/no-send/no-provider boundary.
+- Boundary remains demo seed only: no payroll approval/submission/provider automation.
+
 ### Gate 5 — Korea test/CI harness
 
-Status: after core Gate 2/3 boundaries or earlier if test execution blocks progress.
+Status: next.
 
 Known issue:
 - The active Hermes Python previously lacked `pytest`; test execution environment must be explicit rather than assumed.
@@ -115,15 +122,15 @@ Known issue:
 
 ## Next action
 
-Proceed with Gate 4 from `develop`:
+Proceed with Gate 5 from `develop`:
 
 ```text
-feat/korea-demo-seed-blocker-realism
+ci/korea-regional-smoke-harness
 ```
 
 Expected deliverables:
-- failing direct Python tests first for idempotent blocker-generating demo seed behavior
-- realistic Korea payroll closing blockers: Attendance absence/unclosed, overtime pending approval, and unsettled Expense Claim where feasible
-- no approval/submission/provider calls; seed behavior remains explicit and idempotent
-- focused direct tests and Korea regional smoke verification
+- failing direct Python tests first for any harness behavior changes
+- a cron/CI-safe Korea regional smoke command that uses the current interpreter and dynamic `test_korea*.py` discovery
+- fail-closed behavior when no direct Korea targets are found
+- optional bench/runtime probes kept behind explicit flags or availability checks
 - commit/push/PR URL

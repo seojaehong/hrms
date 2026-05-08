@@ -94,7 +94,8 @@
 						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
 					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
-						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }} · fixture worklist remains visible until Gate 2 runtime worklist bridge is populated
+						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}
+						<span v-if="!runtimeHasWorklistData"> · fixture worklist remains visible until Gate 2 runtime worklist bridge is populated</span>
 					</div>
 					<div v-if="runtimeHasWorklistData" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
 						Runtime worklist loaded · runtime_action={{ runtimeWorklist.runtime_action }} · requires_runtime_apply={{ runtimeWorklist.requires_runtime_apply }} · evidence remains read-only

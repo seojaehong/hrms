@@ -51,8 +51,14 @@ def _build_card_action(key: str, value: int) -> dict[str, Any]:
 def _normalize_metric_count(value: Any, fieldname: str) -> int:
 	if isinstance(value, bool):
 		raise ValueError(f"{fieldname} must be a non-negative integer")
+	if isinstance(value, str):
+		metric_text = value.strip()
+		if not metric_text or "e" in metric_text.lower() or "." in metric_text:
+			raise ValueError(f"{fieldname} must be a non-negative integer")
+	else:
+		metric_text = str(value if value is not None else 0)
 	try:
-		number = Decimal(str(value or 0))
+		number = Decimal(metric_text)
 	except (InvalidOperation, ValueError) as exc:
 		raise ValueError(f"{fieldname} must be a non-negative integer") from exc
 	if not number.is_finite() or number != number.to_integral_value():

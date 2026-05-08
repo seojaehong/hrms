@@ -97,6 +97,16 @@ class TestKoreaAdminDashboard(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			self.mod.build_admin_dashboard(metrics={"open_approvals": True})
 
+	def test_empty_string_metric_values_are_rejected_instead_of_defaulted_to_zero(self):
+		for value in ("", "   "):
+			with self.subTest(value=repr(value)):
+				with self.assertRaisesRegex(ValueError, "open_approvals must be a non-negative integer"):
+					self.mod.build_admin_dashboard(metrics={"open_approvals": value})
+
+	def test_exponent_style_metric_values_are_rejected(self):
+		with self.assertRaisesRegex(ValueError, "pending_payslips must be a non-negative integer"):
+			self.mod.build_admin_dashboard(metrics={"pending_payslips": "1e2"})
+
 
 if __name__ == "__main__":
 	unittest.main()

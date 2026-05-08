@@ -93,11 +93,31 @@ class FakeFrappe:
 				continue
 			if filters and row.get("docstatus") != filters.get("docstatus"):
 				continue
+			if filters and row.get("status") != filters.get("status"):
+				continue
 			workplace_filter = (filters or {}).get("workplace")
 			if isinstance(workplace_filter, tuple) and workplace_filter[0] == "in" and row.get("workplace") not in workplace_filter[1]:
 				continue
 			results.append({field: copy.deepcopy(row.get(field)) for field in fields or []})
 		return results[:limit_page_length]
+
+
+class NoPermissionApiFrappe:
+	def __init__(self, rows):
+		self.rows = rows
+		self.get_list_calls = []
+		self.whitelisted = []
+
+	def whitelist(self):
+		def decorator(fn):
+			self.whitelisted.append(fn.__name__)
+			return fn
+
+		return decorator
+
+	def get_list(self, *args, **kwargs):
+		self.get_list_calls.append((args, kwargs))
+		return self.rows
 
 
 def load_module(fake_frappe):
@@ -159,14 +179,39 @@ class TestKoreaPayrollClosingWorklistRuntimeApi(unittest.TestCase):
 		self.assertFalse(result["items"][0]["requires_runtime_apply"])
 		self.assertEqual(fake_frappe.only_for_calls, [["HR Manager"]])
 		self.assertEqual(fake_frappe.get_list_calls[0]["doctype"], "Korea Payroll Closing Draft")
-		self.assertEqual(fake_frappe.get_list_calls[0]["filters"], {"company": "Korea Demo Co", "docstatus": 0, "workplace": ("in", ["Seoul HQ", "Busan Branch"])})
+		self.assertEqual(
+			fake_frappe.get_list_calls[0]["filters"],
+			{"company": "Korea Demo Co", "docstatus": 0, "status": "draft_pending_human_approval", "workplace": ("in", ["Seoul HQ", "Busan Branch"])},
+		)
 		self.assertEqual(fake_frappe.get_list_calls[0]["limit_page_length"], 20)
 		self.assertIn("list_korea_payroll_closing_worklist_runtime", fake_frappe.whitelisted)
+
+	def test_runtime_worklist_queries_only_pending_human_approval_drafts(self):
+		rows = [
+			draft_row(name="KPCD-2026-05-PENDING"),
+			draft_row(name="KPCD-2026-05-APPROVED", status="draft_human_approved"),
+			draft_row(name="KPCD-2026-05-REJECTED", status="draft_human_rejected"),
+		]
+		fake_frappe = FakeFrappe(rows)
+		module = load_module(fake_frappe)
+
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+		self.assertEqual(result["summary"]["total_count"], 1)
+		self.assertEqual(result["items"][0]["draft_name"], "KPCD-2026-05-PENDING")
+		self.assertEqual(fake_frappe.get_list_calls[0]["filters"]["status"], "draft_pending_human_approval")
 
 	def test_runtime_worklist_requires_draft_read_permission_before_querying_rows(self):
 		fake_frappe = FakeFrappe([draft_row()], permissions={"Korea Payroll Closing Draft": False})
 		module = load_module(fake_frappe)
 		with self.assertRaisesRegex(PermissionError, "read permission is required for Korea Payroll Closing Draft"):
+			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+		self.assertEqual(fake_frappe.get_list_calls, [])
+
+	def test_runtime_worklist_fails_closed_when_permission_apis_are_missing(self):
+		fake_frappe = NoPermissionApiFrappe([draft_row()])
+		module = load_module(fake_frappe)
+		with self.assertRaisesRegex(RuntimeError, "Frappe role and permission APIs are required"):
 			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
 		self.assertEqual(fake_frappe.get_list_calls, [])
 
@@ -186,6 +231,51 @@ class TestKoreaPayrollClosingWorklistRuntimeApi(unittest.TestCase):
 		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
 		self.assertEqual(result["items"][0]["readiness_cards"], [{"key": "attendance", "label": "Attendance", "state": "blocked", "summary": "1 open day"}])
 		self.assertEqual(result["items"][0]["audit_preview"], {"runtime_action": "preview_only", "requires_runtime_apply": False, "blocker_codes": ["attendance_not_ready"]})
+
+	def test_runtime_worklist_rejects_mutating_audit_preview_and_row_score_leakage(self):
+		mutating_session = source_session(audit_preview={"runtime_action": "submit", "requires_runtime_apply": True, "blocker_codes": []})
+		module = load_module(FakeFrappe([draft_row(session=mutating_session)]))
+		with self.assertRaisesRegex(ValueError, "payload.session.audit_preview must remain preview-only read metadata"):
+			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+		module = load_module(
+			FakeFrappe(
+				[
+					draft_row(
+						audit_preview=json.dumps({"runtime_action": "preview_only", "requires_runtime_apply": False, "riskRating": "high"})
+					)
+				]
+			)
+		)
+		with self.assertRaisesRegex(ValueError, "score keys are not allowed"):
+			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+		module = load_module(
+			FakeFrappe(
+				[
+					draft_row(
+						audit_preview=json.dumps({"runtime_action": "submit", "requires_runtime_apply": True, "blocker_codes": []})
+					)
+				]
+			)
+		)
+		with self.assertRaisesRegex(ValueError, "audit_preview must remain preview-only read metadata"):
+			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+	def test_runtime_worklist_rejects_duplicate_session_names(self):
+		rows = [
+			draft_row(name="KPCD-2026-05-SEOUL-A"),
+			draft_row(name="KPCD-2026-05-SEOUL-B"),
+		]
+		module = load_module(FakeFrappe(rows))
+		with self.assertRaisesRegex(ValueError, "payload.session.name values must be unique"):
+			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+	def test_runtime_worklist_preserves_zero_salary_slip_count(self):
+		session = source_session(payroll_artifacts={"payroll_entry": "PAY-ENTRY-2026-05", "salary_slip_count": 0, "employee_count": 99})
+		module = load_module(FakeFrappe([draft_row(session=session)]))
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+		self.assertEqual(result["items"][0]["employee_count"], 0)
 
 	def test_runtime_worklist_rejects_bad_limit_payload_and_score_leakage(self):
 		module = load_module(FakeFrappe([draft_row()]))

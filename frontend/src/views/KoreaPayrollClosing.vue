@@ -75,7 +75,7 @@
 							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">{{ dataSourceLabel }}</p>
 							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
 							<p class="mt-2 text-sm text-gray-300">
-								{{ activeCompany }} · {{ summaryCards.total_employees || 'runtime' }} employees · updated {{ activeWorklist.updated_at || 'runtime read' }}
+								{{ activeCompany }} · {{ summaryCards.total_employees ?? 'runtime' }} employees · updated {{ activeWorklist.updated_at || 'runtime read' }}
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
@@ -84,7 +84,11 @@
 						Loading read-only Frappe runtime data…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
-						Runtime read failed; static fixture fallback is active. {{ runtimeError }}
+						<p>Runtime read failed; static fixture fallback is active. {{ runtimeError }}</p>
+						<p v-if="runtimeWorklistError" class="mt-1">Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}</p>
+					</div>
+					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
+						Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}
 					</div>
 					<div v-else-if="runtimeDashboard && !runtimeHasData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
 						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
@@ -129,7 +133,7 @@
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.role }}</p>
 								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.workplace }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count || 'runtime' }} employees</p>
+								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? 'runtime' }} employees</p>
 							</div>
 							<span
 								class="rounded-full px-3 py-1 text-xs font-semibold"
@@ -191,6 +195,7 @@ const runtimeDashboard = ref(null)
 const runtimeWorklist = ref(null)
 const runtimeLoading = ref(false)
 const runtimeError = ref("")
+const runtimeWorklistError = ref("")
 const activeWorklist = computed(() => (hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value) ? runtimeWorklist.value : fixture))
 const selectedSession = computed(() => buildSessionPreview(findActiveSessionItem(route.params.name)))
 const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
@@ -230,6 +235,7 @@ onMounted(loadRuntimeData)
 async function loadRuntimeData() {
 	runtimeLoading.value = true
 	runtimeError.value = ""
+	runtimeWorklistError.value = ""
 	try {
 		const [dashboardResult, worklistResult] = await Promise.allSettled([
 			loadKoreaAdminDashboardRuntime({ fallbackCompany: fixture.company }),
@@ -238,7 +244,10 @@ async function loadRuntimeData() {
 		if (dashboardResult.status === "fulfilled") runtimeDashboard.value = dashboardResult.value.data
 		else runtimeDashboard.value = null
 		if (worklistResult.status === "fulfilled") runtimeWorklist.value = worklistResult.value.data
-		else runtimeWorklist.value = null
+		else {
+			runtimeWorklist.value = null
+			runtimeWorklistError.value = worklistResult.reason instanceof Error ? worklistResult.reason.message : String(worklistResult.reason)
+		}
 		if (dashboardResult.status === "rejected" && worklistResult.status === "rejected") {
 			const error = worklistResult.reason || dashboardResult.reason
 			runtimeError.value = error instanceof Error ? error.message : String(error)

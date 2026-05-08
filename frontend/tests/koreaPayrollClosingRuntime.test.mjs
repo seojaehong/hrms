@@ -9,6 +9,7 @@ import {
 	isFrappeRuntimeAvailable,
 	loadKoreaAdminDashboardRuntime,
 	loadKoreaPayrollClosingRuntimeWorklist,
+	assertKoreaPayrollClosingRuntimeWorklist,
 } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const method = "hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
@@ -205,6 +206,19 @@ await assert.rejects(
 	/score keys are not allowed/,
 )
 
+assert.throws(
+	() =>
+		assertKoreaPayrollClosingRuntimeWorklist({
+			contract_type: "korea_payroll_closing_worklist_runtime_api_v1",
+			runtime_action: "runtime_read_only",
+			requires_runtime_apply: false,
+			requires_human_approval: true,
+			ai_role: "assistant_only",
+			items: [{ runtime_action: "runtime_read_only", requires_runtime_apply: false, requires_human_approval: true, ai_role: "assistant_only", riskRating: "high" }],
+		}),
+	/score keys are not allowed/,
+)
+
 const viewSource = await readFile(resolve(frontendRoot, "src/views/KoreaPayrollClosing.vue"), "utf8")
 assert.match(viewSource, /loadKoreaAdminDashboardRuntime/)
 assert.match(viewSource, /loadKoreaPayrollClosingRuntimeWorklist/)
@@ -214,5 +228,10 @@ assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \
 assert.match(viewSource, /No runtime dashboard rows were returned/i)
 assert.match(viewSource, /runtime worklist/i)
 assert.match(viewSource, /fixture worklist remains visible/i)
+assert.match(viewSource, /runtimeWorklistError/)
+assert.match(viewSource, /Runtime worklist read failed; fixture worklist fallback is active/i)
+assert.match(viewSource, /runtimeWorklistError\.value = worklistResult\.reason/)
+assert.match(viewSource, /summaryCards\.total_employees \?\? 'runtime'/)
+assert.match(viewSource, /item\.employee_count \?\? 'runtime'/)
 assert.match(viewSource, /findActiveSessionItem\(route\.params\.name\)/)
 assert.match(viewSource, /Loading read-only Frappe runtime data/i)

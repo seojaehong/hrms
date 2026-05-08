@@ -141,7 +141,7 @@ export function hasKoreaPayrollClosingRuntimeWorklistData(data) {
 		data.items.length > 0
 }
 
-const FORBIDDEN_SCORE_KEY_FRAGMENTS = ["riskscore", "legalscore", "legalriskscore", "probabilityscore", "successrate", "successscore"]
+const FORBIDDEN_SCORE_KEY_FRAGMENTS = ["score", "risk", "probability", "successrate"]
 
 function assertNoForbiddenScoreKeys(value) {
 	for (const key of iterObjectKeys(value)) {

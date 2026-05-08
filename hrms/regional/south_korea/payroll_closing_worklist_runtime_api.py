@@ -78,7 +78,7 @@ def list_korea_payroll_closing_worklist_runtime(
 	workplace_payloads = None if workplaces is None else deepcopy(_coerce_list(workplaces, "workplaces"))
 	limit_value = _coerce_limit(limit)
 	_require_runtime_read_access()
-	filters: dict[str, Any] = {"company": company_text, "docstatus": 0}
+	filters: dict[str, Any] = {"company": company_text, "docstatus": 0, "status": "draft_pending_human_approval"}
 	if workplace_payloads is not None:
 		filters["workplace"] = ("in", workplace_payloads)
 	rows = frappe.get_list(  # type: ignore[union-attr]
@@ -89,6 +89,12 @@ def list_korea_payroll_closing_worklist_runtime(
 		limit_page_length=limit_value,
 	)
 	runtime_sessions = [_runtime_session_from_draft_row(row) for row in rows]
+	_seen_session_names: set[str] = set()
+	for item in runtime_sessions:
+		session_name = item["session"]["name"]
+		if session_name in _seen_session_names:
+			raise ValueError("payload.session.name values must be unique in payroll closing worklist runtime rows")
+		_seen_session_names.add(session_name)
 	core = _load_sibling_module("payroll_closing_worklist.py", "korea_payroll_closing_worklist_runtime_core")
 	result = deepcopy(
 		core.build_korea_payroll_closing_worklist(
@@ -134,15 +140,15 @@ def _runtime_required() -> None:
 		raise RuntimeError("Frappe runtime is required for payroll closing worklist runtime reads")
 	if not hasattr(frappe, "get_list"):
 		raise RuntimeError("Frappe get_list API is required for payroll closing worklist runtime reads")
+	if not hasattr(frappe, "only_for") or not hasattr(frappe, "has_permission"):
+		raise RuntimeError("Frappe role and permission APIs are required for payroll closing worklist runtime reads")
 
 
 def _require_runtime_read_access() -> None:
-	if hasattr(frappe, "only_for"):
-		frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
-	if hasattr(frappe, "has_permission"):
-		for doctype in RUNTIME_READ_DOCTYPES:
-			if not frappe.has_permission(doctype, ptype="read"):  # type: ignore[union-attr]
-				raise PermissionError(f"read permission is required for {doctype}")
+	frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
+	for doctype in RUNTIME_READ_DOCTYPES:
+		if not frappe.has_permission(doctype, ptype="read"):  # type: ignore[union-attr]
+			raise PermissionError(f"read permission is required for {doctype}")
 
 
 def _runtime_session_from_draft_row(value: Any) -> dict[str, Any]:
@@ -158,6 +164,8 @@ def _runtime_session_from_draft_row(value: Any) -> dict[str, Any]:
 	if row.get("ai_role") != AI_ROLE:
 		raise ValueError("ai_role must be assistant_only")
 	payload = _coerce_json_object(row.get("payload"), "payload")
+	if row.get("audit_preview") is not None:
+		_validate_row_audit_preview(_coerce_json_object(row.get("audit_preview"), "audit_preview"))
 	session = payload.get("session")
 	if not isinstance(session, dict):
 		raise ValueError("payload.session must be a JSON object")
@@ -195,7 +203,7 @@ def _employee_count_from_session(session: dict[str, Any]) -> int | None:
 	artifacts = session.get("payroll_artifacts")
 	if not isinstance(artifacts, dict):
 		return None
-	value = artifacts.get("salary_slip_count") or artifacts.get("employee_count")
+	value = artifacts.get("salary_slip_count") if "salary_slip_count" in artifacts else artifacts.get("employee_count")
 	if value is None:
 		return None
 	if type(value) is not int or value < 0:
@@ -234,11 +242,23 @@ def _safe_audit_preview(value: Any) -> dict[str, Any]:
 	blocker_codes = value.get("blocker_codes", [])
 	if not isinstance(blocker_codes, list) or not all(isinstance(code, str) for code in blocker_codes):
 		raise ValueError("payload.session.audit_preview.blocker_codes must be a list of strings")
+	runtime_action = _require_text(value.get("runtime_action"), "payload.session.audit_preview.runtime_action")
+	requires_runtime_apply = _require_bool(value.get("requires_runtime_apply"), "payload.session.audit_preview.requires_runtime_apply")
+	if runtime_action != "preview_only" or requires_runtime_apply is not False:
+		raise ValueError("payload.session.audit_preview must remain preview-only read metadata")
 	return {
-		"runtime_action": _require_text(value.get("runtime_action"), "payload.session.audit_preview.runtime_action"),
-		"requires_runtime_apply": _require_bool(value.get("requires_runtime_apply"), "payload.session.audit_preview.requires_runtime_apply"),
+		"runtime_action": runtime_action,
+		"requires_runtime_apply": False,
 		"blocker_codes": [code for code in blocker_codes],
 	}
+
+
+def _validate_row_audit_preview(value: dict[str, Any]) -> None:
+	_reject_forbidden_score_keys(value)
+	runtime_action = _require_text(value.get("runtime_action"), "audit_preview.runtime_action")
+	requires_runtime_apply = _require_bool(value.get("requires_runtime_apply"), "audit_preview.requires_runtime_apply")
+	if runtime_action != "preview_only" or requires_runtime_apply is not False:
+		raise ValueError("payload.session.audit_preview must remain preview-only read metadata")
 
 
 def _require_bool(value: Any, fieldname: str) -> bool:

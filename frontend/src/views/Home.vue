@@ -62,5 +62,10 @@ const quickLinks = [
 		title: __("Korea Payroll Closing"),
 		route: "KoreaPayrollClosingDashboard",
 	},
+	{
+		icon: markRaw(SalaryIcon),
+		title: __("Korea Payroll Review Audit Logs"),
+		route: "KoreaPayrollReviewAuditLogs",
+	},
 ]
 </script>

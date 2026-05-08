@@ -55,6 +55,11 @@ const routes = [
 				name: "KoreaPayrollClosingSessionPreview",
 				component: () => import("@/views/KoreaPayrollClosing.vue"),
 			},
+			{
+				path: "/dashboard/korea-payroll-review-audit-logs",
+				name: "KoreaPayrollReviewAuditLogs",
+				component: () => import("@/views/KoreaPayrollReviewAuditLogs.vue"),
+			},
 		],
 	},
 	{

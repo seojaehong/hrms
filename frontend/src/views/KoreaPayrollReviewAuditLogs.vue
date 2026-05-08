@@ -41,7 +41,8 @@
 						class="rounded-2xl border bg-white p-4 shadow-sm"
 						:class="statusClass(item.status)"
 					>
-						<div class="flex items-start justify-between gap-3">
+						<router-link :to="item.route" class="block">
+							<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.workplace }}</p>
 								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.name }}</h2>
@@ -60,11 +61,12 @@
 							<p class="mt-2 text-gray-700">{{ item.previous_status }} → {{ item.status }}</p>
 						</div>
 
-						<div class="mt-3 grid grid-cols-1 gap-2 text-xs text-gray-600">
-							<p class="rounded-lg bg-gray-50 p-2">Actor: {{ item.audit_actor }}</p>
-							<p class="rounded-lg bg-gray-50 p-2">Boundary: {{ item.mutation_boundary }}</p>
-							<p class="rounded-lg bg-gray-50 p-2">AI={{ item.ai_role }} · human approval required={{ item.requires_human_approval }}</p>
-						</div>
+
+							<div class="mt-3 flex items-center justify-between rounded-xl border border-gray-100 bg-white px-3 py-2 text-xs font-semibold text-gray-700">
+								<span>Open detail</span>
+								<span aria-hidden="true">→</span>
+							</div>
+						</router-link>
 					</article>
 				</section>
 			</div>

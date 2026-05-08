@@ -70,22 +70,39 @@
 					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the static payroll closing fixture.</p>
 				</section>
 				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
-					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">Static fixture preview</p>
-					<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
-					<p class="mt-2 text-sm text-gray-300">
-						{{ fixture.company }} · {{ fixture.summary.total_employees }} employees · updated {{ fixture.updated_at }}
-					</p>
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">{{ dataSourceLabel }}</p>
+							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
+							<p class="mt-2 text-sm text-gray-300">
+								{{ activeCompany }} · {{ fixture.summary.total_employees }} employees · updated {{ fixture.updated_at }}
+							</p>
+						</div>
+						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
+					</div>
+					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+						Loading read-only Frappe runtime dashboard…
+					</div>
+					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
+						Runtime read failed; static fixture fallback is active. {{ runtimeError }}
+					</div>
+					<div v-else-if="runtimeDashboard && !runtimeHasData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
+					</div>
+					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
+						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }} · fixture worklist remains visible until Gate 2 runtime worklist bridge
+					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
-							<p class="text-2xl font-bold">{{ fixture.summary.total_count }}</p>
+							<p class="text-2xl font-bold">{{ summaryCards.total_count }}</p>
 							<p class="text-xs text-gray-300">Workplaces</p>
 						</div>
 						<div class="rounded-xl bg-red-400/20 p-3">
-							<p class="text-2xl font-bold text-red-100">{{ fixture.summary.blocked_count }}</p>
+							<p class="text-2xl font-bold text-red-100">{{ summaryCards.blocked_count }}</p>
 							<p class="text-xs text-red-100">Blocked</p>
 						</div>
 						<div class="rounded-xl bg-green-400/20 p-3">
-							<p class="text-2xl font-bold text-green-100">{{ fixture.summary.review_ready_count }}</p>
+							<p class="text-2xl font-bold text-green-100">{{ summaryCards.review_ready_count }}</p>
 							<p class="text-xs text-green-100">Ready</p>
 						</div>
 					</div>
@@ -152,16 +169,61 @@
 </template>
 
 <script setup>
-import { computed } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
 import BaseLayout from "@/components/BaseLayout.vue"
 import {
 	findKoreaPayrollClosingSession,
 	koreaPayrollClosingOperatorFixture as fixture,
 } from "@/data/koreaPayrollClosingFixture"
+import {
+	hasKoreaAdminDashboardRuntimeData,
+	loadKoreaAdminDashboardRuntime,
+} from "@/data/koreaPayrollClosingRuntime"
 
 const route = useRoute()
+const runtimeDashboard = ref(null)
+const runtimeLoading = ref(false)
+const runtimeError = ref("")
 const selectedSession = computed(() => findKoreaPayrollClosingSession(route.params.name))
+const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
+const activeCompany = computed(() => runtimeDashboard.value?.company || fixture.company)
+const dataSourceLabel = computed(() => (runtimeDashboard.value ? "Runtime read-only dashboard" : "Static fixture preview"))
+const dataSourceBadge = computed(() => {
+	if (runtimeLoading.value) return "loading"
+	if (runtimeDashboard.value) return "runtime_read_only"
+	return "static fixture"
+})
+const dataSourceBadgeClass = computed(() => {
+	if (runtimeDashboard.value) return "bg-blue-100 text-blue-800"
+	if (runtimeLoading.value) return "bg-white/20 text-white"
+	return "bg-amber-100 text-amber-900"
+})
+const summaryCards = computed(() => {
+	const metrics = runtimeDashboard.value?.metrics
+	if (!metrics) return fixture.summary
+	return {
+		total_count: fixture.summary.total_count,
+		blocked_count: metrics.blocked_payroll_closings ?? fixture.summary.blocked_count,
+		review_ready_count: Math.max(0, fixture.summary.total_count - (metrics.blocked_payroll_closings ?? fixture.summary.blocked_count)),
+	}
+})
+
+onMounted(loadRuntimeDashboard)
+
+async function loadRuntimeDashboard() {
+	runtimeLoading.value = true
+	runtimeError.value = ""
+	try {
+		const result = await loadKoreaAdminDashboardRuntime({ fallbackCompany: fixture.company })
+		runtimeDashboard.value = result.data
+	} catch (error) {
+		runtimeDashboard.value = null
+		runtimeError.value = error instanceof Error ? error.message : String(error)
+	} finally {
+		runtimeLoading.value = false
+	}
+}
 
 function formatEvidenceSummary(summary) {
 	if (!summary) return "missing"

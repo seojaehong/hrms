@@ -14,6 +14,15 @@ from frappe.model.document import Document
 
 
 EXPECTED_STATUS = "draft_pending_human_approval"
+ALLOWED_HUMAN_REVIEW_STATUSES = {
+	"draft_pending_human_approval",
+	"draft_human_approved",
+	"draft_human_rejected",
+	"draft_changes_requested",
+}
+REVIEW_ACTION_CONTRACT_TYPE = "korea_payroll_closing_draft_review_action_v1"
+REVIEW_ACTION_MUTATION_BOUNDARY = "human_review_only_no_submit_no_send_no_provider_call"
+REVIEW_RUNTIME_MUTATION_BOUNDARY = "human_review_status_only_no_submit_no_send_no_provider_call"
 EXPECTED_SESSION_CONTRACT_TYPE = "korea_payroll_closing_session_v1"
 EXPECTED_MUTATION_BOUNDARY = "draft_only_no_submit_no_approve_no_send"
 EXPECTED_AI_ROLE = "assistant_only"
@@ -78,8 +87,8 @@ class KoreaPayrollClosingDraft(Document):
 				frappe.throw(frappe._(f"{label} {fieldname} must match the draft {fieldname}."))
 
 	def _validate_safety_boundary(self):
-		if getattr(self, "status", None) != EXPECTED_STATUS:
-			frappe.throw(frappe._("Korea Payroll Closing Draft stays draft_pending_human_approval."))
+		if getattr(self, "status", None) not in ALLOWED_HUMAN_REVIEW_STATUSES:
+			frappe.throw(frappe._("Korea Payroll Closing Draft status must stay within guarded human-review states."))
 		if getattr(self, "source_session_contract_type", None) != EXPECTED_SESSION_CONTRACT_TYPE:
 			frappe.throw(frappe._("Source session contract type must be korea_payroll_closing_session_v1."))
 		if getattr(self, "mutation_boundary", None) != EXPECTED_MUTATION_BOUNDARY:
@@ -130,6 +139,42 @@ def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any
 		"approver": fields["approver"],
 		"actor": actor_text,
 		"docstatus": 0,
+		"requires_human_approval": True,
+		"ai_role": EXPECTED_AI_ROLE,
+	}
+def apply_korea_payroll_closing_draft_review_action(review_action: dict[str, Any], *, actor: str) -> dict[str, Any]:
+	"""Apply a guarded human-review status update to a persisted draft row.
+
+	This is intentionally narrower than payroll approval or submission: it updates
+	the draft review status only, then saves the existing draft row. It does not
+	submit, approve payroll, send notifications, call providers, or create payroll
+	documents.
+	"""
+
+	actor_text = _require_string_text(actor, "actor")
+	fields = _validated_review_action_fields(review_action, actor=actor_text)
+	doc = frappe.get_doc("Korea Payroll Closing Draft", fields["name"])
+	previous_status = getattr(doc, "status", None)
+	_validate_review_target_doc(doc, fields)
+	doc.status = fields["status"]
+	saved = doc.save()
+	return {
+		"contract_type": "korea_payroll_closing_draft_review_runtime_apply_v1",
+		"source_review_action_contract_type": REVIEW_ACTION_CONTRACT_TYPE,
+		"runtime_action": "runtime_draft_review_status_updated",
+		"requires_runtime_apply": False,
+		"mutation_boundary": REVIEW_RUNTIME_MUTATION_BOUNDARY,
+		"doctype": "Korea Payroll Closing Draft",
+		"name": getattr(saved, "name", fields["name"]),
+		"previous_status": previous_status,
+		"status": fields["status"],
+		"action": fields["action"],
+		"actor": actor_text,
+		"company": fields["company"],
+		"workplace": fields["workplace"],
+		"period_start": fields["period_start"],
+		"period_end": fields["period_end"],
+		"source_payroll_entry": fields["source_payroll_entry"],
 		"requires_human_approval": True,
 		"ai_role": EXPECTED_AI_ROLE,
 	}
@@ -185,6 +230,103 @@ def _iter_json_keys(value):
 
 def _normalize_score_key(key: str) -> str:
 	return re.sub(r"[^a-z0-9]+", "_", key.strip().lower()).strip("_").replace("_", "")
+
+
+def _validated_review_action_fields(review_action: dict[str, Any], *, actor: str) -> dict[str, Any]:
+	if not isinstance(review_action, dict):
+		frappe.throw(frappe._("review_action must be a JSON object."))
+	_reject_forbidden_score_keys(review_action, "review_action")
+	if review_action.get("contract_type") != REVIEW_ACTION_CONTRACT_TYPE:
+		frappe.throw(frappe._("review_action.contract_type must be korea_payroll_closing_draft_review_action_v1."))
+	if review_action.get("source_draft_contract_type") != "korea_payroll_closing_draft_runtime_insert_v1":
+		frappe.throw(frappe._("review_action.source_draft_contract_type must be korea_payroll_closing_draft_runtime_insert_v1."))
+	if review_action.get("runtime_action") != "preview_only":
+		frappe.throw(frappe._("review_action.runtime_action must be preview_only."))
+	if review_action.get("requires_runtime_apply") is not True:
+		frappe.throw(frappe._("review_action.requires_runtime_apply must be true."))
+	if review_action.get("mutation_boundary") != REVIEW_ACTION_MUTATION_BOUNDARY:
+		frappe.throw(frappe._("review_action.mutation_boundary must be human_review_only_no_submit_no_send_no_provider_call."))
+	if review_action.get("would_update_doctype") != "Korea Payroll Closing Draft":
+		frappe.throw(frappe._("review_action.would_update_doctype must be Korea Payroll Closing Draft."))
+	if review_action.get("requires_human_approval") is not True:
+		frappe.throw(frappe._("review_action.requires_human_approval must be true."))
+	if review_action.get("ai_role") != EXPECTED_AI_ROLE:
+		frappe.throw(frappe._("review_action.ai_role must be assistant_only."))
+	if _require_string_text(review_action.get("actor"), "review_action.actor") != actor:
+		frappe.throw(frappe._("review_action.actor must match actor."))
+
+	source_draft = review_action.get("source_draft")
+	if not isinstance(source_draft, dict):
+		frappe.throw(frappe._("review_action.source_draft must be a JSON object."))
+	if source_draft.get("contract_type") != "korea_payroll_closing_draft_runtime_insert_v1":
+		frappe.throw(frappe._("source_draft.contract_type must be korea_payroll_closing_draft_runtime_insert_v1."))
+	if source_draft.get("runtime_action") != "runtime_draft_created":
+		frappe.throw(frappe._("source_draft.runtime_action must be runtime_draft_created."))
+	if source_draft.get("requires_runtime_apply") is not False:
+		frappe.throw(frappe._("source_draft.requires_runtime_apply must be false."))
+	if source_draft.get("mutation_boundary") != EXPECTED_MUTATION_BOUNDARY:
+		frappe.throw(frappe._("source_draft.mutation_boundary must remain draft_only_no_submit_no_approve_no_send."))
+	if source_draft.get("doctype") != "Korea Payroll Closing Draft":
+		frappe.throw(frappe._("source_draft.doctype must be Korea Payroll Closing Draft."))
+	if source_draft.get("status") != EXPECTED_STATUS:
+		frappe.throw(frappe._("source_draft.status must be draft_pending_human_approval."))
+	if source_draft.get("docstatus") != 0:
+		frappe.throw(frappe._("source_draft.docstatus must be 0."))
+	if source_draft.get("requires_human_approval") is not True:
+		frappe.throw(frappe._("source_draft.requires_human_approval must be true."))
+	if source_draft.get("ai_role") != EXPECTED_AI_ROLE:
+		frappe.throw(frappe._("source_draft.ai_role must be assistant_only."))
+
+	status = _require_string_text(review_action.get("would_set_status"), "review_action.would_set_status")
+	if status not in (ALLOWED_HUMAN_REVIEW_STATUSES - {EXPECTED_STATUS}):
+		frappe.throw(frappe._("review_action.would_set_status must be a guarded human-review result status."))
+	fields = {
+		"name": _require_string_text(review_action.get("would_update_name"), "review_action.would_update_name"),
+		"status": status,
+		"action": _require_string_text(review_action.get("action"), "review_action.action"),
+		"company": _require_string_text(review_action.get("company"), "review_action.company"),
+		"workplace": _require_string_text(review_action.get("workplace"), "review_action.workplace"),
+		"period_start": _parse_iso_date(review_action.get("period_start"), "review_action.period_start").isoformat(),
+		"period_end": _parse_iso_date(review_action.get("period_end"), "review_action.period_end").isoformat(),
+		"source_payroll_entry": _require_string_text(review_action.get("source_payroll_entry"), "review_action.source_payroll_entry"),
+		"audit_preview": deepcopy(review_action.get("audit_preview")),
+	}
+	if not isinstance(fields["audit_preview"], dict):
+		frappe.throw(frappe._("review_action.audit_preview must be a JSON object."))
+	for fieldname, fieldvalue in fields.items():
+		if fieldname == "audit_preview":
+			continue
+		source_key = "name" if fieldname == "name" else fieldname
+		if fieldname in {"status", "action"}:
+			continue
+		if source_draft.get(source_key) != fieldvalue:
+			frappe.throw(frappe._(f"review_action.{fieldname} must match source_draft.{source_key}."))
+	if review_action.get("would_set_status") != fields["audit_preview"].get("would_set_status"):
+		frappe.throw(frappe._("review_action.would_set_status must match audit_preview.would_set_status."))
+	return fields
+
+
+def _validate_review_target_doc(doc: Any, fields: dict[str, Any]) -> None:
+	checks = {
+		"name": fields["name"],
+		"company": fields["company"],
+		"workplace": fields["workplace"],
+		"period_start": fields["period_start"],
+		"period_end": fields["period_end"],
+		"source_payroll_entry": fields["source_payroll_entry"],
+		"status": EXPECTED_STATUS,
+		"docstatus": 0,
+		"requires_human_approval": 1,
+		"ai_role": EXPECTED_AI_ROLE,
+		"mutation_boundary": EXPECTED_MUTATION_BOUNDARY,
+	}
+	for fieldname, expected in checks.items():
+		actual = getattr(doc, fieldname, None)
+		if fieldname == "requires_human_approval":
+			if actual not in (1, True):
+				frappe.throw(frappe._("target draft requires_human_approval must be true."))
+		elif str(actual) != str(expected):
+			frappe.throw(frappe._(f"target draft {fieldname} must match the review action."))
 
 
 def _validated_apply_plan_fields(apply_plan: dict[str, Any], *, actor: str) -> dict[str, Any]:

@@ -6,8 +6,15 @@ export function isFrappeRuntimeAvailable(win = globalThis.window) {
 }
 
 export function getKoreaPayrollClosingRuntimeCompany(win = globalThis.window, fallbackCompany = "Korea Demo Franchise Co") {
-	const bootCompany = win?.frappe?.boot?.sysdefaults?.company
-	if (typeof bootCompany === "string" && bootCompany.trim()) return bootCompany.trim()
+	const candidateCompanies = [
+		win?.frappe?.boot?.user?.company,
+		win?.frappe?.boot?.user?.defaults?.company,
+		win?.frappe?.session?.company,
+		win?.frappe?.boot?.sysdefaults?.company,
+	]
+	for (const company of candidateCompanies) {
+		if (typeof company === "string" && company.trim()) return company.trim()
+	}
 
 	const defaultGetter = win?.frappe?.defaults?.get_default
 	if (typeof defaultGetter === "function") {
@@ -57,4 +64,10 @@ export function assertKoreaAdminDashboardRuntime(data) {
 		throw new Error("Korea admin dashboard runtime read must not require runtime apply")
 	}
 	return data
+}
+
+export function hasKoreaAdminDashboardRuntimeData(data) {
+	const metrics = data?.metrics
+	if (!metrics || typeof metrics !== "object") return false
+	return Object.values(metrics).some((value) => typeof value === "number" && value > 0)
 }

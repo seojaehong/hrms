@@ -86,8 +86,11 @@
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
 						Runtime read failed; static fixture fallback is active. {{ runtimeError }}
 					</div>
+					<div v-else-if="runtimeDashboard && !runtimeHasData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
+					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
-						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}
+						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }} · fixture worklist remains visible until Gate 2 runtime worklist bridge
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
@@ -173,13 +176,17 @@ import {
 	findKoreaPayrollClosingSession,
 	koreaPayrollClosingOperatorFixture as fixture,
 } from "@/data/koreaPayrollClosingFixture"
-import { loadKoreaAdminDashboardRuntime } from "@/data/koreaPayrollClosingRuntime"
+import {
+	hasKoreaAdminDashboardRuntimeData,
+	loadKoreaAdminDashboardRuntime,
+} from "@/data/koreaPayrollClosingRuntime"
 
 const route = useRoute()
 const runtimeDashboard = ref(null)
 const runtimeLoading = ref(false)
 const runtimeError = ref("")
 const selectedSession = computed(() => findKoreaPayrollClosingSession(route.params.name))
+const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
 const activeCompany = computed(() => runtimeDashboard.value?.company || fixture.company)
 const dataSourceLabel = computed(() => (runtimeDashboard.value ? "Runtime read-only dashboard" : "Static fixture preview"))
 const dataSourceBadge = computed(() => {

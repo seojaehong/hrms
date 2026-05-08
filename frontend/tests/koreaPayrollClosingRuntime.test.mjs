@@ -1,21 +1,33 @@
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
-import { resolve } from "node:path"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import {
 	getKoreaPayrollClosingRuntimeCompany,
+	hasKoreaAdminDashboardRuntimeData,
 	isFrappeRuntimeAvailable,
 	loadKoreaAdminDashboardRuntime,
 } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const method = "hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const frontendRoot = resolve(__dirname, "..")
 
 assert.equal(isFrappeRuntimeAvailable({}), false)
 assert.equal(isFrappeRuntimeAvailable({ frappe: {} }), false)
 assert.equal(isFrappeRuntimeAvailable({ frappe: { call: () => {} } }), true)
 
 assert.equal(
+	getKoreaPayrollClosingRuntimeCompany({ frappe: { boot: { user: { company: "User Co" }, sysdefaults: { company: "Runtime Co" } } } }, "Fallback Co"),
+	"User Co",
+)
+assert.equal(
 	getKoreaPayrollClosingRuntimeCompany({ frappe: { boot: { sysdefaults: { company: "Runtime Co" } } } }, "Fallback Co"),
 	"Runtime Co",
+)
+assert.equal(
+	getKoreaPayrollClosingRuntimeCompany({ frappe: { session: { company: "Session Co" } } }, "Fallback Co"),
+	"Session Co",
 )
 assert.equal(
 	getKoreaPayrollClosingRuntimeCompany({ frappe: { defaults: { get_default: () => "Default Co" } } }, "Fallback Co"),
@@ -53,6 +65,17 @@ assert.equal(result.data.contract_type, "korea_admin_dashboard_runtime_api_v1")
 assert.equal(result.data.runtime_action, "runtime_read_only")
 assert.equal(result.data.requires_runtime_apply, false)
 assert.equal(result.data.metrics.blocked_payroll_closings, 2)
+assert.equal(hasKoreaAdminDashboardRuntimeData(result.data), true)
+assert.equal(
+	hasKoreaAdminDashboardRuntimeData({
+		contract_type: "korea_admin_dashboard_runtime_api_v1",
+		runtime_action: "runtime_read_only",
+		requires_runtime_apply: false,
+		metrics: { blocked_payroll_closings: 0, payroll_review_audit_logs: 0, pending_payslips: 0, unclosed_attendance: 0 },
+		dashboard: { cards: [{ key: "blocked_payroll_closings", count: 0 }] },
+	}),
+	false,
+)
 
 await assert.rejects(
 	() => loadKoreaAdminDashboardRuntime({ win: {}, fallbackCompany: "Fallback Co" }),
@@ -85,8 +108,10 @@ await assert.rejects(
 	/Unexpected Korea admin dashboard runtime action/,
 )
 
-const viewSource = await readFile(resolve("frontend/src/views/KoreaPayrollClosing.vue"), "utf8")
+const viewSource = await readFile(resolve(frontendRoot, "src/views/KoreaPayrollClosing.vue"), "utf8")
 assert.match(viewSource, /loadKoreaAdminDashboardRuntime/)
 assert.match(viewSource, /runtime_read_only/)
 assert.match(viewSource, /static fixture fallback is active/i)
 assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \}\}/)
+assert.match(viewSource, /No runtime dashboard rows were returned/i)
+assert.match(viewSource, /fixture worklist remains visible/i)

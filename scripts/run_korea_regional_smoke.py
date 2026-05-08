@@ -105,6 +105,8 @@ def run_smoke(*, repo_root: pathlib.Path, include_bench: bool = False, site: str
 	return {
 		"contract_type": "korea_regional_smoke_harness_v1",
 		"repo_root": str(repo_root),
+		"python_executable": sys.executable,
+		"direct_target_count": len(direct_commands),
 		"direct_results": direct_results,
 		"bench_result": bench_result,
 		"passed": not failed,
@@ -123,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
 	parser.add_argument("--include-bench", action="store_true")
 	parser.add_argument("--site")
 	parser.add_argument("--dry-run", action="store_true")
+	parser.add_argument("--report-file", help="Optional path to write the JSON smoke report for CI/cron artifacts.")
 	args = parser.parse_args(argv)
 
 	result = run_smoke(
@@ -131,7 +134,12 @@ def main(argv: list[str] | None = None) -> int:
 		site=args.site,
 		dry_run=args.dry_run,
 	)
-	print(json.dumps(result, ensure_ascii=False, indent=2))
+	json_report = json.dumps(result, ensure_ascii=False, indent=2)
+	print(json_report)
+	if args.report_file:
+		report_path = pathlib.Path(args.report_file)
+		report_path.parent.mkdir(parents=True, exist_ok=True)
+		report_path.write_text(json_report + "\n", encoding="utf-8")
 	return 0 if result["passed"] else 1
 
 

@@ -125,7 +125,7 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		self.assertEqual(json.loads(doc.audit_preview)["runtime_action"], "preview_only")
 
 		doc.status = "submitted"
-		with self.assertRaisesRegex(ValueError, "Korea Payroll Closing Draft stays draft_pending_human_approval"):
+		with self.assertRaisesRegex(ValueError, "Korea Payroll Closing Draft status must stay within guarded human-review states"):
 			doc.validate()
 
 		doc.status = "draft_pending_human_approval"
@@ -323,6 +323,132 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "actor must be a non-empty string"):
 			module.create_korea_payroll_closing_draft_from_apply_plan(self._valid_apply_plan(), actor=" ")
 
+	def test_schema_allows_only_guarded_human_review_statuses(self):
+		schema = load_schema()
+		fields = {field["fieldname"]: field for field in schema["fields"] if "fieldname" in field}
+		status_options = set(fields["status"].get("options", "").split("\n"))
+
+		self.assertEqual(
+			status_options,
+			{
+				"draft_pending_human_approval",
+				"draft_human_approved",
+				"draft_human_rejected",
+				"draft_changes_requested",
+			},
+		)
+		self.assertNotIn("submitted", status_options)
+		self.assertNotIn("payroll_closed", status_options)
+
+	def test_runtime_review_adapter_applies_human_status_only_without_submit_or_send(self):
+		module = load_controller_with_frappe_stub()
+		saved_docs = []
+
+		class FakeDraftDoc:
+			name = "KPCD-0001"
+			company = "Korea Demo Co"
+			workplace = "Seoul HQ"
+			period_start = "2026-05-01"
+			period_end = "2026-05-31"
+			source_payroll_entry = "PAY-ENTRY-2026-05"
+			approver = "hr.manager@example.com"
+			status = "draft_pending_human_approval"
+			docstatus = 0
+			requires_human_approval = 1
+			ai_role = "assistant_only"
+			mutation_boundary = "draft_only_no_submit_no_approve_no_send"
+			submitted = False
+			sent = False
+			provider_called = False
+
+			def save(self):
+				saved_docs.append(self)
+				return self
+
+		def fake_get_doc(doctype, name):
+			self.assertEqual(doctype, "Korea Payroll Closing Draft")
+			self.assertEqual(name, "KPCD-0001")
+			return FakeDraftDoc()
+
+		module.frappe.get_doc = fake_get_doc
+		review_action = self._valid_review_action()
+
+		result = module.apply_korea_payroll_closing_draft_review_action(
+			review_action,
+			actor="hr.manager@example.com",
+		)
+
+		self.assertEqual(len(saved_docs), 1)
+		self.assertEqual(saved_docs[0].status, "draft_human_approved")
+		self.assertFalse(saved_docs[0].submitted)
+		self.assertFalse(saved_docs[0].sent)
+		self.assertFalse(saved_docs[0].provider_called)
+		self.assertEqual(result["contract_type"], "korea_payroll_closing_draft_review_runtime_apply_v1")
+		self.assertEqual(result["source_review_action_contract_type"], "korea_payroll_closing_draft_review_action_v1")
+		self.assertEqual(result["runtime_action"], "runtime_draft_review_status_updated")
+		self.assertFalse(result["requires_runtime_apply"])
+		self.assertEqual(result["mutation_boundary"], "human_review_status_only_no_submit_no_send_no_provider_call")
+		self.assertEqual(result["doctype"], "Korea Payroll Closing Draft")
+		self.assertEqual(result["name"], "KPCD-0001")
+		self.assertEqual(result["previous_status"], "draft_pending_human_approval")
+		self.assertEqual(result["status"], "draft_human_approved")
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+
+	def test_runtime_review_adapter_rejects_preview_wrapper_scope_mismatch_and_score_keys(self):
+		module = load_controller_with_frappe_stub()
+		module.frappe.get_doc = lambda doctype, name: self.fail("invalid review action must fail before doc lookup")
+
+		review_action = self._valid_review_action()
+		review_action["contract_type"] = "korea_payroll_closing_draft_review_action_preview_v1"
+		with self.assertRaisesRegex(ValueError, "review_action.contract_type must be korea_payroll_closing_draft_review_action_v1"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+		review_action = self._valid_review_action()
+		review_action["company"] = "Other Co"
+		with self.assertRaisesRegex(ValueError, "review_action.company must match source_draft.company"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+		review_action = self._valid_review_action()
+		review_action["source_draft"]["legal"] = {"score": 0.91}
+		with self.assertRaisesRegex(ValueError, "review_action must not contain numeric risk/probability/success-rate score fields"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+		review_action = self._valid_review_action()
+		review_action["actor"] = "other@example.com"
+		with self.assertRaisesRegex(ValueError, "review_action.actor must match actor"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+	def test_runtime_review_adapter_rejects_non_approver_actor_at_source_and_target(self):
+		module = load_controller_with_frappe_stub()
+		module.frappe.get_doc = lambda doctype, name: self.fail("source approver mismatch must fail before doc lookup")
+
+		review_action = self._valid_review_action()
+		review_action["source_draft"]["approver"] = "other.approver@example.com"
+		with self.assertRaisesRegex(ValueError, "source_draft.approver must match review_action.actor"):
+			module.apply_korea_payroll_closing_draft_review_action(review_action, actor="hr.manager@example.com")
+
+		class FakeDraftDoc:
+			name = "KPCD-0001"
+			company = "Korea Demo Co"
+			workplace = "Seoul HQ"
+			period_start = "2026-05-01"
+			period_end = "2026-05-31"
+			source_payroll_entry = "PAY-ENTRY-2026-05"
+			approver = "other.approver@example.com"
+			status = "draft_pending_human_approval"
+			docstatus = 0
+			requires_human_approval = 1
+			ai_role = "assistant_only"
+			mutation_boundary = "draft_only_no_submit_no_approve_no_send"
+
+			def save(self):
+				self.fail("target approver mismatch must fail before save")
+
+		module.frappe.get_doc = lambda doctype, name: FakeDraftDoc()
+		with self.assertRaisesRegex(ValueError, "target draft approver must match the review actor"):
+			module.apply_korea_payroll_closing_draft_review_action(self._valid_review_action(), actor="hr.manager@example.com")
+
 	def test_controller_rejects_forbidden_numeric_score_keys_in_embedded_json(self):
 		module = load_controller_with_frappe_stub()
 
@@ -467,6 +593,68 @@ class TestKoreaPayrollClosingDraftDoctype(unittest.TestCase):
 					"audit_preview": json.dumps(payload["audit_preview"], ensure_ascii=False, sort_keys=True),
 				},
 			},
+		}
+
+	def _valid_review_action(self):
+		source_draft = {
+			"contract_type": "korea_payroll_closing_draft_runtime_insert_v1",
+			"source_apply_plan_contract_type": "korea_payroll_closing_draft_apply_plan_v1",
+			"runtime_action": "runtime_draft_created",
+			"requires_runtime_apply": False,
+			"mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+			"doctype": "Korea Payroll Closing Draft",
+			"name": "KPCD-0001",
+			"status": "draft_pending_human_approval",
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"source_payroll_entry": "PAY-ENTRY-2026-05",
+			"approver": "hr.manager@example.com",
+			"actor": "hr.ops@example.com",
+			"docstatus": 0,
+			"requires_human_approval": True,
+			"ai_role": "assistant_only",
+		}
+		return {
+			"contract_type": "korea_payroll_closing_draft_review_action_v1",
+			"source_draft_contract_type": "korea_payroll_closing_draft_runtime_insert_v1",
+			"runtime_action": "preview_only",
+			"requires_runtime_apply": True,
+			"mutation_boundary": "human_review_only_no_submit_no_send_no_provider_call",
+			"would_update_doctype": "Korea Payroll Closing Draft",
+			"would_update_name": "KPCD-0001",
+			"would_set_status": "draft_human_approved",
+			"action": "approve_draft",
+			"actor": "hr.manager@example.com",
+			"note": "Reviewed statutory basis, evidence packet, and blockers.",
+			"company": "Korea Demo Co",
+			"workplace": "Seoul HQ",
+			"period_start": "2026-05-01",
+			"period_end": "2026-05-31",
+			"source_payroll_entry": "PAY-ENTRY-2026-05",
+			"source_draft": source_draft,
+			"audit_preview": {
+				"event_type": "korea_payroll_closing_draft_human_review_v1",
+				"runtime_action": "preview_only",
+				"requires_runtime_apply": True,
+				"mutation_boundary": "human_review_only_no_submit_no_send_no_provider_call",
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"draft_name": "KPCD-0001",
+				"source_payroll_entry": "PAY-ENTRY-2026-05",
+				"previous_status": "draft_pending_human_approval",
+				"would_set_status": "draft_human_approved",
+				"action": "approve_draft",
+				"actor": "hr.manager@example.com",
+				"note": "Reviewed statutory basis, evidence packet, and blockers.",
+				"requires_human_approval": True,
+				"ai_role": "assistant_only",
+			},
+			"requires_human_approval": True,
+			"ai_role": "assistant_only",
 		}
 
 	def _valid_doc(self, module):

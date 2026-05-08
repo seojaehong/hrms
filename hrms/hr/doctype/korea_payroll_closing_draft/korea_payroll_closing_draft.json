@@ -65,7 +65,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "draft_pending_human_approval",
+   "options": "draft_pending_human_approval\ndraft_human_approved\ndraft_human_rejected\ndraft_changes_requested",
    "reqd": 1
   },
   {

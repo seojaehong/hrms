@@ -43,6 +43,13 @@ Sass / UI entry points
   - `frontend/`
   - `roster/`
 
+Korea HRMS commercialization roadmap
+- Active roadmap: 1,000-hour Korea HRMS SaaS commercialization and agentic HR runway.
+- Intake snapshot: `.hermes/plans/2026-05-08_161332-korea-hrms-1000h-commercialization-roadmap-intake.md`
+- Phase 1 priority: connect Korea Vue frontend/runtime API/DB flow while preserving static fixture fallback.
+- First implementation target: `frontend/src/views/KoreaPayrollClosing.vue` runtime-read boundary for `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
+- Guardrails: Korea business logic stays under `hrms/regional/south_korea/`; no AI direct DB mutation; preview-only before human-approved apply; no full resident-registration-number storage.
+
 Notes
 - `import hrms` alone will fail outside a Bench/Frappe runtime because `frappe` is not installed in the system Python. Use the Docker/Bench runtime for app execution.
 - For Sass/UI work, server-side source edits + `yarn build` is currently the fastest verified loop.

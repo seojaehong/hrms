@@ -7,18 +7,28 @@ import frappe
 from frappe.utils import getdate
 
 
-def ensure_doc(doctype, name=None, filters=None, values=None):
+def ensure_doc(doctype, name=None, filters=None, values=None, ignore_links=False, update_existing=True):
     values = values or {}
-    if name and frappe.db.exists(doctype, name):
+    if filters:
+        if frappe.db.exists(doctype, filters):
+            doc = frappe.get_doc(doctype, filters)
+        else:
+            doc = None
+    elif name and frappe.db.exists(doctype, name):
         doc = frappe.get_doc(doctype, name)
-    elif filters and frappe.db.exists(doctype, filters):
-        doc = frappe.get_doc(doctype, filters)
     else:
+        doc = None
+
+    if doc is None:
         payload = {"doctype": doctype, **values}
         if name:
             payload["name"] = name
-        doc = frappe.get_doc(payload).insert(ignore_permissions=True)
+            payload["__newname"] = name
+        doc = frappe.get_doc(payload).insert(ignore_permissions=True, ignore_links=ignore_links)
         return doc, True
+
+    if not update_existing:
+        return doc, False
 
     changed = False
     for key, value in values.items():
@@ -26,6 +36,8 @@ def ensure_doc(doctype, name=None, filters=None, values=None):
             doc.set(key, value)
             changed = True
     if changed:
+        if ignore_links:
+            doc.flags.ignore_links = True
         doc.save(ignore_permissions=True)
     return doc, False
 
@@ -311,6 +323,150 @@ def _employee_workplace(employee):
     return workplace.strip()
 
 
+def _require_text(value, label):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{label} must be a non-empty string")
+    return value.strip()
+
+
+def _document_value(doc, fieldname, default):
+    getter = getattr(doc, "get", None)
+    if callable(getter):
+        value = getter(fieldname)
+        if value is not None:
+            return value
+    return getattr(doc, fieldname, default)
+
+
+def ensure_demo_payroll_closing_draft(company):
+    """Seed a positive draft row that the read-only payroll closing worklist can see.
+
+    This is demo/runtime seed data only. It creates a draft ``Korea Payroll
+    Closing Draft`` row so Gate 10 can prove the existing read-only worklist path
+    with positive scoped rows. It does not submit, approve, send, call providers,
+    or create payroll documents.
+    """
+
+    company_name = _require_text(company, "company")
+    workplace = "서울 본사"
+    period_start = "2026-05-01"
+    period_end = "2026-05-31"
+    session_name = "KPCS-DEMO-2026-05-SEOUL-HQ"
+    draft_name = "KPCD-DEMO-2026-05-SEOUL-HQ"
+    source_payroll_entry = "KR-DEMO-PAYROLL-ENTRY-2026-05"
+    audit_preview = {
+        "runtime_action": "preview_only",
+        "requires_runtime_apply": False,
+        "company": company_name,
+        "workplace": workplace,
+        "period_start": period_start,
+        "period_end": period_end,
+        "blocker_codes": ["attendance_not_ready", "expense_settlement_not_ready"],
+    }
+    session = {
+        "contract_type": "korea_payroll_closing_session_v1",
+        "name": session_name,
+        "company": company_name,
+        "workplace": workplace,
+        "period_start": period_start,
+        "period_end": period_end,
+        "status": "blocked",
+        "blockers": [
+            {
+                "code": "attendance_not_ready",
+                "severity": "blocking",
+                "message": "Demo attendance remains open for payroll-close review.",
+            },
+            {
+                "code": "expense_settlement_not_ready",
+                "severity": "blocking",
+                "message": "Demo expense claim remains unsettled for payroll-close review.",
+            },
+        ],
+        "next_actions": [
+            {
+                "action": "review_demo_blockers",
+                "label": "Review demo payroll closing blockers",
+                "requires_runtime_apply": False,
+            }
+        ],
+        "readiness_cards": [
+            {
+                "key": "attendance",
+                "label": "Attendance",
+                "state": "blocked",
+                "summary": "Demo attendance blocker requires human review.",
+            },
+            {
+                "key": "expense_settlement",
+                "label": "Expense Settlement",
+                "state": "blocked",
+                "summary": "Demo expense settlement blocker requires human review.",
+            },
+        ],
+        "payroll_artifacts": {
+            "payroll_entry": source_payroll_entry,
+            "salary_slip_count": 2,
+        },
+        "audit_preview": audit_preview,
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+    }
+    values = {
+        "company": company_name,
+        "workplace": workplace,
+        "period_start": period_start,
+        "period_end": period_end,
+        "status": "draft_pending_human_approval",
+        "source_payroll_entry": source_payroll_entry,
+        "approver": "demo.hr.manager@node.pe.kr",
+        "source_session_contract_type": "korea_payroll_closing_session_v1",
+        "mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+        "docstatus": 0,
+        "payload": json.dumps({"session": session}, ensure_ascii=False, sort_keys=True),
+        "audit_preview": json.dumps(audit_preview, ensure_ascii=False, sort_keys=True),
+    }
+    doc, _created = ensure_doc(
+        "Korea Payroll Closing Draft",
+        name=draft_name,
+        filters={
+            "company": company_name,
+            "workplace": workplace,
+            "period_start": period_start,
+            "period_end": period_end,
+            "status": "draft_pending_human_approval",
+            "docstatus": 0,
+        },
+        values=values,
+        ignore_links=True,
+        update_existing=False,
+    )
+    return {
+        "contract_type": "korea_demo_payroll_closing_draft_seed_v1",
+        "runtime_action": "demo_seed_only",
+        "requires_runtime_apply": False,
+        "mutation_boundary": "demo_seed_idempotent_draft_only_no_submit_no_approve_no_send_no_provider_call",
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+        "company": company_name,
+        "draft_rows": [
+            {
+                "doctype": "Korea Payroll Closing Draft",
+                "name": doc.name,
+                "company": company_name,
+                "workplace": _document_value(doc, "workplace", workplace),
+                "period_start": str(_document_value(doc, "period_start", period_start)),
+                "period_end": str(_document_value(doc, "period_end", period_end)),
+                "status": _document_value(doc, "status", "draft_pending_human_approval"),
+                "docstatus": _document_value(doc, "docstatus", 0),
+                "runtime_visible_via": "payroll_closing_worklist_runtime_api",
+            }
+        ],
+    }
+
+
 def ensure_demo_blocker_transactions(company, employees):
     """Seed realistic blocker-generating rows for the Korea payroll closing demo.
 
@@ -369,6 +525,12 @@ def ensure_demo_blocker_transactions(company, employees):
             "workplace": hq_workplace,
             "blocker_code": "attendance_not_ready",
             "description": "Absent attendance remains unsubmitted before payroll close.",
+            "filters": {
+                "company": company_name,
+                "employee": hq_name,
+                "attendance_date": "2026-05-15",
+                "docstatus": 0,
+            },
             "values": {
                 "naming_series": "HR-ATT-.YYYY.-",
                 "employee": hq_name,
@@ -385,6 +547,14 @@ def ensure_demo_blocker_transactions(company, employees):
             "workplace": store_workplace,
             "blocker_code": "overtime_pending_review",
             "description": "Overtime slip remains draft for operator review before payroll close.",
+            "filters": {
+                "company": company_name,
+                "employee": store_name,
+                "posting_date": "2026-05-31",
+                "start_date": "2026-05-01",
+                "end_date": "2026-05-31",
+                "docstatus": 0,
+            },
             "values": {
                 "employee": store_name,
                 "company": company_name,
@@ -409,6 +579,13 @@ def ensure_demo_blocker_transactions(company, employees):
             "workplace": store_workplace,
             "blocker_code": "expense_settlement_not_ready",
             "description": "Expense claim remains draft/unsettled before payroll close.",
+            "filters": {
+                "company": company_name,
+                "employee": store_name,
+                "posting_date": "2026-05-28",
+                "approval_status": "Draft",
+                "docstatus": 0,
+            },
             "values": {
                 "naming_series": "HR-EXP-.YYYY.-",
                 "employee": store_name,
@@ -440,6 +617,7 @@ def ensure_demo_blocker_transactions(company, employees):
         doc, _created = ensure_doc(
             scenario["doctype"],
             name=scenario["name"],
+            filters=scenario.get("filters"),
             values=values,
         )
         blocker_rows.append(
@@ -589,6 +767,10 @@ def main():
     for row in blocker_seed["blocker_rows"]:
         updated.append(f"{row['doctype']}::{row['name']}")
 
+    draft_seed = ensure_demo_payroll_closing_draft(company=company.name)
+    for row in draft_seed["draft_rows"]:
+        updated.append(f"{row['doctype']}::{row['name']}")
+
     structure, was_created = ensure_salary_structure(company.name)
     (created if was_created else updated).append(f"Salary Structure::{structure.name}")
 
@@ -605,6 +787,7 @@ def main():
         "salary_structure": structure.name,
         "employees": employee_names,
         "demo_blocker_seed": blocker_seed,
+        "demo_payroll_closing_draft_seed": draft_seed,
         "demo_login": {
             "url": "http://10.0.0.58:8000/app",
             "username": "demo.hr.manager@node.pe.kr",

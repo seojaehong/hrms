@@ -1,6 +1,6 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 12 browser runtime verifier landed on `develop`; next implementation gate is demo employee authenticated browser/runtime credential handoff closeout.
+Status: active source-of-truth correction after Gate 13 demo credential handoff landed on `develop`; next implementation gate is human-approved demo credential apply plus authenticated browser runtime proof.
 
 ## Verified repo state
 
@@ -272,7 +272,7 @@ Closeout discipline:
 
 ### Gate 12 — Browser runtime verifier / authenticated walkthrough harness
 
-Status: done and merged as verifier infrastructure; live employee-session browser closeout remains blocked pending credential handoff.
+Status: done and merged as verifier infrastructure; live employee-session browser closeout remains blocked pending credential apply/browser proof.
 
 Goal:
 - Add an authenticated browser/CDP verifier for the Korea payroll closing route.
@@ -292,7 +292,30 @@ Evidence:
 Closeout discipline:
 - Treat Gate 12 as the browser-runtime verifier landing, not full positive authenticated browser proof.
 - Do not remove fixture fallback for static/no-runtime previews.
-- Next gate should establish a report-safe employee-linked credential handoff or generation path, then rerun the verifier until it returns `runtime_verified: true`.
+- Gate 13 establishes a report-safe employee-linked credential handoff/apply path, but browser proof remains a separate next gate until the operator-supplied secret is applied and verified.
+
+### Gate 13 — Demo employee browser credential handoff
+
+Status: done and merged as report-safe handoff/apply boundary; live authenticated browser proof remains pending.
+
+Goal:
+- Establish a report-safe way to hand off or apply the employee-linked demo browser credential without printing or storing secrets in repo/cron output.
+- Keep the default path handoff-only.
+- Require explicit human approval before any credential update.
+- Preserve payroll/evidence boundaries: no save/approve/send/payroll submit/provider mutation.
+
+Evidence:
+- `develop` includes `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
+- `hrms/regional/south_korea/demo_seed.py` emits `korea_demo_browser_credential_handoff_v1` in the demo seed summary with a redacted verifier command and `password_env_var: FRAPPE_BROWSER_PASSWORD`.
+- `ensure_demo_browser_credential()` requires `human_approved=True` before reading the password or calling `update_password`, verifies the approved demo username and active Employee link, and returns no password value.
+- Reviewer-requested fix landed before merge: the apply helper now fails closed before mutation, uses the same `FRAPPE_BROWSER_PASSWORD` env var as the handoff, and returns `human_approval_verified` only after the approved boundary.
+- Verification before merge: `python3 hrms/tests/test_korea_demo_seed_blockers.py`, `python3 -m py_compile hrms/regional/south_korea/demo_seed.py hrms/tests/test_korea_demo_seed_blockers.py`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed.
+- Verification after merge: focused demo-seed test and Korea regional smoke passed on `develop`.
+
+Closeout discipline:
+- Treat Gate 13 as credential handoff/apply-boundary readiness, not positive authenticated browser proof.
+- Do not print, commit, or report the demo employee password.
+- The next gate must only apply the credential with an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit human approval, then run the browser verifier to a positive read-only result.
 
 ## Guardrails
 
@@ -306,16 +329,17 @@ Closeout discipline:
 
 ## Next action
 
-Proceed with Gate 13 demo employee authenticated browser/runtime credential handoff closeout from `develop`:
+Proceed with Gate 14 human-approved demo credential apply and authenticated browser runtime proof from `develop`:
 
 ```text
-test/korea-payroll-closing-browser-employee-credential-handoff
+test/korea-payroll-closing-browser-runtime-positive-credential
 ```
 
 Expected deliverables:
-- establish a report-safe way to supply or generate an employee-linked demo browser credential without printing/storing secrets in repo or cron output
+- use an operator-provided `FRAPPE_BROWSER_PASSWORD` value from the runtime environment without printing, committing, or summarizing the secret
+- apply only the approved demo employee credential boundary with `ensure_demo_browser_credential(..., human_approved=True)`
 - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`
-- prove the loaded UI executes only the two allowed read-only Frappe methods and receives positive runtime worklist rows
+- prove the loaded UI executes only the allowed read-only Frappe methods and receives positive runtime worklist rows
 - preserve fixture fallback for static/no-runtime contexts
 - keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation
 - keep human-approval and `assistant_only` boundaries visible

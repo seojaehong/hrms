@@ -94,7 +94,13 @@ Current verified state
   - `frontend/src/data/koreaPayrollClosingBrowserRuntime.js` and `scripts/verify_korea_payroll_closing_browser_runtime.mjs` provide an authenticated browser/CDP verifier for the payroll closing route.
   - The verifier only allows the Korea admin-dashboard runtime read and payroll-closing worklist runtime read methods, requires positive runtime worklist rows, rejects mutation markers and score/risk/probability keys, and preserves `requires_human_approval: true` plus `ai_role: assistant_only`.
   - Snap Chromium on this cron host did not write `DevToolsActivePort`; PR #183 hardened the verifier to parse the DevTools port from Chromium stderr.
-  - Post-merge focused tests and Korea regional smoke passed, but the live authenticated browser run is still blocked by demo credential/session readiness: Administrator login reaches an HRMS "No active employee" page, while demo employee-user passwords are not reportable/available in cron.
+  - Post-merge focused tests and Korea regional smoke passed, but the live authenticated browser run remained blocked by demo credential/session readiness: Administrator login reached an HRMS "No active employee" page, while demo employee-user passwords were not reportable/available in cron.
+- Gate 13 demo employee browser credential handoff result:
+  - `develop` includes `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
+  - `hrms/regional/south_korea/demo_seed.py` now emits a report-safe `korea_demo_browser_credential_handoff_v1` payload for the employee-linked demo user without printing or storing the password.
+  - The optional credential apply helper requires explicit `human_approved=True` before `update_password`, verifies the approved demo user and active Employee link, reads the verifier password from `FRAPPE_BROWSER_PASSWORD`, and returns no secret value.
+  - Reviewer-requested hardening landed before merge: no password update occurs before explicit human approval, the handoff/apply env var contract is consistent, and `human_approval_verified` is returned after the approved boundary.
+  - This did not yet prove a positive authenticated browser walkthrough; the next gate still needs an operator-provided secret/runtime approval execution, then `scripts/verify_korea_payroll_closing_browser_runtime.mjs` must return `runtime_verified: true`.
 
 Autonomous cron runway
 - Implementation cron:
@@ -107,17 +113,17 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 13: Demo employee authenticated browser/runtime credential handoff closeout.
-- Current status: Gate 12 verifier is merged and can drive a real browser/CDP walkthrough, but live authenticated closeout is not green yet because the cron-host runtime lacks a reportable employee-user credential. Administrator can log in, but HRMS routes reject that session because no active employee is associated with Administrator.
+- Gate 14: Human-approved demo credential apply and authenticated browser runtime proof.
+- Current status: Gate 13 landed the report-safe credential handoff/apply helper, but a positive authenticated browser walkthrough is still not green because cron cannot invent or print the demo employee password. The apply helper is intentionally fail-closed unless `human_approved=True` and `FRAPPE_BROWSER_PASSWORD` is supplied.
 - Latest checkpoint evidence:
-  - 2026-05-09 implementation-cron merged PR #183 (`e7e0aedc5 test: add Korea payroll closing browser runtime verifier`) into `develop`.
-  - `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed before merge; focused JS tests and regional smoke passed again after merge.
-  - Browser verifier with Administrator and the documented local Docker password advanced past Chrome/CDP startup after the Snap Chromium fix, then failed closed on the HRMS "No active employee" page.
-  - No save/submit/approve/send/provider/payroll document mutation was introduced.
+  - 2026-05-09 implementation-cron merged PR #185 (`15f9c24a7 test: add Korea demo browser credential handoff`) into `develop`.
+  - `python3 hrms/tests/test_korea_demo_seed_blockers.py`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed before merge; focused demo-seed test and regional smoke passed again after merge.
+  - The credential helper returns no secret, requires explicit human approval before `update_password`, and does not submit/approve/send/payroll-submit/call providers.
+  - No positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven after applying an employee credential.
 - Likely branch:
-  - `test/korea-payroll-closing-browser-employee-credential-handoff`
+  - `test/korea-payroll-closing-browser-runtime-positive-credential`
 - Goal:
-  - establish a non-secret, operator-safe way to supply or generate an employee-linked demo browser credential for runtime verification
+  - with an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit human approval, apply only the demo employee browser credential boundary
   - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` until it returns `runtime_verified: true` with positive read-only worklist rows
   - keep fixture fallback for static/no-runtime contexts
   - keep evidence/session views read-only and human-review-only

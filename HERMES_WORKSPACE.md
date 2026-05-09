@@ -71,6 +71,11 @@ Current verified state
   - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers handoff normalization, invalid handoff rejection, and a positive mocked operator-provided bench path.
   - Current cron-host evidence remains blocked when no handoff is supplied: Docker Compose has no running Frappe service rows and `bench` is unavailable, so fixture fallback remains required until an actual runtime handoff plus positive scoped rows are available.
   - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 10 source-alignment PR in progress:
+  - Branch: `ops/korea-docker-authoritative-runtime-source`.
+  - Docker Compose now mounts this repo at `/workspace/hrms-source` and `docker/init.sh` installs HRMS from that mounted workspace instead of cloning upstream `frappe/hrms`.
+  - New direct test: `hrms/tests/test_korea_docker_runtime_source.py`.
+  - This is an environment/source-alignment step only; positive runtime row capture still requires rebuilding/recreating the Docker bench runtime and running the existing read-only checkpoint.
 
 Autonomous cron runway
 - Implementation cron:
@@ -87,13 +92,13 @@ Next gate
 - Current status: blocked on authoritative runtime availability.
 - Latest checkpoint evidence:
   - `scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json` returned `runtime_verified: false`.
-  - Docker Compose can start a local Frappe service, but `docker/init.sh` bootstraps upstream `frappe/hrms` into `/home/frappe/frappe-bench/apps/hrms`, not this `seojaehong/hrms` `develop` worktree.
-  - The local Docker runtime therefore does not contain the Korea payroll closing runtime bridge modules from this runway and is not authoritative for positive Gate 10 row capture.
-  - Fixture fallback remains required until an authoritative runtime is using this fork/branch and positive scoped `Korea Payroll Closing Draft` rows are verified through the read-only worklist/session path.
+  - Previous Docker Compose runs could start a local Frappe service, but `docker/init.sh` bootstrapped upstream `frappe/hrms` into `/home/frappe/frappe-bench/apps/hrms`, not this `seojaehong/hrms` `develop` worktree.
+  - Current source-alignment branch updates Docker Compose/init so a recreated local bench installs HRMS from this mounted repo at `/workspace/hrms-source`.
+  - Fixture fallback remains required until that authoritative runtime is rebuilt/recreated and positive scoped `Korea Payroll Closing Draft` rows are verified through the read-only worklist/session path.
 - Likely branch:
   - `ops/korea-payroll-closing-runtime-positive-row-capture`
 - Goal:
-  - supply or expose a real authoritative Bench/Frappe runtime target for this workspace, then run the existing Gate 9 handoff-aware read-only checkpoint against it
+  - rebuild/recreate the Docker/Bench runtime using this canonical `seojaehong/hrms` fork/branch as the HRMS source, not upstream `frappe/hrms`, before claiming positive Gate 10 evidence
   - use an explicit runtime handoff contract rather than environment guessing
   - verify scoped `Korea Payroll Closing Draft` rows through the read-only worklist/session path and record only redacted evidence
   - keep fixture fallback visible and explicitly labeled while positive runtime rows are absent or unverified

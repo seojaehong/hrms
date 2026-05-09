@@ -1,4 +1,13 @@
-#!bin/bash
+#!/bin/bash
+
+set -eo pipefail
+
+: "${HRMS_APP_SOURCE:=/workspace/hrms-source}"
+
+if [ ! -f "$HRMS_APP_SOURCE/pyproject.toml" ] || [ ! -d "$HRMS_APP_SOURCE/hrms" ]; then
+    echo "HRMS_APP_SOURCE does not point to a mounted HRMS workspace: $HRMS_APP_SOURCE" >&2
+    exit 1
+fi
 
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
     echo "Bench already exists, skipping init"
@@ -25,7 +34,7 @@ sed -i '/redis/d' ./Procfile
 sed -i '/watch/d' ./Procfile
 
 bench get-app erpnext
-bench get-app hrms
+bench get-app "$HRMS_APP_SOURCE"
 
 bench new-site hrms.localhost \
 --force \

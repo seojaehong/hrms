@@ -182,18 +182,21 @@ def build_demo_browser_credential_handoff(username=DEMO_BROWSER_USERNAME, passwo
     }
 
 
-def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None):
+def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None, human_approved=False):
     """Set the employee-linked demo user's browser password without reporting it.
 
     This is a narrow demo-credential runtime apply helper for authenticated browser
     verification. It does not submit payroll, approve drafts, send messages, call
-    providers, or create payroll documents.
+    providers, or create payroll documents. The credential side effect requires
+    explicit human approval before the password update boundary.
     """
 
     username = _require_text(username, "username")
     if username != DEMO_BROWSER_USERNAME:
         raise ValueError("username must be the approved demo browser user")
-    password = password if password is not None else os.environ.get("HRMS_DEMO_BROWSER_PASSWORD")
+    if human_approved is not True:
+        raise ValueError("human_approved must be True before credential runtime apply")
+    password = password if password is not None else os.environ.get(DEMO_BROWSER_PASSWORD_ENV_VAR)
     password = _require_text(password, "password")
     if not frappe.db.exists("User", username):
         raise ValueError(f"demo browser user {username} is required")
@@ -211,6 +214,7 @@ def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None
         "employee_link_verified": True,
         "credential_ready_for_browser_verifier": True,
         "password_env_var": DEMO_BROWSER_PASSWORD_ENV_VAR,
+        "human_approval_verified": True,
         "mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
         "requires_human_approval": True,
         "ai_role": "assistant_only",

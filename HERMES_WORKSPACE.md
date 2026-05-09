@@ -71,11 +71,13 @@ Current verified state
   - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers handoff normalization, invalid handoff rejection, and a positive mocked operator-provided bench path.
   - Current cron-host evidence remains blocked when no handoff is supplied: Docker Compose has no running Frappe service rows and `bench` is unavailable, so fixture fallback remains required until an actual runtime handoff plus positive scoped rows are available.
   - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
-- Gate 10 source-alignment PR in progress:
-  - Branch: `ops/korea-docker-authoritative-runtime-source`.
-  - Docker Compose now mounts this repo at `/workspace/hrms-source` and `docker/init.sh` installs HRMS from that mounted workspace instead of cloning upstream `frappe/hrms`.
-  - New direct test: `hrms/tests/test_korea_docker_runtime_source.py`.
-  - This is an environment/source-alignment step only; positive runtime row capture still requires rebuilding/recreating the Docker bench runtime and running the existing read-only checkpoint.
+- Gate 10 source-alignment and runtime-probe hardening result:
+  - `develop` includes `be2806d40 test: align Korea Docker runtime source (#171)`.
+  - `develop` includes `f949ae1dc fix: trust mounted HRMS source in Docker init (#172)`.
+  - `develop` includes `74b58e450 fix: run Korea runtime probe through Docker bench (#173)`.
+  - `develop` includes `d63d0e1a7 fix: require positive rows for Korea runtime verification (#174)`.
+  - Docker Compose mounts this repo at `/workspace/hrms-source`, `docker/init.sh` installs HRMS from that mounted workspace, and the checkpoint can execute Bench inside the `frappe` container without requiring host `bench`.
+  - The checkpoint still fails closed unless positive scoped `Korea Payroll Closing Draft` rows are returned through the read-only runtime worklist path.
 
 Autonomous cron runway
 - Implementation cron:
@@ -88,17 +90,17 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 10: Authoritative runtime handoff execution / positive row capture.
-- Current status: blocked on authoritative runtime availability.
+- Gate 10: Authoritative runtime positive row capture / runtime seed realism.
+- Current status: partially unblocked at runtime-source layer, still blocked on positive scoped rows.
 - Latest checkpoint evidence:
-  - `scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json` returned `runtime_verified: false`.
-  - Previous Docker Compose runs could start a local Frappe service, but `docker/init.sh` bootstrapped upstream `frappe/hrms` into `/home/frappe/frappe-bench/apps/hrms`, not this `seojaehong/hrms` `develop` worktree.
-  - Current source-alignment branch updates Docker Compose/init so a recreated local bench installs HRMS from this mounted repo at `/workspace/hrms-source`.
-  - Fixture fallback remains required until that authoritative runtime is rebuilt/recreated and positive scoped `Korea Payroll Closing Draft` rows are verified through the read-only worklist/session path.
+  - `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --report-file /tmp/korea-payroll-closing-runtime-report-pdca-docker-bench.json` returned `runtime_verified: false`.
+  - Docker Compose currently has running `frappe`, `mariadb`, and `redis` services, and the runtime app source is mounted from `/workspace/hrms-source` rather than upstream `frappe/hrms`.
+  - The container app checkout observed in this PDCA run was `f949ae1dc`, behind host `origin/develop` at `d63d0e1a7`; source alignment exists, but runtime refresh/sync is still required after later checkpoint hardening commits.
+  - The read-only Docker Bench probe executed and returned without a command failure, but did not verify positive `Korea Payroll Closing Draft` rows; fixture fallback remains required.
 - Likely branch:
   - `ops/korea-payroll-closing-runtime-positive-row-capture`
 - Goal:
-  - rebuild/recreate the Docker/Bench runtime using this canonical `seojaehong/hrms` fork/branch as the HRMS source, not upstream `frappe/hrms`, before claiming positive Gate 10 evidence
+  - refresh/sync the Docker/Bench app checkout to current `origin/develop`, then rerun the read-only checkpoint before claiming positive Gate 10 evidence
   - use an explicit runtime handoff contract rather than environment guessing
   - verify scoped `Korea Payroll Closing Draft` rows through the read-only worklist/session path and record only redacted evidence
   - keep fixture fallback visible and explicitly labeled while positive runtime rows are absent or unverified

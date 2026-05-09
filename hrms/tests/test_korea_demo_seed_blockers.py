@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import pathlib
 import sys
 import types
@@ -71,6 +72,15 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 		self.assertTrue(all(row["workplace"] in {"서울 본사", "강남 매장"} for row in first["blocker_rows"]))
 
 		attendance_call = next(call for call in calls if call["doctype"] == "Attendance")
+		self.assertEqual(
+			attendance_call["filters"],
+			{
+				"company": "노란봉투법 데모",
+				"employee": "HR-EMP-0001",
+				"attendance_date": "2026-05-15",
+				"docstatus": 0,
+			},
+		)
 		self.assertEqual(attendance_call["values"]["naming_series"], "HR-ATT-.YYYY.-")
 		self.assertEqual(attendance_call["values"]["status"], "Absent")
 		self.assertEqual(attendance_call["values"]["docstatus"], 0)
@@ -78,6 +88,17 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 
 		overtime_call = next(call for call in calls if call["doctype"] == "Overtime Slip")
 		self.assertEqual(overtime_call["values"]["posting_date"], "2026-05-31")
+		self.assertEqual(
+			overtime_call["filters"],
+			{
+				"company": "노란봉투법 데모",
+				"employee": "HR-EMP-0002",
+				"posting_date": "2026-05-31",
+				"start_date": "2026-05-01",
+				"end_date": "2026-05-31",
+				"docstatus": 0,
+			},
+		)
 		self.assertEqual(overtime_call["values"]["start_date"], "2026-05-01")
 		self.assertEqual(overtime_call["values"]["end_date"], "2026-05-31")
 		self.assertEqual(overtime_call["values"]["total_overtime_duration"], 2.5)
@@ -106,6 +127,16 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 		)
 
 		expense_call = next(call for call in calls if call["doctype"] == "Expense Claim")
+		self.assertEqual(
+			expense_call["filters"],
+			{
+				"company": "노란봉투법 데모",
+				"employee": "HR-EMP-0002",
+				"posting_date": "2026-05-28",
+				"approval_status": "Draft",
+				"docstatus": 0,
+			},
+		)
 		self.assertEqual(expense_call["values"]["naming_series"], "HR-EXP-.YYYY.-")
 		self.assertEqual(expense_call["values"]["approval_status"], "Draft")
 		self.assertEqual(expense_call["values"]["currency"], "KRW")
@@ -134,6 +165,117 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 				company="노란봉투법 데모",
 				employees=[SimpleNamespace(name="", work_location_name="서울 본사"), SimpleNamespace(name="HR-EMP-0002")],
 			)
+
+	def test_demo_seed_creates_positive_payroll_closing_draft_row_for_runtime_worklist(self):
+		calls = []
+
+		def fake_ensure_doc(doctype, name=None, filters=None, values=None, ignore_links=False, update_existing=True):
+			calls.append(
+				{
+					"doctype": doctype,
+					"name": name,
+					"filters": filters,
+					"values": dict(values or {}),
+					"ignore_links": ignore_links,
+					"update_existing": update_existing,
+				}
+			)
+			return SimpleNamespace(name=name or f"{doctype}-EXISTING"), True
+
+		self.mod.ensure_doc = fake_ensure_doc
+		result = self.mod.ensure_demo_payroll_closing_draft(company="노란봉투법 데모")
+
+		self.assertEqual(result["contract_type"], "korea_demo_payroll_closing_draft_seed_v1")
+		self.assertEqual(result["runtime_action"], "demo_seed_only")
+		self.assertEqual(result["mutation_boundary"], "demo_seed_idempotent_draft_only_no_submit_no_approve_no_send_no_provider_call")
+		self.assertFalse(result["requires_runtime_apply"])
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+		self.assertEqual(result["draft_rows"][0]["doctype"], "Korea Payroll Closing Draft")
+		self.assertEqual(result["draft_rows"][0]["status"], "draft_pending_human_approval")
+		self.assertEqual(result["draft_rows"][0]["docstatus"], 0)
+
+		draft_call = next(call for call in calls if call["doctype"] == "Korea Payroll Closing Draft")
+		self.assertTrue(draft_call["ignore_links"])
+		self.assertFalse(draft_call["update_existing"])
+		self.assertEqual(
+			draft_call["filters"],
+			{
+				"company": "노란봉투법 데모",
+				"workplace": "서울 본사",
+				"period_start": "2026-05-01",
+				"period_end": "2026-05-31",
+				"status": "draft_pending_human_approval",
+				"docstatus": 0,
+			},
+		)
+		self.assertEqual(draft_call["name"], "KPCD-DEMO-2026-05-SEOUL-HQ")
+		self.assertEqual(draft_call["values"]["company"], "노란봉투법 데모")
+		self.assertEqual(draft_call["values"]["workplace"], "서울 본사")
+		self.assertEqual(draft_call["values"]["period_start"], "2026-05-01")
+		self.assertEqual(draft_call["values"]["period_end"], "2026-05-31")
+		self.assertEqual(draft_call["values"]["source_session_contract_type"], "korea_payroll_closing_session_v1")
+		self.assertEqual(draft_call["values"]["mutation_boundary"], "draft_only_no_submit_no_approve_no_send")
+		self.assertTrue(draft_call["values"]["requires_human_approval"])
+		self.assertEqual(draft_call["values"]["ai_role"], "assistant_only")
+
+		payload = json.loads(draft_call["values"]["payload"])
+		session = payload["session"]
+		self.assertEqual(session["contract_type"], "korea_payroll_closing_session_v1")
+		self.assertEqual(session["status"], "blocked")
+		self.assertEqual(session["company"], "노란봉투법 데모")
+		self.assertEqual(session["workplace"], "서울 본사")
+		self.assertEqual(session["payroll_artifacts"]["salary_slip_count"], 2)
+		self.assertEqual(session["audit_preview"]["runtime_action"], "preview_only")
+		self.assertFalse(session["audit_preview"]["requires_runtime_apply"])
+		for forbidden in ("score", "risk", "probability", "success_rate", "success rate"):
+			self.assertNotIn(forbidden, json.dumps(payload, ensure_ascii=False).lower())
+
+		audit_preview = json.loads(draft_call["values"]["audit_preview"])
+		self.assertEqual(audit_preview["runtime_action"], "preview_only")
+		self.assertFalse(audit_preview["requires_runtime_apply"])
+
+	def test_demo_payroll_closing_draft_seed_rejects_blank_company(self):
+		with self.assertRaisesRegex(ValueError, "company must be a non-empty string"):
+			self.mod.ensure_demo_payroll_closing_draft(company=" ")
+
+	def test_ensure_doc_with_filters_does_not_mutate_name_collision_that_fails_scope(self):
+		calls = []
+
+		class FakeDB:
+			def exists(self, doctype, lookup):
+				calls.append(("exists", doctype, lookup))
+				if lookup == {"company": "Demo", "docstatus": 0}:
+					return False
+				if lookup == "KR-DEMO-ROW":
+					return True
+				return False
+
+		class FakeDoc:
+			name = "KR-DEMO-ROW"
+
+			def insert(self, **kwargs):
+				calls.append(("insert", kwargs))
+				return self
+
+		def fake_get_doc(*args):
+			calls.append(("get_doc", args))
+			return FakeDoc()
+
+		self.mod.frappe = SimpleNamespace(db=FakeDB(), get_doc=fake_get_doc)
+
+		self.mod.ensure_doc(
+			"Attendance",
+			name="KR-DEMO-ROW",
+			filters={"company": "Demo", "docstatus": 0},
+			values={"company": "Demo", "docstatus": 0},
+		)
+
+		self.assertNotIn(("get_doc", ("Attendance", "KR-DEMO-ROW")), calls)
+		created_payload = next(call[1][0] for call in calls if call[0] == "get_doc")
+		self.assertEqual(created_payload["doctype"], "Attendance")
+		self.assertEqual(created_payload["name"], "KR-DEMO-ROW")
+		self.assertEqual(created_payload["company"], "Demo")
 
 
 if __name__ == "__main__":

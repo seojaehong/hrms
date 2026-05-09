@@ -160,7 +160,9 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 
 		self.assertEqual(report["docker_compose"]["runtime_available"], True)
 		self.assertEqual(report["runtime_verified"], True)
-		self.assertEqual(report["passed"], True)
+		self.assertEqual(report["passed"], False)
+		self.assertEqual(report["runtime_closeout"]["gate_6_blockers_resolved"], False)
+		self.assertIn("run bench read-only worklist probe with --include-bench --site", report["runtime_closeout"]["next_actions"])
 
 	def test_running_non_frappe_service_does_not_verify_runtime(self):
 		module = load_module()
@@ -214,6 +216,131 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 
 		self.assertEqual(report["docker_compose"]["skipped"], True)
 		self.assertEqual(report["command_checks_passed"], False)
+
+	def test_docker_compose_report_includes_redacted_service_summary(self):
+		module = load_module()
+
+		class Completed:
+			returncode = 0
+			stdout = json.dumps([
+				{"Service": "frappe", "State": "running", "Health": "healthy"},
+				{"Service": "mariadb", "State": "running", "Health": "healthy"},
+				{"Service": "redis", "State": "exited", "Health": ""},
+			])
+			stderr = ""
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/docker"), patch.object(
+			module.subprocess, "run", return_value=Completed()
+		):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT)
+
+		self.assertEqual(report["docker_compose"]["service_count"], 3)
+		self.assertEqual(report["docker_compose"]["running_services"], ["frappe", "mariadb"])
+		self.assertNotIn("stdout_tail", report["docker_compose"])
+		self.assertEqual(report["runtime_closeout"]["docker_runtime_running"], True)
+
+	def test_runtime_closeout_keeps_fixture_fallback_when_bench_is_unavailable(self):
+		module = load_module()
+
+		class Completed:
+			returncode = 0
+			stdout = "[]\n"
+			stderr = "compose warning only"
+
+		def fake_which(command):
+			return "/usr/bin/docker" if command == "docker" else None
+
+		with patch.object(module.shutil, "which", side_effect=fake_which), patch.object(
+			module.subprocess, "run", return_value=Completed()
+		):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		closeout = report["runtime_closeout"]
+		self.assertEqual(closeout["gate_6_blockers_resolved"], False)
+		self.assertEqual(closeout["docker_runtime_running"], False)
+		self.assertEqual(closeout["bench_executable_available"], False)
+		self.assertEqual(closeout["positive_runtime_rows_verified"], False)
+		self.assertEqual(closeout["fixture_fallback_required"], True)
+		self.assertEqual(report["passed"], False)
+		self.assertIn("start Docker Compose Frappe runtime", closeout["next_actions"])
+		self.assertIn("install or expose bench executable", closeout["next_actions"])
+		self.assertIn("bench executable not found", report["runtime_blockers"])
+
+	def test_bench_probe_failure_does_not_report_bench_executable_unavailable(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 1
+			stdout = ""
+			stderr = "bench validation failed"
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		closeout = report["runtime_closeout"]
+		self.assertEqual(closeout["bench_executable_available"], True)
+		self.assertNotIn("install or expose bench executable", closeout["next_actions"])
+		self.assertIn("inspect failed read-only bench worklist probe", closeout["next_actions"])
+		self.assertIn("bench worklist runtime read failed", report["runtime_blockers"])
+		self.assertEqual(report["passed"], False)
+
+	def test_positive_bench_worklist_rows_can_close_runtime_gate(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		closeout = report["runtime_closeout"]
+		self.assertEqual(closeout["gate_6_blockers_resolved"], True)
+		self.assertEqual(closeout["positive_runtime_rows_verified"], True)
+		self.assertEqual(closeout["fixture_fallback_required"], False)
+		self.assertEqual(report["fixture_fallback_required_until_positive_runtime_rows"], False)
+		self.assertEqual(report["passed"], True)
+		self.assertNotIn("DRAFT-1", json.dumps(report, ensure_ascii=False))
+
+	def test_malformed_bench_items_do_not_close_runtime_gate(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [None, "not-a-row"]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		self.assertEqual(report["runtime_closeout"]["positive_runtime_rows_verified"], False)
+		self.assertEqual(report["runtime_closeout"]["gate_6_blockers_resolved"], False)
+		self.assertEqual(report["passed"], False)
 
 
 if __name__ == "__main__":

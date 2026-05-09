@@ -80,7 +80,9 @@ def verify_runtime_checkpoint(
 				"command": "bench",
 				"skipped": True,
 				"reason": "bench executable not found",
+				"executable_available": False,
 				"runtime_available": False,
+				"positive_runtime_rows_verified": False,
 				"returncode": 0,
 			}
 		else:
@@ -90,6 +92,7 @@ def verify_runtime_checkpoint(
 				dry_run=dry_run,
 				redact_output=True,
 				redact_command=True,
+				runtime_output_parser=parse_bench_worklist_positive_rows,
 			)
 	else:
 		bench_result = {
@@ -116,6 +119,17 @@ def verify_runtime_checkpoint(
 		runtime_blockers.append("docker compose runtime not running")
 	if include_bench and bench_result.get("returncode") != 0:
 		runtime_blockers.append("bench worklist runtime read failed")
+	if include_bench and bench_result.get("skipped") and bench_result.get("reason") == "bench executable not found":
+		runtime_blockers.append("bench executable not found")
+	fixture_fallback_required = not (runtime_verified and bool(bench_result.get("positive_runtime_rows_verified")))
+	closeout = build_runtime_closeout(
+		docker_result=docker_result,
+		bench_result=bench_result,
+		include_bench=include_bench,
+		runtime_verified=runtime_verified,
+		fixture_fallback_required=fixture_fallback_required,
+	)
+	passed = bool(closeout["gate_6_blockers_resolved"])
 	return {
 		"contract_type": CONTRACT_TYPE,
 		"runtime_action": RUNTIME_ACTION,
@@ -134,9 +148,10 @@ def verify_runtime_checkpoint(
 		"command_checks_passed": command_checks_passed,
 		"runtime_verified": runtime_verified,
 		"runtime_blockers": runtime_blockers,
-		"fixture_fallback_required_until_positive_runtime_rows": True,
+		"runtime_closeout": closeout,
+		"fixture_fallback_required_until_positive_runtime_rows": fixture_fallback_required,
 		"read_only_evidence_packet_boundary": True,
-		"passed": runtime_verified,
+		"passed": passed,
 	}
 
 
@@ -154,7 +169,7 @@ def run_command(
 
 	command_text = _redact_command(command) if redact_command else shlex.join(command)
 	if dry_run:
-		return {"command": command_text, "skipped": True, "returncode": 0, "runtime_available": False}
+		return {"command": command_text, "skipped": True, "returncode": 0, "runtime_available": False, "executable_available": True}
 	if shutil.which(command[0]) is None:
 		return {
 			"command": command_text,
@@ -162,6 +177,7 @@ def run_command(
 			"reason": f"{command[0]} executable not found",
 			"returncode": 0,
 			"runtime_available": False,
+			"executable_available": False,
 		}
 	try:
 		completed = subprocess.run(
@@ -179,42 +195,118 @@ def run_command(
 			"reason": f"{command[0]} executable not found",
 			"returncode": 0,
 			"runtime_available": False,
+			"executable_available": False,
 		}
 	except subprocess.TimeoutExpired:
 		return {
 			"command": command_text,
 			"returncode": 124,
 			"runtime_available": False,
+			"executable_available": True,
 			"timed_out": True,
 			"timeout_seconds": timeout_seconds,
 		}
 	runtime_available = completed.returncode == 0 and bool(completed.stdout.strip())
+	output_summary: dict[str, Any] = {}
 	if runtime_output_parser is not None and completed.returncode == 0:
-		runtime_available = runtime_output_parser(completed.stdout)
+		parsed_runtime = runtime_output_parser(completed.stdout)
+		if isinstance(parsed_runtime, dict):
+			runtime_available = bool(parsed_runtime.pop("runtime_available", runtime_available))
+			output_summary = parsed_runtime
+		else:
+			runtime_available = bool(parsed_runtime)
 	result = {
 		"command": command_text,
 		"returncode": completed.returncode,
 		"runtime_available": runtime_available,
+		"executable_available": True,
 		"stdout_present": bool(completed.stdout.strip()),
 		"stderr_present": bool(completed.stderr.strip()),
 	}
+	result.update(output_summary)
 	if not redact_output:
 		result["stdout_tail"] = _tail(completed.stdout)
 		result["stderr_tail"] = _tail(completed.stderr)
 	return result
 
 
-def parse_docker_compose_runtime_available(stdout: str) -> bool:
-	"""Return true only when docker compose JSON shows a running service."""
+def build_runtime_closeout(
+	*,
+	docker_result: dict[str, Any],
+	bench_result: dict[str, Any],
+	include_bench: bool,
+	runtime_verified: bool,
+	fixture_fallback_required: bool,
+) -> dict[str, Any]:
+	"""Summarize Gate 6 runtime blockers without exposing HR row payloads."""
+
+	docker_running = bool(docker_result.get("runtime_available"))
+	bench_executable_available = include_bench and bench_result.get("executable_available") is not False
+	bench_probe_completed = include_bench and not bench_result.get("skipped") and bench_result.get("returncode") == 0
+	positive_runtime_rows_verified = bool(bench_result.get("positive_runtime_rows_verified"))
+	next_actions: list[str] = []
+	if not docker_running:
+		next_actions.append("start Docker Compose Frappe runtime")
+	if include_bench and not bench_executable_available:
+		next_actions.append("install or expose bench executable")
+	if include_bench and bench_executable_available and not bench_probe_completed:
+		next_actions.append("inspect failed read-only bench worklist probe")
+	if docker_running and not include_bench:
+		next_actions.append("run bench read-only worklist probe with --include-bench --site")
+	if not positive_runtime_rows_verified:
+		next_actions.append("verify positive Korea Payroll Closing Draft rows through the read-only worklist path")
+	return {
+		"gate_6_blockers_resolved": bool(runtime_verified and positive_runtime_rows_verified),
+		"docker_runtime_running": docker_running,
+		"bench_probe_requested": include_bench,
+		"bench_executable_available": bool(bench_executable_available),
+		"positive_runtime_rows_verified": positive_runtime_rows_verified,
+		"fixture_fallback_required": fixture_fallback_required,
+		"next_actions": next_actions,
+	}
+
+
+def parse_bench_worklist_positive_rows(stdout: str) -> dict[str, Any]:
+	"""Return safe positive-row evidence from the redacted bench worklist output."""
+
+	positive_runtime_rows_verified = False
+	try:
+		parsed = json.loads(stdout.strip()) if stdout.strip() else None
+	except json.JSONDecodeError:
+		parsed = None
+	if isinstance(parsed, dict):
+		message = parsed.get("message") if isinstance(parsed.get("message"), dict) else parsed
+		items = message.get("items")
+		positive_runtime_rows_verified = (
+			message.get("contract_type") == "korea_payroll_closing_worklist_runtime_api_v1"
+			and isinstance(items, list)
+			and any(isinstance(item, dict) and bool(item) for item in items)
+		)
+	return {
+		"runtime_available": positive_runtime_rows_verified,
+		"positive_runtime_rows_verified": positive_runtime_rows_verified,
+	}
+
+
+def parse_docker_compose_runtime_available(stdout: str) -> dict[str, Any]:
+	"""Return safe Docker Compose runtime availability and service summary."""
 
 	containers = _parse_docker_compose_ps_json(stdout)
+	running_services: list[str] = []
+	runtime_available = False
 	for container in containers:
 		service = str(container.get("Service") or container.get("service") or container.get("Name") or "").strip().lower()
 		state = str(container.get("State") or container.get("state") or "").strip().lower()
 		health = str(container.get("Health") or container.get("health") or "").strip().lower()
+		if state == "running" and service:
+			running_services.append(service)
 		if service == "frappe" and state == "running" and health not in {"unhealthy", "starting"}:
-			return True
-	return False
+			runtime_available = True
+	return {
+		"runtime_available": runtime_available,
+		"service_count": len(containers),
+		"running_services": running_services,
+	}
 
 
 def _parse_docker_compose_ps_json(stdout: str) -> list[dict[str, Any]]:

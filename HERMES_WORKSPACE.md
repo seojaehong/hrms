@@ -83,6 +83,12 @@ Current verified state
   - Docker Compose mounts this repo at `/workspace/hrms-source`, `docker/init.sh` installs/syncs HRMS from that mounted workspace even when an existing bench checkout is present, and the checkpoint can execute Bench inside the `frappe` container without requiring host `bench`.
   - The demo seed now creates a scoped, draft-only `Korea Payroll Closing Draft` row for human review without submit/approve/send/payroll-submit/provider calls.
   - 2026-05-09 post-merge Docker/Bench verification after restarting `frappe` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
+- Gate 11 runtime-positive operator UI/browser closeout result:
+  - `develop` includes `d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`.
+  - `frontend/src/data/koreaPayrollClosingRuntime.js` now centralizes runtime UI-state decisions so positive read-only worklist rows win over dashboard-only/static fallback copy.
+  - `frontend/src/views/KoreaPayrollClosing.vue` keeps fallback copy conditional and preserves read-only evidence, human-approval, and `assistant_only` boundaries.
+  - 2026-05-09 post-merge cron verification restarted the `frappe` container, synced runtime source to `d603fffa5`, and the read-only runtime checkpoint returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
+  - Route smoke: `http://127.0.0.1:8000/hrms/dashboard/korea-payroll-closing` returned HTTP 200 and the served lazy chunk `KoreaPayrollClosing-oazgujqG.js` returned HTTP 200 with runtime-positive/read-only/assistant-only copy present.
 
 Autonomous cron runway
 - Implementation cron:
@@ -95,21 +101,21 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 11: Runtime-positive operator UI/browser closeout.
-- Current status: Gate 10 is green on the local Docker Compose Bench checkpoint after #179 and a `frappe` restart/sync; the remaining work is to confirm the runtime-positive state through the operator UI/browser route and keep fallback copy conditional.
+- Gate 12: Authenticated browser/runtime operator walkthrough closeout.
+- Current status: Gate 11 is merged and local Docker Compose Bench runtime is green after restart/source sync. Static route/chunk HTTP smoke is green, but a fully authenticated browser-executed runtime read still needs an explicit closeout before calling the UI runtime path production-demo ready.
 - Latest checkpoint evidence:
-  - 2026-05-09 implementation-cron merged PR #179 (`9dd80e49d feat: seed Korea payroll closing runtime rows`) after focused tests, Korea regional smoke, exact-head PR merge, and branch cleanup.
-  - The demo seed returned a scoped draft-only `Korea Payroll Closing Draft` row for company `노란봉투법 데모` and preserved `requires_human_approval: true`, `ai_role: assistant_only`, and `demo_seed_idempotent_draft_only_no_submit_no_approve_no_send_no_provider_call`.
+  - 2026-05-09 implementation-cron verified PR #181 (`d603fffa5 feat: close runtime-positive payroll closing UI state`) is merged into `develop`.
   - Docker Compose has running `frappe`, `mariadb`, and `redis` services.
-  - After restarting `frappe`, logs showed `HEAD is now at 9dd80e49d feat: seed Korea payroll closing runtime rows (#179)`.
+  - After restarting `frappe`, logs showed `HEAD is now at d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`.
   - `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모'` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
+  - `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed.
 - Likely branch:
-  - `feat/korea-payroll-closing-runtime-ui-closeout`
+  - `test/korea-payroll-closing-authenticated-browser-closeout`
 - Goal:
-  - verify the Korea payroll closing operator UI/browser route against runtime-positive rows
+  - verify the Korea payroll closing operator route in an authenticated browser/session context where `frappe.call` actually reads the runtime worklist
+  - keep static/no-runtime fixture fallback intact
   - keep evidence/session views read-only and human-review-only
-  - update UI fallback/banner copy only if the runtime-positive path is visible and tested
-  - preserve fixture fallback for non-runtime/static preview contexts
+  - preserve `runtime_action=runtime_read_only`, `requires_runtime_apply=false`, `requires_human_approval=true`, and `ai_role=assistant_only`
 
 Useful commands
 - Repo status:

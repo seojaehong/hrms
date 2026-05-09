@@ -20,6 +20,8 @@ from typing import Any
 
 CONTRACT_TYPE = "korea_payroll_closing_runtime_verification_v1"
 RUNTIME_ACTION = "runtime_verification_read_only"
+OWNERSHIP_CONTRACT_TYPE = "korea_payroll_closing_runtime_ownership_v1"
+OWNERSHIP_RUNTIME_ACTION = "runtime_ownership_decision_read_only"
 MUTATION_BOUNDARY = "read_only_no_save_submit_approve_send_provider"
 AI_ROLE = "assistant_only"
 WORKLIST_METHOD = (
@@ -129,6 +131,13 @@ def verify_runtime_checkpoint(
 		runtime_verified=runtime_verified,
 		fixture_fallback_required=fixture_fallback_required,
 	)
+	ownership = decide_runtime_ownership(
+		docker_result=docker_result,
+		bench_result=bench_result,
+		include_bench=include_bench,
+		runtime_verified=runtime_verified,
+		positive_runtime_rows_verified=bool(bench_result.get("positive_runtime_rows_verified")),
+	)
 	passed = bool(closeout["gate_6_blockers_resolved"])
 	return {
 		"contract_type": CONTRACT_TYPE,
@@ -149,6 +158,7 @@ def verify_runtime_checkpoint(
 		"runtime_verified": runtime_verified,
 		"runtime_blockers": runtime_blockers,
 		"runtime_closeout": closeout,
+		"runtime_ownership": ownership,
 		"fixture_fallback_required_until_positive_runtime_rows": fixture_fallback_required,
 		"read_only_evidence_packet_boundary": True,
 		"passed": passed,
@@ -228,6 +238,67 @@ def run_command(
 		result["stdout_tail"] = _tail(completed.stdout)
 		result["stderr_tail"] = _tail(completed.stderr)
 	return result
+
+
+def decide_runtime_ownership(
+	*,
+	docker_result: dict[str, Any],
+	bench_result: dict[str, Any],
+	include_bench: bool,
+	runtime_verified: bool,
+	positive_runtime_rows_verified: bool,
+) -> dict[str, Any]:
+	"""Decide which runtime can be treated as authoritative without mutation."""
+
+	evidence: list[str] = []
+	next_actions: list[str] = []
+	docker_running = bool(docker_result.get("runtime_available"))
+	bench_available = include_bench and bench_result.get("executable_available") is not False
+	bench_completed = include_bench and not bench_result.get("skipped") and bench_result.get("returncode") == 0
+	if docker_running:
+		evidence.append("local Docker Compose Frappe service is running")
+	else:
+		evidence.append("local Docker Compose Frappe runtime is not running")
+	if include_bench:
+		if bench_available:
+			evidence.append("bench executable is available in this cron environment")
+		else:
+			evidence.append("bench executable is not available in this cron environment")
+		if bench_completed:
+			evidence.append("read-only bench worklist probe completed")
+		if positive_runtime_rows_verified:
+			evidence.append("read-only bench worklist probe returned positive scoped rows")
+	else:
+		evidence.append("bench probe was not requested")
+		next_actions.append("run read-only bench worklist probe with --include-bench --site against the candidate runtime")
+
+	if runtime_verified and positive_runtime_rows_verified:
+		authoritative_runtime = "local_docker_compose_bench"
+		decision_status = "verified"
+	else:
+		authoritative_runtime = "operator_provided_runtime_required"
+		decision_status = "blocked"
+		if not docker_running:
+			next_actions.append("start or expose the local Docker Compose Frappe runtime")
+		if include_bench and not bench_available:
+			next_actions.append("install or expose bench executable in this cron environment")
+		if include_bench and bench_available and not bench_completed:
+			next_actions.append("inspect the failed read-only bench worklist probe")
+		if not positive_runtime_rows_verified:
+			next_actions.append("provide or expose an authoritative Bench/Frappe runtime")
+
+	return {
+		"contract_type": OWNERSHIP_CONTRACT_TYPE,
+		"runtime_action": OWNERSHIP_RUNTIME_ACTION,
+		"requires_runtime_apply": False,
+		"requires_human_approval": True,
+		"ai_role": AI_ROLE,
+		"mutation_boundary": MUTATION_BOUNDARY,
+		"authoritative_runtime": authoritative_runtime,
+		"decision_status": decision_status,
+		"evidence": evidence,
+		"next_actions": _dedupe(next_actions),
+	}
 
 
 def build_runtime_closeout(
@@ -333,6 +404,16 @@ def _parse_docker_compose_ps_json(stdout: str) -> list[dict[str, Any]]:
 	if isinstance(parsed, list):
 		return [item for item in parsed if isinstance(item, dict)]
 	return []
+
+
+def _dedupe(values: list[str]) -> list[str]:
+	seen: set[str] = set()
+	result: list[str] = []
+	for value in values:
+		if value not in seen:
+			seen.add(value)
+			result.append(value)
+	return result
 
 
 def _redact_command(command: list[str]) -> str:

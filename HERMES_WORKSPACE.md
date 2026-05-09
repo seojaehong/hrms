@@ -100,6 +100,7 @@ Next gate
   - Docker Compose currently has running `frappe`, `mariadb`, and `redis` services, and the runtime app source is mounted from `/workspace/hrms-source` rather than upstream `frappe/hrms`.
   - PR #177 added existing-bench sync logic so the Docker init path updates an already-created HRMS checkout from `/workspace/hrms-source` instead of leaving it at an older commit.
   - The read-only Docker Bench checkpoint observed runtime source matching the mounted workspace and the bench probe executed; `runtime_verified` still returned `false` because no positive scoped `Korea Payroll Closing Draft` rows were verified.
+  - 2026-05-10 PDCA verification while PR #178 was checked out observed mounted source `b6fba285c` and runtime app source `51f0e3d2d`; the runtime app is current to `develop`, but does not match the docs-only PR branch, so the checkpoint correctly failed closed on source alignment before positive-row verification.
 - Likely branch:
   - `ops/korea-payroll-closing-runtime-positive-row-capture`
 - Goal:

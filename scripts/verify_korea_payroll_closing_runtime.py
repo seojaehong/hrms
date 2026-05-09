@@ -171,12 +171,16 @@ def verify_runtime_checkpoint(
 	command_checks_passed = docker_check_passed and bench_check_passed
 	docker_verified = bool(docker_result.get("runtime_available"))
 	bench_verified = bool(bench_result.get("runtime_available"))
-	runtime_verified = (docker_verified or not docker_required) and (
+	positive_runtime_rows_verified = bool(bench_result.get("positive_runtime_rows_verified"))
+	runtime_environment_available = (docker_verified or not docker_required) and (
 		not include_bench or bench_verified
 	)
+	runtime_verified = runtime_environment_available and positive_runtime_rows_verified
 	runtime_blockers = []
-	if not runtime_verified:
+	if not runtime_environment_available:
 		runtime_blockers.append("runtime not verified")
+	if not positive_runtime_rows_verified:
+		runtime_blockers.append("positive runtime rows not verified")
 	if docker_required and docker_result.get("returncode") != 0:
 		runtime_blockers.append("docker compose status check failed")
 	elif docker_required and not docker_result.get("skipped") and not docker_result.get("runtime_available"):

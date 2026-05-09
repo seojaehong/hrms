@@ -65,6 +65,12 @@ Current verified state
   - `scripts/verify_korea_payroll_closing_runtime.py` now returns a report-safe `runtime_ownership` decision with `authoritative_runtime`, `decision_status`, evidence, and next actions.
   - Current cron-host evidence remains blocked: Docker Compose has no running Frappe service rows and `bench` is unavailable, so `authoritative_runtime` is `operator_provided_runtime_required` and fixture fallback remains required.
   - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 9 runtime handoff evidence-path result:
+  - `develop` includes `0da583aea test: add Korea runtime handoff evidence path (#167)`.
+  - `scripts/verify_korea_payroll_closing_runtime.py` now accepts an explicit report-safe runtime handoff contract for `operator_provided_bench` or `local_docker_compose_bench`, forces the read-only bench probe when handoff data is supplied, and redacts site/company/workplace command details.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers handoff normalization, invalid handoff rejection, and a positive mocked operator-provided bench path.
+  - Current cron-host evidence remains blocked when no handoff is supplied: Docker Compose has no running Frappe service rows and `bench` is unavailable, so fixture fallback remains required until an actual runtime handoff plus positive scoped rows are available.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
 
 Autonomous cron runway
 - Implementation cron:
@@ -77,14 +83,14 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 9: Runtime handoff / positive row evidence unblock.
+- Gate 10: Authoritative runtime handoff execution / positive row capture.
 - Likely branch:
-  - `ops/korea-payroll-closing-runtime-handoff-positive-rows`
+  - `ops/korea-payroll-closing-runtime-positive-row-capture`
 - Goal:
-  - connect the verification checkpoint to an authoritative Bench/Frappe runtime path supplied by the operator or made available on this host
-  - run the existing read-only worklist/session probe against scoped `Korea Payroll Closing Draft` rows without weakening no-bench direct tests
-  - record positive runtime-row evidence only when the runtime API actually returns rows through the read-only worklist path
-  - keep fixture fallback visible and explicitly labeled until positive runtime rows are proven
+  - supply or expose a real authoritative Bench/Frappe runtime target for this workspace, then run the existing Gate 9 handoff-aware read-only checkpoint against it
+  - use an explicit runtime handoff contract rather than environment guessing
+  - verify scoped `Korea Payroll Closing Draft` rows through the read-only worklist/session path and record only redacted evidence
+  - keep fixture fallback visible and explicitly labeled while positive runtime rows are absent or unverified
   - preserve read-only/evidence-only boundaries: no save/approve/send/payroll submit/provider calls
 
 Useful commands

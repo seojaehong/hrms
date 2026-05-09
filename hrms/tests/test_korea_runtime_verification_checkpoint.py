@@ -292,6 +292,50 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertIn("bench worklist runtime read failed", report["runtime_blockers"])
 		self.assertEqual(report["passed"], False)
 
+	def test_runtime_ownership_requires_operator_runtime_when_local_docker_and_bench_are_absent(self):
+		module = load_module()
+
+		with patch.object(module.shutil, "which", return_value=None):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		ownership = report["runtime_ownership"]
+		self.assertEqual(ownership["contract_type"], "korea_payroll_closing_runtime_ownership_v1")
+		self.assertEqual(ownership["runtime_action"], "runtime_ownership_decision_read_only")
+		self.assertFalse(ownership["requires_runtime_apply"])
+		self.assertEqual(ownership["ai_role"], "assistant_only")
+		self.assertEqual(ownership["authoritative_runtime"], "operator_provided_runtime_required")
+		self.assertEqual(ownership["decision_status"], "blocked")
+		self.assertIn("local Docker Compose Frappe runtime is not running", ownership["evidence"])
+		self.assertIn("bench executable is not available in this cron environment", ownership["evidence"])
+		self.assertIn("provide or expose an authoritative Bench/Frappe runtime", ownership["next_actions"])
+		self.assertTrue(report["fixture_fallback_required_until_positive_runtime_rows"])
+
+	def test_runtime_ownership_uses_local_docker_when_compose_and_bench_rows_are_positive(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		ownership = report["runtime_ownership"]
+		self.assertEqual(ownership["authoritative_runtime"], "local_docker_compose_bench")
+		self.assertEqual(ownership["decision_status"], "verified")
+		self.assertIn("local Docker Compose Frappe service is running", ownership["evidence"])
+		self.assertIn("read-only bench worklist probe returned positive scoped rows", ownership["evidence"])
+		self.assertEqual(ownership["next_actions"], [])
+
 	def test_positive_bench_worklist_rows_can_close_runtime_gate(self):
 		module = load_module()
 

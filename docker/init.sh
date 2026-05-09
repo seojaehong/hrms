@@ -9,6 +9,8 @@ if [ ! -f "$HRMS_APP_SOURCE/pyproject.toml" ] || [ ! -d "$HRMS_APP_SOURCE/hrms" 
     exit 1
 fi
 
+git config --global --add safe.directory "$HRMS_APP_SOURCE/.git"
+
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
     echo "Bench already exists, skipping init"
     cd frappe-bench

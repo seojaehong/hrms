@@ -23,6 +23,7 @@ class KoreaDockerRuntimeSourceTest(unittest.TestCase):
 		init_script = INIT_SCRIPT.read_text(encoding="utf-8")
 
 		self.assertIn("HRMS_APP_SOURCE", init_script)
+		self.assertIn("git config --global --add safe.directory \"$HRMS_APP_SOURCE/.git\"", init_script)
 		self.assertIn("bench get-app \"$HRMS_APP_SOURCE\"", init_script)
 		self.assertNotIn("bench get-app hrms", init_script)
 		self.assertIn("exit 1", init_script)

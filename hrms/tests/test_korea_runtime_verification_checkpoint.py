@@ -386,6 +386,126 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertEqual(report["runtime_closeout"]["gate_6_blockers_resolved"], False)
 		self.assertEqual(report["passed"], False)
 
+	def test_operator_runtime_handoff_can_verify_positive_rows_without_local_docker(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = "[]\n"
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"message": {"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]}})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		handoff = {
+			"contract_type": "korea_payroll_closing_runtime_handoff_v1",
+			"runtime_kind": "operator_provided_bench",
+			"site": "operator.local",
+			"company": "Sensitive Company",
+			"workplaces": ["Sensitive Workplace"],
+		}
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, runtime_handoff=handoff)
+
+		self.assertTrue(report["passed"])
+		self.assertTrue(report["command_checks_passed"])
+		self.assertTrue(report["runtime_verified"])
+		self.assertFalse(report["fixture_fallback_required_until_positive_runtime_rows"])
+		self.assertEqual(report["runtime_handoff"]["runtime_kind"], "operator_provided_bench")
+		self.assertEqual(report["runtime_ownership"]["authoritative_runtime"], "operator_provided_bench")
+		self.assertEqual(report["runtime_ownership"]["decision_status"], "verified")
+		report_json = json.dumps(report, ensure_ascii=False)
+		self.assertNotIn("Sensitive Company", report_json)
+		self.assertNotIn("Sensitive Workplace", report_json)
+		self.assertNotIn("operator.local", report_json)
+		self.assertNotIn("DRAFT-1", report_json)
+
+	def test_operator_runtime_handoff_command_checks_do_not_require_local_docker(self):
+		module = load_module()
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_which(command):
+			return None if command == "docker" else "/usr/bin/bench"
+
+		handoff = {
+			"contract_type": "korea_payroll_closing_runtime_handoff_v1",
+			"runtime_kind": "operator_provided_bench",
+			"site": "operator.local",
+		}
+		with patch.object(module.shutil, "which", side_effect=fake_which), patch.object(module.subprocess, "run", return_value=BenchCompleted()):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, runtime_handoff=handoff)
+
+		self.assertEqual(report["docker_compose"]["skipped"], True)
+		self.assertEqual(report["docker_compose"]["reason"], "docker executable not found")
+		self.assertEqual(report["runtime_closeout"]["docker_runtime_required"], False)
+		self.assertTrue(report["command_checks_passed"])
+		self.assertTrue(report["passed"])
+		self.assertEqual(report["runtime_blockers"], [])
+
+	def test_runtime_handoff_rejects_malformed_contract_before_probe(self):
+		module = load_module()
+
+		with self.assertRaisesRegex(ValueError, "runtime_handoff.contract_type must be korea_payroll_closing_runtime_handoff_v1"):
+			module.verify_runtime_checkpoint(
+				repo_root=REPO_ROOT,
+				runtime_handoff={"contract_type": "evil", "runtime_kind": "operator_provided_bench", "site": "operator.local"},
+			)
+
+	def test_runtime_handoff_file_drives_cli_probe_without_exposing_scope(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = "[]\n"
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+
+		with tempfile.TemporaryDirectory() as tmpdir:
+			handoff_path = pathlib.Path(tmpdir) / "handoff.json"
+			report_path = pathlib.Path(tmpdir) / "report.json"
+			handoff_path.write_text(
+				json.dumps({
+					"contract_type": "korea_payroll_closing_runtime_handoff_v1",
+					"runtime_kind": "operator_provided_bench",
+					"site": "operator.local",
+					"company": "Sensitive Company",
+				}, ensure_ascii=False),
+				encoding="utf-8",
+			)
+			with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(
+				module.subprocess, "run", side_effect=fake_run
+			):
+				exit_code = module.main([
+					"--repo-root",
+					str(REPO_ROOT),
+					"--runtime-handoff-file",
+					str(handoff_path),
+					"--report-file",
+					str(report_path),
+				])
+
+			self.assertEqual(exit_code, 0)
+			written = json.loads(report_path.read_text(encoding="utf-8"))
+			self.assertEqual(written["runtime_handoff"]["runtime_kind"], "operator_provided_bench")
+			self.assertTrue(written["passed"])
+			self.assertNotIn("Sensitive Company", json.dumps(written, ensure_ascii=False))
+
 
 if __name__ == "__main__":
 	unittest.main()

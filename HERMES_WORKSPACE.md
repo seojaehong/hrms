@@ -25,6 +25,8 @@ Current verified state
   - `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`
 - `develop` includes Gate 6:
   - `7c4dd63c2 test: add Korea payroll closing runtime verification checkpoint (#161)`
+- `develop` includes Gate 7 closeout hardening:
+  - `2f1cc60b5 test: harden payroll closing runtime evidence gate (#163)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
@@ -53,6 +55,11 @@ Current verified state
   - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers no-bench direct behavior, Docker Compose parsing, optional bench command construction, output redaction, and fail-closed skipped-command semantics.
   - Current cron evidence from PR #161: Docker Compose returned no running Frappe service rows and `bench` was unavailable, so runtime verification is not green yet; fixture fallback remains required until positive runtime rows are proven.
   - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 7 closeout result:
+  - `scripts/verify_korea_payroll_closing_runtime.py` now distinguishes skipped command checks from passed checks, parses Docker Compose service state safely, summarizes Gate 6 blocker closeout state, and only closes the runtime gate when positive read-only worklist rows are verified.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers running/stopped/non-Frappe Docker services, missing bench, bench failure, positive bench worklist rows, and malformed bench rows.
+  - PR #163 closed the false-positive evidence gap but did not prove live runtime rows on this cron host; fixture fallback remains required until Docker/Bench runtime plus positive `Korea Payroll Closing Draft` rows are verified.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
 
 Autonomous cron runway
 - Implementation cron:
@@ -65,15 +72,14 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 7: Phase 1 runtime blocker closeout / positive bench evidence.
+- Gate 8: Phase 1 live runtime evidence / Bench environment ownership.
 - Likely branch:
-  - `test/korea-payroll-closing-runtime-positive-evidence`
+  - `ops/korea-payroll-closing-live-runtime-evidence`
 - Goal:
-  - resolve or document the concrete runtime blockers found by Gate 6: no running Frappe Docker Compose service rows and no `bench` executable in the cron environment
-  - run the read-only verification checkpoint against an available Bench/Docker runtime when safe
-  - confirm seeded demo blocker rows surface through the read-only payroll closing worklist/session UI only after positive runtime rows exist
-  - keep fixture fallback visible and explicitly labeled when runtime rows remain absent
-  - preserve the no-bench smoke harness and direct tests as the baseline regression net
+  - establish which runtime is authoritative for the 100h workspace: local Docker Compose, an existing Bench site, or a separate operator-provided runtime
+  - make the verification checkpoint executable against that runtime without weakening no-bench cron tests
+  - produce positive read-only evidence only when scoped `Korea Payroll Closing Draft` rows are actually returned through the runtime worklist/session path
+  - keep fixture fallback visible and explicitly labeled while runtime rows remain absent or unverified
   - preserve read-only/evidence-only boundaries: no save/approve/send/payroll submit/provider calls
 
 Useful commands

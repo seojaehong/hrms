@@ -73,7 +73,7 @@ export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company
 		stderr += chunk.toString()
 	})
 	try {
-		const port = await readDevToolsActivePort(userDataDir)
+		const port = await readDevToolsActivePort(userDataDir, () => stderr)
 		const tab = await openDevtoolsTab({ port, url: "about:blank" })
 		const cdp = await connectCdp(tab.webSocketDebuggerUrl)
 		try {
@@ -149,7 +149,7 @@ function parseSetCookie(header) {
 	}
 }
 
-export async function readDevToolsActivePort(userDataDir) {
+export async function readDevToolsActivePort(userDataDir, readStderr = () => "") {
 	const path = join(userDataDir, "DevToolsActivePort")
 	const deadline = Date.now() + 10000
 	let lastError
@@ -163,9 +163,20 @@ export async function readDevToolsActivePort(userDataDir) {
 		} catch (error) {
 			lastError = error
 		}
+		const stderrPort = extractDevtoolsPortFromText(readStderr())
+		if (stderrPort) return stderrPort
 		await sleep(100)
 	}
+	const stderrPort = extractDevtoolsPortFromText(readStderr())
+	if (stderrPort) return stderrPort
 	throw new Error(`Chrome DevToolsActivePort did not become available: ${lastError?.message || "unknown error"}`)
+}
+
+export function extractDevtoolsPortFromText(text) {
+	const match = String(text || "").match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//)
+	if (!match) return null
+	const port = Number(match[1])
+	return Number.isInteger(port) && port > 0 && port < 65536 ? port : null
 }
 
 export function extractFrappeApiMethodFromUrl(url) {

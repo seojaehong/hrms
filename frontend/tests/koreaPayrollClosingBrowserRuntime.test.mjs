@@ -6,6 +6,7 @@ import {
 } from "../src/data/koreaPayrollClosingBrowserRuntime.js"
 import {
 	assertReadOnlyBrowserRuntimeRequests,
+	extractDevtoolsPortFromText,
 	extractFrappeApiMethodFromUrl,
 } from "../../scripts/verify_korea_payroll_closing_browser_runtime.mjs"
 
@@ -95,6 +96,12 @@ assert.equal(
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 )
 assert.equal(extractFrappeApiMethodFromUrl("http://hrms.localhost:8000/hrms/dashboard/korea-payroll-closing"), null)
+
+assert.equal(
+	extractDevtoolsPortFromText("DevTools listening on ws://127.0.0.1:45359/devtools/browser/session-id"),
+	45359,
+)
+assert.equal(extractDevtoolsPortFromText("Chrome stderr without debugger endpoint"), null)
 
 const observed = assertReadOnlyBrowserRuntimeRequests([
 	{

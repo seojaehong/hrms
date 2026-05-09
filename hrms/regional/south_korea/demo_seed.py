@@ -5,6 +5,10 @@ from pathlib import Path
 
 import frappe
 from frappe.utils import getdate
+try:
+    from frappe.utils.password import update_password
+except ImportError:  # no-bench direct tests provide a minimal frappe stub
+    update_password = None
 
 
 def ensure_doc(doctype, name=None, filters=None, values=None, ignore_links=False, update_existing=True):
@@ -153,8 +157,64 @@ def ensure_leave_type(name, **extra):
     return ensure_doc("Leave Type", name=name, values=values)
 
 
+DEMO_BROWSER_USERNAME = "demo.hr.manager@node.pe.kr"
+DEMO_BROWSER_PASSWORD_ENV_VAR = "FRAPPE_BROWSER_PASSWORD"
+
+
 def build_demo_user_password() -> str:
     return os.environ.get("HRMS_DEMO_USER_PASSWORD") or secrets.token_urlsafe(18)
+
+
+def build_demo_browser_credential_handoff(username=DEMO_BROWSER_USERNAME, password_env_var=DEMO_BROWSER_PASSWORD_ENV_VAR):
+    username = _require_text(username, "username")
+    password_env_var = _require_text(password_env_var, "password_env_var")
+    return {
+        "contract_type": "korea_demo_browser_credential_handoff_v1",
+        "runtime_action": "demo_credential_handoff_only",
+        "requires_runtime_apply": False,
+        "username": username,
+        "employee_link_required": True,
+        "password_env_var": password_env_var,
+        "browser_verifier_command": "FRAPPE_BROWSER_USERNAME=<username> FRAPPE_BROWSER_PASSWORD=<secret> node scripts/verify_korea_payroll_closing_browser_runtime.mjs --base-url http://hrms.localhost:8000 --company <company>",
+        "mutation_boundary": "credential_handoff_only_no_payroll_submit_approve_send_provider_call",
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+    }
+
+
+def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None):
+    """Set the employee-linked demo user's browser password without reporting it.
+
+    This is a narrow demo-credential runtime apply helper for authenticated browser
+    verification. It does not submit payroll, approve drafts, send messages, call
+    providers, or create payroll documents.
+    """
+
+    username = _require_text(username, "username")
+    if username != DEMO_BROWSER_USERNAME:
+        raise ValueError("username must be the approved demo browser user")
+    password = password if password is not None else os.environ.get("HRMS_DEMO_BROWSER_PASSWORD")
+    password = _require_text(password, "password")
+    if not frappe.db.exists("User", username):
+        raise ValueError(f"demo browser user {username} is required")
+    employee_filters = {"user_id": username, "status": "Active"}
+    if not frappe.db.exists("Employee", employee_filters):
+        raise ValueError(f"active employee linked to {username} is required")
+    if update_password is None:
+        raise RuntimeError("frappe.utils.password.update_password is unavailable in this runtime")
+    update_password(username, password)
+    return {
+        "contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+        "runtime_action": "demo_credential_runtime_apply",
+        "requires_runtime_apply": False,
+        "username": username,
+        "employee_link_verified": True,
+        "credential_ready_for_browser_verifier": True,
+        "password_env_var": DEMO_BROWSER_PASSWORD_ENV_VAR,
+        "mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+    }
 
 
 def ensure_user(email, first_name, last_name, role_profile=None):
@@ -788,10 +848,11 @@ def main():
         "employees": employee_names,
         "demo_blocker_seed": blocker_seed,
         "demo_payroll_closing_draft_seed": draft_seed,
+        "demo_browser_credential_handoff": build_demo_browser_credential_handoff(),
         "demo_login": {
             "url": "http://10.0.0.58:8000/app",
             "username": "demo.hr.manager@node.pe.kr",
-            "password": "DemoHRMS!2026",
+            "password": "***",
         },
     }
     print(json.dumps(summary, ensure_ascii=False, default=str, indent=2))

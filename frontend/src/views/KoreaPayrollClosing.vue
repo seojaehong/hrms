@@ -90,15 +90,15 @@
 					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
 						Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}
 					</div>
-					<div v-else-if="runtimeDashboard && !runtimeHasData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
-						No runtime dashboard rows were returned for this company; fixture worklist remains visible as fallback context.
+					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+						No runtime dashboard rows were returned for this company; static fixture fallback remains active for static/no-runtime preview contexts.
 					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
 						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}
-						<span v-if="!runtimeHasWorklistData"> · fixture worklist remains visible until Gate 2 runtime worklist bridge is populated</span>
+						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
-					<div v-if="runtimeHasWorklistData" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
-						Runtime worklist loaded · runtime_action={{ runtimeWorklist.runtime_action }} · requires_runtime_apply={{ runtimeWorklist.requires_runtime_apply }} · evidence remains read-only
+					<div v-if="runtimeUiState.showRuntimePositiveCopy" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
+						{{ runtimeUiState.worklistBanner }}
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
@@ -187,6 +187,7 @@ import {
 import {
 	hasKoreaAdminDashboardRuntimeData,
 	hasKoreaPayrollClosingRuntimeWorklistData,
+	getKoreaPayrollClosingRuntimeUiState,
 	loadKoreaAdminDashboardRuntime,
 	loadKoreaPayrollClosingRuntimeWorklist,
 } from "@/data/koreaPayrollClosingRuntime"
@@ -201,14 +202,14 @@ const activeWorklist = computed(() => (hasKoreaPayrollClosingRuntimeWorklistData
 const selectedSession = computed(() => buildSessionPreview(findActiveSessionItem(route.params.name)))
 const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
 const runtimeHasWorklistData = computed(() => hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value))
+const runtimeUiState = computed(() => getKoreaPayrollClosingRuntimeUiState({
+	runtimeDashboard: runtimeDashboard.value,
+	runtimeWorklist: runtimeWorklist.value,
+	runtimeLoading: runtimeLoading.value,
+}))
 const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || fixture.company)
-const dataSourceLabel = computed(() => (runtimeHasWorklistData.value ? "Runtime read-only worklist" : runtimeDashboard.value ? "Runtime read-only dashboard" : "Static fixture preview"))
-const dataSourceBadge = computed(() => {
-	if (runtimeLoading.value) return "loading"
-	if (runtimeHasWorklistData.value) return "runtime worklist"
-	if (runtimeDashboard.value) return "runtime_read_only"
-	return "static fixture"
-})
+const dataSourceLabel = computed(() => runtimeUiState.value.dataSourceLabel)
+const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {
 	if (runtimeHasWorklistData.value) return "bg-green-100 text-green-800"
 	if (runtimeDashboard.value) return "bg-blue-100 text-blue-800"

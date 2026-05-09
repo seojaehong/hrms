@@ -35,7 +35,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 9
+   - current priority: Gate 10
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -220,7 +220,7 @@ Closeout discipline:
 
 ### Gate 10 — Authoritative runtime handoff execution / positive row capture
 
-Status: next.
+Status: blocked pending authoritative runtime handoff or running local Bench/Frappe runtime.
 
 Goal:
 - Supply or expose a real authoritative Bench/Frappe runtime target for this workspace, then run the existing Gate 9 handoff-aware read-only checkpoint against it.
@@ -228,6 +228,13 @@ Goal:
 - Verify scoped `Korea Payroll Closing Draft` rows through the read-only worklist/session path and record only redacted evidence.
 - Preserve fixture fallback and clear fallback labeling while runtime rows are absent or unverified.
 - Keep evidence/session views read-only: no save/approve/send/payroll submit/provider calls.
+
+Current cron-host evidence:
+- 2026-05-09 Gate 10 checkpoint from `/home/ubuntu/workspaces/seojaehong-hrms-100h` ran `scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json`.
+- Docker Compose command was available but returned zero service rows for `docker/docker-compose.yml`; no running Frappe service was detected.
+- `bench` was unavailable and no explicit `runtime_handoff` contract was supplied, so the bench worklist probe was not requested.
+- The checkpoint correctly reported `runtime_verified: false`, `authoritative_runtime: operator_provided_runtime_required`, and `fixture_fallback_required_until_positive_runtime_rows: true`.
+- Boundary remained read-only: no save/submit/approve/send/provider/payroll document mutation.
 
 ## Guardrails
 

@@ -84,6 +84,12 @@ Autonomous cron runway
 
 Next gate
 - Gate 10: Authoritative runtime handoff execution / positive row capture.
+- Current status: blocked on authoritative runtime availability.
+- Latest checkpoint evidence:
+  - `scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json` returned `runtime_verified: false`.
+  - Docker Compose returned zero service rows for this workspace; no running Frappe service was detected.
+  - `bench` is unavailable in this cron host and no explicit runtime handoff contract was supplied.
+  - Fixture fallback remains required until positive scoped `Korea Payroll Closing Draft` rows are verified through the read-only worklist/session path.
 - Likely branch:
   - `ops/korea-payroll-closing-runtime-positive-row-capture`
 - Goal:

@@ -231,9 +231,11 @@ Goal:
 
 Current cron-host evidence:
 - 2026-05-09 Gate 10 checkpoint from `/home/ubuntu/workspaces/seojaehong-hrms-100h` ran `scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json`.
-- Docker Compose command was available but returned zero service rows for `docker/docker-compose.yml`; no running Frappe service was detected.
-- `bench` was unavailable and no explicit `runtime_handoff` contract was supplied, so the bench worklist probe was not requested.
-- The checkpoint correctly reported `runtime_verified: false`, `authoritative_runtime: operator_provided_runtime_required`, and `fixture_fallback_required_until_positive_runtime_rows: true`.
+- Focused Gate 2/Gate 10 health checks passed: `python3 hrms/tests/test_korea_payroll_closing_worklist_runtime_api.py`, `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, and `python3 scripts/run_korea_regional_smoke.py` with 60 direct targets.
+- `docker compose -f docker/docker-compose.yml up -d` successfully started `docker-frappe-1`, `docker-mariadb-1`, and `docker-redis-1`, and `hrms.localhost` installed successfully.
+- The started Docker runtime is not authoritative for this runway yet: `docker/init.sh` clones upstream `https://github.com/frappe/hrms.git` into the bench, so `/home/frappe/frappe-bench/apps/hrms` is upstream `hrms 17.0.0-dev develop`, not this `seojaehong/hrms` `develop` worktree with the Korea runtime bridge modules.
+- A direct bench execute probe against `hrms.regional.south_korea.payroll_closing_worklist_runtime_api...` failed because the runtime app source does not expose the Korea module path from this fork.
+- The checkpoint correctly remains `runtime_verified: false`; positive scoped row capture is blocked until the runtime app source is switched to, mounted from, or otherwise deployed from the canonical fork/branch.
 - Boundary remained read-only: no save/submit/approve/send/provider/payroll document mutation.
 
 ## Guardrails
@@ -256,10 +258,11 @@ ops/korea-payroll-closing-runtime-positive-row-capture
 
 Expected deliverables:
 - authoritative Bench/Frappe runtime handoff executed through the Gate 9 checkpoint path
+- ensure the runtime app source is this canonical `seojaehong/hrms` fork/branch, not upstream `frappe/hrms`, before claiming positive Gate 10 evidence
 - explicit runtime handoff contract inputs kept out of reports except for redacted booleans/counts
 - read-only runtime verification checkpoint run against that runtime when available and explicitly scoped
 - positive scoped `Korea Payroll Closing Draft` row evidence only if the runtime actually returns rows through the worklist/session path
-- precise environmental blocker report if Docker/Bench/runtime access remains unavailable
+- precise environmental blocker report if Docker/Bench/runtime access remains unavailable or points at the wrong app source
 - fixture fallback remains visible and labeled when runtime data is absent or unverified
 - no save/approve/send/payroll submit/provider mutation in the verification gate
 - commit/push/PR URL

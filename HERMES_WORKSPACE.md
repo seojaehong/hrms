@@ -71,7 +71,7 @@ Current verified state
   - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers handoff normalization, invalid handoff rejection, and a positive mocked operator-provided bench path.
   - Current cron-host evidence remains blocked when no handoff is supplied: Docker Compose has no running Frappe service rows and `bench` is unavailable, so fixture fallback remains required until an actual runtime handoff plus positive scoped rows are available.
   - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
-- Gate 10 source-alignment and runtime-probe hardening result:
+- Gate 10 source-alignment, runtime-probe, and positive-row capture result:
   - `develop` includes `be2806d40 test: align Korea Docker runtime source (#171)`.
   - `develop` includes `f949ae1dc fix: trust mounted HRMS source in Docker init (#172)`.
   - `develop` includes `74b58e450 fix: run Korea runtime probe through Docker bench (#173)`.
@@ -79,8 +79,10 @@ Current verified state
   - `develop` includes `12a37c4e8 docs: align Gate 10 runtime checkpoint state (#175)`.
   - `develop` includes `2f276f0b5 fix: fail closed on stale Korea runtime source (#176)`.
   - `develop` includes `51f0e3d2 fix: sync existing Docker HRMS runtime source (#177)`.
+  - `develop` includes `9dd80e49d feat: seed Korea payroll closing runtime rows (#179)`.
   - Docker Compose mounts this repo at `/workspace/hrms-source`, `docker/init.sh` installs/syncs HRMS from that mounted workspace even when an existing bench checkout is present, and the checkpoint can execute Bench inside the `frappe` container without requiring host `bench`.
-  - The checkpoint fails closed on stale runtime source and still requires positive scoped `Korea Payroll Closing Draft` rows through the read-only runtime worklist path.
+  - The demo seed now creates a scoped, draft-only `Korea Payroll Closing Draft` row for human review without submit/approve/send/payroll-submit/provider calls.
+  - 2026-05-09 post-merge Docker/Bench verification after restarting `frappe` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
 
 Autonomous cron runway
 - Implementation cron:
@@ -93,22 +95,21 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 10: Authoritative runtime positive row capture / runtime seed realism.
-- Current status: partially unblocked at runtime-source layer, still blocked on positive scoped rows.
+- Gate 11: Runtime-positive operator UI/browser closeout.
+- Current status: Gate 10 is green on the local Docker Compose Bench checkpoint after #179 and a `frappe` restart/sync; the remaining work is to confirm the runtime-positive state through the operator UI/browser route and keep fallback copy conditional.
 - Latest checkpoint evidence:
-  - 2026-05-10 implementation-cron executed `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --report-file /tmp/korea-payroll-closing-runtime-report-stale-gate2.json`; it returned `runtime_verified: false`.
-  - Docker Compose currently has running `frappe`, `mariadb`, and `redis` services, and the runtime app source is mounted from `/workspace/hrms-source` rather than upstream `frappe/hrms`.
-  - PR #177 added existing-bench sync logic so the Docker init path updates an already-created HRMS checkout from `/workspace/hrms-source` instead of leaving it at an older commit.
-  - The read-only Docker Bench checkpoint observed runtime source matching the mounted workspace and the bench probe executed; `runtime_verified` still returned `false` because no positive scoped `Korea Payroll Closing Draft` rows were verified.
-  - 2026-05-10 PDCA verification while PR #178 was checked out observed mounted source `b6fba285c` and runtime app source `51f0e3d2d`; the runtime app is current to `develop`, but does not match the docs-only PR branch, so the checkpoint correctly failed closed on source alignment before positive-row verification.
+  - 2026-05-09 implementation-cron merged PR #179 (`9dd80e49d feat: seed Korea payroll closing runtime rows`) after focused tests, Korea regional smoke, exact-head PR merge, and branch cleanup.
+  - The demo seed returned a scoped draft-only `Korea Payroll Closing Draft` row for company `노란봉투법 데모` and preserved `requires_human_approval: true`, `ai_role: assistant_only`, and `demo_seed_idempotent_draft_only_no_submit_no_approve_no_send_no_provider_call`.
+  - Docker Compose has running `frappe`, `mariadb`, and `redis` services.
+  - After restarting `frappe`, logs showed `HEAD is now at 9dd80e49d feat: seed Korea payroll closing runtime rows (#179)`.
+  - `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모'` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
 - Likely branch:
-  - `ops/korea-payroll-closing-runtime-positive-row-capture`
+  - `feat/korea-payroll-closing-runtime-ui-closeout`
 - Goal:
-  - capture or seed positive scoped draft-row evidence through the existing read-only worklist/session path before claiming Gate 10 green
-  - use an explicit runtime handoff contract rather than environment guessing when the runtime is not the local Docker Compose bench
-  - record only redacted counts/statuses from runtime verification
-  - keep fixture fallback visible and explicitly labeled while positive runtime rows are absent or unverified
-  - preserve read-only/evidence-only boundaries in verification; any seed/runtime mutation must remain demo-scoped, human-controlled, and separated from worklist read APIs
+  - verify the Korea payroll closing operator UI/browser route against runtime-positive rows
+  - keep evidence/session views read-only and human-review-only
+  - update UI fallback/banner copy only if the runtime-positive path is visible and tested
+  - preserve fixture fallback for non-runtime/static preview contexts
 
 Useful commands
 - Repo status:

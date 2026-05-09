@@ -32,8 +32,20 @@ class KoreaDockerRuntimeSourceTest(unittest.TestCase):
 		init_script = INIT_SCRIPT.read_text(encoding="utf-8")
 
 		validation_index = init_script.index("HRMS_APP_SOURCE does not point to a mounted HRMS workspace")
-		existing_bench_index = init_script.index("Bench already exists, skipping init")
+		existing_bench_index = init_script.index("Bench already exists, syncing HRMS app from mounted source")
 		self.assertLess(validation_index, existing_bench_index)
+
+	def test_existing_bench_syncs_installed_hrms_app_to_mounted_source_before_start(self):
+		init_script = INIT_SCRIPT.read_text(encoding="utf-8")
+
+		existing_bench_index = init_script.index("Bench already exists, syncing HRMS app from mounted source")
+		sync_call_index = init_script.index("sync_hrms_app_from_mounted_source", existing_bench_index)
+		bench_start_index = init_script.index("bench start", existing_bench_index)
+		self.assertLess(existing_bench_index, sync_call_index)
+		self.assertLess(sync_call_index, bench_start_index)
+		self.assertIn("git -C apps/hrms fetch --force \"$HRMS_APP_SOURCE\"", init_script)
+		self.assertIn("git -C apps/hrms reset --hard FETCH_HEAD", init_script)
+		self.assertIn("git -C apps/hrms clean -fd", init_script)
 
 	def test_init_script_keeps_read_only_runtime_boundary(self):
 		init_script = INIT_SCRIPT.read_text(encoding="utf-8").lower()

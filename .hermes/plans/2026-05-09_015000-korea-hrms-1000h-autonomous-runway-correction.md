@@ -6,7 +6,7 @@ Status: active source-of-truth correction after Gate 10 Docker source-alignment/
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `d63d0e1a7 fix: require positive rows for Korea runtime verification (#174)`
+- Latest product gate commit on `develop`: `2f276f0b5 fix: fail closed on stale Korea runtime source (#176)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -236,7 +236,7 @@ Current cron-host evidence:
 - `docker compose -f docker/docker-compose.yml up -d` successfully started `docker-frappe-1`, `docker-mariadb-1`, and `docker-redis-1`, and `hrms.localhost` installed successfully.
 - The started Docker runtime was not authoritative for this runway yet: `docker/init.sh` cloned upstream `https://github.com/frappe/hrms.git` into the bench, so `/home/frappe/frappe-bench/apps/hrms` was upstream `hrms 17.0.0-dev develop`, not this `seojaehong/hrms` `develop` worktree with the Korea runtime bridge modules.
 - A direct bench execute probe against `hrms.regional.south_korea.payroll_closing_worklist_runtime_api...` failed because the runtime app source did not expose the Korea module path from this fork.
-- Gate 10 follow-up PRs #171-#174 landed source alignment and checkpoint hardening: Docker now mounts this repo as `/workspace/hrms-source`, `docker/init.sh` installs HRMS from that mount, the checkpoint can run Bench through Docker, and `runtime_verified` requires positive scoped rows.
+- Gate 10 follow-up PRs #171-#176 landed source alignment and checkpoint hardening: Docker now mounts this repo as `/workspace/hrms-source`, `docker/init.sh` installs HRMS from that mount, the checkpoint can run Bench through Docker, `runtime_verified` requires positive scoped rows, stale runtime source fails closed, and docs/source-of-truth are aligned through #176.
 - 2026-05-09 PDCA verification observed the running container app checkout at `f949ae1dc`, behind host `origin/develop` at `d63d0e1a7`; runtime source is no longer upstream, but the container app checkout still needs refresh/sync after later checkpoint hardening commits.
 - 2026-05-09 PDCA verification ran `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --report-file /tmp/korea-payroll-closing-runtime-report-pdca-docker-bench.json`; Docker and Docker Bench commands were available, but `runtime_verified` remained `false` because positive `Korea Payroll Closing Draft` rows were not verified.
 - The checkpoint correctly remains `runtime_verified: false`; positive scoped row capture is blocked until the runtime checkout is current and scoped draft rows are returned through the read-only worklist/session path.

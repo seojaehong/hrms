@@ -86,6 +86,34 @@ def build_docker_bench_worklist_probe_command(
 	]
 
 
+def build_docker_runtime_source_probe_command(*, repo_root: pathlib.Path) -> list[str]:
+	"""Build a read-only Docker command that compares mounted and installed HRMS source."""
+
+	shell_payload = shlex.join([
+		"python3",
+		"-c",
+		(
+			"import json, pathlib, subprocess; "
+			"mounted=pathlib.Path('/workspace/hrms-source'); "
+			"app=pathlib.Path('/home/frappe/frappe-bench/apps/hrms'); "
+			"head=lambda path: subprocess.check_output(['git','-c','safe.directory='+str(path),'rev-parse','HEAD'], cwd=str(path), text=True).strip(); "
+			"print(json.dumps({'mounted_source_head': head(mounted), 'runtime_app_head': head(app)}, sort_keys=True))"
+		),
+	])
+	return [
+		"docker",
+		"compose",
+		"-f",
+		str(pathlib.Path(repo_root) / "docker" / "docker-compose.yml"),
+		"exec",
+		"-T",
+		"frappe",
+		"bash",
+		"-lc",
+		shell_payload,
+	]
+
+
 def _build_worklist_kwargs_json(*, company: str, workplaces: list[str] | None = None) -> str:
 	kwargs: dict[str, Any] = {"company": _require_text(company, "company")}
 	if workplaces is not None:
@@ -120,6 +148,12 @@ def verify_runtime_checkpoint(
 		cwd=repo_root,
 		dry_run=dry_run,
 		runtime_output_parser=parse_docker_compose_runtime_available,
+	)
+	source_result = run_runtime_source_probe(
+		repo_root=repo_root,
+		docker_result=docker_result,
+		docker_required=docker_required,
+		dry_run=dry_run,
 	)
 	bench_result: dict[str, Any]
 	if include_bench:
@@ -168,13 +202,23 @@ def verify_runtime_checkpoint(
 		bench_result.get("returncode") == 0 and not bench_result.get("skipped")
 	)
 	docker_check_passed = not docker_required or (docker_result.get("returncode") == 0 and not docker_result.get("skipped"))
-	command_checks_passed = docker_check_passed and bench_check_passed
+	source_check_passed = (
+		not docker_required
+		or source_result.get("skipped")
+		or (source_result.get("returncode") == 0 and source_result.get("source_matches_mounted_workspace") is True)
+	)
+	command_checks_passed = docker_check_passed and bench_check_passed and source_check_passed
 	docker_verified = bool(docker_result.get("runtime_available"))
 	bench_verified = bool(bench_result.get("runtime_available"))
 	positive_runtime_rows_verified = bool(bench_result.get("positive_runtime_rows_verified"))
+	source_matches_mounted_workspace = (
+		not docker_required
+		or source_result.get("skipped")
+		or source_result.get("source_matches_mounted_workspace") is True
+	)
 	runtime_environment_available = (docker_verified or not docker_required) and (
 		not include_bench or bench_verified
-	)
+	) and source_matches_mounted_workspace
 	runtime_verified = runtime_environment_available and positive_runtime_rows_verified
 	runtime_blockers = []
 	if not runtime_environment_available:
@@ -189,10 +233,15 @@ def verify_runtime_checkpoint(
 		runtime_blockers.append("bench worklist runtime read failed")
 	if include_bench and bench_result.get("skipped") and bench_result.get("reason") == "bench executable not found":
 		runtime_blockers.append("bench executable not found")
+	if source_result.get("source_matches_mounted_workspace") is False:
+		runtime_blockers.append("runtime app source is not aligned with mounted workspace")
+	elif docker_required and docker_verified and not source_result.get("skipped") and source_result.get("source_matches_mounted_workspace") is not True:
+		runtime_blockers.append("runtime app source alignment not verified")
 	fixture_fallback_required = not (runtime_verified and bool(bench_result.get("positive_runtime_rows_verified")))
 	closeout = build_runtime_closeout(
 		docker_result=docker_result,
 		bench_result=bench_result,
+		source_result=source_result,
 		include_bench=include_bench,
 		runtime_verified=runtime_verified,
 		fixture_fallback_required=fixture_fallback_required,
@@ -222,6 +271,7 @@ def verify_runtime_checkpoint(
 			"site_provided": bool(site),
 		},
 		"docker_compose": docker_result,
+		"runtime_source": source_result,
 		"bench_probe": bench_result,
 		"command_checks_passed": command_checks_passed,
 		"runtime_verified": runtime_verified,
@@ -310,6 +360,41 @@ def run_command(
 	return result
 
 
+def run_runtime_source_probe(
+	*,
+	repo_root: pathlib.Path,
+	docker_result: dict[str, Any],
+	docker_required: bool,
+	dry_run: bool,
+) -> dict[str, Any]:
+	"""Run the local Docker source-alignment probe only when local Docker matters."""
+
+	if not docker_required:
+		return {
+			"command": "docker runtime HRMS source alignment probe",
+			"skipped": True,
+			"reason": "local Docker runtime not required for operator-provided handoff",
+			"returncode": 0,
+			"runtime_available": False,
+		}
+	if not docker_result.get("runtime_available"):
+		return {
+			"command": "docker runtime HRMS source alignment probe",
+			"skipped": True,
+			"reason": "docker compose runtime not running",
+			"returncode": 0,
+			"runtime_available": False,
+		}
+	return run_command(
+		build_docker_runtime_source_probe_command(repo_root=repo_root),
+		cwd=repo_root,
+		dry_run=dry_run,
+		redact_output=True,
+		redact_command=True,
+		runtime_output_parser=parse_docker_runtime_source_alignment,
+	)
+
+
 def decide_runtime_ownership(
 	*,
 	docker_result: dict[str, Any],
@@ -381,6 +466,7 @@ def build_runtime_closeout(
 	*,
 	docker_result: dict[str, Any],
 	bench_result: dict[str, Any],
+	source_result: dict[str, Any],
 	include_bench: bool,
 	runtime_verified: bool,
 	fixture_fallback_required: bool,
@@ -399,6 +485,10 @@ def build_runtime_closeout(
 		next_actions.append("install or expose bench executable")
 	if include_bench and bench_executable_available and not bench_probe_completed:
 		next_actions.append("inspect failed read-only bench worklist probe")
+	if source_result.get("source_matches_mounted_workspace") is False:
+		next_actions.append("refresh Docker Bench HRMS app checkout from mounted workspace")
+	elif docker_required and docker_running and not source_result.get("skipped") and source_result.get("source_matches_mounted_workspace") is not True:
+		next_actions.append("rerun or inspect Docker Bench HRMS source alignment probe")
 	if docker_running and not include_bench:
 		next_actions.append("run bench read-only worklist probe with --include-bench --site")
 	if not positive_runtime_rows_verified:
@@ -409,6 +499,7 @@ def build_runtime_closeout(
 		"docker_runtime_required": docker_required,
 		"bench_probe_requested": include_bench,
 		"bench_executable_available": bool(bench_executable_available),
+		"runtime_source_matches_mounted_workspace": source_result.get("source_matches_mounted_workspace"),
 		"positive_runtime_rows_verified": positive_runtime_rows_verified,
 		"fixture_fallback_required": fixture_fallback_required,
 		"next_actions": next_actions,
@@ -517,6 +608,26 @@ def parse_docker_compose_runtime_available(stdout: str) -> dict[str, Any]:
 		"runtime_available": runtime_available,
 		"service_count": len(containers),
 		"running_services": running_services,
+	}
+
+
+def parse_docker_runtime_source_alignment(stdout: str) -> dict[str, Any]:
+	"""Parse source-alignment probe output without returning commit SHAs."""
+
+	try:
+		parsed = json.loads(stdout.strip()) if stdout.strip() else None
+	except json.JSONDecodeError:
+		parsed = None
+	mounted_head = parsed.get("mounted_source_head") if isinstance(parsed, dict) else None
+	runtime_head = parsed.get("runtime_app_head") if isinstance(parsed, dict) else None
+	has_mounted_head = isinstance(mounted_head, str) and bool(mounted_head.strip())
+	has_runtime_head = isinstance(runtime_head, str) and bool(runtime_head.strip())
+	source_matches = mounted_head == runtime_head if has_mounted_head and has_runtime_head else None
+	return {
+		"runtime_available": source_matches is not False,
+		"mounted_source_head_present": has_mounted_head,
+		"runtime_app_head_present": has_runtime_head,
+		"source_matches_mounted_workspace": source_matches,
 	}
 
 

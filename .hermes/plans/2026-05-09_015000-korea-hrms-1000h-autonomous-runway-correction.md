@@ -1,12 +1,12 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 10 positive-row capture landed on `develop`; next implementation gate is runtime-positive operator UI/browser closeout.
+Status: active source-of-truth correction after Gate 11 runtime-positive operator UI closeout landed on `develop`; next implementation gate is authenticated browser/runtime operator walkthrough closeout.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `9dd80e49d feat: seed Korea payroll closing runtime rows (#179)`
+- Latest product gate commit on `develop`: `d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -17,6 +17,7 @@ Status: active source-of-truth correction after Gate 10 positive-row capture lan
 - Gate 8 runtime ownership evidence is merged to `develop`.
 - Gate 9 runtime handoff evidence path is merged to `develop`.
 - Gate 10 Docker source-alignment, runtime-probe hardening, and positive scoped runtime-row capture are merged to `develop`.
+- Gate 11 runtime-positive operator UI/browser closeout is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -27,7 +28,7 @@ Status: active source-of-truth correction after Gate 10 positive-row capture lan
 
 Previous roadmap/grill plan work existed on a plan branch and not all plan notes were present on `develop`. `HERMES_WORKSPACE.md` on `develop` was also stale and still referenced `/home/ubuntu/workspaces/frappe-hrms` as the primary repo.
 
-The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 10 positive-row capture and aligns cron with the next runtime-positive UI/browser closeout action.
+The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 11 runtime-positive UI closeout and aligns cron with the next authenticated browser/runtime operator walkthrough action.
 
 ## Autonomous operating model
 
@@ -36,7 +37,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 11 runtime-positive operator UI/browser closeout
+   - current priority: Gate 12 authenticated browser/runtime operator walkthrough closeout
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -244,6 +245,30 @@ Closeout discipline:
 - Do not remove fixture fallback for static/no-runtime previews.
 - Next gate should verify the operator UI/browser route with runtime-positive rows and make fallback/banner copy conditional on actual runtime data.
 
+### Gate 11 — Runtime-positive operator UI/browser closeout
+
+Status: done and merged; local Docker Compose Bench checkpoint is green after PR #181 and `frappe` source sync.
+
+Goal:
+- Verify the Korea payroll closing operator route against the local Docker/Bench runtime after positive scoped rows are present.
+- Prove the UI chooses runtime rows when available and preserves fixture fallback for static/no-runtime contexts.
+- Keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation.
+- Keep human-approval and `assistant_only` boundaries visible.
+
+Evidence:
+- `develop` includes `d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`.
+- `frontend/src/data/koreaPayrollClosingRuntime.js` now centralizes the runtime UI-state normalizer so positive runtime worklist rows win over dashboard-only/static fallback copy.
+- `frontend/src/views/KoreaPayrollClosing.vue` uses the normalizer to keep fallback/banner copy conditional while preserving read-only evidence, human approval, and assistant-only copy.
+- 2026-05-09 post-merge verification restarted the `frappe` container and synced runtime source to `d603fffa5`.
+- `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모'` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, `fixture_fallback_required_until_positive_runtime_rows: false`, and no runtime blockers.
+- Static route/chunk smoke returned HTTP 200 for `http://127.0.0.1:8000/hrms/dashboard/korea-payroll-closing` and the served `KoreaPayrollClosing-oazgujqG.js` lazy chunk; the chunk contains runtime-positive, read-only evidence, fixture fallback, and `assistant_only` copy.
+- `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed.
+
+Closeout discipline:
+- Treat Gate 11 as runtime-positive UI-state and route/chunk smoke evidence, not a full authenticated browser/session walkthrough.
+- Do not remove fixture fallback for static/no-runtime previews.
+- Next gate should verify a real authenticated browser/session path where the loaded UI executes `frappe.call` and receives the runtime worklist from the local Docker/Bench site.
+
 ## Guardrails
 
 - Korean business logic stays under `hrms/regional/south_korea/`.
@@ -256,17 +281,17 @@ Closeout discipline:
 
 ## Next action
 
-Proceed with Gate 11 runtime-positive operator UI/browser closeout from `develop`:
+Proceed with Gate 12 authenticated browser/runtime operator walkthrough closeout from `develop`:
 
 ```text
-feat/korea-payroll-closing-runtime-ui-closeout
+test/korea-payroll-closing-authenticated-browser-closeout
 ```
 
 Expected deliverables:
-- verify the Korea payroll closing operator route against the local Docker/Bench runtime now that positive scoped rows are present
-- prove the UI chooses runtime rows when available and preserves fixture fallback for static/no-runtime contexts
-- update fallback/banner copy only if direct tests and browser/runtime evidence prove the runtime-positive path is visible
+- verify the Korea payroll closing operator route in an authenticated browser/session context against the local Docker/Bench runtime
+- prove the loaded UI executes `frappe.call` and receives positive runtime worklist rows without removing fixture fallback for static/no-runtime contexts
+- add or update only focused browser/runtime verification helpers if needed; keep UI/product changes PR-sized and evidence-driven
 - keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation
 - keep human-approval and `assistant_only` boundaries visible
-- run focused frontend normalizer/UI tests, the runtime verification checkpoint, and Korea regional smoke
+- run focused frontend normalizer/UI tests, the runtime verification checkpoint, Korea regional smoke, and frontend build
 - commit/push/PR URL

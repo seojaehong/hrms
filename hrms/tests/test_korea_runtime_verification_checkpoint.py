@@ -66,6 +66,71 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertNotIn("send", joined.lower())
 		self.assertNotIn("provider", joined.lower())
 
+	def test_local_docker_bench_probe_uses_container_bench_without_host_bench(self):
+		module = load_module()
+
+		command = module.build_docker_bench_worklist_probe_command(
+			repo_root=REPO_ROOT,
+			site="korea.local",
+			company="Korea Demo Co",
+			workplaces=["Seoul HQ"],
+		)
+		joined = " ".join(command)
+
+		self.assertEqual(command[:6], ["docker", "compose", "-f", str(REPO_ROOT / "docker" / "docker-compose.yml"), "exec", "-T"])
+		self.assertIn("frappe", command)
+		self.assertIn("cd /home/frappe/frappe-bench", joined)
+		self.assertIn("bench --site korea.local execute", joined)
+		self.assertIn("payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime", joined)
+		self.assertIn('"company": "Korea Demo Co"', joined)
+		self.assertIn('"workplaces": ["Seoul HQ"]', joined)
+		self.assertNotIn(" save", joined.lower())
+		self.assertNotIn("submit", joined.lower())
+		self.assertNotIn("approve", joined.lower())
+		self.assertNotIn("send", joined.lower())
+		self.assertNotIn("provider", joined.lower())
+
+	def test_local_docker_handoff_does_not_require_host_bench_executable(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"message": {"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]}})
+			stderr = ""
+
+		commands = []
+
+		def fake_which(command):
+			return "/usr/bin/docker" if command == "docker" else None
+
+		def fake_run(command, **kwargs):
+			commands.append(command)
+			if command[:2] == ["docker", "compose"] and "ps" in command:
+				return DockerCompleted()
+			return BenchCompleted()
+
+		handoff = {
+			"contract_type": "korea_payroll_closing_runtime_handoff_v1",
+			"runtime_kind": "local_docker_compose_bench",
+			"site": "hrms.localhost",
+			"company": "Sensitive Company",
+		}
+		with patch.object(module.shutil, "which", side_effect=fake_which), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, runtime_handoff=handoff)
+
+		self.assertTrue(report["passed"])
+		self.assertTrue(report["runtime_verified"])
+		self.assertTrue(report["runtime_closeout"]["positive_runtime_rows_verified"])
+		self.assertEqual(report["runtime_ownership"]["authoritative_runtime"], "local_docker_compose_bench")
+		self.assertTrue(any(command[:6] == ["docker", "compose", "-f", str(REPO_ROOT / "docker" / "docker-compose.yml"), "exec", "-T"] for command in commands))
+		self.assertNotIn("Sensitive Company", json.dumps(report, ensure_ascii=False))
+		self.assertNotIn("DRAFT-1", json.dumps(report, ensure_ascii=False))
+
 	def test_include_bench_requires_site(self):
 		module = load_module()
 
@@ -204,8 +269,8 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertNotIn("Sensitive Company", report_json)
 		self.assertNotIn("Sensitive Workplace", report_json)
 		self.assertNotIn("korea.local", report_json)
-		self.assertIn("--site '[redacted]'", report["bench_probe"]["command"])
-		self.assertIn("--kwargs '[redacted]'", report["bench_probe"]["command"])
+		self.assertIn("bash -lc '[redacted]'", report["bench_probe"]["command"])
+		self.assertNotIn("--kwargs", report["bench_probe"]["command"])
 		self.assertEqual(report["scope"], {"company_provided": True, "workplace_count": 1, "site_provided": True})
 
 	def test_skipped_command_checks_are_not_reported_as_passed(self):
@@ -258,13 +323,13 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		closeout = report["runtime_closeout"]
 		self.assertEqual(closeout["gate_6_blockers_resolved"], False)
 		self.assertEqual(closeout["docker_runtime_running"], False)
-		self.assertEqual(closeout["bench_executable_available"], False)
+		self.assertEqual(closeout["bench_executable_available"], True)
 		self.assertEqual(closeout["positive_runtime_rows_verified"], False)
 		self.assertEqual(closeout["fixture_fallback_required"], True)
 		self.assertEqual(report["passed"], False)
 		self.assertIn("start Docker Compose Frappe runtime", closeout["next_actions"])
-		self.assertIn("install or expose bench executable", closeout["next_actions"])
-		self.assertIn("bench executable not found", report["runtime_blockers"])
+		self.assertIn("verify positive Korea Payroll Closing Draft rows through the read-only worklist path", closeout["next_actions"])
+		self.assertNotIn("bench executable not found", report["runtime_blockers"])
 
 	def test_bench_probe_failure_does_not_report_bench_executable_unavailable(self):
 		module = load_module()
@@ -280,7 +345,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = "bench validation failed"
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
@@ -324,7 +389,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
@@ -350,7 +415,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
@@ -377,7 +442,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
@@ -400,7 +465,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		handoff = {
 			"contract_type": "korea_payroll_closing_runtime_handoff_v1",
@@ -474,7 +539,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[0] == "docker" else BenchCompleted()
+			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
 
 		with tempfile.TemporaryDirectory() as tmpdir:
 			handoff_path = pathlib.Path(tmpdir) / "handoff.json"

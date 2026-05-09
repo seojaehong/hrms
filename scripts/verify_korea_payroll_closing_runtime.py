@@ -41,13 +41,8 @@ def build_docker_compose_ps_command(repo_root: pathlib.Path) -> list[str]:
 
 
 def build_bench_worklist_probe_command(*, site: str, company: str, workplaces: list[str] | None = None) -> list[str]:
-	"""Build a read-only bench execute command for the worklist runtime API."""
+	"""Build a host bench read-only execute command for the worklist runtime API."""
 
-	kwargs: dict[str, Any] = {"company": _require_text(company, "company")}
-	if workplaces is not None:
-		if not isinstance(workplaces, list) or not all(isinstance(item, str) and item.strip() for item in workplaces):
-			raise ValueError("workplaces must be a list of non-empty strings when provided")
-		kwargs["workplaces"] = workplaces
 	return [
 		"bench",
 		"--site",
@@ -55,8 +50,49 @@ def build_bench_worklist_probe_command(*, site: str, company: str, workplaces: l
 		"execute",
 		WORKLIST_METHOD,
 		"--kwargs",
-		json.dumps(kwargs, ensure_ascii=False, sort_keys=True),
+		_build_worklist_kwargs_json(company=company, workplaces=workplaces),
 	]
+
+
+def build_docker_bench_worklist_probe_command(
+	*,
+	repo_root: pathlib.Path,
+	site: str,
+	company: str,
+	workplaces: list[str] | None = None,
+) -> list[str]:
+	"""Build a Docker Compose bench command without requiring host bench."""
+
+	bench_command = shlex.join([
+		"bench",
+		"--site",
+		_require_text(site, "site"),
+		"execute",
+		WORKLIST_METHOD,
+		"--kwargs",
+		_build_worklist_kwargs_json(company=company, workplaces=workplaces),
+	])
+	return [
+		"docker",
+		"compose",
+		"-f",
+		str(pathlib.Path(repo_root) / "docker" / "docker-compose.yml"),
+		"exec",
+		"-T",
+		"frappe",
+		"bash",
+		"-lc",
+		f"cd /home/frappe/frappe-bench && {bench_command}",
+	]
+
+
+def _build_worklist_kwargs_json(*, company: str, workplaces: list[str] | None = None) -> str:
+	kwargs: dict[str, Any] = {"company": _require_text(company, "company")}
+	if workplaces is not None:
+		if not isinstance(workplaces, list) or not all(isinstance(item, str) and item.strip() for item in workplaces):
+			raise ValueError("workplaces must be a list of non-empty strings when provided")
+		kwargs["workplaces"] = workplaces
+	return json.dumps(kwargs, ensure_ascii=False, sort_keys=True)
 
 
 def verify_runtime_checkpoint(
@@ -89,7 +125,15 @@ def verify_runtime_checkpoint(
 	if include_bench:
 		if not site:
 			raise ValueError("site is required when include_bench is true")
-		if shutil.which("bench") is None and not dry_run:
+		use_docker_bench = normalized_handoff is None or normalized_handoff["runtime_kind"] == LOCAL_DOCKER_BENCH_RUNTIME
+		if use_docker_bench:
+			bench_command = build_docker_bench_worklist_probe_command(
+				repo_root=repo_root,
+				site=site,
+				company=company,
+				workplaces=workplaces,
+			)
+		elif shutil.which("bench") is None and not dry_run:
 			bench_result = {
 				"command": "bench",
 				"skipped": True,
@@ -99,9 +143,12 @@ def verify_runtime_checkpoint(
 				"positive_runtime_rows_verified": False,
 				"returncode": 0,
 			}
+			bench_command = None
 		else:
+			bench_command = build_bench_worklist_probe_command(site=site, company=company, workplaces=workplaces)
+		if bench_command is not None:
 			bench_result = run_command(
-				build_bench_worklist_probe_command(site=site, company=company, workplaces=workplaces),
+				bench_command,
 				cwd=repo_root,
 				dry_run=dry_run,
 				redact_output=True,
@@ -512,6 +559,10 @@ def _redact_command(command: list[str]) -> str:
 		if skip_next:
 			redacted.append("[redacted]")
 			skip_next = False
+			continue
+		if item == "-lc" and command[:2] == ["docker", "compose"]:
+			redacted.append(item)
+			skip_next = True
 			continue
 		redacted.append(item)
 		if item in {"--kwargs", "--site"}:

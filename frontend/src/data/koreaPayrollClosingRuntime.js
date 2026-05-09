@@ -4,8 +4,41 @@ export const KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD =
 export const KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD =
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"
 
+const KOREA_PAYROLL_CLOSING_READ_ONLY_RUNTIME_METHODS = new Set([
+	KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD,
+	KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD,
+])
+
 export function isFrappeRuntimeAvailable(win = globalThis.window) {
 	return Boolean(win?.frappe && typeof win.frappe.call === "function")
+}
+
+export function ensureKoreaPayrollClosingFrappeCallRuntime(win = globalThis.window) {
+	if (!win?.frappe || typeof win.fetch !== "function") return false
+	if (typeof win.frappe.call === "function") return true
+	win.frappe.call = async ({ method, args = {} } = {}) => {
+		if (typeof method !== "string" || !method.trim()) throw new Error("frappe.call method is required")
+		if (!KOREA_PAYROLL_CLOSING_READ_ONLY_RUNTIME_METHODS.has(method)) {
+			throw new Error("frappe.call fallback only allows Korea payroll closing read-only runtime methods")
+		}
+		const body = new URLSearchParams()
+		for (const [key, value] of Object.entries(args || {})) {
+			if (value !== undefined && value !== null) body.append(key, value)
+		}
+		const response = await win.fetch(`/api/method/${method}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+				"X-Frappe-CSRF-Token": win.csrf_token || "",
+			},
+			body,
+			credentials: "same-origin",
+		})
+		const payload = await response.json()
+		if (!response.ok) throw new Error(payload?._server_messages || payload?.exc || `frappe.call failed with HTTP ${response.status}`)
+		return payload
+	}
+	return true
 }
 
 export function getKoreaPayrollClosingRuntimeCompany(win = globalThis.window, fallbackCompany = "Korea Demo Franchise Co") {
@@ -33,6 +66,7 @@ export async function loadKoreaAdminDashboardRuntime({
 	fallbackCompany = "Korea Demo Franchise Co",
 	workplaces,
 } = {}) {
+	ensureKoreaPayrollClosingFrappeCallRuntime(win)
 	if (!isFrappeRuntimeAvailable(win)) {
 		throw new Error("Frappe runtime is not available for Korea payroll closing runtime reads")
 	}
@@ -75,6 +109,7 @@ export async function loadKoreaPayrollClosingRuntimeWorklist({
 	workplaces,
 	limit,
 } = {}) {
+	ensureKoreaPayrollClosingFrappeCallRuntime(win)
 	if (!isFrappeRuntimeAvailable(win)) {
 		throw new Error("Frappe runtime is not available for Korea payroll closing worklist runtime reads")
 	}

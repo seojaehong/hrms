@@ -76,8 +76,10 @@ Current verified state
   - `develop` includes `f949ae1dc fix: trust mounted HRMS source in Docker init (#172)`.
   - `develop` includes `74b58e450 fix: run Korea runtime probe through Docker bench (#173)`.
   - `develop` includes `d63d0e1a7 fix: require positive rows for Korea runtime verification (#174)`.
+  - `develop` includes `12a37c4e8 docs: align Gate 10 runtime checkpoint state (#175)`.
+  - `develop` includes `2f276f0b5 fix: fail closed on stale Korea runtime source (#176)`.
   - Docker Compose mounts this repo at `/workspace/hrms-source`, `docker/init.sh` installs HRMS from that mounted workspace, and the checkpoint can execute Bench inside the `frappe` container without requiring host `bench`.
-  - The checkpoint still fails closed unless positive scoped `Korea Payroll Closing Draft` rows are returned through the read-only runtime worklist path.
+  - The checkpoint fails closed on stale runtime source and still requires positive scoped `Korea Payroll Closing Draft` rows through the read-only runtime worklist path.
 
 Autonomous cron runway
 - Implementation cron:

@@ -11,6 +11,7 @@ import {
 	loadKoreaPayrollClosingRuntimeWorklist,
 	assertKoreaPayrollClosingRuntimeWorklist,
 	getKoreaPayrollClosingRuntimeUiState,
+	ensureKoreaPayrollClosingFrappeCallRuntime,
 } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const method = "hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
@@ -21,6 +22,34 @@ const frontendRoot = resolve(__dirname, "..")
 assert.equal(isFrappeRuntimeAvailable({}), false)
 assert.equal(isFrappeRuntimeAvailable({ frappe: {} }), false)
 assert.equal(isFrappeRuntimeAvailable({ frappe: { call: () => {} } }), true)
+
+const browserFetchCalls = []
+const browserWindowWithoutCall = {
+	csrf_token: "csrf-token",
+	frappe: { session: { user: "Administrator" } },
+	fetch: async (url, options) => {
+		browserFetchCalls.push({ url, options })
+		return {
+			ok: true,
+			status: 200,
+			json: async () => ({ message: { contract_type: "korea_admin_dashboard_runtime_api_v1", runtime_action: "runtime_read_only", requires_runtime_apply: false } }),
+		}
+	},
+}
+assert.equal(ensureKoreaPayrollClosingFrappeCallRuntime(browserWindowWithoutCall), true)
+assert.equal(isFrappeRuntimeAvailable(browserWindowWithoutCall), true)
+const browserCallResponse = await browserWindowWithoutCall.frappe.call({ method, args: { company: "Runtime Co" } })
+assert.equal(browserFetchCalls[0].url, `/api/method/${method}`)
+assert.equal(browserFetchCalls[0].options.method, "POST")
+assert.equal(browserFetchCalls[0].options.headers["X-Frappe-CSRF-Token"], "csrf-token")
+assert.match(String(browserFetchCalls[0].options.body), /company=Runtime\+Co/)
+assert.equal(browserCallResponse.message.runtime_action, "runtime_read_only")
+await assert.rejects(
+	browserWindowWithoutCall.frappe.call({ method: "frappe.client.insert", args: { doc: "blocked" } }),
+	/read-only runtime methods/,
+)
+assert.equal(browserFetchCalls.length, 1)
+assert.equal(ensureKoreaPayrollClosingFrappeCallRuntime({ frappe: {}, fetch: null }), false)
 
 assert.equal(
 	getKoreaPayrollClosingRuntimeCompany({ frappe: { boot: { user: { company: "User Co" }, sysdefaults: { company: "Runtime Co" } } } }, "Fallback Co"),

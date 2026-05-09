@@ -1,12 +1,12 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 7 closeout hardening landed on `develop`.
+Status: active source-of-truth correction after Gate 8 runtime ownership evidence landed on `develop`.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `2f1cc60b5 test: harden payroll closing runtime evidence gate (#163)`
+- Latest product gate commit on `develop`: `b5926a910 test: add Korea payroll closing runtime ownership evidence (#165)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -14,6 +14,7 @@ Status: active source-of-truth correction after Gate 7 closeout hardening landed
 - Gate 5 is merged to `develop`.
 - Gate 6 is merged to `develop`.
 - Gate 7 closeout hardening is merged to `develop`.
+- Gate 8 runtime ownership evidence is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -24,7 +25,7 @@ Status: active source-of-truth correction after Gate 7 closeout hardening landed
 
 Previous roadmap/grill plan work existed on a plan branch and not all plan notes were present on `develop`. `HERMES_WORKSPACE.md` on `develop` was also stale and still referenced `/home/ubuntu/workspaces/frappe-hrms` as the primary repo.
 
-The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 7 closeout hardening and aligns cron with the Gate 8 next action.
+The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 8 runtime ownership evidence and aligns cron with the Gate 9 next action.
 
 ## Autonomous operating model
 
@@ -33,7 +34,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 8
+   - current priority: Gate 9
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -171,12 +172,35 @@ Closeout discipline:
 
 ### Gate 8 — Phase 1 live runtime evidence / Bench environment ownership
 
-Status: next.
+Status: done and merged.
 
 Goal:
 - Establish which runtime is authoritative for the 100h workspace: local Docker Compose, an existing Bench site, or a separate operator-provided runtime.
 - Make the runtime verification checkpoint executable against that runtime without weakening no-bench cron tests.
 - Produce positive read-only evidence only when scoped `Korea Payroll Closing Draft` rows are actually returned through the runtime worklist/session path.
+- Preserve fixture fallback and clear fallback labeling while runtime rows remain absent or unverified.
+- Keep evidence/session views read-only: no save/approve/send/payroll submit/provider calls.
+
+Evidence:
+- `develop` includes `b5926a910 test: add Korea payroll closing runtime ownership evidence (#165)`.
+- `scripts/verify_korea_payroll_closing_runtime.py` returns a report-safe `runtime_ownership` decision with `authoritative_runtime`, `decision_status`, evidence, and next actions.
+- `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers blocked `operator_provided_runtime_required` ownership when Docker/Bench are absent and verified `local_docker_compose_bench` ownership when Docker plus positive read-only worklist rows are available.
+- Current cron-host evidence after #165 remains blocked: Docker Compose has no running Frappe service rows, `bench` is unavailable, and no positive scoped runtime rows were returned.
+- Fixture fallback remains required until an authoritative runtime returns scoped `Korea Payroll Closing Draft` rows through the read-only worklist/session path.
+
+Closeout discipline:
+- Treat Gate 8 as ownership/evidence decision hardening, not positive live runtime completion.
+- Do not remove static fixture fallback until a real Bench/Frappe runtime returns positive scoped rows through the read-only worklist/session path.
+- Keep runtime reports redacted; do not leak payroll/HR row payloads into cron artifacts.
+
+### Gate 9 — Runtime handoff / positive row evidence unblock
+
+Status: next.
+
+Goal:
+- Connect the verification checkpoint to an authoritative Bench/Frappe runtime path supplied by the operator or made available on this host.
+- Run the existing read-only worklist/session probe against scoped `Korea Payroll Closing Draft` rows without weakening no-bench direct tests.
+- Produce positive runtime-row evidence only when the runtime API actually returns rows through the read-only worklist path.
 - Preserve fixture fallback and clear fallback labeling while runtime rows remain absent or unverified.
 - Keep evidence/session views read-only: no save/approve/send/payroll submit/provider calls.
 
@@ -192,15 +216,15 @@ Goal:
 
 ## Next action
 
-Proceed with Gate 8 from `develop`:
+Proceed with Gate 9 from `develop`:
 
 ```text
-ops/korea-payroll-closing-live-runtime-evidence
+ops/korea-payroll-closing-runtime-handoff-positive-rows
 ```
 
 Expected deliverables:
-- authoritative runtime ownership decision for this workspace: local Docker Compose, existing Bench site, or separately provided runtime
-- read-only runtime verification checkpoint run against that runtime when available
+- authoritative runtime handoff target for this workspace: local Docker Compose, existing Bench site, or separately provided runtime
+- read-only runtime verification checkpoint run against that runtime when available and explicitly scoped
 - positive scoped `Korea Payroll Closing Draft` row evidence only if the runtime actually returns rows through the worklist/session path
 - precise environmental blocker report if Docker/Bench/runtime access remains unavailable
 - fixture fallback remains visible and labeled when runtime data is absent or unverified

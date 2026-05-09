@@ -210,7 +210,7 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertEqual(report["docker_compose"]["runtime_available"], False)
 		self.assertIn("docker compose runtime not running", report["runtime_blockers"])
 
-	def test_running_docker_compose_service_can_verify_runtime_without_bench(self):
+	def test_running_docker_compose_service_without_bench_does_not_verify_runtime_rows(self):
 		module = load_module()
 
 		class Completed:
@@ -224,7 +224,8 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT)
 
 		self.assertEqual(report["docker_compose"]["runtime_available"], True)
-		self.assertEqual(report["runtime_verified"], True)
+		self.assertEqual(report["runtime_verified"], False)
+		self.assertIn("positive runtime rows not verified", report["runtime_blockers"])
 		self.assertEqual(report["passed"], False)
 		self.assertEqual(report["runtime_closeout"]["gate_6_blockers_resolved"], False)
 		self.assertIn("run bench read-only worklist probe with --include-bench --site", report["runtime_closeout"]["next_actions"])

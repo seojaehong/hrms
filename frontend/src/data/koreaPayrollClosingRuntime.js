@@ -141,6 +141,32 @@ export function hasKoreaPayrollClosingRuntimeWorklistData(data) {
 		data.items.length > 0
 }
 
+export function getKoreaPayrollClosingRuntimeUiState({ runtimeDashboard = null, runtimeWorklist = null, runtimeLoading = false } = {}) {
+	const runtimeHasWorklistData = hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist)
+	const runtimeHasDashboard = Boolean(runtimeDashboard)
+	const runtimeAction = runtimeWorklist?.runtime_action || "runtime_read_only"
+	const requiresRuntimeApply = runtimeWorklist?.requires_runtime_apply ?? false
+	return {
+		dataSourceLabel: runtimeHasWorklistData
+			? "Runtime read-only worklist"
+			: runtimeHasDashboard
+				? "Runtime read-only dashboard"
+				: "Static fixture preview",
+		dataSourceBadge: runtimeLoading
+			? "loading"
+			: runtimeHasWorklistData
+				? "runtime worklist"
+				: runtimeHasDashboard
+					? "runtime_read_only"
+					: "static fixture",
+		showFixtureFallbackCopy: !runtimeHasWorklistData,
+		showRuntimePositiveCopy: runtimeHasWorklistData,
+		worklistBanner: runtimeHasWorklistData
+			? `Runtime worklist loaded · runtime_action=${runtimeAction} · requires_runtime_apply=${requiresRuntimeApply} · evidence remains read-only`
+			: "No positive runtime worklist rows were returned; static fixture fallback remains active for static/no-runtime preview contexts.",
+	}
+}
+
 const FORBIDDEN_SCORE_KEY_FRAGMENTS = ["score", "risk", "probability", "successrate"]
 
 function assertNoForbiddenScoreKeys(value) {

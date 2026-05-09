@@ -10,6 +10,7 @@ import {
 	loadKoreaAdminDashboardRuntime,
 	loadKoreaPayrollClosingRuntimeWorklist,
 	assertKoreaPayrollClosingRuntimeWorklist,
+	getKoreaPayrollClosingRuntimeUiState,
 } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const method = "hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime"
@@ -140,6 +141,30 @@ assert.equal(worklistResult.data.items[0].requires_runtime_apply, false)
 assert.equal(hasKoreaPayrollClosingRuntimeWorklistData(worklistResult.data), true)
 assert.equal(hasKoreaPayrollClosingRuntimeWorklistData({ contract_type: "korea_payroll_closing_worklist_runtime_api_v1", runtime_action: "runtime_read_only", requires_runtime_apply: false, items: [] }), false)
 
+const runtimePositiveUiState = getKoreaPayrollClosingRuntimeUiState({
+	runtimeDashboard: result.data,
+	runtimeWorklist: worklistResult.data,
+})
+assert.equal(runtimePositiveUiState.dataSourceLabel, "Runtime read-only worklist")
+assert.equal(runtimePositiveUiState.dataSourceBadge, "runtime worklist")
+assert.equal(runtimePositiveUiState.showFixtureFallbackCopy, false)
+assert.equal(runtimePositiveUiState.showRuntimePositiveCopy, true)
+assert.match(runtimePositiveUiState.worklistBanner, /Runtime worklist loaded/i)
+assert.match(runtimePositiveUiState.worklistBanner, /evidence remains read-only/i)
+assert.doesNotMatch(runtimePositiveUiState.worklistBanner, /Gate 2/i)
+assert.doesNotMatch(runtimePositiveUiState.worklistBanner, /fixture worklist remains visible/i)
+
+const runtimeDashboardOnlyUiState = getKoreaPayrollClosingRuntimeUiState({
+	runtimeDashboard: result.data,
+	runtimeWorklist: { contract_type: "korea_payroll_closing_worklist_runtime_api_v1", runtime_action: "runtime_read_only", requires_runtime_apply: false, items: [] },
+})
+assert.equal(runtimeDashboardOnlyUiState.dataSourceLabel, "Runtime read-only dashboard")
+assert.equal(runtimeDashboardOnlyUiState.showFixtureFallbackCopy, true)
+assert.equal(runtimeDashboardOnlyUiState.showRuntimePositiveCopy, false)
+assert.match(runtimeDashboardOnlyUiState.worklistBanner, /No positive runtime worklist rows/i)
+assert.match(runtimeDashboardOnlyUiState.worklistBanner, /static fixture fallback remains active/i)
+assert.doesNotMatch(runtimeDashboardOnlyUiState.worklistBanner, /Gate 2/i)
+
 await assert.rejects(
 	() => loadKoreaAdminDashboardRuntime({ win: {}, fallbackCompany: "Fallback Co" }),
 	/Frappe runtime is not available/,
@@ -227,7 +252,9 @@ assert.match(viewSource, /static fixture fallback is active/i)
 assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \}\}/)
 assert.match(viewSource, /No runtime dashboard rows were returned/i)
 assert.match(viewSource, /runtime worklist/i)
-assert.match(viewSource, /fixture worklist remains visible/i)
+assert.match(viewSource, /runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData/)
+assert.match(viewSource, /runtimeUiState\.worklistBanner/)
+assert.doesNotMatch(viewSource, /Gate 2 runtime worklist bridge/i)
 assert.match(viewSource, /runtimeWorklistError/)
 assert.match(viewSource, /Runtime worklist read failed; fixture worklist fallback is active/i)
 assert.match(viewSource, /runtimeWorklistError\.value = worklistResult\.reason/)

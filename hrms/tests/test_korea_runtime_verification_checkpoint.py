@@ -90,12 +90,109 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 		self.assertNotIn("send", joined.lower())
 		self.assertNotIn("provider", joined.lower())
 
+	def test_local_docker_runtime_source_probe_reports_mounted_workspace_alignment(self):
+		module = load_module()
+
+		command = module.build_docker_runtime_source_probe_command(repo_root=REPO_ROOT)
+		joined = " ".join(command)
+
+		self.assertEqual(command[:6], ["docker", "compose", "-f", str(REPO_ROOT / "docker" / "docker-compose.yml"), "exec", "-T"])
+		self.assertIn("/workspace/hrms-source", joined)
+		self.assertIn("/home/frappe/frappe-bench/apps/hrms", joined)
+		self.assertIn("safe.directory", joined)
+		self.assertNotIn("config --global", joined)
+		self.assertNotIn("--add safe.directory", joined)
+		self.assertNotIn(" save", joined.lower())
+		self.assertNotIn("submit", joined.lower())
+		self.assertNotIn("approve", joined.lower())
+		self.assertNotIn("send", joined.lower())
+		self.assertNotIn("provider", joined.lower())
+
+	def test_stale_local_docker_runtime_source_blocks_positive_row_closeout(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class SourceCompleted:
+			returncode = 0
+			stdout = json.dumps({"mounted_source_head": "newer123", "runtime_app_head": "older456"})
+			stderr = ""
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			if command[:2] == ["docker", "compose"] and "ps" in command:
+				return DockerCompleted()
+			if command[:2] == ["docker", "compose"] and "runtime_app_head" in command[-1]:
+				return SourceCompleted()
+			return BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		self.assertFalse(report["runtime_source"]["source_matches_mounted_workspace"])
+		self.assertTrue(report["runtime_closeout"]["positive_runtime_rows_verified"])
+		self.assertFalse(report["command_checks_passed"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertFalse(report["passed"])
+		self.assertIn("runtime app source is not aligned with mounted workspace", report["runtime_blockers"])
+		self.assertIn("refresh Docker Bench HRMS app checkout from mounted workspace", report["runtime_closeout"]["next_actions"])
+		self.assertNotIn("newer123", json.dumps(report, ensure_ascii=False))
+		self.assertNotIn("older456", json.dumps(report, ensure_ascii=False))
+
+	def test_failed_local_docker_runtime_source_probe_blocks_positive_row_closeout(self):
+		module = load_module()
+
+		class DockerCompleted:
+			returncode = 0
+			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class SourceFailed:
+			returncode = 128
+			stdout = ""
+			stderr = "fatal: not a git repository"
+
+		class BenchCompleted:
+			returncode = 0
+			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
+			stderr = ""
+
+		def fake_run(command, **kwargs):
+			if command[:2] == ["docker", "compose"] and "ps" in command:
+				return DockerCompleted()
+			if command[:2] == ["docker", "compose"] and "runtime_app_head" in command[-1]:
+				return SourceFailed()
+			return BenchCompleted()
+
+		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
+			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
+
+		self.assertIsNone(report["runtime_source"].get("source_matches_mounted_workspace"))
+		self.assertTrue(report["runtime_closeout"]["positive_runtime_rows_verified"])
+		self.assertFalse(report["command_checks_passed"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertFalse(report["passed"])
+		self.assertIn("runtime app source alignment not verified", report["runtime_blockers"])
+		self.assertIn("rerun or inspect Docker Bench HRMS source alignment probe", report["runtime_closeout"]["next_actions"])
+
 	def test_local_docker_handoff_does_not_require_host_bench_executable(self):
 		module = load_module()
 
 		class DockerCompleted:
 			returncode = 0
 			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
+			stderr = ""
+
+		class SourceCompleted:
+			returncode = 0
+			stdout = json.dumps({"mounted_source_head": "same123", "runtime_app_head": "same123"})
 			stderr = ""
 
 		class BenchCompleted:
@@ -112,6 +209,8 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			commands.append(command)
 			if command[:2] == ["docker", "compose"] and "ps" in command:
 				return DockerCompleted()
+			if command[:2] == ["docker", "compose"] and "runtime_app_head" in command[-1]:
+				return SourceCompleted()
 			return BenchCompleted()
 
 		handoff = {
@@ -384,13 +483,22 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
 			stderr = ""
 
+		class SourceCompleted:
+			returncode = 0
+			stdout = json.dumps({"mounted_source_head": "same123", "runtime_app_head": "same123"})
+			stderr = ""
+
 		class BenchCompleted:
 			returncode = 0
 			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
+			if command[:2] == ["docker", "compose"] and "ps" in command:
+				return DockerCompleted()
+			if command[:2] == ["docker", "compose"] and "runtime_app_head" in command[-1]:
+				return SourceCompleted()
+			return BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")
@@ -410,13 +518,22 @@ class KoreaRuntimeVerificationCheckpointTest(unittest.TestCase):
 			stdout = json.dumps([{"Service": "frappe", "State": "running", "Health": "healthy"}])
 			stderr = ""
 
+		class SourceCompleted:
+			returncode = 0
+			stdout = json.dumps({"mounted_source_head": "same123", "runtime_app_head": "same123"})
+			stderr = ""
+
 		class BenchCompleted:
 			returncode = 0
 			stdout = json.dumps({"contract_type": "korea_payroll_closing_worklist_runtime_api_v1", "items": [{"name": "DRAFT-1"}]})
 			stderr = ""
 
 		def fake_run(command, **kwargs):
-			return DockerCompleted() if command[:2] == ["docker", "compose"] and "ps" in command else BenchCompleted()
+			if command[:2] == ["docker", "compose"] and "ps" in command:
+				return DockerCompleted()
+			if command[:2] == ["docker", "compose"] and "runtime_app_head" in command[-1]:
+				return SourceCompleted()
+			return BenchCompleted()
 
 		with patch.object(module.shutil, "which", return_value="/usr/bin/tool"), patch.object(module.subprocess, "run", side_effect=fake_run):
 			report = module.verify_runtime_checkpoint(repo_root=REPO_ROOT, include_bench=True, site="hrms.localhost")

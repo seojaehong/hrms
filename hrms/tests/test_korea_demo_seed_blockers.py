@@ -239,6 +239,101 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 		with self.assertRaisesRegex(ValueError, "company must be a non-empty string"):
 			self.mod.ensure_demo_payroll_closing_draft(company=" ")
 
+	def test_demo_browser_credential_handoff_is_report_safe_and_secret_free(self):
+		handoff = self.mod.build_demo_browser_credential_handoff()
+
+		self.assertEqual(handoff["contract_type"], "korea_demo_browser_credential_handoff_v1")
+		self.assertEqual(handoff["runtime_action"], "demo_credential_handoff_only")
+		self.assertFalse(handoff["requires_runtime_apply"])
+		self.assertEqual(handoff["username"], "demo.hr.manager@node.pe.kr")
+		self.assertEqual(handoff["employee_link_required"], True)
+		self.assertEqual(handoff["password_env_var"], "FRAPPE_BROWSER_PASSWORD")
+		self.assertNotIn("runtime-secret", json.dumps(handoff).lower())
+		self.assertEqual(handoff["mutation_boundary"], "credential_handoff_only_no_payroll_submit_approve_send_provider_call")
+		self.assertTrue(handoff["requires_human_approval"])
+		self.assertEqual(handoff["ai_role"], "assistant_only")
+
+	def test_demo_browser_credential_runtime_apply_requires_explicit_human_approval_before_mutation(self):
+		calls = []
+
+		class FakeDB:
+			def exists(self, doctype, lookup):
+				calls.append(("exists", doctype, lookup))
+				return True
+
+		def fake_update_password(username, password):
+			calls.append(("update_password", username, password))
+
+		self.mod.frappe = SimpleNamespace(db=FakeDB())
+		self.mod.update_password = fake_update_password
+
+		with self.assertRaisesRegex(ValueError, "human_approved must be True before credential runtime apply"):
+			self.mod.ensure_demo_browser_credential(password="runtime-secret-not-reported")
+
+		self.assertNotIn(("update_password", "demo.hr.manager@node.pe.kr", "runtime-secret-not-reported"), calls)
+
+	def test_demo_browser_credential_runtime_apply_sets_password_without_reporting_secret_after_approval(self):
+		calls = []
+
+		class FakeDB:
+			def exists(self, doctype, lookup):
+				calls.append(("exists", doctype, lookup))
+				if doctype == "User" and lookup == "demo.hr.manager@node.pe.kr":
+					return True
+				if doctype == "Employee" and lookup == {"user_id": "demo.hr.manager@node.pe.kr", "status": "Active"}:
+					return True
+				return False
+
+		def fake_update_password(username, password):
+			calls.append(("update_password", username, password))
+
+		self.mod.frappe = SimpleNamespace(db=FakeDB())
+		self.mod.update_password = fake_update_password
+
+		result = self.mod.ensure_demo_browser_credential(password="runtime-secret-not-reported", human_approved=True)
+
+		self.assertEqual(result["contract_type"], "korea_demo_browser_credential_runtime_apply_v1")
+		self.assertEqual(result["runtime_action"], "demo_credential_runtime_apply")
+		self.assertEqual(result["username"], "demo.hr.manager@node.pe.kr")
+		self.assertEqual(result["employee_link_verified"], True)
+		self.assertEqual(result["credential_ready_for_browser_verifier"], True)
+		self.assertEqual(result["password_env_var"], "FRAPPE_BROWSER_PASSWORD")
+		self.assertEqual(result["mutation_boundary"], "credential_only_no_payroll_submit_approve_send_provider_call")
+		self.assertTrue(result["human_approval_verified"])
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+		self.assertNotIn("runtime-secret-not-reported", json.dumps(result))
+		self.assertIn(("update_password", "demo.hr.manager@node.pe.kr", "runtime-secret-not-reported"), calls)
+
+	def test_demo_browser_credential_runtime_apply_rejects_non_demo_username(self):
+		calls = []
+
+		class FakeDB:
+			def exists(self, doctype, lookup):
+				calls.append(("exists", doctype, lookup))
+				return True
+
+		def fake_update_password(username, password):
+			calls.append(("update_password", username, password))
+
+		self.mod.frappe = SimpleNamespace(db=FakeDB())
+		self.mod.update_password = fake_update_password
+
+		with self.assertRaisesRegex(ValueError, "username must be the approved demo browser user"):
+			self.mod.ensure_demo_browser_credential(username="other.employee@example.com", password="runtime-secret", human_approved=True)
+
+		self.assertNotIn(("update_password", "other.employee@example.com", "runtime-secret"), calls)
+
+	def test_demo_browser_credential_runtime_apply_fails_closed_without_active_employee(self):
+		class FakeDB:
+			def exists(self, doctype, lookup):
+				return doctype == "User" and lookup == "demo.hr.manager@node.pe.kr"
+
+		self.mod.frappe = SimpleNamespace(db=FakeDB())
+
+		with self.assertRaisesRegex(ValueError, "active employee linked to demo.hr.manager@node.pe.kr is required"):
+			self.mod.ensure_demo_browser_credential(password="runtime-secret", human_approved=True)
+
 	def test_ensure_doc_with_filters_does_not_mutate_name_collision_that_fails_scope(self):
 		calls = []
 

@@ -23,6 +23,8 @@ Current verified state
   - `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
 - `develop` includes Gate 5:
   - `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`
+- `develop` includes Gate 6:
+  - `7c4dd63c2 test: add Korea payroll closing runtime verification checkpoint (#161)`
 - Gate 1 result:
   - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
   - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
@@ -46,6 +48,11 @@ Current verified state
   - `scripts/run_korea_regional_smoke.py` now reports the current Python executable, writes optional JSON reports for CI/cron artifacts, and continues to discover `hrms/tests/test_korea*.py` dynamically while excluding the harness self-test.
   - `hrms/tests/test_korea_regional_smoke_harness.py` covers report-file output, current-interpreter command construction, fail-closed zero-target behavior, and dry-run reporting.
   - optional bench probes remain explicit (`--include-bench --site ...`) and skipped safely when `bench` is unavailable.
+- Gate 6 result:
+  - `scripts/verify_korea_payroll_closing_runtime.py` records a cron-safe read-only runtime/bench verification checkpoint for the payroll closing worklist path.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers no-bench direct behavior, Docker Compose parsing, optional bench command construction, output redaction, and fail-closed skipped-command semantics.
+  - Current cron evidence from PR #161: Docker Compose returned no running Frappe service rows and `bench` was unavailable, so runtime verification is not green yet; fixture fallback remains required until positive runtime rows are proven.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
 
 Autonomous cron runway
 - Implementation cron:
@@ -58,14 +65,15 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 6: Phase 1 runtime/bench verification checkpoint.
+- Gate 7: Phase 1 runtime blocker closeout / positive bench evidence.
 - Likely branch:
-  - `test/korea-payroll-closing-runtime-verification`
+  - `test/korea-payroll-closing-runtime-positive-evidence`
 - Goal:
-  - verify the payroll closing runtime-read/worklist path against a real Bench/Docker runtime when available
-  - confirm seeded demo blocker rows surface through the read-only operator worklist/session UI
-  - keep fixture fallback visible when positive runtime rows are absent
-  - document runtime prerequisites and blockers without weakening the no-bench smoke harness
+  - resolve or document the concrete runtime blockers found by Gate 6: no running Frappe Docker Compose service rows and no `bench` executable in the cron environment
+  - run the read-only verification checkpoint against an available Bench/Docker runtime when safe
+  - confirm seeded demo blocker rows surface through the read-only payroll closing worklist/session UI only after positive runtime rows exist
+  - keep fixture fallback visible and explicitly labeled when runtime rows remain absent
+  - preserve the no-bench smoke harness and direct tests as the baseline regression net
   - preserve read-only/evidence-only boundaries: no save/approve/send/payroll submit/provider calls
 
 Useful commands
@@ -79,6 +87,8 @@ Useful commands
   - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && python3 scripts/run_korea_regional_smoke.py`
 - Docker runtime status:
   - `docker compose -f /home/ubuntu/workspaces/seojaehong-hrms-100h/docker/docker-compose.yml ps`
+- Runtime verification checkpoint:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && python3 scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json || true`
 
 Key paths
 - Korea runtime APIs and domain logic:
@@ -93,6 +103,8 @@ Key paths
   - `hrms/regional/south_korea/payroll_salary_slip_adapter.py`
 - Demo seed:
   - `hrms/regional/south_korea/demo_seed.py`
+- Runtime verification checkpoint:
+  - `scripts/verify_korea_payroll_closing_runtime.py`
 
 Guardrails
 - Korean business logic stays under `hrms/regional/south_korea/`.

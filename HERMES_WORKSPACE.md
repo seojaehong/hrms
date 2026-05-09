@@ -89,6 +89,12 @@ Current verified state
   - `frontend/src/views/KoreaPayrollClosing.vue` keeps fallback copy conditional and preserves read-only evidence, human-approval, and `assistant_only` boundaries.
   - 2026-05-09 post-merge cron verification restarted the `frappe` container, synced runtime source to `d603fffa5`, and the read-only runtime checkpoint returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
   - Route smoke: `http://127.0.0.1:8000/hrms/dashboard/korea-payroll-closing` returned HTTP 200 and the served lazy chunk `KoreaPayrollClosing-oazgujqG.js` returned HTTP 200 with runtime-positive/read-only/assistant-only copy present.
+- Gate 12 browser runtime verifier result:
+  - `develop` includes `e7e0aedc5 test: add Korea payroll closing browser runtime verifier (#183)`.
+  - `frontend/src/data/koreaPayrollClosingBrowserRuntime.js` and `scripts/verify_korea_payroll_closing_browser_runtime.mjs` provide an authenticated browser/CDP verifier for the payroll closing route.
+  - The verifier only allows the Korea admin-dashboard runtime read and payroll-closing worklist runtime read methods, requires positive runtime worklist rows, rejects mutation markers and score/risk/probability keys, and preserves `requires_human_approval: true` plus `ai_role: assistant_only`.
+  - Snap Chromium on this cron host did not write `DevToolsActivePort`; PR #183 hardened the verifier to parse the DevTools port from Chromium stderr.
+  - Post-merge focused tests and Korea regional smoke passed, but the live authenticated browser run is still blocked by demo credential/session readiness: Administrator login reaches an HRMS "No active employee" page, while demo employee-user passwords are not reportable/available in cron.
 
 Autonomous cron runway
 - Implementation cron:
@@ -101,21 +107,21 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 12: Authenticated browser/runtime operator walkthrough closeout.
-- Current status: Gate 11 is merged and local Docker Compose Bench runtime is green after restart/source sync. Static route/chunk HTTP smoke is green, but a fully authenticated browser-executed runtime read still needs an explicit closeout before calling the UI runtime path production-demo ready.
+- Gate 13: Demo employee authenticated browser/runtime credential handoff closeout.
+- Current status: Gate 12 verifier is merged and can drive a real browser/CDP walkthrough, but live authenticated closeout is not green yet because the cron-host runtime lacks a reportable employee-user credential. Administrator can log in, but HRMS routes reject that session because no active employee is associated with Administrator.
 - Latest checkpoint evidence:
-  - 2026-05-09 implementation-cron verified PR #181 (`d603fffa5 feat: close runtime-positive payroll closing UI state`) is merged into `develop`.
-  - Docker Compose has running `frappe`, `mariadb`, and `redis` services.
-  - After restarting `frappe`, logs showed `HEAD is now at d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`.
-  - `scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모'` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
-  - `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed.
+  - 2026-05-09 implementation-cron merged PR #183 (`e7e0aedc5 test: add Korea payroll closing browser runtime verifier`) into `develop`.
+  - `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed before merge; focused JS tests and regional smoke passed again after merge.
+  - Browser verifier with Administrator and the documented local Docker password advanced past Chrome/CDP startup after the Snap Chromium fix, then failed closed on the HRMS "No active employee" page.
+  - No save/submit/approve/send/provider/payroll document mutation was introduced.
 - Likely branch:
-  - `test/korea-payroll-closing-authenticated-browser-closeout`
+  - `test/korea-payroll-closing-browser-employee-credential-handoff`
 - Goal:
-  - verify the Korea payroll closing operator route in an authenticated browser/session context where `frappe.call` actually reads the runtime worklist
-  - keep static/no-runtime fixture fallback intact
+  - establish a non-secret, operator-safe way to supply or generate an employee-linked demo browser credential for runtime verification
+  - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` until it returns `runtime_verified: true` with positive read-only worklist rows
+  - keep fixture fallback for static/no-runtime contexts
   - keep evidence/session views read-only and human-review-only
-  - preserve `runtime_action=runtime_read_only`, `requires_runtime_apply=false`, `requires_human_approval=true`, and `ai_role=assistant_only`
+  - preserve `runtime_action=browser_runtime_read_only`, `requires_runtime_apply=false`, `requires_human_approval=true`, and `ai_role=assistant_only`
 
 Useful commands
 - Repo status:

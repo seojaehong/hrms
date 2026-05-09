@@ -1,12 +1,12 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 11 runtime-positive operator UI closeout landed on `develop`; next implementation gate is authenticated browser/runtime operator walkthrough closeout.
+Status: active source-of-truth correction after Gate 12 browser runtime verifier landed on `develop`; next implementation gate is demo employee authenticated browser/runtime credential handoff closeout.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`
+- Latest product gate commit on `develop`: `e7e0aedc5 test: add Korea payroll closing browser runtime verifier (#183)`
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -18,6 +18,7 @@ Status: active source-of-truth correction after Gate 11 runtime-positive operato
 - Gate 9 runtime handoff evidence path is merged to `develop`.
 - Gate 10 Docker source-alignment, runtime-probe hardening, and positive scoped runtime-row capture are merged to `develop`.
 - Gate 11 runtime-positive operator UI/browser closeout is merged to `develop`.
+- Gate 12 browser runtime verifier is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -28,7 +29,7 @@ Status: active source-of-truth correction after Gate 11 runtime-positive operato
 
 Previous roadmap/grill plan work existed on a plan branch and not all plan notes were present on `develop`. `HERMES_WORKSPACE.md` on `develop` was also stale and still referenced `/home/ubuntu/workspaces/frappe-hrms` as the primary repo.
 
-The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 11 runtime-positive UI closeout and aligns cron with the next authenticated browser/runtime operator walkthrough action.
+The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 12 browser runtime verifier closeout and aligns cron with the next demo employee credential handoff action.
 
 ## Autonomous operating model
 
@@ -37,7 +38,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 12 authenticated browser/runtime operator walkthrough closeout
+   - current priority: Gate 13 demo employee authenticated browser/runtime credential handoff closeout
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -269,6 +270,30 @@ Closeout discipline:
 - Do not remove fixture fallback for static/no-runtime previews.
 - Next gate should verify a real authenticated browser/session path where the loaded UI executes `frappe.call` and receives the runtime worklist from the local Docker/Bench site.
 
+### Gate 12 — Browser runtime verifier / authenticated walkthrough harness
+
+Status: done and merged as verifier infrastructure; live employee-session browser closeout remains blocked pending credential handoff.
+
+Goal:
+- Add an authenticated browser/CDP verifier for the Korea payroll closing route.
+- Prove the verifier executes only the approved read-only Frappe methods and requires positive runtime worklist rows.
+- Preserve read-only evidence, human approval, and `assistant_only` boundaries.
+- Fail closed and report blockers rather than mutating runtime data.
+
+Evidence:
+- `develop` includes `e7e0aedc5 test: add Korea payroll closing browser runtime verifier (#183)`.
+- `frontend/src/data/koreaPayrollClosingBrowserRuntime.js` builds a browser-side probe for the payroll closing route and validates runtime-positive/read-only/assistant-only DOM and payload state.
+- `scripts/verify_korea_payroll_closing_browser_runtime.mjs` logs in through Frappe, drives headless Chromium through CDP, observes browser API requests, and rejects non-read-only Frappe methods, mutation markers, and score/risk/probability keys.
+- Snap Chromium on this cron host did not write `DevToolsActivePort`; PR #183 added stderr port parsing and a focused regression test.
+- Verification before merge: `node frontend/tests/koreaPayrollClosingRuntime.test.mjs`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed.
+- Verification after merge: focused JS tests and Korea regional smoke passed on `develop`.
+- Live browser run with Administrator and the documented local Docker password failed closed on the HRMS "No active employee" page; no secret/demo employee password was printed or stored.
+
+Closeout discipline:
+- Treat Gate 12 as the browser-runtime verifier landing, not full positive authenticated browser proof.
+- Do not remove fixture fallback for static/no-runtime previews.
+- Next gate should establish a report-safe employee-linked credential handoff or generation path, then rerun the verifier until it returns `runtime_verified: true`.
+
 ## Guardrails
 
 - Korean business logic stays under `hrms/regional/south_korea/`.
@@ -281,17 +306,18 @@ Closeout discipline:
 
 ## Next action
 
-Proceed with Gate 12 authenticated browser/runtime operator walkthrough closeout from `develop`:
+Proceed with Gate 13 demo employee authenticated browser/runtime credential handoff closeout from `develop`:
 
 ```text
-test/korea-payroll-closing-authenticated-browser-closeout
+test/korea-payroll-closing-browser-employee-credential-handoff
 ```
 
 Expected deliverables:
-- verify the Korea payroll closing operator route in an authenticated browser/session context against the local Docker/Bench runtime
-- prove the loaded UI executes `frappe.call` and receives positive runtime worklist rows without removing fixture fallback for static/no-runtime contexts
-- add or update only focused browser/runtime verification helpers if needed; keep UI/product changes PR-sized and evidence-driven
+- establish a report-safe way to supply or generate an employee-linked demo browser credential without printing/storing secrets in repo or cron output
+- rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`
+- prove the loaded UI executes only the two allowed read-only Frappe methods and receives positive runtime worklist rows
+- preserve fixture fallback for static/no-runtime contexts
 - keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation
 - keep human-approval and `assistant_only` boundaries visible
-- run focused frontend normalizer/UI tests, the runtime verification checkpoint, Korea regional smoke, and frontend build
+- run focused browser/runtime tests, the runtime verification checkpoint, Korea regional smoke, and frontend build
 - commit/push/PR URL

@@ -6,7 +6,8 @@ Status: active source-of-truth correction after Gate 13 demo credential handoff 
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `e7e0aedc5 test: add Korea payroll closing browser runtime verifier (#183)`
+- Latest product gate commit on `develop`: `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
+- Latest source-of-truth alignment commit on `develop`: `9db012fa4 docs: align Gate 13 credential handoff state (#186)`.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -19,6 +20,7 @@ Status: active source-of-truth correction after Gate 13 demo credential handoff 
 - Gate 10 Docker source-alignment, runtime-probe hardening, and positive scoped runtime-row capture are merged to `develop`.
 - Gate 11 runtime-positive operator UI/browser closeout is merged to `develop`.
 - Gate 12 browser runtime verifier is merged to `develop`.
+- Gate 13 demo employee browser credential handoff is merged to `develop`.
 - Runtime bridge files are tracked:
   - `frontend/src/data/koreaPayrollClosingRuntime.js`
   - `frontend/tests/koreaPayrollClosingRuntime.test.mjs`
@@ -29,7 +31,7 @@ Status: active source-of-truth correction after Gate 13 demo credential handoff 
 
 Previous roadmap/grill plan work existed on a plan branch and not all plan notes were present on `develop`. `HERMES_WORKSPACE.md` on `develop` was also stale and still referenced `/home/ubuntu/workspaces/frappe-hrms` as the primary repo.
 
-The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 12 browser runtime verifier closeout and aligns cron with the next demo employee credential handoff action.
+The original correction made `develop` the operational source of truth after Gate 1; this update advances the same runway after Gate 13 demo credential handoff closeout and aligns cron with Gate 14 human-approved credential apply plus authenticated browser runtime proof.
 
 ## Autonomous operating model
 
@@ -38,7 +40,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 13 demo employee authenticated browser/runtime credential handoff closeout
+   - current priority: Gate 14 human-approved demo credential apply plus authenticated browser runtime proof
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate

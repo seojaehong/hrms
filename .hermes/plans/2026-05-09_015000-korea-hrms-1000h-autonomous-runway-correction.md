@@ -1,13 +1,13 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 13 demo credential handoff landed on `develop`; next implementation gate is human-approved demo credential apply plus authenticated browser runtime proof.
+Status: active source-of-truth correction after Gate 14 credential-apply checkpoint landed on `develop`; positive authenticated browser proof remains pending explicit secret plus human-approved execution.
 
 ## Verified repo state
 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
-- Latest product gate commit on `develop`: `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
-- Recent source-of-truth alignment includes Gate 13 credential handoff state and this Gate 14 priority correction; do not treat a specific alignment commit as the product gate.
+- Latest product gate commit on `develop`: `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
+- Recent source-of-truth alignment includes Gate 14 credential-checkpoint state; do not treat a specific alignment commit as the product gate.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.
@@ -40,7 +40,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: Gate 14 human-approved demo credential apply plus authenticated browser runtime proof
+   - current priority: complete Gate 14 with operator-provided secret plus explicit human-approved credential apply/browser proof
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -319,6 +319,28 @@ Closeout discipline:
 - Do not print, commit, or report the demo employee password.
 - The next gate must only apply the credential with an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit human approval, then run the browser verifier to a positive read-only result.
 
+### Gate 14 — Credential apply checkpoint / authenticated browser proof gate
+
+Status: checkpoint infrastructure done and merged; live positive authenticated browser proof remains pending secret plus explicit human-approved execution.
+
+Goal:
+- Provide a cron-safe checkpoint that applies only the demo employee browser credential after both `FRAPPE_BROWSER_PASSWORD` and explicit human approval are present.
+- Run the authenticated browser runtime verifier immediately after credential apply.
+- Fail closed without credential mutation or browser execution when the secret or approval is missing.
+- Preserve payroll/evidence boundaries: no save/approve/send/payroll submit/provider mutation.
+
+Evidence:
+- `develop` includes `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
+- `scripts/verify_korea_demo_browser_credential_apply.py` verifies the password env var and `--human-approved` flag before invoking `ensure_demo_browser_credential(..., human_approved=True)` through Docker Bench, then runs `scripts/verify_korea_payroll_closing_browser_runtime.mjs` only if credential apply succeeds.
+- `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit approval gating, redacted reports/commands, successful mocked apply+browser verification, and browser-skip behavior when credential apply fails.
+- 2026-05-10 cron evidence without secret/approval returned `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+
+Closeout discipline:
+- Treat Gate 14 checkpoint infrastructure as safety/runtime harness progress, not live browser proof.
+- Do not pass `--human-approved` unless the operator has supplied both the secret and explicit approval for this runtime action.
+- Do not print, commit, or summarize the password value.
+- Positive closeout still requires `runtime_verified: true` from the browser verifier with read-only worklist rows, `requires_human_approval: true`, and `ai_role: assistant_only`.
+
 ## Guardrails
 
 - Korean business logic stays under `hrms/regional/south_korea/`.
@@ -331,7 +353,7 @@ Closeout discipline:
 
 ## Next action
 
-Proceed with Gate 14 human-approved demo credential apply and authenticated browser runtime proof from `develop`:
+Proceed with the remaining Gate 14 positive proof from `develop` only when the runtime environment supplies the operator-approved secret and explicit approval:
 
 ```text
 test/korea-payroll-closing-browser-runtime-positive-credential
@@ -339,6 +361,7 @@ test/korea-payroll-closing-browser-runtime-positive-credential
 
 Expected deliverables:
 - use an operator-provided `FRAPPE_BROWSER_PASSWORD` value from the runtime environment without printing, committing, or summarizing the secret
+- run `scripts/verify_korea_demo_browser_credential_apply.py --human-approved` only after explicit approval is present
 - apply only the approved demo employee credential boundary with `ensure_demo_browser_credential(..., human_approved=True)`
 - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`
 - prove the loaded UI executes only the allowed read-only Frappe methods and receives positive runtime worklist rows

@@ -117,6 +117,7 @@ Next gate
 - Current status: Gate 13 landed the report-safe credential handoff/apply helper, but a positive authenticated browser walkthrough is still not green because cron cannot invent or print the demo employee password. The apply helper is intentionally fail-closed unless `human_approved=True` and `FRAPPE_BROWSER_PASSWORD` is supplied.
 - Latest checkpoint evidence:
   - 2026-05-09 implementation-cron merged PR #185 (`15f9c24a7 test: add Korea demo browser credential handoff`) into `develop`.
+  - 2026-05-10 stale Gate 2 cron closeout confirmed Gate 2 was already merged as #152 and merged PR #187 (`e03eabb70 docs: align Gate 13 plan head`) to align the active correction plan with Gate 14 priority.
   - `python3 hrms/tests/test_korea_demo_seed_blockers.py`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 scripts/run_korea_regional_smoke.py`, and `cd frontend && yarn build` passed before merge; focused demo-seed test and regional smoke passed again after merge.
   - The credential helper returns no secret, requires explicit human approval before `update_password`, and does not submit/approve/send/payroll-submit/call providers.
   - No positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven after applying an employee credential.

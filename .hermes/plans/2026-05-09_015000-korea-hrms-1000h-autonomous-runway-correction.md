@@ -7,7 +7,7 @@ Status: active source-of-truth correction after Gate 13 demo credential handoff 
 - Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
 - Base branch: `develop`
 - Latest product gate commit on `develop`: `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
-- Latest source-of-truth alignment commit on `develop`: `9db012fa4 docs: align Gate 13 credential handoff state (#186)`.
+- Recent source-of-truth alignment includes Gate 13 credential handoff state and this Gate 14 priority correction; do not treat a specific alignment commit as the product gate.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
 - Gate 3 is merged to `develop`.

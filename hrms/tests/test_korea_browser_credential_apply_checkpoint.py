@@ -79,10 +79,12 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 				stdout=json.dumps({
 					"contract_type": "korea_payroll_closing_browser_runtime_walkthrough_v1",
 					"runtime_action": "browser_runtime_read_only",
-					"runtime_verified": True,
-					"fixture_fallback_required": False,
+					"requires_runtime_apply": False,
 					"requires_human_approval": True,
 					"ai_role": "assistant_only",
+					"mutation_boundary": "read_only_no_save_submit_approve_send_provider",
+					"runtime_verified": True,
+					"fixture_fallback_required": False,
 				}),
 				stderr="",
 			)
@@ -104,6 +106,46 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertNotIn("runtime-secret", serialized)
 		self.assertEqual(commands[0]["kwargs"]["env"]["FRAPPE_BROWSER_PASSWORD"], "runtime-secret")
 		self.assertEqual(commands[1]["kwargs"]["env"]["FRAPPE_BROWSER_PASSWORD"], "runtime-secret")
+
+	def test_checkpoint_rejects_browser_positive_without_safety_metadata(self):
+		def fake_run(command, **kwargs):
+			if command[0:2] == ["docker", "compose"]:
+				return self.mod.CommandResult(
+					returncode=0,
+					stdout=json.dumps({
+						"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+						"runtime_action": "demo_credential_runtime_apply",
+						"credential_ready_for_browser_verifier": True,
+						"human_approval_verified": True,
+					}),
+					stderr="",
+				)
+			return self.mod.CommandResult(
+				returncode=0,
+				stdout=json.dumps({
+					"contract_type": "korea_payroll_closing_browser_runtime_walkthrough_v1",
+					"runtime_action": "browser_runtime_read_only",
+					"runtime_verified": True,
+					"fixture_fallback_required": False,
+					"requires_human_approval": False,
+					"ai_role": "automation",
+				}),
+				stderr="",
+			)
+
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+			human_approved=True,
+			run_command=fake_run,
+		)
+
+		self.assertTrue(report["browser_verification"]["attempted"])
+		self.assertFalse(report["browser_verification"]["passed"])
+		self.assertFalse(report["browser_verification"]["runtime_verified"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertTrue(report["fixture_fallback_required"])
+		self.assertIn("browser verifier safety metadata invalid", report["browser_verification"]["reason"])
 
 	def test_checkpoint_does_not_run_browser_when_credential_apply_fails(self):
 		commands = []

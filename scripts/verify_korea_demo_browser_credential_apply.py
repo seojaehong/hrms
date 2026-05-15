@@ -178,10 +178,18 @@ def build_browser_verifier_command(*, base_url: str, company: str, username: str
 
 def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run: bool) -> dict[str, Any]:
 	payload = parse_json_payload(result.stdout)
-	passed = result.returncode == 0 and (
-		dry_run or payload.get("credential_ready_for_browser_verifier") is True or payload.get("dry_run") is True
+	apply_metadata_valid = (
+		payload.get("contract_type") == "korea_demo_browser_credential_runtime_apply_v1"
+		and payload.get("runtime_action") == "demo_credential_runtime_apply"
+		and payload.get("requires_runtime_apply") is False
+		and payload.get("requires_human_approval") is True
+		and payload.get("ai_role") == AI_ROLE
+		and payload.get("mutation_boundary") == "credential_only_no_payroll_submit_approve_send_provider_call"
+		and payload.get("human_approval_verified") is True
 	)
-	return {
+	credential_ready = payload.get("credential_ready_for_browser_verifier") is True or payload.get("dry_run") is True
+	passed = result.returncode == 0 and (dry_run or (credential_ready and apply_metadata_valid))
+	summary = {
 		"attempted": True,
 		"passed": passed,
 		"returncode": result.returncode,
@@ -192,9 +200,12 @@ def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run
 		"password_value": "[redacted]",
 		"contract_type": payload.get("contract_type"),
 		"runtime_action": payload.get("runtime_action"),
-		"credential_ready_for_browser_verifier": bool(payload.get("credential_ready_for_browser_verifier")),
-		"human_approval_verified": bool(payload.get("human_approval_verified")),
+		"credential_ready_for_browser_verifier": payload.get("credential_ready_for_browser_verifier") is True,
+		"human_approval_verified": payload.get("human_approval_verified") is True,
 	}
+	if result.returncode == 0 and credential_ready and not (dry_run or apply_metadata_valid):
+		summary["reason"] = "credential apply safety metadata invalid"
+	return summary
 
 
 def summarize_browser_result(result: CommandResult, *, command: list[str], dry_run: bool) -> dict[str, Any]:

@@ -199,9 +199,19 @@ def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run
 
 def summarize_browser_result(result: CommandResult, *, command: list[str], dry_run: bool) -> dict[str, Any]:
 	payload = parse_json_payload(result.stdout)
-	return {
+	safety_metadata_valid = (
+		payload.get("contract_type") == "korea_payroll_closing_browser_runtime_walkthrough_v1"
+		and payload.get("runtime_action") == "browser_runtime_read_only"
+		and payload.get("requires_runtime_apply") is False
+		and payload.get("requires_human_approval") is True
+		and payload.get("ai_role") == AI_ROLE
+		and payload.get("mutation_boundary") == "read_only_no_save_submit_approve_send_provider"
+	)
+	payload_runtime_verified = payload.get("runtime_verified") is True and payload.get("fixture_fallback_required") is False
+	passed = result.returncode == 0 and payload_runtime_verified and safety_metadata_valid
+	summary = {
 		"attempted": True,
-		"passed": result.returncode == 0,
+		"passed": passed,
 		"returncode": result.returncode,
 		"stdout_present": bool(result.stdout),
 		"stderr_present": bool(result.stderr),
@@ -209,9 +219,12 @@ def summarize_browser_result(result: CommandResult, *, command: list[str], dry_r
 		"dry_run": dry_run,
 		"contract_type": payload.get("contract_type"),
 		"runtime_action": payload.get("runtime_action"),
-		"runtime_verified": result.returncode == 0 and payload.get("runtime_verified") is True,
-		"fixture_fallback_required": payload.get("fixture_fallback_required") is not False,
+		"runtime_verified": passed,
+		"fixture_fallback_required": not passed,
 	}
+	if result.returncode == 0 and payload_runtime_verified and not safety_metadata_valid:
+		summary["reason"] = "browser verifier safety metadata invalid"
+	return summary
 
 
 def parse_json_payload(text: str) -> dict[str, Any]:

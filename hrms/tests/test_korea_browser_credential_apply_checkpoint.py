@@ -67,8 +67,10 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 					stdout=json.dumps({
 						"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
 						"runtime_action": "demo_credential_runtime_apply",
+						"requires_runtime_apply": False,
 						"credential_ready_for_browser_verifier": True,
 						"human_approval_verified": True,
+						"mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
 						"requires_human_approval": True,
 						"ai_role": "assistant_only",
 					}),
@@ -115,8 +117,12 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 					stdout=json.dumps({
 						"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
 						"runtime_action": "demo_credential_runtime_apply",
+						"requires_runtime_apply": False,
 						"credential_ready_for_browser_verifier": True,
 						"human_approval_verified": True,
+						"mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
+						"requires_human_approval": True,
+						"ai_role": "assistant_only",
 					}),
 					stderr="",
 				)
@@ -164,6 +170,39 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertEqual(len(commands), 1)
 		self.assertTrue(report["credential_apply"]["attempted"])
 		self.assertFalse(report["credential_apply"]["passed"])
+		self.assertFalse(report["browser_verification"]["attempted"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertNotIn("runtime-secret", json.dumps(report))
+
+	def test_checkpoint_rejects_credential_apply_without_safety_metadata(self):
+		commands = []
+
+		def fake_run(command, **kwargs):
+			commands.append(command)
+			return self.mod.CommandResult(
+				returncode=0,
+				stdout=json.dumps({
+					"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+					"runtime_action": "demo_credential_runtime_apply",
+					"credential_ready_for_browser_verifier": True,
+					"human_approval_verified": True,
+					"requires_human_approval": False,
+					"ai_role": "automation",
+				}),
+				stderr="",
+			)
+
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+			human_approved=True,
+			run_command=fake_run,
+		)
+
+		self.assertEqual(len(commands), 1)
+		self.assertTrue(report["credential_apply"]["attempted"])
+		self.assertFalse(report["credential_apply"]["passed"])
+		self.assertEqual(report["credential_apply"]["reason"], "credential apply safety metadata invalid")
 		self.assertFalse(report["browser_verification"]["attempted"])
 		self.assertFalse(report["runtime_verified"])
 		self.assertNotIn("runtime-secret", json.dumps(report))

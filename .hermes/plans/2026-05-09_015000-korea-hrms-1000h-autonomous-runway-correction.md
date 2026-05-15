@@ -9,6 +9,8 @@ Status: active source-of-truth correction after Gate 14 credential-apply checkpo
 - Latest product gate commit on `develop`: `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
 - Latest post-gate runtime-boundary hardening on `develop`: `681563105 fix: harden korea payroll review runtime boundaries`.
 - Latest Gate 14 browser checkpoint hardening on `develop`: `2e17155dd test: harden Korea browser checkpoint safety metadata`.
+- Latest Gate 14 credential-apply summary hardening on `develop`: `f4af2a3c0 test: harden Korea browser credential apply summary`.
+- Latest Gate 14 runtime resync evidence: 2026-05-15 UTC Docker `frappe` service restart aligned the Bench app checkout to mounted workspace `f4af2a3c0`; the non-browser read-only runtime verification for company `노란봉투법 데모` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, and `positive_runtime_rows_verified: true`. This is runtime source/row evidence, not authenticated browser proof.
 - Recent source-of-truth alignment includes Gate 14 credential-checkpoint state; do not treat a specific alignment commit or hardening commit as the product gate.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
@@ -339,6 +341,7 @@ Evidence:
 - `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit approval gating, redacted reports/commands, successful mocked apply+browser verification, browser-skip behavior when credential apply fails, and rejection of browser-positive output that omits the required read-only/human-approval/`assistant_only` safety metadata.
 - 2026-05-10 cron evidence without secret/approval returned `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
 - 2026-05-16 cron evidence on `2e17155dd` again failed closed before mutation without an approved credential apply: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+- 2026-05-15 UTC evidence on `f4af2a3c0` again failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent: `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
 - The post-checkpoint hardening keeps draft/review/audit runtime boundaries fail-closed against forged wrapper/provenance/status/scope data and recursive score/risk/probability/success-rate leakage, without adding payroll submit/approve/send/provider mutation.
 
 Closeout discipline:

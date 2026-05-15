@@ -38,6 +38,7 @@ def apply_korea_payroll_closing_draft_review_runtime(
 
 	review_action_payload = deepcopy(_coerce_mapping(review_action, "review_action"))
 	actor_text = _resolve_actor(actor)
+	_enforce_runtime_write_access()
 	controller = _load_doctype_controller()
 	result = deepcopy(
 		controller.apply_korea_payroll_closing_draft_review_action(
@@ -61,13 +62,30 @@ def apply_korea_payroll_closing_draft_review_runtime(
 
 
 def _resolve_actor(actor: Any | None) -> str:
-	if actor is None:
-		if frappe is None or not getattr(frappe, "session", None):
+	if frappe is None or not getattr(frappe, "session", None):
+		if actor is None:
 			raise ValueError("actor is required outside a Frappe session")
-		actor = getattr(frappe.session, "user", None)
-	if not isinstance(actor, str) or not actor.strip():
-		raise ValueError("actor must be a non-empty string")
-	return actor.strip()
+		if not isinstance(actor, str) or not actor.strip():
+			raise ValueError("actor must be a non-empty string")
+		return actor.strip()
+	session_user = getattr(frappe.session, "user", None)
+	if not isinstance(session_user, str) or not session_user.strip():
+		raise ValueError("authenticated session user is required")
+	session_actor = session_user.strip()
+	if actor is not None:
+		if not isinstance(actor, str) or not actor.strip():
+			raise ValueError("actor must be a non-empty string")
+		if actor.strip() != session_actor:
+			raise ValueError("actor must match the authenticated session user")
+	return session_actor
+
+
+def _enforce_runtime_write_access() -> None:
+	if frappe is None:
+		return
+	frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
+	if not frappe.has_permission("Korea Payroll Closing Draft", ptype="write"):  # type: ignore[union-attr]
+		raise PermissionError("write permission is required for Korea Payroll Closing Draft")
 
 
 def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:

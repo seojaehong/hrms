@@ -38,6 +38,7 @@ def create_korea_payroll_closing_review_audit_log_runtime(
 
 	audit_log_payload = deepcopy(_coerce_mapping(audit_log, "audit_log"))
 	audit_actor_text = _resolve_actor(audit_actor)
+	_enforce_runtime_create_access()
 	controller = _load_doctype_controller()
 	result = deepcopy(
 		controller.create_korea_payroll_closing_review_audit_log(
@@ -61,13 +62,30 @@ def create_korea_payroll_closing_review_audit_log_runtime(
 
 
 def _resolve_actor(audit_actor: Any | None) -> str:
-	if audit_actor is None:
-		if frappe is None or not getattr(frappe, "session", None):
+	if frappe is None or not getattr(frappe, "session", None):
+		if audit_actor is None:
 			raise ValueError("audit_actor is required outside a Frappe session")
-		audit_actor = getattr(frappe.session, "user", None)
-	if not isinstance(audit_actor, str) or not audit_actor.strip():
-		raise ValueError("audit_actor must be a non-empty string")
-	return audit_actor.strip()
+		if not isinstance(audit_actor, str) or not audit_actor.strip():
+			raise ValueError("audit_actor must be a non-empty string")
+		return audit_actor.strip()
+	session_user = getattr(frappe.session, "user", None)
+	if not isinstance(session_user, str) or not session_user.strip():
+		raise ValueError("authenticated session user is required")
+	session_actor = session_user.strip()
+	if audit_actor is not None:
+		if not isinstance(audit_actor, str) or not audit_actor.strip():
+			raise ValueError("audit_actor must be a non-empty string")
+		if audit_actor.strip() != session_actor:
+			raise ValueError("audit_actor must match the authenticated session user")
+	return session_actor
+
+
+def _enforce_runtime_create_access() -> None:
+	if frappe is None:
+		return
+	frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
+	if not frappe.has_permission("Korea Payroll Closing Review Audit Log", ptype="create"):  # type: ignore[union-attr]
+		raise PermissionError("create permission is required for Korea Payroll Closing Review Audit Log")
 
 
 def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:

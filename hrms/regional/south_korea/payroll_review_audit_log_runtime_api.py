@@ -70,6 +70,7 @@ def list_korea_payroll_review_audit_logs_runtime(
 	_runtime_required()
 	company_text = _require_text(company, "company")
 	workplace_payloads = None if workplaces is None else deepcopy(_coerce_list(workplaces, "workplaces"))
+	workplace_payloads = _enforce_runtime_read_access(company=company_text, workplaces=workplace_payloads)
 	limit_value = _coerce_limit(limit)
 	filters: dict[str, Any] = {"company": company_text}
 	if workplace_payloads is not None:
@@ -118,6 +119,7 @@ def get_korea_payroll_review_audit_log_detail_runtime(
 	company_text = _require_text(company, "company")
 	name_text = _require_text(name, "name")
 	workplace_payloads = None if workplaces is None else deepcopy(_coerce_list(workplaces, "workplaces"))
+	workplace_payloads = _enforce_runtime_read_access(company=company_text, workplaces=workplace_payloads)
 	filters: dict[str, Any] = {"name": name_text, "company": company_text}
 	if workplace_payloads is not None:
 		filters["workplace"] = ("in", workplace_payloads)
@@ -156,6 +158,69 @@ def get_korea_payroll_review_audit_log_detail_runtime(
 def _runtime_required() -> None:
 	if frappe is None:
 		raise RuntimeError("Frappe runtime is required for payroll review audit-log runtime reads")
+
+
+def _enforce_runtime_read_access(*, company: str, workplaces: list[str] | None) -> list[str] | None:
+	if frappe is None:
+		raise RuntimeError("Frappe runtime is required for payroll review audit-log runtime reads")
+	frappe.only_for(["HR Manager"])  # type: ignore[union-attr]
+	if not frappe.has_permission(DOCTYPE, ptype="read"):  # type: ignore[union-attr]
+		raise PermissionError(f"read permission is required for {DOCTYPE}")
+	allowed_companies, allowed_workplaces = _resolve_runtime_allowed_scope()
+	if allowed_companies is not None and company not in allowed_companies:
+		raise PermissionError("company is outside the current user's allowed scope")
+	if allowed_workplaces is None:
+		return workplaces
+	if workplaces is None:
+		return sorted(allowed_workplaces)
+	requested = set(workplaces)
+	if not requested.issubset(allowed_workplaces):
+		raise PermissionError("workplaces are outside the current user's allowed scope")
+	return workplaces
+
+
+def _resolve_runtime_allowed_scope() -> tuple[set[str] | None, set[str] | None]:
+	allowed_companies = getattr(frappe, "allowed_companies", None)
+	allowed_workplaces = getattr(frappe, "allowed_workplaces", None)
+	if allowed_companies is not None or allowed_workplaces is not None:
+		return _normalize_optional_scope_set(allowed_companies), _normalize_optional_scope_set(allowed_workplaces)
+	get_all = getattr(frappe, "get_all", None)
+	session = getattr(frappe, "session", None)
+	session_user = getattr(session, "user", None)
+	if not callable(get_all) or not isinstance(session_user, str) or not session_user.strip():
+		return None, None
+	try:
+		employees = get_all(
+			"Employee",
+			filters={"user_id": session_user.strip(), "status": "Active"},
+			fields=["company", "work_location_name"],
+		)
+	except Exception:
+		return None, None
+	if not employees:
+		return None, None
+	companies: set[str] = set()
+	workplaces: set[str] = set()
+	for employee in employees:
+		company = _mapping_or_attr(employee, "company")
+		workplace = _mapping_or_attr(employee, "work_location_name")
+		if isinstance(company, str) and company.strip():
+			companies.add(company.strip())
+		if isinstance(workplace, str) and workplace.strip():
+			workplaces.add(workplace.strip())
+	return companies or None, workplaces or None
+
+
+def _normalize_optional_scope_set(value: Any) -> set[str] | None:
+	if value is None:
+		return None
+	return {item.strip() for item in value if isinstance(item, str) and item.strip()}
+
+
+def _mapping_or_attr(value: Any, fieldname: str) -> Any:
+	if isinstance(value, dict):
+		return value.get(fieldname)
+	return getattr(value, fieldname, None)
 
 
 def _runtime_row_from_doc(value: Any) -> dict[str, Any]:

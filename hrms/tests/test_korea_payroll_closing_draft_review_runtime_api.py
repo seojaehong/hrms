@@ -17,6 +17,19 @@ def load_module_with_frappe_stub():
 	frappe._ = lambda message: message
 	frappe.whitelist = lambda: (lambda fn: fn)
 	frappe.session = types.SimpleNamespace(user="hr.manager@example.com")
+	frappe.only_for_calls = []
+	frappe.has_permission_calls = []
+	frappe.allowed_permissions = True
+
+	def only_for(roles):
+		frappe.only_for_calls.append(list(roles))
+
+	def has_permission(doctype, ptype="read"):
+		frappe.has_permission_calls.append({"doctype": doctype, "ptype": ptype})
+		return frappe.allowed_permissions
+
+	frappe.only_for = only_for
+	frappe.has_permission = has_permission
 
 	def throw(message):
 		raise ValueError(message)
@@ -145,8 +158,29 @@ class TestKoreaPayrollClosingDraftReviewRuntimeApi(unittest.TestCase):
 		self.assertFalse(result["requires_runtime_apply"])
 		self.assertEqual(result["mutation_boundary"], "human_review_status_only_no_submit_no_send_no_provider_call")
 		self.assertEqual(result["actor"], "hr.manager@example.com")
+		self.assertEqual(frappe.only_for_calls, [["HR Manager"]])
+		self.assertEqual(
+			frappe.has_permission_calls,
+			[{"doctype": "Korea Payroll Closing Draft", "ptype": "write"}],
+		)
 		self.assertTrue(result["requires_human_approval"])
 		self.assertEqual(result["ai_role"], "assistant_only")
+
+	def test_runtime_api_rejects_actor_impersonation_and_permission_denial_before_save(self):
+		module, frappe = load_module_with_frappe_stub()
+		frappe.session.user = "payroll.ops@example.com"
+		frappe.get_doc = lambda doctype, name: self.fail("actor mismatch must fail before runtime lookup")
+
+		with self.assertRaisesRegex(ValueError, "actor must match the authenticated session user"):
+			module.apply_korea_payroll_closing_draft_review_runtime(
+				review_action=review_action(),
+				actor="hr.manager@example.com",
+			)
+
+		frappe.session.user = "hr.manager@example.com"
+		frappe.allowed_permissions = False
+		with self.assertRaisesRegex(PermissionError, "write permission is required"):
+			module.apply_korea_payroll_closing_draft_review_runtime(review_action=review_action())
 
 	def test_runtime_api_rejects_preview_wrapper_invalid_json_and_defensively_copies(self):
 		module, frappe = load_module_with_frappe_stub()

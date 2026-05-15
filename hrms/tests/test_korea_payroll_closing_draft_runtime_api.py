@@ -24,10 +24,21 @@ def install_frappe_stub(*, inserted_docs=None, existing_duplicate=None, user="hr
 	frappe.throw = throw
 
 	class FakeDB:
+		def __init__(self):
+			self.sql_calls = []
+
 		def exists(self, doctype, filters):
 			if existing_duplicate:
 				return existing_duplicate
 			return None
+
+		def sql(self, query, values=None):
+			self.sql_calls.append({"query": query, "values": values})
+			if "GET_LOCK" in query:
+				return [(1,)]
+			if "RELEASE_LOCK" in query:
+				return [(1,)]
+			return []
 
 	frappe.db = FakeDB()
 
@@ -172,6 +183,9 @@ class TestKoreaPayrollClosingDraftRuntimeApi(unittest.TestCase):
 			self.assertFalse(result.get("approved", False))
 			self.assertFalse(result.get("sent", False))
 			self.assertFalse(result.get("provider_called", False))
+			lock_queries = [call["query"] for call in sys.modules["frappe"].db.sql_calls]
+			self.assertTrue(any("GET_LOCK" in query for query in lock_queries))
+			self.assertTrue(any("RELEASE_LOCK" in query for query in lock_queries))
 		finally:
 			restore_modules(previous, names)
 
@@ -253,6 +267,20 @@ class TestKoreaPayrollClosingDraftRuntimeApi(unittest.TestCase):
 
 			self.assertEqual(get_doc_calls, [])
 			self.assertEqual(inserted_docs, [])
+		finally:
+			restore_modules(previous, names)
+
+	def test_runtime_api_uses_duplicate_guard_lock_around_insert(self):
+		inserted_docs = []
+		previous, names = install_frappe_stub(inserted_docs=inserted_docs)
+		try:
+			mod = load_module()
+			mod.create_korea_payroll_closing_draft_runtime(apply_plan=apply_plan_payload(), actor="hr.manager@example.com")
+
+			queries = [call["query"] for call in sys.modules["frappe"].db.sql_calls]
+			self.assertTrue(any("GET_LOCK" in query for query in queries))
+			self.assertTrue(any("RELEASE_LOCK" in query for query in queries))
+			self.assertEqual(len(inserted_docs), 1)
 		finally:
 			restore_modules(previous, names)
 

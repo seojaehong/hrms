@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import re
 from copy import deepcopy
@@ -120,8 +121,16 @@ def create_korea_payroll_closing_draft_from_apply_plan(apply_plan: dict[str, Any
 
 	actor_text = _require_string_text(actor, "actor")
 	fields = _validated_apply_plan_fields(apply_plan, actor=actor_text)
-	_ensure_no_duplicate_open_draft(fields)
-	created = frappe.get_doc(fields).insert()
+	_acquire_duplicate_open_draft_lock(fields)
+	try:
+		_ensure_no_duplicate_open_draft(fields)
+		try:
+			created = frappe.get_doc(fields).insert()
+		except Exception as exc:
+			_raise_duplicate_open_draft_if_integrity_error(exc)
+			raise
+	finally:
+		_release_duplicate_open_draft_lock(fields)
 	return {
 		"contract_type": "korea_payroll_closing_draft_runtime_insert_v1",
 		"source_apply_plan_contract_type": "korea_payroll_closing_draft_apply_plan_v1",
@@ -195,6 +204,39 @@ def _ensure_no_duplicate_open_draft(fields: dict[str, Any], *, exclude_name: str
 		filters["name"] = ["!=", exclude_name]
 	existing = db.exists("Korea Payroll Closing Draft", filters)
 	if existing:
+		frappe.throw(frappe._("Korea Payroll Closing Draft already exists for this company/workplace/period."))
+
+
+def _duplicate_open_draft_lock_name(fields: dict[str, Any]) -> str:
+	scope = "|".join(
+		str(fields[key])
+		for key in ("company", "workplace", "period_start", "period_end")
+	)
+	digest = hashlib.sha256(scope.encode("utf-8")).hexdigest()[:40]
+	return f"kpcd-open-draft:{digest}"
+
+
+def _acquire_duplicate_open_draft_lock(fields: dict[str, Any]) -> None:
+	db = getattr(frappe, "db", None)
+	if db is None or not hasattr(db, "sql"):
+		return
+	lock_name = _duplicate_open_draft_lock_name(fields)
+	result = db.sql("SELECT GET_LOCK(%s, 10)", (lock_name,))
+	locked = result and result[0] and result[0][0] == 1
+	if not locked:
+		frappe.throw(frappe._("Could not acquire Korea Payroll Closing Draft duplicate guard lock."))
+
+
+def _release_duplicate_open_draft_lock(fields: dict[str, Any]) -> None:
+	db = getattr(frappe, "db", None)
+	if db is None or not hasattr(db, "sql"):
+		return
+	db.sql("SELECT RELEASE_LOCK(%s)", (_duplicate_open_draft_lock_name(fields),))
+
+
+def _raise_duplicate_open_draft_if_integrity_error(exc: Exception) -> None:
+	message = str(exc).lower()
+	if "duplicate" in message or "unique" in message or exc.__class__.__name__ in {"DuplicateEntryError", "IntegrityError"}:
 		frappe.throw(frappe._("Korea Payroll Closing Draft already exists for this company/workplace/period."))
 
 

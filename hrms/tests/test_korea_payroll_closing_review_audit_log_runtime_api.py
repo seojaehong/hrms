@@ -17,6 +17,19 @@ def load_module_with_frappe_stub():
 	frappe._ = lambda message: message
 	frappe.whitelist = lambda: (lambda fn: fn)
 	frappe.session = types.SimpleNamespace(user="hr.auditor@example.com")
+	frappe.only_for_calls = []
+	frappe.has_permission_calls = []
+	frappe.allowed_permissions = True
+
+	def only_for(roles):
+		frappe.only_for_calls.append(list(roles))
+
+	def has_permission(doctype, ptype="read"):
+		frappe.has_permission_calls.append({"doctype": doctype, "ptype": ptype})
+		return frappe.allowed_permissions
+
+	frappe.only_for = only_for
+	frappe.has_permission = has_permission
 
 	def throw(message):
 		raise ValueError(message)
@@ -140,8 +153,29 @@ class TestKoreaPayrollClosingReviewAuditLogRuntimeApi(unittest.TestCase):
 		self.assertFalse(result["requires_runtime_apply"])
 		self.assertEqual(result["mutation_boundary"], "audit_log_only_no_submit_no_send_no_provider_call")
 		self.assertEqual(result["audit_actor"], "hr.auditor@example.com")
+		self.assertEqual(frappe.only_for_calls, [["HR Manager"]])
+		self.assertEqual(
+			frappe.has_permission_calls,
+			[{"doctype": "Korea Payroll Closing Review Audit Log", "ptype": "create"}],
+		)
 		self.assertTrue(result["requires_human_approval"])
 		self.assertEqual(result["ai_role"], "assistant_only")
+
+	def test_runtime_api_rejects_audit_actor_impersonation_and_permission_denial_before_insert(self):
+		module, frappe = load_module_with_frappe_stub()
+		frappe.session.user = "payroll.ops@example.com"
+		frappe.get_doc = lambda fields: self.fail("audit actor mismatch must fail before insert")
+
+		with self.assertRaisesRegex(ValueError, "audit_actor must match the authenticated session user"):
+			module.create_korea_payroll_closing_review_audit_log_runtime(
+				audit_log=audit_log_preview(),
+				audit_actor="hr.auditor@example.com",
+			)
+
+		frappe.session.user = "hr.auditor@example.com"
+		frappe.allowed_permissions = False
+		with self.assertRaisesRegex(PermissionError, "create permission is required"):
+			module.create_korea_payroll_closing_review_audit_log_runtime(audit_log=audit_log_preview())
 
 	def test_runtime_api_rejects_preview_wrapper_invalid_json_and_defensively_copies(self):
 		module, frappe = load_module_with_frappe_stub()

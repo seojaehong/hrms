@@ -51,11 +51,17 @@ class FakeDoc:
 
 
 class FakeFrappe:
-	def __init__(self, rows):
+	def __init__(self, rows, *, allowed_roles=True, allowed_permissions=True, allowed_companies=None, allowed_workplaces=None):
 		self.rows = [copy.deepcopy(row) for row in rows]
 		self.get_all_calls = []
 		self.get_doc_calls = []
 		self.whitelisted = []
+		self.allowed_roles = allowed_roles
+		self.allowed_permissions = allowed_permissions
+		self.allowed_companies = allowed_companies
+		self.allowed_workplaces = allowed_workplaces
+		self.only_for_calls = []
+		self.has_permission_calls = []
 
 	def whitelist(self):
 		def decorator(fn):
@@ -64,6 +70,20 @@ class FakeFrappe:
 			return fn
 
 		return decorator
+
+	def only_for(self, roles):
+		self.only_for_calls.append(list(roles))
+		if not self.allowed_roles:
+			raise PermissionError("not permitted")
+
+	def has_permission(self, doctype, ptype="read"):
+		self.has_permission_calls.append({"doctype": doctype, "ptype": ptype})
+		return self.allowed_permissions
+
+	def get_value(self, doctype, filters, fieldname):
+		if doctype == "Employee" and fieldname == "company" and self.allowed_companies is not None:
+			return self.allowed_companies[0] if self.allowed_companies else None
+		return None
 
 	def get_all(self, doctype, *, filters=None, fields=None, order_by=None, limit_page_length=None):
 		self.get_all_calls.append(
@@ -136,6 +156,11 @@ class TestKoreaPayrollReviewAuditLogRuntimeApi(unittest.TestCase):
 		self.assertEqual(fake_frappe.get_all_calls[0]["doctype"], "Korea Payroll Closing Review Audit Log")
 		self.assertEqual(fake_frappe.get_all_calls[0]["filters"]["workplace"], ("in", ["Seoul HQ", "Busan Branch"]))
 		self.assertEqual(fake_frappe.get_all_calls[0]["limit_page_length"], 20)
+		self.assertEqual(fake_frappe.only_for_calls, [["HR Manager"]])
+		self.assertEqual(
+			fake_frappe.has_permission_calls,
+			[{"doctype": "Korea Payroll Closing Review Audit Log", "ptype": "read"}],
+		)
 		self.assertIn("list_korea_payroll_review_audit_logs_runtime", fake_frappe.whitelisted)
 		self.assertFalse(self._contains_forbidden_numeric_score(result))
 
@@ -162,6 +187,37 @@ class TestKoreaPayrollReviewAuditLogRuntimeApi(unittest.TestCase):
 		self.assertEqual(fake_frappe.get_all_calls[0]["filters"]["company"], "Korea Demo Co")
 		self.assertEqual(fake_frappe.get_all_calls[0]["filters"]["workplace"], ("in", ["Seoul HQ"]))
 		self.assertIn("get_korea_payroll_review_audit_log_detail_runtime", fake_frappe.whitelisted)
+
+	def test_runtime_read_rejects_unauthorized_role_permission_and_scope_before_query(self):
+		role_denied = FakeFrappe([runtime_row()], allowed_roles=False)
+		role_module = load_module(role_denied)
+		with self.assertRaises(PermissionError):
+			role_module.list_korea_payroll_review_audit_logs_runtime(company="Korea Demo Co")
+		self.assertEqual(role_denied.get_all_calls, [])
+
+		permission_denied = FakeFrappe([runtime_row()], allowed_permissions=False)
+		permission_module = load_module(permission_denied)
+		with self.assertRaisesRegex(PermissionError, "read permission is required"):
+			permission_module.get_korea_payroll_review_audit_log_detail_runtime(
+				company="Korea Demo Co",
+				name="KPCRAL-2026-05-SEOUL-001",
+			)
+		self.assertEqual(permission_denied.get_all_calls, [])
+
+		company_denied = FakeFrappe([runtime_row()], allowed_companies=["Other Co"] )
+		company_module = load_module(company_denied)
+		with self.assertRaisesRegex(PermissionError, "company is outside the current user's allowed scope"):
+			company_module.list_korea_payroll_review_audit_logs_runtime(company="Korea Demo Co")
+		self.assertEqual(company_denied.get_all_calls, [])
+
+		workplace_denied = FakeFrappe([runtime_row()], allowed_workplaces=["Busan Branch"] )
+		workplace_module = load_module(workplace_denied)
+		with self.assertRaisesRegex(PermissionError, "workplaces are outside the current user's allowed scope"):
+			workplace_module.list_korea_payroll_review_audit_logs_runtime(
+				company="Korea Demo Co",
+				workplaces=["Seoul HQ"],
+			)
+		self.assertEqual(workplace_denied.get_all_calls, [])
 
 	def test_runtime_api_rejects_bad_scope_limit_and_score_leakage_before_returning(self):
 		fake_frappe = FakeFrappe([runtime_row(audit_event={"legal": {"score": 0.9}})])

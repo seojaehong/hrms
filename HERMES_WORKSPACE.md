@@ -106,6 +106,7 @@ Current verified state
   - `scripts/verify_korea_demo_browser_credential_apply.py` provides a cron-safe checkpoint that first verifies `FRAPPE_BROWSER_PASSWORD` and an explicit `--human-approved` flag, then applies only the approved demo credential boundary and runs the authenticated browser verifier.
   - `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit human-approval gating, redacted command/report output, and no browser run after credential-apply failure.
   - Current cron evidence without the secret/approval still fails closed before mutation: credential apply is not attempted, browser verification is skipped, `runtime_verified: false`, and fixture fallback remains required.
+  - `develop` also includes post-checkpoint runtime-boundary hardening at `681563105 fix: harden korea payroll review runtime boundaries`: draft/review/audit runtime APIs now fail closed harder on forged wrapper/provenance/status/scope and recursive score/risk/probability/success-rate leakage without adding payroll submit/approve/send/provider mutation.
 
 Autonomous cron runway
 - Implementation cron:

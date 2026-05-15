@@ -8,6 +8,7 @@ Status: active source-of-truth correction after Gate 14 credential-apply checkpo
 - Base branch: `develop`
 - Latest product gate commit on `develop`: `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
 - Latest post-gate runtime-boundary hardening on `develop`: `681563105 fix: harden korea payroll review runtime boundaries`.
+- Latest Gate 14 browser checkpoint hardening on `develop`: `2e17155dd test: harden Korea browser checkpoint safety metadata`.
 - Recent source-of-truth alignment includes Gate 14 credential-checkpoint state; do not treat a specific alignment commit or hardening commit as the product gate.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
@@ -333,9 +334,11 @@ Goal:
 Evidence:
 - `develop` includes `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
 - `develop` includes post-checkpoint runtime-boundary hardening at `681563105 fix: harden korea payroll review runtime boundaries`.
+- `develop` includes `2e17155dd test: harden Korea browser checkpoint safety metadata`.
 - `scripts/verify_korea_demo_browser_credential_apply.py` verifies the password env var and `--human-approved` flag before invoking `ensure_demo_browser_credential(..., human_approved=True)` through Docker Bench, then runs `scripts/verify_korea_payroll_closing_browser_runtime.mjs` only if credential apply succeeds.
-- `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit approval gating, redacted reports/commands, successful mocked apply+browser verification, and browser-skip behavior when credential apply fails.
+- `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit approval gating, redacted reports/commands, successful mocked apply+browser verification, browser-skip behavior when credential apply fails, and rejection of browser-positive output that omits the required read-only/human-approval/`assistant_only` safety metadata.
 - 2026-05-10 cron evidence without secret/approval returned `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+- 2026-05-16 cron evidence on `2e17155dd` again failed closed before mutation without an approved credential apply: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
 - The post-checkpoint hardening keeps draft/review/audit runtime boundaries fail-closed against forged wrapper/provenance/status/scope data and recursive score/risk/probability/success-rate leakage, without adding payroll submit/approve/send/provider mutation.
 
 Closeout discipline:

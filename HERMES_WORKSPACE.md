@@ -107,6 +107,7 @@ Current verified state
   - `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit human-approval gating, redacted command/report output, and no browser run after credential-apply failure.
   - Current cron evidence without the secret/approval still fails closed before mutation: credential apply is not attempted, browser verification is skipped, `runtime_verified: false`, and fixture fallback remains required.
   - `develop` also includes post-checkpoint runtime-boundary hardening at `681563105 fix: harden korea payroll review runtime boundaries`: draft/review/audit runtime APIs now fail closed harder on forged wrapper/provenance/status/scope and recursive score/risk/probability/success-rate leakage without adding payroll submit/approve/send/provider mutation.
+  - `develop` also includes `2e17155dd test: harden Korea browser checkpoint safety metadata`: the Gate 14 checkpoint now requires the browser verifier output to preserve the expected read-only runtime action, no-runtime-apply flag, human-approval flag, `assistant_only` role, and read-only mutation boundary before it can mark browser runtime proof green.
 
 Autonomous cron runway
 - Implementation cron:
@@ -127,6 +128,7 @@ Next gate
   - 2026-05-10 implementation-cron merged PR #189 (`13f061046 test: add Korea demo browser credential checkpoint`) into `develop`.
   - `scripts/verify_korea_demo_browser_credential_apply.py` now records the fail-closed credential-apply/browser-verification checkpoint and redacts the password value from reports/commands.
   - Current no-approval/no-secret run returned `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+  - 2026-05-16 cron evidence on `2e17155dd` again failed closed before mutation without an approved credential apply: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
   - The credential helper returns no secret, requires explicit human approval before `update_password`, and does not submit/approve/send/payroll-submit/call providers.
   - No positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven after applying an employee credential.
 - Likely branch:

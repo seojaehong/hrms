@@ -44,6 +44,17 @@ export function buildKoreaPayrollClosingBrowserProbe({ company, workplaces } = {
   if (typeof window.frappe.call !== "function") {
     throw new Error("Frappe runtime is not available in the browser session");
   }
+  async function getAuthenticatedUser() {
+    const sessionUser = window.frappe.session && window.frappe.session.user;
+    if (sessionUser && sessionUser !== "Guest") return sessionUser;
+    const response = await window.fetch("/api/method/frappe.auth.get_logged_user", {
+      method: "GET",
+      credentials: "same-origin",
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload._server_messages || payload.exception || "Frappe logged-user check failed");
+    return payload.message;
+  }
   async function callRuntime(method, args) {
     calledMethods.push(method);
     const response = await window.frappe.call({ method, args });
@@ -52,13 +63,14 @@ export function buildKoreaPayrollClosingBrowserProbe({ company, workplaces } = {
   const args = { company: ${companyJson} };
   const workplaces = ${workplacesJson};
   if (Array.isArray(workplaces) && workplaces.length) args.workplaces = JSON.stringify(workplaces);
+  const authenticatedUser = await getAuthenticatedUser();
   const [dashboard, worklist] = await Promise.all([
     callRuntime(${JSON.stringify(KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD)}, args),
     callRuntime(${JSON.stringify(KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD)}, args),
   ]);
   return {
     url: window.location.href,
-    authenticated: Boolean(window.frappe.session && window.frappe.session.user && window.frappe.session.user !== "Guest"),
+    authenticated: Boolean(authenticatedUser && authenticatedUser !== "Guest"),
     dashboard,
     worklist,
     domText: document.body ? document.body.innerText : "",
@@ -93,7 +105,7 @@ export function assertKoreaPayrollClosingBrowserWalkthrough(result) {
 	if (!String(result.domText || "").match(/Runtime worklist loaded/i) || !String(result.domText || "").match(/evidence remains read-only/i)) {
 		throw new Error("browser DOM did not show the runtime-positive read-only state")
 	}
-	if (!String(result.domText || "").match(/assistant_only/i) && !String(result.domText || "").match(/AI=assistant_only/i)) {
+	if (!String(result.domText || "").match(/assistant_only/i) && !String(result.domText || "").match(/AI=assistant_only/i) && !String(result.domText || "").match(/AI is assistant-only/i)) {
 		throw new Error("browser DOM did not preserve assistant-only AI copy")
 	}
 	assertNoMutationMarkers(result)

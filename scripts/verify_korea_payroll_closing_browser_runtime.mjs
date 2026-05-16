@@ -13,6 +13,8 @@ const DEFAULT_BASE_URL = "http://hrms.localhost:8000"
 const DEFAULT_COMPANY = "노란봉투법 데모"
 const MUTATION_BOUNDARY = "read_only_no_save_submit_approve_send_provider"
 const READ_ONLY_RUNTIME_METHODS = new Set([
+	"frappe.auth.get_logged_user",
+	"hrms.api.get_current_employee_info",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 ])
@@ -90,7 +92,7 @@ export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company
 					httpOnly: cookie.httpOnly,
 				})
 			}
-			await cdp.send("Page.navigate", { url: `${baseUrl}${KOREA_PAYROLL_CLOSING_BROWSER_ROUTE}` })
+			await cdp.send("Page.navigate", { url: buildBrowserRouteUrl({ baseUrl, company }) })
 			await waitForRuntime(cdp)
 			// Page title is localized: Korean shows "한국 급여 마감", English shows "Korea Payroll Closing".
 			// Match both so the verifier doesn't fail closed on the default Korean rendering.
@@ -179,6 +181,12 @@ export function extractDevtoolsPortFromText(text) {
 	if (!match) return null
 	const port = Number(match[1])
 	return Number.isInteger(port) && port > 0 && port < 65536 ? port : null
+}
+
+export function buildBrowserRouteUrl({ baseUrl = DEFAULT_BASE_URL, company = DEFAULT_COMPANY } = {}) {
+	const url = new URL(KOREA_PAYROLL_CLOSING_BROWSER_ROUTE, `${String(baseUrl || DEFAULT_BASE_URL).replace(/\/$/, "")}/`)
+	url.searchParams.set("company", requireNonEmptyOption(company, "company"))
+	return url.toString()
 }
 
 export function extractFrappeApiMethodFromUrl(url) {

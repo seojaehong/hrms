@@ -6,17 +6,23 @@ import {
 } from "../src/data/koreaPayrollClosingBrowserRuntime.js"
 import {
 	assertReadOnlyBrowserRuntimeRequests,
+	buildBrowserRouteUrl,
 	extractDevtoolsPortFromText,
 	extractFrappeApiMethodFromUrl,
 } from "../../scripts/verify_korea_payroll_closing_browser_runtime.mjs"
 
 assert.equal(KOREA_PAYROLL_CLOSING_BROWSER_ROUTE, "/hrms/dashboard/korea-payroll-closing")
+assert.equal(
+	buildBrowserRouteUrl({ baseUrl: "http://hrms.localhost:8000/", company: "노란봉투법 데모" }),
+	"http://hrms.localhost:8000/hrms/dashboard/korea-payroll-closing?company=%EB%85%B8%EB%9E%80%EB%B4%89%ED%88%AC%EB%B2%95+%EB%8D%B0%EB%AA%A8",
+)
 
 const probeSource = buildKoreaPayrollClosingBrowserProbe({ company: "노란봉투법 데모" })
 assert.match(probeSource, /frappe\.call/)
 assert.match(probeSource, /window\.fetch\("\/api\/method\/" \+ method/)
 assert.match(probeSource, /X-Frappe-CSRF-Token/)
 assert.match(probeSource, /credentials: "same-origin"/)
+assert.match(probeSource, /frappe\.auth\.get_logged_user/)
 assert.match(probeSource, /browser runtime probe only allows Korea payroll closing read-only methods/)
 assert.match(probeSource, /list_korea_payroll_closing_worklist_runtime/)
 assert.match(probeSource, /get_korea_admin_dashboard_runtime/)
@@ -90,6 +96,10 @@ assert.throws(
 	() => assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "Static fixture preview" }),
 	/browser DOM did not show the runtime-positive read-only state/,
 )
+assert.equal(
+	assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "Runtime worklist loaded · evidence remains read-only · AI is assistant-only" }).runtime_verified,
+	true,
+)
 
 assert.equal(
 	extractFrappeApiMethodFromUrl("http://hrms.localhost:8000/api/method/hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"),
@@ -105,6 +115,14 @@ assert.equal(extractDevtoolsPortFromText("Chrome stderr without debugger endpoin
 
 const observed = assertReadOnlyBrowserRuntimeRequests([
 	{
+		url: "http://hrms.localhost:8000/api/method/frappe.auth.get_logged_user",
+		postData: "",
+	},
+	{
+		url: "http://hrms.localhost:8000/api/method/hrms.api.get_current_employee_info",
+		postData: "",
+	},
+	{
 		url: "http://hrms.localhost:8000/api/method/hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 		postData: "company=%EB%85%B8%EB%9E%80%EB%B4%89%ED%88%AC%EB%B2%95+%EB%8D%B0%EB%AA%A8",
 	},
@@ -114,6 +132,8 @@ const observed = assertReadOnlyBrowserRuntimeRequests([
 	},
 ])
 assert.deepEqual(observed.sort(), [
+	"frappe.auth.get_logged_user",
+	"hrms.api.get_current_employee_info",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 ])

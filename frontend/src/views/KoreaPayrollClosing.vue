@@ -198,6 +198,10 @@ const runtimeWorklist = ref(null)
 const runtimeLoading = ref(false)
 const runtimeError = ref("")
 const runtimeWorklistError = ref("")
+const requestedCompany = computed(() => {
+	const company = route.query.company
+	return typeof company === "string" && company.trim() ? company.trim() : fixture.company
+})
 const activeWorklist = computed(() => (hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value) ? runtimeWorklist.value : fixture))
 const selectedSession = computed(() => buildSessionPreview(findActiveSessionItem(route.params.name)))
 const runtimeHasData = computed(() => hasKoreaAdminDashboardRuntimeData(runtimeDashboard.value))
@@ -207,7 +211,7 @@ const runtimeUiState = computed(() => getKoreaPayrollClosingRuntimeUiState({
 	runtimeWorklist: runtimeWorklist.value,
 	runtimeLoading: runtimeLoading.value,
 }))
-const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || fixture.company)
+const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || requestedCompany.value)
 const dataSourceLabel = computed(() => runtimeUiState.value.dataSourceLabel)
 const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {
@@ -240,8 +244,8 @@ async function loadRuntimeData() {
 	runtimeWorklistError.value = ""
 	try {
 		const [dashboardResult, worklistResult] = await Promise.allSettled([
-			loadKoreaAdminDashboardRuntime({ fallbackCompany: fixture.company }),
-			loadKoreaPayrollClosingRuntimeWorklist({ fallbackCompany: fixture.company }),
+			loadKoreaAdminDashboardRuntime({ fallbackCompany: requestedCompany.value }),
+			loadKoreaPayrollClosingRuntimeWorklist({ fallbackCompany: requestedCompany.value }),
 		])
 		if (dashboardResult.status === "fulfilled") runtimeDashboard.value = dashboardResult.value.data
 		else runtimeDashboard.value = null

@@ -71,6 +71,18 @@ def verify_demo_browser_credential_apply(
 	password = environ.get(PASSWORD_ENV_VAR)
 	report: dict[str, Any] = base_report(repo_root=repo_root, site=site, company=company, base_url=base_url, username=username)
 
+	scope_error = required_scope_input_error(
+		site=site,
+		company=company,
+		base_url=base_url,
+		username=username,
+		chromium=chromium,
+	)
+	if scope_error:
+		report["credential_apply"] = skipped_step(scope_error)
+		report["browser_verification"] = skipped_step("credential apply not ready")
+		return report
+
 	if not password:
 		report["credential_apply"] = skipped_step("FRAPPE_BROWSER_PASSWORD missing")
 		report["browser_verification"] = skipped_step("credential apply not ready")
@@ -298,6 +310,19 @@ def redact_command(command: list[str]) -> list[str]:
 def _run_subprocess(command: list[str], **kwargs) -> CommandResult:
 	completed = subprocess.run(command, text=True, capture_output=True, **kwargs)
 	return CommandResult(returncode=completed.returncode, stdout=completed.stdout, stderr=completed.stderr)
+
+
+def required_scope_input_error(*, site: str, company: str, base_url: str, username: str, chromium: str) -> str | None:
+	for label, value in (
+		("site", site),
+		("company", company),
+		("base_url", base_url),
+		("username", username),
+		("chromium", chromium),
+	):
+		if not isinstance(value, str) or not value.strip():
+			return f"{label} must be a non-empty string"
+	return None
 
 
 def _require_text(value: str, label: str) -> str:

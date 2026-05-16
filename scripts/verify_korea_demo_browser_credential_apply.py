@@ -168,6 +168,11 @@ def _has_non_empty_text(value: str) -> bool:
 
 
 def build_docker_credential_apply_command(*, repo_root: pathlib.Path, site: str) -> list[str]:
+	# bench `execute --kwargs` parses the value as a Python literal (ast.literal_eval / eval),
+	# not as JSON. JSON `{"human_approved": true}` raises `NameError: true` on the bench side.
+	# Pass a Python dict literal repr instead — covered by tests in
+	# `hrms/tests/test_korea_browser_credential_apply_checkpoint.py`.
+	kwargs_literal = repr({"human_approved": True})
 	bench_command = shlex.join([
 		"bench",
 		"--site",
@@ -175,7 +180,7 @@ def build_docker_credential_apply_command(*, repo_root: pathlib.Path, site: str)
 		"execute",
 		"hrms.regional.south_korea.demo_seed.ensure_demo_browser_credential",
 		"--kwargs",
-		json.dumps({"human_approved": True}, sort_keys=True),
+		kwargs_literal,
 	])
 	return [
 		"docker",

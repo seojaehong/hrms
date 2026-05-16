@@ -80,6 +80,13 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 			"username": "demo.hr.manager@node.pe.kr",
 			"chromium": "chromium-browser",
 		}
+		provided_flag_by_field = {
+			"site": "site_provided",
+			"company": "company_provided",
+			"base_url": "base_url_provided",
+			"username": "username_provided",
+			"chromium": "chromium_provided",
+		}
 		for field in valid_scope:
 			with self.subTest(field=field):
 				commands = []
@@ -98,6 +105,7 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 				)
 
 				self.assertEqual(commands, [])
+				self.assertFalse(report["scope"][provided_flag_by_field[field]])
 				self.assertFalse(report["credential_apply"]["attempted"])
 				self.assertFalse(report["credential_apply"]["passed"])
 				self.assertEqual(report["credential_apply"]["reason"], f"{field} must be a non-empty string")

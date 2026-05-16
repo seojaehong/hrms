@@ -119,11 +119,27 @@ const observed = assertReadOnlyBrowserRuntimeRequests([
 		postData: "",
 	},
 	{
+		url: "http://hrms.localhost:8000/api/method/frappe.translate.load_all_translations?lang=ko&hash=0.1",
+		postData: "",
+	},
+	{
+		url: "http://hrms.localhost:8000/api/method/hrms.api.are_push_notifications_enabled",
+		postData: "",
+	},
+	{
 		url: "http://hrms.localhost:8000/api/method/hrms.api.get_current_employee_info",
 		postData: "",
 	},
 	{
 		url: "http://hrms.localhost:8000/api/method/hrms.api.get_current_user_info",
+		postData: "",
+	},
+	{
+		url: "http://hrms.localhost:8000/api/method/hrms.api.get_unread_notifications_count",
+		postData: "",
+	},
+	{
+		url: "http://hrms.localhost:8000/api/method/notification_relay.api.get_config?project_name=hrms",
 		postData: "",
 	},
 	{
@@ -137,10 +153,14 @@ const observed = assertReadOnlyBrowserRuntimeRequests([
 ])
 assert.deepEqual(observed.sort(), [
 	"frappe.auth.get_logged_user",
+	"frappe.translate.load_all_translations",
+	"hrms.api.are_push_notifications_enabled",
 	"hrms.api.get_current_employee_info",
 	"hrms.api.get_current_user_info",
+	"hrms.api.get_unread_notifications_count",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
+	"notification_relay.api.get_config",
 ])
 
 assert.throws(

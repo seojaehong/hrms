@@ -14,8 +14,12 @@ const DEFAULT_COMPANY = "노란봉투법 데모"
 const MUTATION_BOUNDARY = "read_only_no_save_submit_approve_send_provider"
 const READ_ONLY_RUNTIME_METHODS = new Set([
 	"frappe.auth.get_logged_user",
+	"frappe.translate.load_all_translations",
+	"hrms.api.are_push_notifications_enabled",
 	"hrms.api.get_current_employee_info",
 	"hrms.api.get_current_user_info",
+	"hrms.api.get_unread_notifications_count",
+	"notification_relay.api.get_config",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 ])

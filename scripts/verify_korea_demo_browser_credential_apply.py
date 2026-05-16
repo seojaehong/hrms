@@ -72,7 +72,14 @@ def verify_demo_browser_credential_apply(
 	environ = dict(os.environ if environ is None else environ)
 	run_command = run_command or _run_subprocess
 	password = environ.get(PASSWORD_ENV_VAR)
-	report: dict[str, Any] = base_report(repo_root=repo_root, site=site, company=company, base_url=base_url, username=username)
+	report: dict[str, Any] = base_report(
+		repo_root=repo_root,
+		site=site,
+		company=company,
+		base_url=base_url,
+		username=username,
+		chromium=chromium,
+	)
 
 	scope_error = required_scope_input_error(
 		site=site,
@@ -127,7 +134,7 @@ def verify_demo_browser_credential_apply(
 	return report
 
 
-def base_report(*, repo_root: pathlib.Path, site: str, company: str, base_url: str, username: str) -> dict[str, Any]:
+def base_report(*, repo_root: pathlib.Path, site: str, company: str, base_url: str, username: str, chromium: str) -> dict[str, Any]:
 	return {
 		"contract_type": CONTRACT_TYPE,
 		"runtime_action": RUNTIME_ACTION,
@@ -137,9 +144,11 @@ def base_report(*, repo_root: pathlib.Path, site: str, company: str, base_url: s
 		"mutation_boundary": MUTATION_BOUNDARY,
 		"repo_root": str(repo_root),
 		"scope": {
-			"site_provided": bool(site),
-			"company_provided": bool(company),
-			"base_url_provided": bool(base_url),
+			"site_provided": _has_non_empty_text(site),
+			"company_provided": _has_non_empty_text(company),
+			"base_url_provided": _has_non_empty_text(base_url),
+			"username_provided": _has_non_empty_text(username),
+			"chromium_provided": _has_non_empty_text(chromium),
 			"username": username,
 			"password_env_var": PASSWORD_ENV_VAR,
 		},
@@ -152,6 +161,10 @@ def base_report(*, repo_root: pathlib.Path, site: str, company: str, base_url: s
 
 def skipped_step(reason: str) -> dict[str, Any]:
 	return {"attempted": False, "passed": False, "reason": reason}
+
+
+def _has_non_empty_text(value: str) -> bool:
+	return isinstance(value, str) and bool(value.strip())
 
 
 def build_docker_credential_apply_command(*, repo_root: pathlib.Path, site: str) -> list[str]:

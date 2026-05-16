@@ -45,6 +45,7 @@ def main() -> int:
 		chromium=args.chromium,
 		human_approved=args.human_approved,
 		dry_run=args.dry_run,
+		browser_report_file=args.browser_report_file,
 	)
 	json_report = json.dumps(report, ensure_ascii=False, indent=2)
 	print(json_report)
@@ -66,6 +67,7 @@ def verify_demo_browser_credential_apply(
 	chromium: str = "chromium-browser",
 	human_approved: bool = False,
 	dry_run: bool = False,
+	browser_report_file: str | None = None,
 	run_command: Callable[..., CommandResult] | None = None,
 ) -> dict[str, Any]:
 	repo_root = pathlib.Path(repo_root).resolve()
@@ -122,12 +124,18 @@ def verify_demo_browser_credential_apply(
 		company=company,
 		username=username,
 		chromium=chromium,
+		report_file=browser_report_file,
 	)
 	if dry_run:
 		browser_result = CommandResult(returncode=0, stdout=json.dumps({"dry_run": True, "runtime_verified": False, "fixture_fallback_required": True}), stderr="")
 	else:
 		browser_result = run_command(browser_command, cwd=repo_root, env=apply_env, timeout=300)
-	browser_summary = summarize_browser_result(browser_result, command=redact_command(browser_command), dry_run=dry_run)
+	browser_summary = summarize_browser_result(
+		browser_result,
+		command=redact_command(browser_command),
+		dry_run=dry_run,
+		report_file=browser_report_file,
+	)
 	report["browser_verification"] = browser_summary
 	report["runtime_verified"] = bool(browser_summary.get("runtime_verified"))
 	report["fixture_fallback_required"] = not report["runtime_verified"]
@@ -198,8 +206,8 @@ def build_docker_credential_apply_command(*, repo_root: pathlib.Path, site: str)
 	]
 
 
-def build_browser_verifier_command(*, base_url: str, company: str, username: str, chromium: str) -> list[str]:
-	return [
+def build_browser_verifier_command(*, base_url: str, company: str, username: str, chromium: str, report_file: str | None = None) -> list[str]:
+	command = [
 		"node",
 		"scripts/verify_korea_payroll_closing_browser_runtime.mjs",
 		"--base-url",
@@ -211,6 +219,9 @@ def build_browser_verifier_command(*, base_url: str, company: str, username: str
 		"--chromium",
 		_require_text(chromium, "chromium"),
 	]
+	if report_file:
+		command.extend(["--report-file", _require_text(report_file, "browser_report_file")])
+	return command
 
 
 def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run: bool) -> dict[str, Any]:
@@ -249,7 +260,7 @@ def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run
 	return summary
 
 
-def summarize_browser_result(result: CommandResult, *, command: list[str], dry_run: bool) -> dict[str, Any]:
+def summarize_browser_result(result: CommandResult, *, command: list[str], dry_run: bool, report_file: str | None = None) -> dict[str, Any]:
 	payload = parse_json_payload(result.stdout)
 	safety_metadata_valid = (
 		payload.get("contract_type") == "korea_payroll_closing_browser_runtime_walkthrough_v1"
@@ -274,6 +285,8 @@ def summarize_browser_result(result: CommandResult, *, command: list[str], dry_r
 		"runtime_verified": passed,
 		"fixture_fallback_required": not passed,
 	}
+	if report_file:
+		summary["report_file"] = report_file
 	if result.returncode == 0 and payload_runtime_verified and not safety_metadata_valid:
 		summary["reason"] = "browser verifier safety metadata invalid"
 	elif result.returncode != 0:
@@ -371,6 +384,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument("--human-approved", action="store_true")
 	parser.add_argument("--dry-run", action="store_true")
 	parser.add_argument("--report-file")
+	parser.add_argument("--browser-report-file")
 	return parser.parse_args()
 
 

@@ -178,6 +178,56 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertIn("'human_approved': True", normalized)
 		self.assertNotIn('"human_approved": true', bench_payload)
 
+	def test_checkpoint_passes_redacted_browser_report_file_to_child_verifier(self):
+		commands = []
+		browser_report_file = "/tmp/korea-browser/nested/report.json"
+
+		def fake_run(command, **kwargs):
+			commands.append(command)
+			if command[0:2] == ["docker", "compose"]:
+				return self.mod.CommandResult(
+					returncode=0,
+					stdout=json.dumps({
+						"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+						"runtime_action": "demo_credential_runtime_apply",
+						"requires_runtime_apply": False,
+						"credential_ready_for_browser_verifier": True,
+						"human_approval_verified": True,
+						"mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
+						"requires_human_approval": True,
+						"ai_role": "assistant_only",
+					}),
+					stderr="",
+				)
+			return self.mod.CommandResult(
+				returncode=0,
+				stdout=json.dumps({
+					"contract_type": "korea_payroll_closing_browser_runtime_walkthrough_v1",
+					"runtime_action": "browser_runtime_read_only",
+					"requires_runtime_apply": False,
+					"requires_human_approval": True,
+					"ai_role": "assistant_only",
+					"mutation_boundary": "read_only_no_save_submit_approve_send_provider",
+					"runtime_verified": True,
+					"fixture_fallback_required": False,
+				}),
+				stderr="",
+			)
+
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+			human_approved=True,
+			browser_report_file=browser_report_file,
+			run_command=fake_run,
+		)
+
+		self.assertTrue(report["browser_verification"]["passed"])
+		self.assertIn("--report-file", commands[1])
+		self.assertIn(browser_report_file, commands[1])
+		self.assertEqual(report["browser_verification"]["report_file"], browser_report_file)
+		self.assertNotIn("runtime-secret", json.dumps(report))
+
 	def test_checkpoint_accepts_noisy_stdout_wrapping_final_json_payloads(self):
 		def fake_run(command, **kwargs):
 			if command[0:2] == ["docker", "compose"]:

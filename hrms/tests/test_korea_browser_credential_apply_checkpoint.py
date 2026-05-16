@@ -56,6 +56,20 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertFalse(report["runtime_verified"])
 		self.assertNotIn("runtime-secret", json.dumps(report))
 
+	def test_checkpoint_rejects_blank_password_env_before_apply(self):
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "   \t\n"},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		self.assertFalse(report["credential_apply"]["attempted"])
+		self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD blank")
+		self.assertFalse(report["browser_verification"]["attempted"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertTrue(report["fixture_fallback_required"])
+
 	def test_checkpoint_builds_redacted_apply_and_browser_commands(self):
 		commands = []
 

@@ -75,6 +75,10 @@ def verify_demo_browser_credential_apply(
 		report["credential_apply"] = skipped_step("FRAPPE_BROWSER_PASSWORD missing")
 		report["browser_verification"] = skipped_step("credential apply not ready")
 		return report
+	if not password.strip():
+		report["credential_apply"] = skipped_step("FRAPPE_BROWSER_PASSWORD blank")
+		report["browser_verification"] = skipped_step("credential apply not ready")
+		return report
 	if human_approved is not True:
 		report["credential_apply"] = skipped_step("human approval flag missing")
 		report["browser_verification"] = skipped_step("credential apply not approved")

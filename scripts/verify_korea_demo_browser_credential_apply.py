@@ -254,7 +254,7 @@ def parse_json_payload(text: str) -> dict[str, Any]:
 		payload = _json_object_or_empty("\n".join(lines[index:]))
 		if payload:
 			return payload
-	return {}
+	return _last_json_object_or_empty(text)
 
 
 def _json_object_or_empty(text: str) -> dict[str, Any]:
@@ -263,6 +263,24 @@ def _json_object_or_empty(text: str) -> dict[str, Any]:
 	except json.JSONDecodeError:
 		return {}
 	return payload if isinstance(payload, dict) else {}
+
+
+def _last_json_object_or_empty(text: str) -> dict[str, Any]:
+	decoder = json.JSONDecoder()
+	payload: dict[str, Any] = {}
+	payload_end = -1
+	for index, char in enumerate(text):
+		if char != "{":
+			continue
+		try:
+			candidate, end = decoder.raw_decode(text[index:])
+		except json.JSONDecodeError:
+			continue
+		absolute_end = index + end
+		if isinstance(candidate, dict) and absolute_end > payload_end:
+			payload = candidate
+			payload_end = absolute_end
+	return payload
 
 
 def redact_command(command: list[str]) -> list[str]:

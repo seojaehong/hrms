@@ -246,11 +246,23 @@ def parse_json_payload(text: str) -> dict[str, Any]:
 	text = (text or "").strip()
 	if not text:
 		return {}
+	payload = _json_object_or_empty(text)
+	if payload:
+		return payload
+	lines = [line for line in text.splitlines() if line.strip()]
+	for index in range(len(lines) - 1, -1, -1):
+		payload = _json_object_or_empty("\n".join(lines[index:]))
+		if payload:
+			return payload
+	return {}
+
+
+def _json_object_or_empty(text: str) -> dict[str, Any]:
 	try:
 		payload = json.loads(text)
-		return payload if isinstance(payload, dict) else {}
 	except json.JSONDecodeError:
 		return {}
+	return payload if isinstance(payload, dict) else {}
 
 
 def redact_command(command: list[str]) -> list[str]:

@@ -1,4 +1,7 @@
 import assert from "node:assert/strict"
+import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import {
 	KOREA_PAYROLL_CLOSING_BROWSER_ROUTE,
 	buildKoreaPayrollClosingBrowserProbe,
@@ -9,6 +12,7 @@ import {
 	buildBrowserRouteUrl,
 	extractDevtoolsPortFromText,
 	extractFrappeApiMethodFromUrl,
+	writeBrowserRuntimeReportFile,
 } from "../../scripts/verify_korea_payroll_closing_browser_runtime.mjs"
 
 assert.equal(KOREA_PAYROLL_CLOSING_BROWSER_ROUTE, "/hrms/dashboard/korea-payroll-closing")
@@ -178,3 +182,18 @@ assert.throws(
 	]),
 	/browser runtime observed mutation marker/,
 )
+
+const reportTempDir = await mkdtemp(join(tmpdir(), "korea-browser-report-test-"))
+try {
+	const reportPath = join(reportTempDir, "nested", "browser", "report.json")
+	const reportPayload = {
+		contract_type: "korea_payroll_closing_browser_runtime_walkthrough_v1",
+		runtime_action: "browser_runtime_read_only",
+		runtime_verified: false,
+		fixture_fallback_required: true,
+	}
+	await writeBrowserRuntimeReportFile(reportPath, reportPayload)
+	assert.deepEqual(JSON.parse(await readFile(reportPath, "utf8")), reportPayload)
+} finally {
+	await rm(reportTempDir, { recursive: true, force: true })
+}

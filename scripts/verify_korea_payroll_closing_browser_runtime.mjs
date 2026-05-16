@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process"
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import {
 	KOREA_PAYROLL_CLOSING_BROWSER_ROUTE,
 	assertKoreaPayrollClosingBrowserWalkthrough,
@@ -49,15 +49,20 @@ async function main() {
 			browser_blockers: [error instanceof Error ? error.message : String(error)],
 		}
 		if (!args["no-throw"]) {
-			if (reportFile) await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`)
+			if (reportFile) await writeBrowserRuntimeReportFile(reportFile, report)
 			console.log(JSON.stringify(report, null, 2))
 			process.exitCode = 1
 			return
 		}
 	}
-	if (reportFile) await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`)
+	if (reportFile) await writeBrowserRuntimeReportFile(reportFile, report)
 	console.log(JSON.stringify(report, null, 2))
 	if (!report.runtime_verified && !args["no-throw"]) process.exitCode = 1
+}
+
+export async function writeBrowserRuntimeReportFile(reportFile, report) {
+	await mkdir(dirname(reportFile), { recursive: true })
+	await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`)
 }
 
 export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company = DEFAULT_COMPANY, username, password, chromium = "chromium-browser" } = {}) {

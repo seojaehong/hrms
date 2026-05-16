@@ -93,7 +93,7 @@ def verify_demo_browser_credential_apply(
 		report["browser_verification"] = skipped_step("credential apply not ready")
 		return report
 
-	if not password:
+	if password is None:
 		report["credential_apply"] = skipped_step("FRAPPE_BROWSER_PASSWORD missing")
 		report["browser_verification"] = skipped_step("credential apply not ready")
 		return report

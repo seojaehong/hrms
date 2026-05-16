@@ -391,7 +391,21 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 			stdout_report = json.loads(completed.stdout)
 			self.assertEqual(stdout_report, report)
 			self.assertEqual(report["scope"]["company_provided"], True)
-			self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD missing")
+			self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD blank")
+
+	def test_checkpoint_reports_empty_password_env_as_blank_not_missing(self):
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": ""},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		self.assertFalse(report["credential_apply"]["attempted"])
+		self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD blank")
+		self.assertFalse(report["browser_verification"]["attempted"])
+		self.assertFalse(report["runtime_verified"])
+		self.assertTrue(report["fixture_fallback_required"])
 
 
 if __name__ == "__main__":

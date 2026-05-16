@@ -46,9 +46,12 @@ def main() -> int:
 		human_approved=args.human_approved,
 		dry_run=args.dry_run,
 	)
+	json_report = json.dumps(report, ensure_ascii=False, indent=2)
+	print(json_report)
 	if args.report_file:
-		pathlib.Path(args.report_file).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
-	print(json.dumps(report, ensure_ascii=False, indent=2))
+		report_path = pathlib.Path(args.report_file)
+		report_path.parent.mkdir(parents=True, exist_ok=True)
+		report_path.write_text(json_report + "\n", encoding="utf-8")
 	return 0 if report.get("runtime_verified") else 1
 
 

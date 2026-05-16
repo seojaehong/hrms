@@ -1,6 +1,6 @@
 # Korea HRMS 1,000h autonomous runway correction
 
-Status: active source-of-truth correction after Gate 14 credential-apply checkpoint landed on `develop`; positive authenticated browser proof remains pending explicit secret plus human-approved execution.
+Status: active source-of-truth correction after Gate 14 credential-apply checkpoint and PR #210 kwargs/title fixes landed on `develop`; credential apply still requires an operator-provided secret plus explicit human approval, and the current known browser-proof blocker is session/cookie handoff where the browser probe remains `Guest` after REST login.
 
 ## Verified repo state
 
@@ -16,9 +16,11 @@ Status: active source-of-truth correction after Gate 14 credential-apply checkpo
 - Latest Gate 14 report-file hardening on `develop`: `b389fa336 test: harden Korea browser checkpoint report files`.
 - Latest Gate 14 command-failure reporting hardening on `develop`: `97344eb48 test: report Korea browser checkpoint command failures (#206)`.
 - Latest Gate 14 scope-report hardening on `develop`: `54b041d47 test: harden Korea browser checkpoint scope report (#208)`.
-- Latest Gate 14 checkpoint evidence: 2026-05-16 cron verification on `54b041d47` confirmed `FRAPPE_BROWSER_PASSWORD` is absent, so the credential/browser checkpoint failed closed before mutation and skipped browser verification while reporting whitespace-aware required-scope flags.
-- Latest Gate 14 test evidence: focused checkpoint tests passed 11 tests on `54b041d47`, including browser verifier command-failure and scope-report coverage.
-- Latest non-browser runtime-row evidence: the 2026-05-16 read-only runtime verification for company `노란봉투법 데모` on `97344eb48` initially detected a stale Docker Bench app checkout; after restarting only the `frappe` service, it returned `runtime_verified: true`, source/app checkout matched the mounted workspace, and positive scoped runtime rows were verified. This is runtime source/row evidence, not authenticated browser proof.
+- Latest Gate 14 kwargs/title hardening on `develop`: `75207e165 fix(gate14): bench kwargs Python literal + browser title Korean match (#210)`.
+- Latest Gate 14 checkpoint evidence: 2026-05-17 cron verification on `75207e165` without explicit `--human-approved` failed closed before mutation and skipped browser verification while preserving redacted scope/report metadata.
+- Latest Gate 14 test evidence: focused checkpoint tests passed 11 tests on `75207e165`, including browser verifier command-failure, scope-report, and Python-literal kwargs coverage.
+- Latest non-browser runtime-row evidence: the 2026-05-17 read-only runtime verification for company `노란봉투법 데모` on `75207e165` initially detected a stale Docker Bench app checkout; after restarting only the `frappe` service, it returned `runtime_verified: true`, source/app checkout matched the mounted workspace, and positive scoped runtime rows were verified. This is runtime source/row evidence, not authenticated browser proof.
+- Latest authenticated-browser blocker: PR #210 fixed the approved credential-apply kwargs shape and localized route-title wait, then recorded that the browser verifier still sees `window.frappe.session.user === "Guest"` after REST login. The next narrow Gate 14 slice is session/cookie handoff debugging.
 - Recent source-of-truth alignment includes Gate 14 credential-checkpoint state; do not treat a specific alignment commit or hardening commit as the product gate.
 - Gate 1 is merged to `develop`.
 - Gate 2 is merged to `develop`.
@@ -52,7 +54,7 @@ Two cron jobs remain the main autonomous runway:
 1. `frappe-hrms-1000h-saas-agentic-productization-runway`
    - cadence: every 30 minutes
    - role: implementation, tests, commit, push, PR URL
-   - current priority: complete Gate 14 with operator-provided secret plus explicit human-approved credential apply/browser proof
+   - current priority: complete Gate 14 by preserving the operator-approved credential boundary, then fix the authenticated browser session/cookie handoff so the verifier stops seeing `Guest` and returns positive read-only runtime proof
 2. `frappe-hrms-1000h-pdca-briefing-grill`
    - cadence: every 30 minutes
    - role: grill/checkpoint against docs, risks, stale assumptions, next gate
@@ -306,7 +308,7 @@ Evidence:
 Closeout discipline:
 - Treat Gate 12 as the browser-runtime verifier landing, not full positive authenticated browser proof.
 - Do not remove fixture fallback for static/no-runtime previews.
-- Gate 13 establishes a report-safe employee-linked credential handoff/apply path, but browser proof remains a separate next gate until the operator-supplied secret is applied and verified.
+- Gate 13 establishes a report-safe employee-linked credential handoff/apply path, but browser proof remains a separate Gate 14 concern: PR #210 fixed the kwargs/title blockers, and the remaining known issue is browser session/cookie handoff still showing `Guest` after REST login.
 
 ### Gate 13 — Demo employee browser credential handoff
 
@@ -333,7 +335,7 @@ Closeout discipline:
 
 ### Gate 14 — Credential apply checkpoint / authenticated browser proof gate
 
-Status: checkpoint infrastructure done and merged; live positive authenticated browser proof remains pending secret plus explicit human-approved execution.
+Status: checkpoint infrastructure and PR #210 kwargs/title fixes are done and merged; live positive authenticated browser proof remains blocked by session/cookie handoff after the guarded credential path, where the verifier still sees `Guest` after REST login.
 
 Goal:
 - Provide a cron-safe checkpoint that applies only the demo employee browser credential after both `FRAPPE_BROWSER_PASSWORD` and explicit human approval are present.
@@ -353,7 +355,9 @@ Evidence:
 - `develop` includes `b389fa336 test: harden Korea browser checkpoint report files`.
 - `develop` includes `97344eb48 test: report Korea browser checkpoint command failures (#206)`.
 - `develop` includes `54b041d47 test: harden Korea browser checkpoint scope report (#208)`.
-- `scripts/verify_korea_demo_browser_credential_apply.py` verifies the password env var and `--human-approved` flag before invoking `ensure_demo_browser_credential(..., human_approved=True)` through Docker Bench, rejects blank/whitespace-only passwords before apply, reports whitespace-aware required-scope availability flags, rejects blank required scope inputs before credential apply, tolerates Docker/Bench setup noise before the final JSON payload, creates parent directories for `--report-file`, writes UTF-8 JSON reports matching stdout, reports explicit apply/browser command-failure reasons, then runs `scripts/verify_korea_payroll_closing_browser_runtime.mjs` only if credential apply succeeds.
+- `develop` includes `75207e165 fix(gate14): bench kwargs Python literal + browser title Korean match (#210)`.
+- `scripts/verify_korea_demo_browser_credential_apply.py` verifies the password env var and `--human-approved` flag before invoking `ensure_demo_browser_credential(..., human_approved=True)` through Docker Bench, rejects blank/whitespace-only passwords before apply, reports whitespace-aware required-scope availability flags, rejects blank required scope inputs before credential apply, tolerates Docker/Bench setup noise before the final JSON payload, creates parent directories for `--report-file`, writes UTF-8 JSON reports matching stdout, reports explicit apply/browser command-failure reasons, sends Bench kwargs as a Python literal rather than JSON booleans, then runs `scripts/verify_korea_payroll_closing_browser_runtime.mjs` only if credential apply succeeds.
+- `scripts/verify_korea_payroll_closing_browser_runtime.mjs` accepts both `Korea Payroll Closing` and the localized `한국 급여 마감` route title before probing the read-only runtime payload.
 - `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit approval gating, redacted reports/commands, blank required-scope fail-closed behavior, scope-provided flag reporting, report-file artifact writing, successful mocked apply+browser verification, browser-skip behavior when credential apply fails, browser-command-failure reporting, and rejection of browser-positive output that omits the required read-only/human-approval/`assistant_only` safety metadata.
 - 2026-05-10 cron evidence without secret/approval returned `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
 - 2026-05-16 cron evidence on `2e17155dd` again failed closed before mutation without an approved credential apply: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
@@ -365,14 +369,17 @@ Evidence:
 - 2026-05-16 evidence on `b389fa336` confirms report-file artifact hardening is on `develop`; focused checkpoint tests passed 10 tests, the credential/browser checkpoint wrote a redacted JSON report artifact, and the live checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
 - 2026-05-16 evidence on `97344eb48` confirms browser command-failure reporting is on `develop`; focused checkpoint tests passed 11 tests, the credential/browser checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent, and no browser verification was attempted.
 - 2026-05-16 evidence on `54b041d47` confirms scope-report hardening is on `develop`; focused checkpoint tests passed 11 tests, the checkpoint reports whitespace-aware `site/company/base_url/username/chromium` availability flags, and the live checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
-- 2026-05-16 non-browser runtime evidence on `97344eb48` confirms the local Docker/Bench runtime is source-aligned and positive for scoped runtime rows after restarting only the `frappe` service (`runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, `fixture_fallback_required_until_positive_runtime_rows: false`). This is not authenticated browser proof.
+- 2026-05-17 evidence on `75207e165` confirms kwargs/title hardening is on `develop`; focused checkpoint tests passed 11 tests, the credential apply command now sends a Python-literal `{'human_approved': True}` to Bench, and the browser verifier accepts the localized `한국 급여 마감` title.
+- 2026-05-17 checkpoint evidence without explicit `--human-approved` failed closed before credential mutation because the human-approval flag was absent; browser verification was skipped and fixture fallback remains required for authenticated browser proof.
+- 2026-05-17 non-browser runtime evidence on `75207e165` confirms the local Docker/Bench runtime is source-aligned and positive for scoped runtime rows after restarting only the `frappe` service (`runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, `fixture_fallback_required_until_positive_runtime_rows: false`). This is not authenticated browser proof.
+- PR #210 records the remaining browser-proof blocker after the kwargs/title fixes: the browser verifier still sees `window.frappe.session.user === "Guest"` after REST login, so the next narrow Gate 14 task is session/cookie handoff debugging.
 - The post-checkpoint hardening keeps draft/review/audit runtime boundaries fail-closed against forged wrapper/provenance/status/scope data and recursive score/risk/probability/success-rate leakage, without adding payroll submit/approve/send/provider mutation.
 
 Closeout discipline:
 - Treat Gate 14 checkpoint infrastructure as safety/runtime harness progress, not live browser proof.
 - Do not pass `--human-approved` unless the operator has supplied both the secret and explicit approval for this runtime action.
 - Do not print, commit, or summarize the password value.
-- Positive closeout still requires `runtime_verified: true` from the browser verifier with read-only worklist rows, `requires_human_approval: true`, and `ai_role: assistant_only`.
+- Positive closeout still requires `runtime_verified: true` from the browser verifier with read-only worklist rows, `requires_human_approval: true`, and `ai_role: assistant_only`; the current known blocker is authenticated session/cookie handoff where the browser probe remains `Guest` after REST login.
 
 ## Guardrails
 
@@ -396,7 +403,7 @@ Expected deliverables:
 - use an operator-provided `FRAPPE_BROWSER_PASSWORD` value from the runtime environment without printing, committing, or summarizing the secret
 - run `scripts/verify_korea_demo_browser_credential_apply.py --human-approved` only after explicit approval is present
 - apply only the approved demo employee credential boundary with `ensure_demo_browser_credential(..., human_approved=True)`
-- rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`
+- rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`; first debug the post-#210 session/cookie handoff issue where the browser probe still sees `Guest` after REST login
 - prove the loaded UI executes only the allowed read-only Frappe methods and receives positive runtime worklist rows
 - preserve fixture fallback for static/no-runtime contexts
 - keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation

@@ -224,6 +224,10 @@ def summarize_apply_result(result: CommandResult, *, command: list[str], dry_run
 	}
 	if result.returncode == 0 and credential_ready and not (dry_run or apply_metadata_valid):
 		summary["reason"] = "credential apply safety metadata invalid"
+	elif result.returncode != 0:
+		summary["reason"] = "credential apply command failed"
+	elif not credential_ready:
+		summary["reason"] = "credential apply payload not ready"
 	return summary
 
 
@@ -254,6 +258,10 @@ def summarize_browser_result(result: CommandResult, *, command: list[str], dry_r
 	}
 	if result.returncode == 0 and payload_runtime_verified and not safety_metadata_valid:
 		summary["reason"] = "browser verifier safety metadata invalid"
+	elif result.returncode != 0:
+		summary["reason"] = "browser verifier command failed"
+	elif not payload_runtime_verified:
+		summary["reason"] = "browser verifier did not confirm runtime proof"
 	return summary
 
 

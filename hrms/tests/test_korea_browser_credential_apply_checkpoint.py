@@ -269,8 +269,43 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertEqual(len(commands), 1)
 		self.assertTrue(report["credential_apply"]["attempted"])
 		self.assertFalse(report["credential_apply"]["passed"])
+		self.assertEqual(report["credential_apply"]["reason"], "credential apply command failed")
 		self.assertFalse(report["browser_verification"]["attempted"])
 		self.assertFalse(report["runtime_verified"])
+		self.assertNotIn("runtime-secret", json.dumps(report))
+
+	def test_checkpoint_reports_browser_command_failure_reason(self):
+		def fake_run(command, **kwargs):
+			if command[0:2] == ["docker", "compose"]:
+				return self.mod.CommandResult(
+					returncode=0,
+					stdout=json.dumps({
+						"contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+						"runtime_action": "demo_credential_runtime_apply",
+						"requires_runtime_apply": False,
+						"credential_ready_for_browser_verifier": True,
+						"human_approval_verified": True,
+						"mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
+						"requires_human_approval": True,
+						"ai_role": "assistant_only",
+					}),
+					stderr="",
+				)
+			return self.mod.CommandResult(returncode=1, stdout="", stderr="browser failed")
+
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+			human_approved=True,
+			run_command=fake_run,
+		)
+
+		self.assertTrue(report["credential_apply"]["passed"])
+		self.assertTrue(report["browser_verification"]["attempted"])
+		self.assertFalse(report["browser_verification"]["passed"])
+		self.assertEqual(report["browser_verification"]["reason"], "browser verifier command failed")
+		self.assertFalse(report["runtime_verified"])
+		self.assertTrue(report["fixture_fallback_required"])
 		self.assertNotIn("runtime-secret", json.dumps(report))
 
 	def test_checkpoint_rejects_credential_apply_without_safety_metadata(self):

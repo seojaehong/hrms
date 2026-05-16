@@ -167,6 +167,16 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertNotIn("runtime-secret", serialized)
 		self.assertEqual(commands[0]["kwargs"]["env"]["FRAPPE_BROWSER_PASSWORD"], "runtime-secret")
 		self.assertEqual(commands[1]["kwargs"]["env"]["FRAPPE_BROWSER_PASSWORD"], "runtime-secret")
+		# bench `execute --kwargs` parses the value as a Python literal, NOT JSON.
+		# JSON `{"human_approved": true}` raises `NameError: true` on the bench side.
+		# Verify the credential apply command passes a Python dict literal (`True`, capital T),
+		# not a JSON `true`, inside the bash -lc payload. shlex/bash escaping may inject quote
+		# sequences (`'"'"'`) between characters, so check for the unescaped tokens after a
+		# best-effort normalization.
+		bench_payload = commands[0]["command"][-1]
+		normalized = bench_payload.replace("'\"'\"'", "'").replace("\\'", "'")
+		self.assertIn("'human_approved': True", normalized)
+		self.assertNotIn('"human_approved": true', bench_payload)
 
 	def test_checkpoint_accepts_noisy_stdout_wrapping_final_json_payloads(self):
 		def fake_run(command, **kwargs):

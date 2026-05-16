@@ -92,7 +92,9 @@ export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company
 			}
 			await cdp.send("Page.navigate", { url: `${baseUrl}${KOREA_PAYROLL_CLOSING_BROWSER_ROUTE}` })
 			await waitForRuntime(cdp)
-			await waitForSelectorText(cdp, "body", /Korea Payroll Closing/i)
+			// Page title is localized: Korean shows "한국 급여 마감", English shows "Korea Payroll Closing".
+			// Match both so the verifier doesn't fail closed on the default Korean rendering.
+			await waitForSelectorText(cdp, "body", /Korea Payroll Closing|한국 급여 마감/i)
 			await waitForFrappe(cdp)
 			const probeSource = buildKoreaPayrollClosingBrowserProbe({ company })
 			const evaluated = await cdp.send("Runtime.evaluate", {

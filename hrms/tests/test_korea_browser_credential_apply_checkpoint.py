@@ -137,7 +137,8 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 						"mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
 						"requires_human_approval": True,
 						"ai_role": "assistant_only",
-					}) + "\n",
+						"safety_metadata": {"source": "credential_apply"},
+					}) + "\npost-json bench notice\n",
 					stderr="",
 				)
 			return self.mod.CommandResult(
@@ -151,7 +152,8 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 					"mutation_boundary": "read_only_no_save_submit_approve_send_provider",
 					"runtime_verified": True,
 					"fixture_fallback_required": False,
-				}) + "\n",
+					"safety_metadata": {"source": "browser_verifier"},
+				}) + "\npost-json browser notice\n",
 				stderr="",
 			)
 

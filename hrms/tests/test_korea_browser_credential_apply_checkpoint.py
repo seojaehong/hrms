@@ -70,6 +70,41 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertFalse(report["runtime_verified"])
 		self.assertTrue(report["fixture_fallback_required"])
 
+	def test_checkpoint_fails_closed_when_required_scope_input_blank(self):
+		valid_scope = {
+			"site": "hrms.localhost",
+			"company": "노란봉투법 데모",
+			"base_url": "http://hrms.localhost:8000",
+			"username": "demo.hr.manager@node.pe.kr",
+			"chromium": "chromium-browser",
+		}
+		for field in valid_scope:
+			with self.subTest(field=field):
+				commands = []
+
+				def fake_run(command, **kwargs):
+					commands.append(command)
+					return self.mod.CommandResult(returncode=0, stdout="{}", stderr="")
+
+				scope = {**valid_scope, field: "  \t\n"}
+				report = self.mod.verify_demo_browser_credential_apply(
+					repo_root=self.repo_root,
+					environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+					human_approved=True,
+					run_command=fake_run,
+					**scope,
+				)
+
+				self.assertEqual(commands, [])
+				self.assertFalse(report["credential_apply"]["attempted"])
+				self.assertFalse(report["credential_apply"]["passed"])
+				self.assertEqual(report["credential_apply"]["reason"], f"{field} must be a non-empty string")
+				self.assertFalse(report["browser_verification"]["attempted"])
+				self.assertEqual(report["browser_verification"]["reason"], "credential apply not ready")
+				self.assertFalse(report["runtime_verified"])
+				self.assertTrue(report["fixture_fallback_required"])
+				self.assertNotIn("runtime-secret", json.dumps(report))
+
 	def test_checkpoint_builds_redacted_apply_and_browser_commands(self):
 		commands = []
 

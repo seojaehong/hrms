@@ -5,7 +5,9 @@ import importlib.util
 import json
 import os
 import pathlib
+import subprocess
 import sys
+import tempfile
 import unittest
 
 SCRIPT_PATH = pathlib.Path(__file__).resolve().parents[2] / "scripts" / "verify_korea_demo_browser_credential_apply.py"
@@ -303,6 +305,40 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertFalse(report["browser_verification"]["attempted"])
 		self.assertFalse(report["runtime_verified"])
 		self.assertNotIn("runtime-secret", json.dumps(report))
+
+	def test_cli_report_file_creates_parent_directory_and_writes_utf8_report(self):
+		with tempfile.TemporaryDirectory() as temp_dir:
+			report_path = pathlib.Path(temp_dir) / "nested" / "checkpoint" / "report.json"
+			completed = subprocess.run(
+				[
+					sys.executable,
+					str(SCRIPT_PATH),
+					"--repo-root",
+					str(self.repo_root),
+					"--site",
+					"hrms.localhost",
+					"--company",
+					"노란봉투법 데모",
+					"--base-url",
+					"http://127.0.0.1:8000",
+					"--report-file",
+					str(report_path),
+				],
+				cwd=self.repo_root,
+				env={**os.environ, "FRAPPE_BROWSER_PASSWORD": ""},
+				text=True,
+				capture_output=True,
+				check=False,
+			)
+
+			self.assertEqual(completed.returncode, 1)
+			self.assertEqual(completed.stderr, "")
+			self.assertTrue(report_path.exists())
+			report = json.loads(report_path.read_text(encoding="utf-8"))
+			stdout_report = json.loads(completed.stdout)
+			self.assertEqual(stdout_report, report)
+			self.assertEqual(report["scope"]["company_provided"], True)
+			self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD missing")
 
 
 if __name__ == "__main__":

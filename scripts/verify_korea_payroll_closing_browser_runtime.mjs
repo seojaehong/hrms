@@ -15,6 +15,7 @@ const MUTATION_BOUNDARY = "read_only_no_save_submit_approve_send_provider"
 const READ_ONLY_RUNTIME_METHODS = new Set([
 	"frappe.auth.get_logged_user",
 	"hrms.api.get_current_employee_info",
+	"hrms.api.get_current_user_info",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 ])

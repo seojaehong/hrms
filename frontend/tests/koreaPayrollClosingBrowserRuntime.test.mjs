@@ -123,6 +123,10 @@ const observed = assertReadOnlyBrowserRuntimeRequests([
 		postData: "",
 	},
 	{
+		url: "http://hrms.localhost:8000/api/method/hrms.api.get_current_user_info",
+		postData: "",
+	},
+	{
 		url: "http://hrms.localhost:8000/api/method/hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 		postData: "company=%EB%85%B8%EB%9E%80%EB%B4%89%ED%88%AC%EB%B2%95+%EB%8D%B0%EB%AA%A8",
 	},
@@ -134,6 +138,7 @@ const observed = assertReadOnlyBrowserRuntimeRequests([
 assert.deepEqual(observed.sort(), [
 	"frappe.auth.get_logged_user",
 	"hrms.api.get_current_employee_info",
+	"hrms.api.get_current_user_info",
 	"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
 ])

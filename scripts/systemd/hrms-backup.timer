@@ -1,0 +1,14 @@
+[Unit]
+Description=한국 HRMS 자동 백업 타이머 (매일 02:00 KST)
+Documentation=file:///home/ubuntu/workspaces/seojaehong-hrms-100h/docs/operations/backup_recovery.md
+
+[Timer]
+# 매일 02:00 실행 (서버 시간이 KST로 설정된 경우)
+OnCalendar=*-*-* 02:00:00
+
+# 서버 재시작 후 놓친 실행을 복구하는 최대 지연 시간
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target

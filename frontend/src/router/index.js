@@ -8,6 +8,7 @@ import employeeAdvanceRoutes from "./advances"
 import salarySlipRoutes from "./salary_slips"
 import koreaApprovalInboxRoutes from "./koreaApprovalInbox"
 import koreaRoutes from "./korea"
+import koreaSubscriptionRoutes from "./korea_subscription"
 
 const routes = [
 	{
@@ -136,6 +137,7 @@ const routes = [
 	...salarySlipRoutes,
 	...koreaApprovalInboxRoutes,
 	...koreaRoutes,
+	...koreaSubscriptionRoutes,
 ]
 
 const router = createRouter({

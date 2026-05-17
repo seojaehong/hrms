@@ -1,0 +1,37 @@
+[Unit]
+Description=한국 HRMS 자동 백업 (Korea HRMS Auto Backup)
+Documentation=file:///home/ubuntu/workspaces/seojaehong-hrms-100h/docs/operations/backup_recovery.md
+After=network.target mariadb.service
+
+[Service]
+Type=oneshot
+User=frappe
+Group=frappe
+
+# 환경변수 파일 (옵션: /etc/hrms-backup.env 생성 후 활성화)
+# EnvironmentFile=/etc/hrms-backup.env
+
+Environment=BENCH_PATH=/home/frappe/frappe-bench
+Environment=SITE_NAME=hrms.localhost
+Environment=BACKUP_DIR=/home/ubuntu/backups/hrms
+
+# S3 업로드가 필요하면 아래 주석 해제 및 값 설정:
+# Environment=BACKUP_S3_BUCKET=s3://your-bucket-name
+# Environment=AWS_ACCESS_KEY_ID=your-key-id
+# Environment=AWS_SECRET_ACCESS_KEY=your-secret
+# Environment=AWS_DEFAULT_REGION=ap-northeast-2
+
+ExecStart=/bin/bash /home/ubuntu/workspaces/seojaehong-hrms-100h/scripts/backup_korea_hrms.sh
+
+# S3 업로드 활성화 시:
+# ExecStart=/bin/bash /home/ubuntu/workspaces/seojaehong-hrms-100h/scripts/backup_korea_hrms.sh --upload
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hrms-backup
+
+# 타임아웃: 대용량 파일 백업을 위해 충분히 확보
+TimeoutStartSec=3600
+
+[Install]
+WantedBy=multi-user.target

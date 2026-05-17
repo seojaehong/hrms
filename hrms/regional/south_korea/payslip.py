@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -62,10 +63,12 @@ def build_korea_wage_statement_preview(*, salary_slip: dict[str, Any], actor: st
 	source_name = _require_text(salary_slip.get("name"), "salary_slip.name")
 	employee = _require_text(salary_slip.get("employee"), "salary_slip.employee")
 	company = _require_text(salary_slip.get("company"), "salary_slip.company")
-	period_start = _require_text(salary_slip.get("period_start"), "salary_slip.period_start")
-	period_end = _require_text(salary_slip.get("period_end"), "salary_slip.period_end")
-	if period_start > period_end:
+	period_start_date = _require_iso_date(salary_slip.get("period_start"), "salary_slip.period_start")
+	period_end_date = _require_iso_date(salary_slip.get("period_end"), "salary_slip.period_end")
+	if period_start_date > period_end_date:
 		raise ValueError("salary_slip.period_start cannot be after salary_slip.period_end")
+	period_start = period_start_date.isoformat()
+	period_end = period_end_date.isoformat()
 
 	earnings = _normalize_wage_statement_lines(salary_slip.get("earnings"), "earnings")
 	deductions = _normalize_wage_statement_lines(salary_slip.get("deductions", []), "deductions")
@@ -146,6 +149,21 @@ def _require_text(value: Any, field: str) -> str:
 	if not value:
 		raise ValueError(f"{field} is required")
 	return value
+
+
+def _require_iso_date(value: Any, field: str) -> date:
+	if not isinstance(value, str):
+		raise ValueError(f"{field} must be an ISO date string")
+	text = value.strip()
+	if len(text) != 10:
+		raise ValueError(f"{field} must be an ISO date string")
+	try:
+		parsed = date.fromisoformat(text)
+	except ValueError as exc:
+		raise ValueError(f"{field} must be an ISO date string") from exc
+	if parsed.isoformat() != text:
+		raise ValueError(f"{field} must be an ISO date string")
+	return parsed
 
 
 def _coerce_integer_krw(value: Any, field: str) -> int:

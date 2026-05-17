@@ -84,7 +84,26 @@ class TestKoreaPayslip(unittest.TestCase):
 		self.assertEqual(statement["mutation_boundary"], "preview_only_no_submit_approve_send_provider_call")
 
 	def test_wage_statement_preview_rejects_fractional_or_exponent_amounts(self):
-		base = {
+		base = self._base_salary_slip()
+		for bad_amount in (True, "1e6", "1000.5", "Infinity"):
+			payload = {**base, "earnings": [{"label": "기본급", "amount": bad_amount, "basis": "월 고정급"}]}
+			with self.subTest(bad_amount=bad_amount):
+				with self.assertRaises(ValueError):
+					self.mod.build_korea_wage_statement_preview(salary_slip=payload, actor="hr.manager@example.com")
+
+	def test_wage_statement_preview_rejects_invalid_period_dates(self):
+		for bad_start, bad_end in (
+			("2026-02-31", "2026-03-31"),
+			("2026-2-01", "2026-10-01"),
+			("2026-06-01", "2026-05-31"),
+		):
+			payload = {**self._base_salary_slip(), "period_start": bad_start, "period_end": bad_end}
+			with self.subTest(period_start=bad_start, period_end=bad_end):
+				with self.assertRaises(ValueError):
+					self.mod.build_korea_wage_statement_preview(salary_slip=payload, actor="hr.manager@example.com")
+
+	def _base_salary_slip(self):
+		return {
 			"name": "SAL-2026-05-0001",
 			"employee": "HR-EMP-0001",
 			"company": "노란봉투법 데모",
@@ -93,11 +112,6 @@ class TestKoreaPayslip(unittest.TestCase):
 			"earnings": [{"label": "기본급", "amount": "3000000", "basis": "월 고정급"}],
 			"deductions": [],
 		}
-		for bad_amount in (True, "1e6", "1000.5", "Infinity"):
-			payload = {**base, "earnings": [{"label": "기본급", "amount": bad_amount, "basis": "월 고정급"}]}
-			with self.subTest(bad_amount=bad_amount):
-				with self.assertRaises(ValueError):
-					self.mod.build_korea_wage_statement_preview(salary_slip=payload, actor="hr.manager@example.com")
 
 
 if __name__ == "__main__":

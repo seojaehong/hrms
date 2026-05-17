@@ -94,6 +94,10 @@ def verify_demo_browser_credential_apply(
 		report["credential_apply"] = skipped_step(scope_error)
 		report["browser_verification"] = skipped_step("credential apply not ready")
 		return report
+	if browser_report_file is not None and not _has_non_empty_text(browser_report_file):
+		report["credential_apply"] = skipped_step("browser_report_file must be a non-empty string")
+		report["browser_verification"] = skipped_step("credential apply not ready")
+		return report
 
 	if password is None:
 		report["credential_apply"] = skipped_step("FRAPPE_BROWSER_PASSWORD missing")

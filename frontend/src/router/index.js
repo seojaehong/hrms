@@ -87,7 +87,22 @@ const routes = [
 				name: "KoreaMobileCheckin",
 				component: () => import("@/views/KoreaMobileCheckin.vue"),
 			},
+			{
+				path: "/dashboard/korea-ai-chat",
+				name: "KoreaAIChat",
+				component: () => import("@/views/KoreaAIChat.vue"),
+			},
 		],
+	},
+	{
+		path: "/search",
+		name: "KoreaGlobalSearch",
+		component: () => import("@/views/KoreaGlobalSearch.vue"),
+	},
+	{
+		path: "/offline",
+		name: "Offline",
+		component: () => import("@/views/Offline.vue"),
 	},
 	{
 		path: "/login",

@@ -1,5 +1,9 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { clientsClaim } from "workbox-core"
+import { registerRoute } from "workbox-routing"
+import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from "workbox-strategies"
+import { CacheableResponsePlugin } from "workbox-cacheable-response"
+import { ExpirationPlugin } from "workbox-expiration"
 
 import { initializeApp } from "firebase/app"
 import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw"
@@ -9,6 +13,69 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 // Clean up old caches
 cleanupOutdatedCaches()
+
+// ── Offline fallback 페이지 등록 ─────────────────────────────────────────────
+// vite build --base=/assets/hrms/frontend/ 로 배포 시 public/ 파일은
+// /assets/hrms/frontend/ 하위에 서빙됨. SW URL 패턴과 동일하게 맞춤.
+const OFFLINE_URL = "/assets/hrms/frontend/offline.html"
+const OFFLINE_CACHE = "nbp-hrms-offline-v1"
+
+self.addEventListener("install", (event) => {
+	event.waitUntil(
+		caches.open(OFFLINE_CACHE).then((cache) => {
+			return cache.add(new Request(OFFLINE_URL, { cache: "reload" }))
+		})
+	)
+})
+
+// ── 정적 자산 Cache-First (이미지, 폰트, CSS, JS) ─────────────────────────────
+registerRoute(
+	({ request }) =>
+		request.destination === "image" ||
+		request.destination === "font" ||
+		request.destination === "style" ||
+		request.destination === "script",
+	new CacheFirst({
+		cacheName: "nbp-hrms-assets-v1",
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+			new ExpirationPlugin({ maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 }),
+		],
+	})
+)
+
+// ── 한국 모듈 읽기 전용 API — Stale-While-Revalidate ─────────────────────────
+// /api/method/hrms.* 경로 — 데이터 최신성보다 응답 속도 우선
+registerRoute(
+	({ url }) =>
+		url.pathname.startsWith("/api/method/hrms.") ||
+		url.pathname.startsWith("/api/resource/"),
+	new StaleWhileRevalidate({
+		cacheName: "nbp-hrms-api-v1",
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+			new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 60 * 60 }),
+		],
+	})
+)
+
+// ── 네비게이션 요청 — Network-First + offline fallback ───────────────────────
+// NetworkFirst 핸들러가 실패 시 offline.html 서빙
+registerRoute(
+	({ request }) => request.mode === "navigate",
+	async ({ event }) => {
+		try {
+			return await new NetworkFirst({
+				cacheName: "nbp-hrms-pages-v1",
+				plugins: [new CacheableResponsePlugin({ statuses: [0, 200] })],
+				networkTimeoutSeconds: 5,
+			}).handle({ event, request: event.request })
+		} catch {
+			const cache = await caches.open(OFFLINE_CACHE)
+			return (await cache.match(OFFLINE_URL)) || Response.error()
+		}
+	}
+)
 
 const jsonConfig = new URL(location).searchParams.get("config")
 

@@ -10,6 +10,14 @@
 							</h2>
 						</div>
 						<div class="flex flex-row items-center gap-3 ml-auto">
+							<!-- 통합 검색 버튼 (Cmd/Ctrl+K) -->
+							<router-link
+								:to="{ name: 'KoreaGlobalSearch' }"
+								class="flex flex-col items-center text-gray-600 hover:text-gray-900 transition"
+								:aria-label="__('통합 검색')"
+							>
+								<SearchIcon class="h-6 w-6" />
+							</router-link>
 							<router-link
 								:to="{ name: 'Notifications' }"
 								v-slot="{ navigate }"
@@ -53,10 +61,14 @@ import { IonHeader, IonContent, IonPage } from "@ionic/vue"
 import { FeatherIcon, Avatar } from "frappe-ui"
 
 import { unreadNotificationsCount } from "@/data/notifications"
+import SearchIcon from "@/components/icons/SearchIcon.vue"
 
-import { inject } from "vue"
+import { inject, onMounted, onBeforeUnmount } from "vue"
+import { useRouter } from "vue-router"
 
 const user = inject("$user")
+const __ = inject("$translate")
+const router = useRouter()
 
 const props = defineProps({
 	pageTitle: {
@@ -64,5 +76,21 @@ const props = defineProps({
 		required: false,
 		default: "",
 	},
+})
+
+// Cmd/Ctrl+K → /search 라우트로 이동
+function handleGlobalKeydown(e) {
+	if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+		e.preventDefault()
+		router.push({ name: "KoreaGlobalSearch" })
+	}
+}
+
+onMounted(() => {
+	window.addEventListener("keydown", handleGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+	window.removeEventListener("keydown", handleGlobalKeydown)
 })
 </script>

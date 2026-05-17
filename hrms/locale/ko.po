@@ -30,11 +30,11 @@ msgstr ""
 
 #: hrms/hr/report/employee_hours_utilization_based_on_timesheet/employee_hours_utilization_based_on_timesheet.py:86
 msgid "% Utilization (B + NB) / T"
-msgstr "활용률 (청구+비청구) / 전체"
+msgstr "활용률 % (청구+비청구) / 전체"
 
 #: hrms/hr/report/employee_hours_utilization_based_on_timesheet/employee_hours_utilization_based_on_timesheet.py:92
 msgid "% Utilization (B / T)"
-msgstr "활용률 (청구 / 전체)"
+msgstr "활용률 % (청구 / 전체)"
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:183
 msgid "'employee_field_value' and 'timestamp' are required."

@@ -150,7 +150,7 @@ Employment Contract      ←표준 + → employment_contract
 
 ### 화면 3: 한국 급여마감 대시보드 ⭐ (메인)
 - URL: https://hrms.safeclaw.kr/hrms/dashboard/korea-payroll-closing
-- 보여줄 것: 
+- 보여줄 것:
   - **사업장별 마감 진행률** (서울 본사/강남 매장)
   - **차단요인 (blocker) 목록** — 4대보험 미가입자, 누락 근태 등
   - **read-only fixture fallback** — 데이터 없을 때 fallback UI 표시

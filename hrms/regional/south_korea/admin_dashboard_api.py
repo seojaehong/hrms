@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover - direct-run no-bench mode
 
 
 def _whitelist(fn):
-	if frappe is None:
+	if frappe is None or not hasattr(frappe, "whitelist"):
 		return fn
 	return frappe.whitelist()(fn)
 

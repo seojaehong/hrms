@@ -695,7 +695,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "서울 본사",
         "base": 4200000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "서울 본사",
             "bank_name": "우리은행",
             "bank_ac_no": "1002-000-111111",
@@ -721,7 +721,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "서울 본사",
         "base": 2700000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "서울 본사",
             "bank_name": "카카오뱅크",
             "bank_ac_no": "3333-00-2222222",
@@ -747,7 +747,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "서울 본사",
         "base": 3800000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "서울 본사",
             "bank_name": "국민은행",
             "bank_ac_no": "110-0003-3333",
@@ -774,7 +774,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "강남 매장",
         "base": 2500000,
         "custom": {
-            "employment_type_kr": "파트타임",
+            "employment_type_kr": "Part-time",
             "work_location_name": "강남 매장",
             "bank_name": "신한은행",
             "bank_ac_no": "110-0444-4444",
@@ -799,7 +799,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "강남 매장",
         "base": 3200000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "강남 매장",
             "bank_name": "하나은행",
             "bank_ac_no": "200-0555-5555",
@@ -825,7 +825,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "부산 지사",
         "base": 4500000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "부산 지사",
             "bank_name": "부산은행",
             "bank_ac_no": "201-0666-6666",
@@ -850,7 +850,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "부산 지사",
         "base": 2600000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "부산 지사",
             "bank_name": "국민은행",
             "bank_ac_no": "110-0777-7777",
@@ -875,7 +875,7 @@ EXTENDED_EMPLOYEE_SPECS = [
         "branch": "부산 지사",
         "base": 3600000,
         "custom": {
-            "employment_type_kr": "정규직",
+            "employment_type_kr": "Regular",
             "work_location_name": "부산 지사",
             "bank_name": "신한은행",
             "bank_ac_no": "140-0888-8888",
@@ -1115,7 +1115,15 @@ def ensure_wave4_payroll_closing_drafts(company: str):
             "requires_human_approval": True,
             "ai_role": "assistant_only",
             "docstatus": 0,
-            "payload": json.dumps({"session": {"name": draft_name, "status": "draft"}}, ensure_ascii=False),
+            "payload": json.dumps({"session": {
+                "contract_type": "korea_payroll_closing_session_v1",
+                "name": draft_name,
+                "company": company_name,
+                "workplace": branch,
+                "period_start": period_start,
+                "period_end": period_end,
+                "status": "draft",
+            }}, ensure_ascii=False),
             "audit_preview": json.dumps(audit_preview, ensure_ascii=False),
         }
         doc, _created = ensure_doc(
@@ -1207,12 +1215,14 @@ def seed_korea_demo_wave4(company_name: str, holiday_list_name: str, salary_stru
             "annual_leave_days": spec.get("annual_leave_days", 15),
         })
 
-        # Salary structure assignment
+        # Salary structure assignment — use date_of_joining as from_date
+        _emp_doj = str(emp_doc.date_of_joining) if emp_doc.date_of_joining else "2026-01-01"
         ensure_salary_structure_assignment(
             emp_doc.name,
             company_name,
             salary_structure_name,
             base=spec.get("base", 3000000),
+            from_date=_emp_doj,
         )
 
         # Leave allocation (Annual Leave)
@@ -1384,7 +1394,10 @@ def seed_korea_demo():
     (created_list if was_created else updated_list).append(f"Salary Structure::{structure.name}")
 
     for employee in employee_names:
-        doc, created_assignment = ensure_salary_structure_assignment(employee, company.name, structure.name)
+        # Use the employee's date_of_joining as from_date to avoid validation error
+        emp_doc = frappe.get_doc("Employee", employee)
+        doj = str(emp_doc.date_of_joining) if emp_doc.date_of_joining else "2026-01-01"
+        doc, created_assignment = ensure_salary_structure_assignment(employee, company.name, structure.name, from_date=doj)
         (created_list if created_assignment else updated_list).append(f"Salary Structure Assignment::{doc.name}")
 
     # ── Wave 4 extension ─────────────────────────────────────────────────
@@ -1418,6 +1431,257 @@ def seed_korea_demo():
     }
     print(json.dumps(summary, ensure_ascii=False, default=str, indent=2))
     return summary
+
+
+# ---------------------------------------------------------------------------
+# Phase 2-A Demo Employee Roster (framework-free)
+# ---------------------------------------------------------------------------
+
+_DEMO_EMPLOYEE_ROSTER = [
+    {
+        "user": "demo.hr.manager@node.pe.kr",
+        "first_name": "민지",
+        "last_name": "김",
+        "gender": "Female",
+        "dob": "1992-03-15",
+        "doj": "2024-03-01",
+        "department": "운영",
+        "designation": "HR Manager",
+        "custom": {
+            "employment_type_kr": "Regular",
+            "work_location_name": "서울 본사",
+            "cell_number": "010-1000-1000",
+        },
+    },
+    {
+        "user": "demo.store@node.pe.kr",
+        "first_name": "현우",
+        "last_name": "박",
+        "gender": "Male",
+        "dob": "1996-07-02",
+        "doj": "2025-06-01",
+        "department": "매장운영",
+        "designation": "Store Supervisor",
+        "custom": {
+            "employment_type_kr": "Regular",
+            "work_location_name": "강남 매장",
+            "cell_number": "010-2000-2000",
+        },
+    },
+    {
+        "user": "demo.accounting@node.pe.kr",
+        "first_name": "서연",
+        "last_name": "이",
+        "gender": "Female",
+        "dob": "1990-11-28",
+        "doj": "2023-01-02",
+        "department": "경리",
+        "designation": "Accountant",
+        "custom": {
+            "employment_type_kr": "Regular",
+            "work_location_name": "서울 본사",
+            "cell_number": "010-3000-3000",
+        },
+    },
+    {
+        "user": "demo.ops1@node.pe.kr",
+        "first_name": "준혁",
+        "last_name": "최",
+        "gender": "Male",
+        "dob": "1994-05-10",
+        "doj": "2024-07-01",
+        "department": "물류",
+        "designation": "Operations Staff",
+        "custom": {
+            "employment_type_kr": "Fixed-term",
+            "work_location_name": "부산 지사",
+            "cell_number": "010-4000-4000",
+        },
+    },
+    {
+        "user": "demo.ops2@node.pe.kr",
+        "first_name": "지수",
+        "last_name": "한",
+        "gender": "Female",
+        "dob": "1998-02-14",
+        "doj": "2025-03-01",
+        "department": "물류",
+        "designation": "Operations Staff",
+        "custom": {
+            "employment_type_kr": "Fixed-term",
+            "work_location_name": "부산 지사",
+            "cell_number": "010-5000-5000",
+        },
+    },
+    {
+        "user": "demo.parttime1@node.pe.kr",
+        "first_name": "유진",
+        "last_name": "오",
+        "gender": "Female",
+        "dob": "2000-08-20",
+        "doj": "2026-01-15",
+        "department": "매장운영",
+        "designation": "Part-time Staff",
+        "custom": {
+            "employment_type_kr": "Part-time",
+            "work_location_name": "강남 매장",
+            "cell_number": "010-6000-6000",
+        },
+    },
+    {
+        "user": "demo.parttime2@node.pe.kr",
+        "first_name": "도현",
+        "last_name": "윤",
+        "gender": "Male",
+        "dob": "2001-04-05",
+        "doj": "2026-02-01",
+        "department": "매장운영",
+        "designation": "Part-time Staff",
+        "custom": {
+            "employment_type_kr": "Part-time",
+            "work_location_name": "강남 매장",
+            "cell_number": "010-7000-7000",
+        },
+    },
+    {
+        "user": "demo.busan1@node.pe.kr",
+        "first_name": "수빈",
+        "last_name": "장",
+        "gender": "Female",
+        "dob": "1993-12-03",
+        "doj": "2023-09-01",
+        "department": "영업",
+        "designation": "Sales Staff",
+        "custom": {
+            "employment_type_kr": "Regular",
+            "work_location_name": "부산 지사",
+            "cell_number": "010-8000-8000",
+        },
+    },
+    {
+        "user": "demo.busan2@node.pe.kr",
+        "first_name": "태양",
+        "last_name": "정",
+        "gender": "Male",
+        "dob": "1997-06-22",
+        "doj": "2024-11-01",
+        "department": "영업",
+        "designation": "Sales Staff",
+        "custom": {
+            "employment_type_kr": "Fixed-term",
+            "work_location_name": "부산 지사",
+            "cell_number": "010-9000-9000",
+        },
+    },
+    {
+        "user": "demo.admin@node.pe.kr",
+        "first_name": "하은",
+        "last_name": "강",
+        "gender": "Female",
+        "dob": "1991-09-17",
+        "doj": "2022-04-01",
+        "department": "경영지원",
+        "designation": "Admin Manager",
+        "custom": {
+            "employment_type_kr": "Regular",
+            "work_location_name": "서울 본사",
+            "cell_number": "010-1001-0001",
+        },
+    },
+]
+
+
+def build_demo_employee_roster() -> list[dict]:
+    """데모 직원 명단 반환 — framework-free, 실제 DB mutation 없음.
+
+    반환 목록:
+    - 10명 이상의 한국 중소기업 페르소나
+    - 3개 이상의 근무지
+    - Regular / Fixed-term / Part-time 고용 형태 포함
+    - 비밀번호 / 점수 / 위험도 등 민감 정보 미포함
+    """
+    import copy as _copy
+    return [_copy.deepcopy(row) for row in _DEMO_EMPLOYEE_ROSTER]
+
+
+# ---------------------------------------------------------------------------
+# Phase 2-A Demo Browser Credential Handoff + Runtime Apply
+# ---------------------------------------------------------------------------
+
+_DEMO_BROWSER_USERNAME = "demo.hr.manager@node.pe.kr"
+_DEMO_ALLOWED_USERNAMES = {_DEMO_BROWSER_USERNAME}
+
+
+def build_demo_browser_credential_handoff() -> dict:
+    """데모 브라우저 자격증명 핸드오프 dict 반환 — framework-free, 실제 mutation 없음.
+
+    비밀번호나 점수 등 민감 정보를 포함하지 않습니다.
+    """
+    return {
+        "contract_type": "korea_demo_browser_credential_handoff_v1",
+        "runtime_action": "demo_credential_handoff_only",
+        "requires_runtime_apply": False,
+        "requires_human_approval": True,
+        "ai_role": "assistant_only",
+        "username": _DEMO_BROWSER_USERNAME,
+        "employee_link_required": True,
+        "password_env_var": "FRAPPE_BROWSER_PASSWORD",
+        "mutation_boundary": "credential_handoff_only_no_payroll_submit_approve_send_provider_call",
+        "note": "Call ensure_demo_browser_credential with human_approved=True to apply.",
+    }
+
+
+def ensure_demo_browser_credential(
+    *,
+    password: str,
+    human_approved: bool = False,
+    username: str = _DEMO_BROWSER_USERNAME,
+) -> dict:
+    """데모 브라우저 자격증명 적용 — human_approved=True 게이트 이후에만 실행.
+
+    frappe.db.exists()로 사용자 및 활성 직원 연결 여부를 검사합니다.
+    """
+    if not human_approved:
+        raise ValueError("human_approved must be True before credential runtime apply")
+
+    if username not in _DEMO_ALLOWED_USERNAMES:
+        raise ValueError(
+            f"username must be the approved demo browser user: {_DEMO_BROWSER_USERNAME!r}"
+        )
+
+    # Verify Frappe user exists
+    if not frappe.db.exists("User", username):
+        raise ValueError(f"Frappe user {username!r} does not exist")
+
+    # Verify active employee linked to this user
+    if not frappe.db.exists("Employee", {"user_id": username, "status": "Active"}):
+        raise ValueError(f"active employee linked to {username} is required")
+
+    # Apply credential
+    update_password(username, password)
+
+    return {
+        "contract_type": "korea_demo_browser_credential_runtime_apply_v1",
+        "runtime_action": "demo_credential_runtime_apply",
+        "requires_runtime_apply": True,
+        "requires_human_approval": True,
+        "human_approval_verified": True,
+        "ai_role": "assistant_only",
+        "username": username,
+        "employee_link_verified": True,
+        "credential_ready_for_browser_verifier": True,
+        "password_env_var": "FRAPPE_BROWSER_PASSWORD",
+        "mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
+    }
+
+
+# update_password reference — overrideable in tests
+try:
+    from frappe.utils.password import update_password
+except Exception:
+    def update_password(username: str, password: str) -> None:  # type: ignore[misc]
+        """Stub for non-Frappe environments."""
+        pass
 
 
 # ---------------------------------------------------------------------------

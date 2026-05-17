@@ -415,20 +415,19 @@ Closeout discipline:
 
 ## Next action
 
-Proceed with the remaining Gate 14 positive proof from `develop` only when the runtime environment supplies the operator-approved secret and explicit approval:
+Operator override: Gate 14 positive credential/browser proof is being handled separately by the operator. The autonomous runway should proceed with Gate 15 unless a later instruction explicitly re-enables Gate 14 work.
+
+Proceed with Gate 15 from the current Korean localization/demo-readiness branch:
 
 ```text
-test/korea-payroll-closing-browser-runtime-positive-credential
+feat/hrms-korean-locale-batch1
 ```
 
 Expected deliverables:
-- use an operator-provided `FRAPPE_BROWSER_PASSWORD` value from the runtime environment without printing, committing, or summarizing the secret
-- run `scripts/verify_korea_demo_browser_credential_apply.py --human-approved` only after explicit approval is present
-- apply only the approved demo employee credential boundary with `ensure_demo_browser_credential(..., human_approved=True)`
-- rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` against local Docker/Bench until it returns `runtime_verified: true`; validate whether the current session-handoff/bootstrap-call/report-file/blank-scope hardening now produces an authenticated read-only browser proof
-- prove the loaded UI executes only the allowed read-only Frappe methods and receives positive runtime worklist rows
-- preserve fixture fallback for static/no-runtime contexts
-- keep evidence/session views read-only: no save/approve/send/payroll submit/provider mutation
-- keep human-approval and `assistant_only` boundaries visible
-- run focused browser/runtime tests, the runtime verification checkpoint, Korea regional smoke, and frontend build
+- keep PR #225 focused on Korean localization, demo guidance, validation artifacts, and source-of-truth alignment
+- preserve Gate 14 safety boundaries and do not run credential mutation or browser proof paths from this gate
+- validate `hrms/locale/ko.po` syntax/placeholders with available tooling
+- run `python3 scripts/run_korea_regional_smoke.py`, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, and `cd frontend && yarn build`
+- keep AI `assistant_only`, human-approval, fixture fallback, and no probability/score language intact
+- if PR #225 is clean, prepare the adjacent Gate 15 follow-up as batch-2 Korean locale coverage or source-of-truth alignment only; do not broaden into payroll submit/approve/send/provider mutation
 - commit/push/PR URL

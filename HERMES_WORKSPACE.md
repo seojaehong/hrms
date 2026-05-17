@@ -142,9 +142,10 @@ Autonomous cron runway
   - role: check plan/doc alignment, stale assumptions, risks, and next action
 
 Next gate
-- Gate 14: Human-approved demo credential apply and authenticated browser runtime proof.
-- Current status: Gate 14 checkpoint infrastructure landed in PR #189, kwargs/title fixes landed in PR #210, and later `develop` commits `de03f017a`/`73680c445` hardened the browser session handoff and read-only bootstrap-call allowlist. `fabf13309` added the operator verification guide, `c1b12a78d` hardened distinct blank-password checkpoint reporting, PR #217 hardened browser-verifier report-file artifacts, `73c9c639b` passes a child browser report-file path through the credential checkpoint, `23d104927` rejects blank child browser report-file paths before credential apply, and `3f59cccec` rejects blank browser-verifier scope/password inputs. Positive authenticated browser proof is still not proven in cron: do not run the credential mutation path unless `FRAPPE_BROWSER_PASSWORD` is present and explicit human approval is provided; the next proof run should validate whether the session-handoff/bootstrap-call/report-file/blank-scope hardening now returns authenticated read-only runtime rows.
-- Latest checkpoint evidence:
+- Gate 15: Korean localization and demo-readiness closeout.
+- Operator override: Gate 14 credential/browser proof is being handled separately by the operator; autonomous runway should not keep cycling on Gate 14 unless explicitly re-enabled.
+- Current Gate 15 status: PR #225 / branch `feat/hrms-korean-locale-batch1` expands `hrms/locale/ko.po` to 816 Korean entries and adds `docs/korea_hrms/feature_map_user_guide.md` for a 30-minute operator/demo walkthrough. Gate 15 scope is localization, demo guidance, validation, and source-of-truth alignment only; no credential mutation, payroll submit/approve/send/provider call, or AI scoring/probability output.
+- Gate 14 checkpoint evidence retained for handoff:
   - 2026-05-09 implementation-cron merged PR #185 (`15f9c24a7 test: add Korea demo browser credential handoff`) into `develop`.
   - 2026-05-10 stale Gate 2 cron closeout confirmed Gate 2 was already merged as #152 and merged PR #187 (`e03eabb70 docs: align Gate 13 plan head`) to align the active correction plan with Gate 14 priority.
   - 2026-05-10 implementation-cron merged PR #189 (`13f061046 test: add Korea demo browser credential checkpoint`) into `develop`.

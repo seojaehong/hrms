@@ -1,0 +1,265 @@
+{#- 한국 임금명세서 Print Format (Jinja 템플릿)
+   적용 방식  : wage_statement.py > render_korea_wage_statement_html(payload=...) 로 렌더링
+   법적 근거  : 근로기준법 시행령 제27조의2 (임금명세서 7개 법정 기재 사항)
+   위치       : hrms/regional/south_korea/print_formats/korea_wage_statement.html
+
+   컨텍스트 변수:
+     - payload: build_korea_wage_statement_pdf_payload() 반환 dict
+                payload.employee_name, payload.employee_birth_date, payload.employee_id (§1)
+                payload.payment_date (§2)
+                payload.gross_pay (§3)
+                payload.earnings[].{label, amount, basis, is_tax_exempt} (§4·§5)
+                payload.deductions[].{label, amount, basis} (§6)
+                payload.tax_exempt_items (§7)
+
+   Frappe Print Format 레코드에서 직접 사용 시:
+     - render_korea_wage_statement_html(payload=build_korea_wage_statement_pdf_payload(...))
+       결과를 frappe.get_print() 대신 사용하거나 wkhtmltopdf에 전달합니다.
+
+   법정 기재 사항 매핑:
+     §1  성명·생년월일·사원번호  →  payload.employee_name / .employee_birth_date / .employee_id
+     §2  임금 지급일             →  payload.payment_date
+     §3  임금 총액               →  payload.gross_pay
+     §4  항목별 금액             →  payload.earnings[].amount
+     §5  항목별 계산 방법        →  payload.earnings[].basis
+     §6  공제 항목별 금액·산출   →  payload.deductions[].{amount, basis}
+     §7  비과세 항목             →  payload.tax_exempt_items (is_tax_exempt == True 인 항목)
+-#}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 12px;
+    color: #111;
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm 20mm 25mm 20mm;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 10px;
+    color: #777;
+    margin-bottom: 30px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 7px 10px;
+    font-size: 11.5px;
+    vertical-align: top;
+  }
+  th {
+    background: #f5f5f5;
+    font-weight: 600;
+    text-align: left;
+    width: 26%;
+    white-space: nowrap;
+  }
+  .section-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin: 18px 0 6px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 3px;
+  }
+  .amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .total-row th,
+  .total-row td {
+    background: #eef2ff;
+    font-weight: 700;
+  }
+  .net-row th,
+  .net-row td {
+    background: #1a3c6e;
+    color: #fff;
+    font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #d1fae5;
+    color: #065f46;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .badge-warn {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .basis-text {
+    font-size: 10.5px;
+    color: #555;
+  }
+  .footer-note {
+    font-size: 9.5px;
+    color: #666;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>임금명세서</h1>
+  <p class="subtitle">Wage Statement &mdash; 근로기준법 시행령 제27조의2</p>
+
+  {#- ===== §1 근로자 특정 정보 ===== -#}
+  <p class="section-title">근로자 정보</p>
+  <table>
+    <tr>
+      <th>회사명</th>
+      <td>{{ payload.company or "—" }}</td>
+      <th>사번</th>
+      <td>{{ payload.employee_id or "—" }}</td>
+    </tr>
+    <tr>
+      <th>성명</th>
+      <td>{{ payload.employee_name or "—" }}</td>
+      <th>생년월일</th>
+      <td>{{ payload.employee_birth_date or "—" }}</td>
+    </tr>
+    <tr>
+      <th>부서</th>
+      <td>{{ payload.department or "—" }}</td>
+      <th>직급</th>
+      <td>{{ payload.designation or "—" }}</td>
+    </tr>
+  </table>
+
+  {#- ===== §2 임금 지급일 + 임금 산정 기간 ===== -#}
+  <p class="section-title">지급 정보</p>
+  <table>
+    <tr>
+      <th>임금 지급일</th>
+      <td><strong>{{ payload.payment_date or "—" }}</strong></td>
+      <th>임금 산정 기간</th>
+      <td>{{ payload.period_start or "—" }} ~ {{ payload.period_end or "—" }}</td>
+    </tr>
+  </table>
+
+  {#- ===== §4 항목별 금액 + §5 계산 방법 ===== -#}
+  <p class="section-title">지급 내역 (§4 항목별 금액 · §5 계산 방법)</p>
+  <table>
+    <tr>
+      <th>항목</th>
+      <th>계산 방법 / 산출근거</th>
+      <th class="amount">금액 (원)</th>
+    </tr>
+    {% for row in payload.earnings %}
+    <tr>
+      <td>
+        {{ row.label or "—" }}
+        {% if row.is_tax_exempt %}
+          <span class="badge">비과세</span>
+          {% if row.get("tax_exempt_cap_exceeded") %}
+            <span class="badge badge-warn">한도초과</span>
+          {% endif %}
+        {% endif %}
+      </td>
+      <td class="basis-text">
+        {%- if row.basis -%}{{ row.basis }}{%- else -%}—{%- endif -%}
+      </td>
+      <td class="amount">{{ "{:,}".format(row.amount | int) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <th colspan="2">지급 합계</th>
+      <td class="amount">{{ "{:,}".format((payload.gross_pay or 0) | int) }}</td>
+    </tr>
+  </table>
+
+  {#- ===== §6 공제 항목별 금액·산출 내역 ===== -#}
+  <p class="section-title">공제 내역 (§6 공제 항목별 금액 · 산출 내역)</p>
+  <table>
+    <tr>
+      <th>항목</th>
+      <th>산출 내역</th>
+      <th class="amount">금액 (원)</th>
+    </tr>
+    {% for row in payload.deductions %}
+    <tr>
+      <td>{{ row.label or "—" }}</td>
+      <td class="basis-text">
+        {%- if row.basis -%}{{ row.basis }}{%- else -%}—{%- endif -%}
+      </td>
+      <td class="amount">{{ "{:,}".format(row.amount | int) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <th colspan="2">공제 합계</th>
+      <td class="amount">{{ "{:,}".format((payload.total_deductions or 0) | int) }}</td>
+    </tr>
+  </table>
+
+  {#- ===== §7 비과세 항목 (해당 시) ===== -#}
+  {% if payload.tax_exempt_items %}
+  <p class="section-title">비과세 항목 (§7 — 소득세법 시행령 해당 조항 적용)</p>
+  <table>
+    <tr>
+      <th>항목</th>
+      <th>적용 근거 / 산출 내역</th>
+      <th class="amount">금액 (원)</th>
+    </tr>
+    {% for row in payload.tax_exempt_items %}
+    <tr>
+      <td>
+        {{ row.label or "—" }}
+        <span class="badge">비과세</span>
+        {% if row.get("cap_exceeded") %}
+          <span class="badge badge-warn">한도초과({{ "{:,}".format(row.cap | int) }}원)</span>
+        {% endif %}
+      </td>
+      <td class="basis-text">
+        {{ row.basis or "소득세법 시행령 관련 조항" }}
+      </td>
+      <td class="amount">{{ "{:,}".format(row.amount | int) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {#- ===== §3 임금 총액 + 실지급액 ===== -#}
+  <table>
+    <tr class="net-row">
+      <th colspan="2">실 지급액 (지급합계 − 공제합계)</th>
+      <td class="amount">{{ "{:,}".format((payload.net_pay or 0) | int) }} 원</td>
+    </tr>
+  </table>
+
+  <div class="footer-note">
+    ※ 이 명세서는 근로기준법 시행령 제27조의2에 따라 발급된 공식 임금명세서입니다.<br>
+    ※ 비과세 항목은 소득세법 시행령 제17조의2 등 관련 규정에 따라 구분됩니다.<br>
+    ※ 문의: {{ payload.company or "" }} 인사/급여 담당 &middot;
+       문서번호: {{ payload.source_salary_slip or "" }} &middot;
+       발급일: {{ payload.payment_date or "" }}
+  </div>
+
+</div>
+</body>
+</html>

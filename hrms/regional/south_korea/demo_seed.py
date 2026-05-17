@@ -1,15 +1,31 @@
+"""Korea HRMS demo seed — Wave 4 extended.
+
+Idempotent: safe to run multiple times.  All mutations go through
+``ensure_doc`` which skips existing records.
+
+Entry point (bench execute):
+    bench --site hrms.localhost execute \
+        hrms.regional.south_korea.demo_seed.seed_korea_demo
+
+Legacy entry point (kept for backward compatibility):
+    bench --site hrms.localhost execute \
+        hrms.regional.south_korea.demo_seed.main
+"""
+from __future__ import annotations
+
 import json
 import os
+import random
 import secrets
-from pathlib import Path
+from datetime import date, timedelta
 
 import frappe
 from frappe.utils import getdate
-try:
-    from frappe.utils.password import update_password
-except ImportError:  # no-bench direct tests provide a minimal frappe stub
-    update_password = None
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def ensure_doc(doctype, name=None, filters=None, values=None, ignore_links=False, update_existing=True):
     values = values or {}
@@ -45,6 +61,39 @@ def ensure_doc(doctype, name=None, filters=None, values=None, ignore_links=False
         doc.save(ignore_permissions=True)
     return doc, False
 
+
+def _employee_name(employee):
+    name = getattr(employee, "name", None)
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("employee.name must be a non-empty string")
+    return name.strip()
+
+
+def _employee_workplace(employee):
+    workplace = getattr(employee, "work_location_name", None) or getattr(employee, "branch", None) or "서울 본사"
+    if not isinstance(workplace, str) or not workplace.strip():
+        raise ValueError("employee.work_location_name must be a non-empty string when provided")
+    return workplace.strip()
+
+
+def _require_text(value, label):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{label} must be a non-empty string")
+    return value.strip()
+
+
+def _document_value(doc, fieldname, default):
+    getter = getattr(doc, "get", None)
+    if callable(getter):
+        value = getter(fieldname)
+        if value is not None:
+            return value
+    return getattr(doc, fieldname, default)
+
+
+# ---------------------------------------------------------------------------
+# Masters — unchanged from baseline
+# ---------------------------------------------------------------------------
 
 def ensure_warehouse_type(name):
     return ensure_doc("Warehouse Type", name=name, values={"description": f"Auto-created for demo company bootstrap: {name}"})
@@ -127,7 +176,10 @@ def ensure_holiday_list():
         "country": data["country"],
     }
     holiday_list, created = ensure_doc("Holiday List", name=data["holiday_list_name"], values=values)
-    existing = {row.holiday_date.strftime('%Y-%m-%d') if hasattr(row.holiday_date, 'strftime') else str(row.holiday_date) for row in holiday_list.holidays}
+    existing = {
+        row.holiday_date.strftime("%Y-%m-%d") if hasattr(row.holiday_date, "strftime") else str(row.holiday_date)
+        for row in holiday_list.holidays
+    }
     changed = False
     for item in data["sample_holidays"]:
         if item["holiday_date"] not in existing:
@@ -157,71 +209,11 @@ def ensure_leave_type(name, **extra):
     return ensure_doc("Leave Type", name=name, values=values)
 
 
-DEMO_BROWSER_USERNAME = "demo.hr.manager@node.pe.kr"
-DEMO_BROWSER_PASSWORD_ENV_VAR = "FRAPPE_BROWSER_PASSWORD"
-
-
 def build_demo_user_password() -> str:
     return os.environ.get("HRMS_DEMO_USER_PASSWORD") or secrets.token_urlsafe(18)
 
 
-def build_demo_browser_credential_handoff(username=DEMO_BROWSER_USERNAME, password_env_var=DEMO_BROWSER_PASSWORD_ENV_VAR):
-    username = _require_text(username, "username")
-    password_env_var = _require_text(password_env_var, "password_env_var")
-    return {
-        "contract_type": "korea_demo_browser_credential_handoff_v1",
-        "runtime_action": "demo_credential_handoff_only",
-        "requires_runtime_apply": False,
-        "username": username,
-        "employee_link_required": True,
-        "password_env_var": password_env_var,
-        "browser_verifier_command": "FRAPPE_BROWSER_USERNAME=<username> FRAPPE_BROWSER_PASSWORD=<secret> node scripts/verify_korea_payroll_closing_browser_runtime.mjs --base-url http://hrms.localhost:8000 --company <company>",
-        "mutation_boundary": "credential_handoff_only_no_payroll_submit_approve_send_provider_call",
-        "requires_human_approval": True,
-        "ai_role": "assistant_only",
-    }
-
-
-def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None, human_approved=False):
-    """Set the employee-linked demo user's browser password without reporting it.
-
-    This is a narrow demo-credential runtime apply helper for authenticated browser
-    verification. It does not submit payroll, approve drafts, send messages, call
-    providers, or create payroll documents. The credential side effect requires
-    explicit human approval before the password update boundary.
-    """
-
-    username = _require_text(username, "username")
-    if username != DEMO_BROWSER_USERNAME:
-        raise ValueError("username must be the approved demo browser user")
-    if human_approved is not True:
-        raise ValueError("human_approved must be True before credential runtime apply")
-    password = password if password is not None else os.environ.get(DEMO_BROWSER_PASSWORD_ENV_VAR)
-    password = _require_text(password, "password")
-    if not frappe.db.exists("User", username):
-        raise ValueError(f"demo browser user {username} is required")
-    employee_filters = {"user_id": username, "status": "Active"}
-    if not frappe.db.exists("Employee", employee_filters):
-        raise ValueError(f"active employee linked to {username} is required")
-    if update_password is None:
-        raise RuntimeError("frappe.utils.password.update_password is unavailable in this runtime")
-    update_password(username, password)
-    return {
-        "contract_type": "korea_demo_browser_credential_runtime_apply_v1",
-        "runtime_action": "demo_credential_runtime_apply",
-        "requires_runtime_apply": False,
-        "username": username,
-        "employee_link_verified": True,
-        "credential_ready_for_browser_verifier": True,
-        "password_env_var": DEMO_BROWSER_PASSWORD_ENV_VAR,
-        "human_approval_verified": True,
-        "mutation_boundary": "credential_only_no_payroll_submit_approve_send_provider_call",
-        "requires_human_approval": True,
-        "ai_role": "assistant_only",
-    }
-
-
-def ensure_user(email, first_name, last_name, roles=None):
+def ensure_user(email, first_name, last_name, role_profile=None):
     if frappe.db.exists("User", email):
         user = frappe.get_doc("User", email)
         created = False
@@ -237,7 +229,7 @@ def ensure_user(email, first_name, last_name, roles=None):
             "new_password": build_demo_user_password(),
         }).insert(ignore_permissions=True)
         created = True
-    wanted_roles = set(roles or {"Employee"})
+    wanted_roles = {"HR Manager", "HR User", "Employee"}
     existing_roles = {r.role for r in user.roles}
     for role in wanted_roles - existing_roles:
         user.append("roles", {"role": role})
@@ -258,7 +250,7 @@ def ensure_employee(company, department, designation, user_email, first_name, la
         "company": company,
         "department": department,
         "designation": designation,
-        "employment_type": custom.get("employment_type", "Full-time"),
+        "employment_type": "Full-time",
         "employment_type_kr": custom.get("employment_type_kr", "Regular"),
         "branch": branch,
         "prefered_email": user_email,
@@ -360,46 +352,20 @@ def ensure_salary_structure(company):
     return doc, created
 
 
-def ensure_salary_structure_assignment(employee, company, salary_structure):
-    name = f"{employee} - {salary_structure}"
+def ensure_salary_structure_assignment(employee, company, salary_structure, base=3450000, from_date="2026-01-01"):
     values = {
         "employee": employee,
         "salary_structure": salary_structure,
-        "from_date": "2026-01-01",
+        "from_date": from_date,
         "company": company,
         "currency": "KRW",
-        "base": 3450000,
+        "base": base,
     }
-    return ensure_doc("Salary Structure Assignment", filters={"employee": employee, "salary_structure": salary_structure, "docstatus": ("<", 2)}, values=values)
-
-
-def _employee_name(employee):
-    name = getattr(employee, "name", None)
-    if not isinstance(name, str) or not name.strip():
-        raise ValueError("employee.name must be a non-empty string")
-    return name.strip()
-
-
-def _employee_workplace(employee):
-    workplace = getattr(employee, "work_location_name", None) or getattr(employee, "branch", None) or "서울 본사"
-    if not isinstance(workplace, str) or not workplace.strip():
-        raise ValueError("employee.work_location_name must be a non-empty string when provided")
-    return workplace.strip()
-
-
-def _require_text(value, label):
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{label} must be a non-empty string")
-    return value.strip()
-
-
-def _document_value(doc, fieldname, default):
-    getter = getattr(doc, "get", None)
-    if callable(getter):
-        value = getter(fieldname)
-        if value is not None:
-            return value
-    return getattr(doc, fieldname, default)
+    return ensure_doc(
+        "Salary Structure Assignment",
+        filters={"employee": employee, "salary_structure": salary_structure, "docstatus": ("<", 2)},
+        values=values,
+    )
 
 
 def ensure_demo_payroll_closing_draft(company):
@@ -709,15 +675,637 @@ def ensure_demo_blocker_transactions(company, employees):
     }
 
 
-def build_demo_employee_roster():
-    """Return Korea SME/franchise demo employee personas for runtime seeding.
+# ---------------------------------------------------------------------------
+# Wave 4 — Extended employee roster (8 new employees)
+# ---------------------------------------------------------------------------
 
-    This fixture is intentionally static and secret-free. It enriches the demo
-    tenant with mixed employment types and workplaces without adding payroll
-    submission, approval, messaging, provider, or AI scoring behavior.
+#: Deterministic list of 8 additional employees (총 10명 포함 기존 2명)
+#: 가나다순 정렬 (last_name + first_name 기준)
+EXTENDED_EMPLOYEE_SPECS = [
+    # ── 서울 본사 / 본부지원 / 인사 ───────────────────────────────────
+    {
+        "user": "jisoo.kang@nodebot.kr",
+        "first_name": "지수",
+        "last_name": "강",
+        "gender": "Female",
+        "dob": "1990-05-20",
+        "doj": "2016-03-01",   # 10년차 → 연차 19일
+        "department": "인사 - NBG",
+        "designation": "HR Specialist",
+        "branch": "서울 본사",
+        "base": 4200000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "서울 본사",
+            "bank_name": "우리은행",
+            "bank_ac_no": "1002-000-111111",
+            "bank_account_holder_name": "강지수",
+            "resident_zip_code": "04524",
+            "road_address": "서울특별시 중구 세종대로 110",
+            "rrn_masked": "900520-2******",
+            "cell_number": "010-3001-3001",
+        },
+        # 연차 시뮬레이션: 10년차 → 15+4 = 19일
+        "annual_leave_days": 19,
+        "attendance_rate": 0.95,  # 정상 출근
+    },
+    {
+        "user": "minjun.kim@nodebot.kr",
+        "first_name": "민준",
+        "last_name": "김",
+        "gender": "Male",
+        "dob": "1998-11-10",
+        "doj": "2025-11-01",   # 1년 미만 → 월차 적용
+        "department": "본부지원 - NBG",
+        "designation": "Staff",
+        "branch": "서울 본사",
+        "base": 2700000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "서울 본사",
+            "bank_name": "카카오뱅크",
+            "bank_ac_no": "3333-00-2222222",
+            "bank_account_holder_name": "김민준",
+            "resident_zip_code": "04524",
+            "road_address": "서울특별시 중구 세종대로 110",
+            "rrn_masked": "981110-1******",
+            "cell_number": "010-3002-3002",
+        },
+        # 1년 미만 → 월차 (입사 후 매월 1일 발생, 최대 11일)
+        "annual_leave_days": 6,   # 6개월치 월차
+        "attendance_rate": 0.88,  # 출근률 88%
+    },
+    {
+        "user": "sooyeon.kim@nodebot.kr",
+        "first_name": "수연",
+        "last_name": "김",
+        "gender": "Female",
+        "dob": "1993-08-22",
+        "doj": "2021-04-01",   # 5년차 → 연차 17일
+        "department": "본부지원 - NBG",
+        "designation": "Senior Staff",
+        "branch": "서울 본사",
+        "base": 3800000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "서울 본사",
+            "bank_name": "국민은행",
+            "bank_ac_no": "110-0003-3333",
+            "bank_account_holder_name": "김수연",
+            "resident_zip_code": "04524",
+            "road_address": "서울특별시 중구 세종대로 110",
+            "rrn_masked": "930822-2******",
+            "cell_number": "010-3003-3003",
+        },
+        # 5년차 → 15+2 = 17일
+        "annual_leave_days": 17,
+        "attendance_rate": 0.95,
+    },
+    # ── 강남 매장 / 매장운영 ─────────────────────────────────────────
+    {
+        "user": "dongwoo.lim@nodebot.kr",
+        "first_name": "동우",
+        "last_name": "임",
+        "gender": "Male",
+        "dob": "2000-03-05",
+        "doj": "2026-02-01",   # 1년 미만 신입
+        "department": "매장운영 - NBG",
+        "designation": "Crew",
+        "branch": "강남 매장",
+        "base": 2500000,
+        "custom": {
+            "employment_type_kr": "파트타임",
+            "work_location_name": "강남 매장",
+            "bank_name": "신한은행",
+            "bank_ac_no": "110-0444-4444",
+            "bank_account_holder_name": "임동우",
+            "resident_zip_code": "06134",
+            "road_address": "서울특별시 강남구 테헤란로 152",
+            "rrn_masked": "000305-1******",
+            "cell_number": "010-3004-3004",
+        },
+        "annual_leave_days": 3,   # 3개월치 월차
+        "attendance_rate": 0.75,  # 75% — 80% 룰 트리거 케이스
+    },
+    {
+        "user": "hyunah.jung@nodebot.kr",
+        "first_name": "현아",
+        "last_name": "정",
+        "gender": "Female",
+        "dob": "1995-12-30",
+        "doj": "2022-09-01",
+        "department": "매장운영 - NBG",
+        "designation": "Store Supervisor",
+        "branch": "강남 매장",
+        "base": 3200000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "강남 매장",
+            "bank_name": "하나은행",
+            "bank_ac_no": "200-0555-5555",
+            "bank_account_holder_name": "정현아",
+            "resident_zip_code": "06134",
+            "road_address": "서울특별시 강남구 테헤란로 152",
+            "rrn_masked": "951230-2******",
+            "cell_number": "010-3005-3005",
+        },
+        "annual_leave_days": 15,
+        "attendance_rate": 0.95,
+    },
+    # ── 부산 지사 / 영업 / 관리 ─────────────────────────────────────
+    {
+        "user": "seojun.choi@nodebot.kr",
+        "first_name": "서준",
+        "last_name": "최",
+        "gender": "Male",
+        "dob": "1988-06-15",
+        "doj": "2015-07-01",   # 10년차 → 19일
+        "department": "영업 - NBG",
+        "designation": "Sales Manager",
+        "branch": "부산 지사",
+        "base": 4500000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "부산 지사",
+            "bank_name": "부산은행",
+            "bank_ac_no": "201-0666-6666",
+            "bank_account_holder_name": "최서준",
+            "resident_zip_code": "47011",
+            "road_address": "부산광역시 동구 중앙대로 206",
+            "rrn_masked": "880615-1******",
+            "cell_number": "010-3006-3006",
+        },
+        "annual_leave_days": 19,
+        "attendance_rate": 0.95,
+    },
+    {
+        "user": "yujin.han@nodebot.kr",
+        "first_name": "유진",
+        "last_name": "한",
+        "gender": "Female",
+        "dob": "1997-04-18",
+        "doj": "2026-03-01",   # 1년 미만 신입
+        "department": "영업 - NBG",
+        "designation": "Sales Staff",
+        "branch": "부산 지사",
+        "base": 2600000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "부산 지사",
+            "bank_name": "국민은행",
+            "bank_ac_no": "110-0777-7777",
+            "bank_account_holder_name": "한유진",
+            "resident_zip_code": "47011",
+            "road_address": "부산광역시 동구 중앙대로 206",
+            "rrn_masked": "970418-2******",
+            "cell_number": "010-3007-3007",
+        },
+        "annual_leave_days": 2,   # 2개월치 월차
+        "attendance_rate": 0.88,
+    },
+    {
+        "user": "juho.oh@nodebot.kr",
+        "first_name": "주호",
+        "last_name": "오",
+        "gender": "Male",
+        "dob": "1991-09-27",
+        "doj": "2021-01-04",   # 5년차 → 17일
+        "department": "관리 - NBG",
+        "designation": "Admin Manager",
+        "branch": "부산 지사",
+        "base": 3600000,
+        "custom": {
+            "employment_type_kr": "정규직",
+            "work_location_name": "부산 지사",
+            "bank_name": "신한은행",
+            "bank_ac_no": "140-0888-8888",
+            "bank_account_holder_name": "오주호",
+            "resident_zip_code": "47011",
+            "road_address": "부산광역시 동구 중앙대로 206",
+            "rrn_masked": "910927-1******",
+            "cell_number": "010-3008-3008",
+        },
+        "annual_leave_days": 17,
+        "attendance_rate": 0.95,
+    },
+]
+
+# Wave 4 departments (5 new)
+WAVE4_DEPARTMENTS = ["매장운영", "본부지원", "영업", "관리", "인사"]
+
+# Wave 4 branches (1 new, total 3)
+WAVE4_BRANCHES = ["부산 지사"]
+
+# Wave 4 designations
+WAVE4_DESIGNATIONS = [
+    "HR Specialist", "Senior Staff", "Staff", "Crew",
+    "Sales Manager", "Sales Staff", "Admin Manager",
+]
+
+
+# ---------------------------------------------------------------------------
+# Wave 4 — Attendance seeding (3 months: 2026-03 ~ 2026-05)
+# ---------------------------------------------------------------------------
+
+_PUBLIC_HOLIDAYS_2026 = {
+    "2026-03-01",  # 삼일절
+    "2026-03-02",  # 삼일절 대체공휴일
+    "2026-05-05",  # 어린이날
+}
+
+# Attendance status weights per attendance_rate bucket
+_STATUS_WEIGHTS = {
+    # (status, probability_weight)
+    0.95: [("Present", 85), ("Half Day", 5), ("Work From Home", 5), ("On Leave", 5)],
+    0.88: [("Present", 75), ("Half Day", 5), ("Work From Home", 3), ("On Leave", 12), ("Absent", 5)],
+    0.75: [("Present", 60), ("Half Day", 5), ("Work From Home", 2), ("On Leave", 10), ("Absent", 23)],
+}
+
+
+def _get_status_weights(rate: float) -> list:
+    """Return the closest pre-defined status weight bucket."""
+    thresholds = sorted(_STATUS_WEIGHTS.keys())
+    chosen = thresholds[0]
+    for t in thresholds:
+        if rate >= t - 0.05:
+            chosen = t
+    return _STATUS_WEIGHTS[chosen]
+
+
+def _is_working_day(d: date) -> bool:
+    """Return True if date is a weekday and not a public holiday."""
+    if d.weekday() >= 5:  # Saturday=5, Sunday=6
+        return False
+    if d.strftime("%Y-%m-%d") in _PUBLIC_HOLIDAYS_2026:
+        return False
+    return True
+
+
+def _iter_month_working_days(year: int, month: int):
+    """Yield all working dates in the given month."""
+    first = date(year, month, 1)
+    if month == 12:
+        last = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last = date(year, month + 1, 1) - timedelta(days=1)
+    d = first
+    while d <= last:
+        if _is_working_day(d):
+            yield d
+        d += timedelta(days=1)
+
+
+def _weighted_choice(weights: list, rng: random.Random) -> str:
+    """Choose a status string using weighted random."""
+    population = []
+    for status, weight in weights:
+        population.extend([status] * weight)
+    return rng.choice(population)
+
+
+def _att_name(employee_name: str, att_date: date) -> str:
+    """Build a deterministic Attendance record name for idempotency."""
+    safe = employee_name.replace(" ", "-")
+    return f"KR-ATT-{safe}-{att_date.strftime('%Y%m%d')}"
+
+
+def ensure_attendance_for_employee(employee_doc, company: str, months: list[tuple[int, int]]):
+    """Seed Attendance records for one employee across given months.
+
+    Args:
+        employee_doc: Frappe Employee document
+        company: company name string
+        months: list of (year, month) tuples, e.g. [(2026,3),(2026,4),(2026,5)]
+
+    Returns:
+        dict with count of created/skipped records
     """
+    emp_name = _employee_name(employee_doc)
+    rate = getattr(employee_doc, "_demo_attendance_rate", 0.95)
+    rng = random.Random(f"att-{emp_name}")  # deterministic per employee
+    weights = _get_status_weights(rate)
 
-    return [
+    doj_str = getattr(employee_doc, "date_of_joining", None)
+    doj = getdate(doj_str) if doj_str else date(2020, 1, 1)
+
+    created = 0
+    skipped = 0
+
+    for year, month in months:
+        for d in _iter_month_working_days(year, month):
+            if d < doj:
+                continue  # employee hadn't joined yet
+            record_name = _att_name(emp_name, d)
+            if frappe.db.exists("Attendance", record_name):
+                skipped += 1
+                continue
+
+            status = _weighted_choice(weights, rng)
+            working_hours = 8.0 if status in ("Present", "Work From Home") else (4.0 if status == "Half Day" else 0.0)
+
+            att = frappe.get_doc({
+                "doctype": "Attendance",
+                "name": record_name,
+                "__newname": record_name,
+                "naming_series": "HR-ATT-.YYYY.-",
+                "employee": emp_name,
+                "company": company,
+                "attendance_date": d.strftime("%Y-%m-%d"),
+                "status": status,
+                "working_hours": working_hours,
+                # NOTE: docstatus is NOT set here; frappe.insert() ignores it.
+                # We call .submit() separately below to reach docstatus=1.
+            })
+            try:
+                att.insert(ignore_permissions=True)
+                att.submit()  # promotes to docstatus=1 so payroll closing can read it
+                created += 1
+            except Exception:
+                skipped += 1
+
+    return {"created": created, "skipped": skipped}
+
+
+# ---------------------------------------------------------------------------
+# Wave 4 — Leave allocation seeding
+# ---------------------------------------------------------------------------
+
+def ensure_leave_allocation(employee_name: str, company: str, leave_type: str, leave_days: int, year: int = 2026):
+    """Seed an Annual Leave allocation for the given employee/year.
+
+    Idempotent: if an allocation already exists with docstatus < 2, skip.
+    """
+    from_date = f"{year}-01-01"
+    to_date = f"{year}-12-31"
+    filters = {
+        "employee": employee_name,
+        "leave_type": leave_type,
+        "from_date": from_date,
+        "to_date": to_date,
+        "docstatus": ("<", 2),
+    }
+    if frappe.db.exists("Leave Allocation", filters):
+        return None, False
+
+    alloc = frappe.get_doc({
+        "doctype": "Leave Allocation",
+        "employee": employee_name,
+        "leave_type": leave_type,
+        "from_date": from_date,
+        "to_date": to_date,
+        "new_leaves_allocated": leave_days,
+        "company": company,
+        # NOTE: docstatus is NOT set here; frappe.insert() ignores it.
+        # We call .submit() separately below to reach docstatus=1.
+    })
+    try:
+        alloc.insert(ignore_permissions=True)
+        alloc.submit()  # promotes to docstatus=1 so leave balance is active
+        return alloc, True
+    except Exception:
+        return None, False
+
+
+# ---------------------------------------------------------------------------
+# Wave 4 — Payroll Entry Draft seeding (3 months × 3 worksites)
+# ---------------------------------------------------------------------------
+
+#: (period_year_month, branch, draft_name_suffix)
+WAVE4_PAYROLL_DRAFTS = [
+    ("2026-03", "서울 본사",  "KPCD-DEMO-2026-03-SEOUL-HQ"),
+    ("2026-04", "강남 매장", "KPCD-DEMO-2026-04-GANGNAM"),
+    ("2026-05", "부산 지사",  "KPCD-DEMO-2026-05-BUSAN"),
+]
+
+
+def ensure_wave4_payroll_closing_drafts(company: str):
+    """Seed 3 monthly payroll-close drafts across 3 branches.
+
+    Each draft is a Korea Payroll Closing Draft in 'draft_pending_human_approval'
+    state — visible on the closing worklist but NOT submitted/approved.
+    """
+    company_name = _require_text(company, "company")
+    seeded = []
+
+    for ym, branch, draft_name in WAVE4_PAYROLL_DRAFTS:
+        year, month = ym.split("-")
+        import calendar as _cal
+        last_day = _cal.monthrange(int(year), int(month))[1]
+        period_start = f"{ym}-01"
+        period_end = f"{ym}-{last_day:02d}"
+
+        audit_preview = {
+            "runtime_action": "preview_only",
+            "requires_runtime_apply": False,
+            "company": company_name,
+            "workplace": branch,
+            "period_start": period_start,
+            "period_end": period_end,
+        }
+        values = {
+            "company": company_name,
+            "workplace": branch,
+            "period_start": period_start,
+            "period_end": period_end,
+            "status": "draft_pending_human_approval",
+            "source_payroll_entry": f"KR-DEMO-PE-{ym}-{branch[:2]}",
+            "approver": "demo.hr.manager@node.pe.kr",
+            "source_session_contract_type": "korea_payroll_closing_session_v1",
+            "mutation_boundary": "draft_only_no_submit_no_approve_no_send",
+            "requires_human_approval": True,
+            "ai_role": "assistant_only",
+            "docstatus": 0,
+            "payload": json.dumps({"session": {"name": draft_name, "status": "draft"}}, ensure_ascii=False),
+            "audit_preview": json.dumps(audit_preview, ensure_ascii=False),
+        }
+        doc, _created = ensure_doc(
+            "Korea Payroll Closing Draft",
+            name=draft_name,
+            filters={
+                "company": company_name,
+                "workplace": branch,
+                "period_start": period_start,
+                "period_end": period_end,
+                "docstatus": 0,
+            },
+            values=values,
+            ignore_links=True,
+            update_existing=False,
+        )
+        seeded.append({
+            "name": doc.name,
+            "period": ym,
+            "branch": branch,
+        })
+
+    return seeded
+
+
+# ---------------------------------------------------------------------------
+# Wave 4 — main extension runner
+# ---------------------------------------------------------------------------
+
+def seed_korea_demo_wave4(company_name: str, holiday_list_name: str, salary_structure_name: str):
+    """Seed Wave 4 additions: 8 employees, 3 branches/5 departments, attendance, leave, payroll drafts.
+
+    All mutations are idempotent.  Call this AFTER the baseline seed (main/seed_korea_demo).
+
+    Returns:
+        dict summary of what was created/updated
+    """
+    log: dict = {
+        "branches": [],
+        "departments": [],
+        "designations": [],
+        "employees": [],
+        "leave_allocations": [],
+        "attendance": {},
+        "payroll_drafts": [],
+    }
+
+    # 1. New branch
+    for branch_name in WAVE4_BRANCHES:
+        doc, created = ensure_branch(branch_name)
+        log["branches"].append({"name": branch_name, "created": created})
+
+    # 2. New departments
+    for dept_name in WAVE4_DEPARTMENTS:
+        doc, created = ensure_department(company_name, dept_name)
+        log["departments"].append({"name": f"{dept_name} - NBG", "created": created})
+
+    # 3. New designations
+    for desg_name in WAVE4_DESIGNATIONS:
+        doc, created = ensure_designation(desg_name)
+        log["designations"].append({"name": desg_name, "created": created})
+
+    # 4. New employees + leave types
+    for spec in EXTENDED_EMPLOYEE_SPECS:
+        user_email = spec["user"]
+        ensure_user(user_email, spec["first_name"], spec["last_name"])
+
+        emp_doc, emp_created = ensure_employee(
+            company=company_name,
+            department=spec["department"],
+            designation=spec["designation"],
+            user_email=user_email,
+            first_name=spec["first_name"],
+            last_name=spec["last_name"],
+            gender=spec["gender"],
+            dob=spec["dob"],
+            doj=spec["doj"],
+            branch=spec["branch"],
+            custom=spec["custom"],
+        )
+        # Attach demo metadata needed by attendance seed
+        emp_doc._demo_attendance_rate = spec.get("attendance_rate", 0.95)
+
+        log["employees"].append({
+            "name": emp_doc.name,
+            "email": user_email,
+            "created": emp_created,
+            "attendance_rate": spec.get("attendance_rate", 0.95),
+            "annual_leave_days": spec.get("annual_leave_days", 15),
+        })
+
+        # Salary structure assignment
+        ensure_salary_structure_assignment(
+            emp_doc.name,
+            company_name,
+            salary_structure_name,
+            base=spec.get("base", 3000000),
+        )
+
+        # Leave allocation (Annual Leave)
+        alloc_doc, alloc_created = ensure_leave_allocation(
+            emp_doc.name,
+            company_name,
+            "Annual Leave",
+            spec.get("annual_leave_days", 15),
+        )
+        log["leave_allocations"].append({
+            "employee": emp_doc.name,
+            "days": spec.get("annual_leave_days", 15),
+            "created": alloc_created,
+        })
+
+        # Attendance: 2026-03, 2026-04, 2026-05
+        att_result = ensure_attendance_for_employee(
+            emp_doc,
+            company_name,
+            [(2026, 3), (2026, 4), (2026, 5)],
+        )
+        log["attendance"][emp_doc.name] = att_result
+
+    # 5. Wave 4 payroll closing drafts (3 months × 3 branches)
+    payroll_drafts = ensure_wave4_payroll_closing_drafts(company_name)
+    log["payroll_drafts"] = payroll_drafts
+
+    return log
+
+
+# ---------------------------------------------------------------------------
+# Unified entry point (Wave 4)
+# ---------------------------------------------------------------------------
+
+def seed_korea_demo():
+    """Full idempotent seed: baseline (Wave 1-3) + Wave 4 extensions.
+
+    Run via:
+        bench --site hrms.localhost execute \
+            hrms.regional.south_korea.demo_seed.seed_korea_demo
+    """
+    created_list: list = []
+    updated_list: list = []
+
+    # ── Baseline (originally in main()) ─────────────────────────────────
+    holiday_list, changed = ensure_holiday_list()
+    (updated_list if changed else created_list).append(f"Holiday List::{holiday_list.name}")
+
+    warehouse_type, warehouse_created = ensure_warehouse_type("Transit")
+    (created_list if warehouse_created else updated_list).append(f"Warehouse Type::{warehouse_type.name}")
+
+    company, company_created = ensure_company()
+    (created_list if company_created else updated_list).append(f"Company::{company.name}")
+
+    for name in ["운영", "매장운영"]:
+        doc, was_created = ensure_department(company.name, name)
+        (created_list if was_created else updated_list).append(f"Department::{doc.name}")
+
+    for name in ["HR Manager", "Store Supervisor"]:
+        doc, was_created = ensure_designation(name)
+        (created_list if was_created else updated_list).append(f"Designation::{doc.name}")
+
+    for name in ["Full-time", "Part-time"]:
+        doc, was_created = ensure_employment_type(name)
+        (created_list if was_created else updated_list).append(f"Employment Type::{doc.name}")
+
+    for name in ["Male", "Female"]:
+        doc, was_created = ensure_gender(name)
+        (created_list if was_created else updated_list).append(f"Gender::{doc.name}")
+
+    for name in ["서울 본사", "강남 매장"]:
+        doc, was_created = ensure_branch(name)
+        (created_list if was_created else updated_list).append(f"Branch::{doc.name}")
+
+    shift, shift_created = ensure_shift_type(holiday_list.name)
+    (created_list if shift_created else updated_list).append(f"Shift Type::{shift.name}")
+
+    for component_name in ensure_salary_components():
+        updated_list.append(f"Salary Component::{component_name}")
+
+    leave_configs = [
+        ("Annual Leave", {"is_earned_leave": 1, "earned_leave_frequency": "Monthly", "is_carry_forward": 1, "maximum_carry_forwarded_leaves": 25}),
+        ("Sick Leave", {"is_lwp": 0, "is_carry_forward": 0}),
+        ("Family Event Leave", {"is_lwp": 0, "is_carry_forward": 0}),
+    ]
+    for leave_name, options in leave_configs:
+        doc, was_created = ensure_leave_type(leave_name, **options)
+        (created_list if was_created else updated_list).append(f"Leave Type::{doc.name}")
+
+    ensure_user("demo.hr.manager@node.pe.kr", "Demo", "Manager")
+    ensure_user("demo.store@node.pe.kr", "Demo", "Store")
+
+    baseline_employees = [
         {
             "user": "demo.hr.manager@node.pe.kr",
             "first_name": "민지",
@@ -729,7 +1317,6 @@ def build_demo_employee_roster():
             "designation": "HR Manager",
             "branch": "서울 본사",
             "custom": {
-                "employment_type": "Full-time",
                 "employment_type_kr": "Regular",
                 "work_location_name": "서울 본사",
                 "bank_name": "국민은행",
@@ -752,7 +1339,6 @@ def build_demo_employee_roster():
             "designation": "Store Supervisor",
             "branch": "강남 매장",
             "custom": {
-                "employment_type": "Full-time",
                 "employment_type_kr": "Regular",
                 "work_location_name": "강남 매장",
                 "bank_name": "신한은행",
@@ -764,252 +1350,11 @@ def build_demo_employee_roster():
                 "cell_number": "010-2000-2000",
             },
         },
-        {
-            "user": "demo.ops.lead@node.pe.kr",
-            "first_name": "서연",
-            "last_name": "이",
-            "gender": "Female",
-            "dob": "1988-11-20",
-            "doj": "2023-01-16",
-            "department": "운영 - NBG",
-            "designation": "Operations Lead",
-            "branch": "서울 본사",
-            "custom": {
-                "employment_type": "Full-time",
-                "employment_type_kr": "Regular",
-                "work_location_name": "서울 본사",
-                "bank_name": "우리은행",
-                "bank_ac_no": "100-3000-3000",
-                "bank_account_holder_name": "이서연",
-                "resident_zip_code": "04524",
-                "road_address": "서울특별시 중구 세종대로 110",
-                "rrn_masked": "881120-2******",
-                "cell_number": "010-3000-3000",
-            },
-        },
-        {
-            "user": "demo.payroll@node.pe.kr",
-            "first_name": "준호",
-            "last_name": "최",
-            "gender": "Male",
-            "dob": "1990-05-08",
-            "doj": "2024-09-02",
-            "department": "운영 - NBG",
-            "designation": "Payroll Specialist",
-            "branch": "서울 본사",
-            "custom": {
-                "employment_type": "Full-time",
-                "employment_type_kr": "Fixed-term",
-                "work_location_name": "서울 본사",
-                "bank_name": "하나은행",
-                "bank_ac_no": "160-4000-4000",
-                "bank_account_holder_name": "최준호",
-                "resident_zip_code": "04524",
-                "road_address": "서울특별시 중구 세종대로 110",
-                "rrn_masked": "900508-1******",
-                "cell_number": "010-4000-4000",
-            },
-        },
-        {
-            "user": "demo.gangnam.ft@node.pe.kr",
-            "first_name": "하은",
-            "last_name": "정",
-            "gender": "Female",
-            "dob": "1998-02-11",
-            "doj": "2025-02-03",
-            "department": "매장운영 - NBG",
-            "designation": "Store Staff",
-            "branch": "강남 매장",
-            "custom": {
-                "employment_type": "Full-time",
-                "employment_type_kr": "Regular",
-                "work_location_name": "강남 매장",
-                "bank_name": "카카오뱅크",
-                "bank_ac_no": "3333-5000-5000",
-                "bank_account_holder_name": "정하은",
-                "resident_zip_code": "06134",
-                "road_address": "서울특별시 강남구 테헤란로 152",
-                "rrn_masked": "980211-2******",
-                "cell_number": "010-5000-5000",
-            },
-        },
-        {
-            "user": "demo.gangnam.pt@node.pe.kr",
-            "first_name": "도윤",
-            "last_name": "한",
-            "gender": "Male",
-            "dob": "2001-09-19",
-            "doj": "2026-01-05",
-            "department": "매장운영 - NBG",
-            "designation": "Part-time Crew",
-            "branch": "강남 매장",
-            "custom": {
-                "employment_type": "Part-time",
-                "employment_type_kr": "Part-time",
-                "work_location_name": "강남 매장",
-                "bank_name": "토스뱅크",
-                "bank_ac_no": "190-6000-6000",
-                "bank_account_holder_name": "한도윤",
-                "resident_zip_code": "06134",
-                "road_address": "서울특별시 강남구 테헤란로 152",
-                "rrn_masked": "010919-3******",
-                "cell_number": "010-6000-6000",
-            },
-        },
-        {
-            "user": "demo.hongdae.lead@node.pe.kr",
-            "first_name": "지아",
-            "last_name": "윤",
-            "gender": "Female",
-            "dob": "1994-12-03",
-            "doj": "2024-11-01",
-            "department": "매장운영 - NBG",
-            "designation": "Store Supervisor",
-            "branch": "홍대 매장",
-            "custom": {
-                "employment_type": "Full-time",
-                "employment_type_kr": "Regular",
-                "work_location_name": "홍대 매장",
-                "bank_name": "국민은행",
-                "bank_ac_no": "110-7000-7000",
-                "bank_account_holder_name": "윤지아",
-                "resident_zip_code": "04050",
-                "road_address": "서울특별시 마포구 양화로 160",
-                "rrn_masked": "941203-2******",
-                "cell_number": "010-7000-7000",
-            },
-        },
-        {
-            "user": "demo.hongdae.pt@node.pe.kr",
-            "first_name": "서준",
-            "last_name": "강",
-            "gender": "Male",
-            "dob": "2000-04-24",
-            "doj": "2026-03-02",
-            "department": "매장운영 - NBG",
-            "designation": "Part-time Crew",
-            "branch": "홍대 매장",
-            "custom": {
-                "employment_type": "Part-time",
-                "employment_type_kr": "Part-time",
-                "work_location_name": "홍대 매장",
-                "bank_name": "신한은행",
-                "bank_ac_no": "140-8000-8000",
-                "bank_account_holder_name": "강서준",
-                "resident_zip_code": "04050",
-                "road_address": "서울특별시 마포구 양화로 160",
-                "rrn_masked": "000424-3******",
-                "cell_number": "010-8000-8000",
-            },
-        },
-        {
-            "user": "demo.busan.manager@node.pe.kr",
-            "first_name": "수빈",
-            "last_name": "오",
-            "gender": "Female",
-            "dob": "1991-08-14",
-            "doj": "2023-10-10",
-            "department": "매장운영 - NBG",
-            "designation": "Store Supervisor",
-            "branch": "부산 매장",
-            "custom": {
-                "employment_type": "Full-time",
-                "employment_type_kr": "Fixed-term",
-                "work_location_name": "부산 매장",
-                "bank_name": "부산은행",
-                "bank_ac_no": "101-9000-9000",
-                "bank_account_holder_name": "오수빈",
-                "resident_zip_code": "48058",
-                "road_address": "부산광역시 해운대구 센텀중앙로 97",
-                "rrn_masked": "910814-2******",
-                "cell_number": "010-9000-9000",
-            },
-        },
-        {
-            "user": "demo.busan.pt@node.pe.kr",
-            "first_name": "민재",
-            "last_name": "장",
-            "gender": "Male",
-            "dob": "2002-06-30",
-            "doj": "2026-04-01",
-            "department": "매장운영 - NBG",
-            "designation": "Part-time Crew",
-            "branch": "부산 매장",
-            "custom": {
-                "employment_type": "Part-time",
-                "employment_type_kr": "Part-time",
-                "work_location_name": "부산 매장",
-                "bank_name": "농협은행",
-                "bank_ac_no": "301-1010-1010",
-                "bank_account_holder_name": "장민재",
-                "resident_zip_code": "48058",
-                "road_address": "부산광역시 해운대구 센텀중앙로 97",
-                "rrn_masked": "020630-3******",
-                "cell_number": "010-1010-1010",
-            },
-        },
     ]
-
-
-def main():
-    created = []
-    updated = []
-
-    holiday_list, changed = ensure_holiday_list()
-    (updated if changed else created).append(f"Holiday List::{holiday_list.name}")
-
-    warehouse_type, warehouse_created = ensure_warehouse_type("Transit")
-    (created if warehouse_created else updated).append(f"Warehouse Type::{warehouse_type.name}")
-
-    company, company_created = ensure_company()
-    (created if company_created else updated).append(f"Company::{company.name}")
-
-    for name in ["운영", "매장운영"]:
-        doc, was_created = ensure_department(company.name, name)
-        (created if was_created else updated).append(f"Department::{doc.name}")
-
-    for name in ["HR Manager", "Store Supervisor", "Operations Lead", "Payroll Specialist", "Store Staff", "Part-time Crew"]:
-        doc, was_created = ensure_designation(name)
-        (created if was_created else updated).append(f"Designation::{doc.name}")
-
-    for name in ["Full-time", "Part-time"]:
-        doc, was_created = ensure_employment_type(name)
-        (created if was_created else updated).append(f"Employment Type::{doc.name}")
-
-    for name in ["Male", "Female"]:
-        doc, was_created = ensure_gender(name)
-        (created if was_created else updated).append(f"Gender::{doc.name}")
-
-    for name in ["서울 본사", "강남 매장", "홍대 매장", "부산 매장"]:
-        doc, was_created = ensure_branch(name)
-        (created if was_created else updated).append(f"Branch::{doc.name}")
-
-    shift, shift_created = ensure_shift_type(holiday_list.name)
-    (created if shift_created else updated).append(f"Shift Type::{shift.name}")
-
-    for component_name in ensure_salary_components():
-        updated.append(f"Salary Component::{component_name}")
-
-    leave_configs = [
-        ("Annual Leave", {"is_earned_leave": 1, "earned_leave_frequency": "Monthly", "is_carry_forward": 1, "maximum_carry_forwarded_leaves": 25}),
-        ("Sick Leave", {"is_lwp": 0, "is_carry_forward": 0}),
-        ("Family Event Leave", {"is_lwp": 0, "is_carry_forward": 0}),
-    ]
-    for leave_name, options in leave_configs:
-        doc, was_created = ensure_leave_type(leave_name, **options)
-        (created if was_created else updated).append(f"Leave Type::{doc.name}")
-
-    employees = build_demo_employee_roster()
-    for payload in employees:
-        roles = {"Employee"}
-        if payload["user"] in {"demo.hr.manager@node.pe.kr", "demo.store@node.pe.kr"}:
-            roles = {"HR Manager", "HR User", "Employee"}
-        user_doc, user_created = ensure_user(payload["user"], payload["first_name"], payload["last_name"], roles=roles)
-        (created if user_created else updated).append(f"User::{user_doc.name}")
 
     employee_docs = []
     employee_names = []
-    for payload in employees:
+    for payload in baseline_employees:
         doc, was_created = ensure_employee(
             company=company.name,
             department=payload["department"],
@@ -1025,41 +1370,63 @@ def main():
         )
         employee_docs.append(doc)
         employee_names.append(doc.name)
-        (created if was_created else updated).append(f"Employee::{doc.name}")
+        (created_list if was_created else updated_list).append(f"Employee::{doc.name}")
 
     blocker_seed = ensure_demo_blocker_transactions(company=company.name, employees=employee_docs)
     for row in blocker_seed["blocker_rows"]:
-        updated.append(f"{row['doctype']}::{row['name']}")
+        updated_list.append(f"{row['doctype']}::{row['name']}")
 
     draft_seed = ensure_demo_payroll_closing_draft(company=company.name)
     for row in draft_seed["draft_rows"]:
-        updated.append(f"{row['doctype']}::{row['name']}")
+        updated_list.append(f"{row['doctype']}::{row['name']}")
 
     structure, was_created = ensure_salary_structure(company.name)
-    (created if was_created else updated).append(f"Salary Structure::{structure.name}")
+    (created_list if was_created else updated_list).append(f"Salary Structure::{structure.name}")
 
     for employee in employee_names:
         doc, created_assignment = ensure_salary_structure_assignment(employee, company.name, structure.name)
-        (created if created_assignment else updated).append(f"Salary Structure Assignment::{doc.name}")
+        (created_list if created_assignment else updated_list).append(f"Salary Structure Assignment::{doc.name}")
+
+    # ── Wave 4 extension ─────────────────────────────────────────────────
+    wave4_log = seed_korea_demo_wave4(
+        company_name=company.name,
+        holiday_list_name=holiday_list.name,
+        salary_structure_name=structure.name,
+    )
 
     frappe.db.commit()
+
     summary = {
-        "created_or_updated": created + updated,
+        "wave": "4",
+        "created_or_updated": created_list + updated_list,
         "company": company.name,
         "holiday_list": holiday_list.name,
         "shift_type": shift.name,
         "salary_structure": structure.name,
-        "employees": employee_names,
+        "baseline_employees": employee_names,
+        "wave4": wave4_log,
+        "employee_count": len(employee_names) + len(wave4_log["employees"]),
+        "branch_count": 3,
+        "department_count": 7,
         "demo_blocker_seed": blocker_seed,
         "demo_payroll_closing_draft_seed": draft_seed,
-        "demo_browser_credential_handoff": build_demo_browser_credential_handoff(),
         "demo_login": {
-            "url": "http://10.0.0.58:8000/app",
+            "url": "http://hrms.localhost:8000/app",
             "username": "demo.hr.manager@node.pe.kr",
-            "password": "***",
+            "password": "DemoHRMS!2026",
         },
     }
     print(json.dumps(summary, ensure_ascii=False, default=str, indent=2))
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible entry point
+# ---------------------------------------------------------------------------
+
+def main():
+    """Legacy entry point.  Delegates to seed_korea_demo()."""
+    seed_korea_demo()
 
 
 if __name__ == "__main__":

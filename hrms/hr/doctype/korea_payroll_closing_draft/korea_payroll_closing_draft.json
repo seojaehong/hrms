@@ -22,7 +22,8 @@
   "ai_role",
   "payload_section",
   "payload",
-  "audit_preview"
+  "audit_preview",
+  "attendance_snapshot"
  ],
  "fields": [
   {
@@ -137,6 +138,11 @@
    "fieldtype": "Long Text",
    "label": "Audit Preview JSON",
    "reqd": 1
+  },
+  {
+   "fieldname": "attendance_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Attendance Snapshot JSON"
   }
  ],
  "index_web_pages_for_search": 1,

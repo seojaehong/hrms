@@ -1,0 +1,21 @@
+{
+ "align_labels_right": 0,
+ "creation": "2026-05-17 00:00:00.000000",
+ "custom_format": 1,
+ "disabled": 0,
+ "doc_type": "Leave Application",
+ "docstatus": 0,
+ "doctype": "Print Format",
+ "html": "<!DOCTYPE html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"UTF-8\"/>\n<style>\n* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: \"Apple SD Gothic Neo\", \"Malgun Gothic\", \"Noto Sans KR\", sans-serif; font-size: 12px; color: #111; }\n.page { width: 210mm; min-height: 297mm; padding: 20mm 20mm 25mm 20mm; }\nh1 { font-size: 20px; font-weight: 700; text-align: center; letter-spacing: 0.15em; margin-bottom: 24px; }\n.subtitle { text-align: center; font-size: 11px; color: #555; margin-bottom: 32px; }\ntable { width: 100%; border-collapse: collapse; margin-bottom: 20px; }\nth, td { border: 1px solid #ccc; padding: 8px 10px; font-size: 12px; vertical-align: top; }\nth { background: #f5f5f5; font-weight: 600; text-align: left; width: 28%; }\n.section-title { font-size: 13px; font-weight: 700; margin: 20px 0 8px; border-bottom: 2px solid #333; padding-bottom: 4px; }\n.approval-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #ccc; margin-bottom: 20px; }\n.approval-cell { border-right: 1px solid #ccc; padding: 12px 10px; min-height: 80px; }\n.approval-cell:last-child { border-right: none; }\n.approval-label { font-size: 11px; color: #555; margin-bottom: 6px; }\n.approval-sign { min-height: 48px; }\n.footer-note { font-size: 10px; color: #666; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px; line-height: 1.6; }\n</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>휴가 신청서</h1>\n<p class=\"subtitle\">Leave Application</p>\n<p class=\"section-title\">신청인 정보</p>\n<table>\n<tr><th>회사명</th><td>{{ doc.company or \"—\" }}</td><th>사번</th><td>{{ doc.employee or \"—\" }}</td></tr>\n<tr><th>성명</th><td>{{ doc.employee_name or \"—\" }}</td><th>부서</th><td>{{ doc.department or \"—\" }}</td></tr>\n<tr><th>직급</th><td>{{ doc.designation or \"—\" }}</td><th>요청일</th><td>{{ doc.posting_date or \"—\" }}</td></tr>\n</table>\n<p class=\"section-title\">휴가 내용</p>\n<table>\n<tr><th>휴가 종류</th><td colspan=\"3\">{{ doc.leave_type or \"—\" }}</td></tr>\n<tr><th>시작일</th><td>{{ doc.from_date or \"—\" }}</td><th>종료일</th><td>{{ doc.to_date or \"—\" }}</td></tr>\n<tr><th>휴가 일수</th><td colspan=\"3\"><strong>{{ doc.total_leave_days or \"—\" }} 일</strong></td></tr>\n<tr><th>휴가 사유</th><td colspan=\"3\" style=\"min-height:48px;\">{{ doc.reason or \"—\" }}</td></tr>\n</table>\n<p class=\"section-title\">결재</p>\n<div class=\"approval-grid\">\n<div class=\"approval-cell\"><div class=\"approval-label\">신청인</div><div class=\"approval-sign\">{{ doc.employee_name or \"\" }}</div></div>\n<div class=\"approval-cell\"><div class=\"approval-label\">결재자</div><div class=\"approval-sign\">{{ doc.leave_approver_name or doc.leave_approver or \"\" }}</div></div>\n<div class=\"approval-cell\"><div class=\"approval-label\">인사 확인</div><div class=\"approval-sign\"></div></div>\n</div>\n<div class=\"footer-note\">\n※ 이 신청서는 근로기준법 제60조에 따라 연차유급휴가를 신청하기 위한 문서입니다.<br>\n※ 허위 사유로 신청한 경우 취업규칙에 따른 징계 대상이 될 수 있습니다.<br>\n※ 신청일: {{ doc.posting_date or \"\" }} &middot; 문서번호: {{ doc.name or \"\" }}\n</div>\n</div>\n</body>\n</html>",
+ "idx": 0,
+ "line_breaks": 0,
+ "modified": "2026-05-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Korea Leave Application",
+ "owner": "Administrator",
+ "print_format_builder": 0,
+ "print_format_type": "Jinja",
+ "show_section_headings": 0,
+ "standard": "Yes"
+}

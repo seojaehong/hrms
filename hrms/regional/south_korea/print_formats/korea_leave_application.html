@@ -1,0 +1,129 @@
+{#- 한국 휴가 신청서 Print Format (Jinja 템플릿)
+   적용 DocType: Leave Application
+   위치: hrms/regional/south_korea/print_formats/korea_leave_application.html
+
+   사용법: Frappe Print Format 레코드 생성 시 HTML 필드에 이 내용을 붙여넣거나
+           frappe.get_print(doctype, docname, print_format_name) 으로 렌더링.
+-#}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 12px; color: #111; }
+  .page { width: 210mm; min-height: 297mm; padding: 20mm 20mm 25mm 20mm; }
+  h1 { font-size: 20px; font-weight: 700; text-align: center; letter-spacing: 0.15em; margin-bottom: 24px; }
+  .subtitle { text-align: center; font-size: 11px; color: #555; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px 10px; font-size: 12px; vertical-align: top; }
+  th { background: #f5f5f5; font-weight: 600; text-align: left; width: 28%; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 20px 0 8px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+  .approval-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #ccc; margin-bottom: 20px; }
+  .approval-cell { border-right: 1px solid #ccc; padding: 12px 10px; min-height: 80px; }
+  .approval-cell:last-child { border-right: none; }
+  .approval-label { font-size: 11px; color: #555; margin-bottom: 6px; }
+  .approval-sign { min-height: 48px; }
+  .footer-note { font-size: 10px; color: #666; margin-top: 24px; border-top: 1px solid #eee; padding-top: 10px; line-height: 1.6; }
+  .stamp-area { text-align: center; font-size: 11px; color: #888; border: 1px dashed #ccc; padding: 12px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>휴가 신청서</h1>
+  <p class="subtitle">Leave Application</p>
+
+  {#- ===== 신청인 정보 ===== -#}
+  <p class="section-title">신청인 정보</p>
+  <table>
+    <tr>
+      <th>회사명</th>
+      <td>{{ doc.company or "—" }}</td>
+      <th>사번</th>
+      <td>{{ doc.employee or "—" }}</td>
+    </tr>
+    <tr>
+      <th>성명</th>
+      <td>{{ doc.employee_name or "—" }}</td>
+      <th>부서</th>
+      <td>{{ doc.department or "—" }}</td>
+    </tr>
+    <tr>
+      <th>직급</th>
+      <td>{{ doc.designation or "—" }}</td>
+      <th>요청일</th>
+      <td>{{ doc.posting_date or frappe.format_date(frappe.utils.nowdate(), "yyyy-MM-dd") }}</td>
+    </tr>
+  </table>
+
+  {#- ===== 휴가 내용 ===== -#}
+  <p class="section-title">휴가 내용</p>
+  <table>
+    <tr>
+      <th>휴가 종류</th>
+      <td colspan="3">{{ doc.leave_type or "—" }}</td>
+    </tr>
+    <tr>
+      <th>휴가 시작일</th>
+      <td>{{ doc.from_date or "—" }}</td>
+      <th>휴가 종료일</th>
+      <td>{{ doc.to_date or "—" }}</td>
+    </tr>
+    <tr>
+      <th>휴가 일수</th>
+      <td colspan="3"><strong>{{ doc.total_leave_days or "—" }} 일</strong></td>
+    </tr>
+    <tr>
+      <th>휴가 사유</th>
+      <td colspan="3" style="min-height:48px;">{{ doc.reason or "—" }}</td>
+    </tr>
+    <tr>
+      <th>비상 연락처</th>
+      <td colspan="3">{{ doc.follow_via_email or "—" }}</td>
+    </tr>
+  </table>
+
+  {#- ===== 잔여 연차 현황 ===== -#}
+  {% if doc.leave_balance is defined %}
+  <p class="section-title">잔여 연차 현황</p>
+  <table>
+    <tr>
+      <th>신청 전 잔여</th>
+      <td>{{ doc.leave_balance or 0 }} 일</td>
+      <th>신청 후 예상 잔여</th>
+      <td>{{ (doc.leave_balance or 0) - (doc.total_leave_days or 0) }} 일</td>
+    </tr>
+  </table>
+  {% endif %}
+
+  {#- ===== 결재란 ===== -#}
+  <p class="section-title">결재</p>
+  <div class="approval-grid">
+    <div class="approval-cell">
+      <div class="approval-label">신청인</div>
+      <div class="approval-sign">{{ doc.employee_name or "" }}</div>
+    </div>
+    <div class="approval-cell">
+      <div class="approval-label">팀장 / 직속 상사</div>
+      <div class="approval-sign">{{ doc.leave_approver_name or doc.leave_approver or "" }}</div>
+    </div>
+    <div class="approval-cell">
+      <div class="approval-label">인사 확인</div>
+      <div class="approval-sign"></div>
+    </div>
+  </div>
+
+  <div class="stamp-area">
+    (직인)
+  </div>
+
+  <div class="footer-note">
+    ※ 이 신청서는 근로기준법 제60조에 따라 연차유급휴가를 신청하기 위한 문서입니다.<br>
+    ※ 허위 사유로 신청한 경우 취업규칙에 따른 징계 대상이 될 수 있습니다.<br>
+    ※ 신청일: {{ doc.posting_date or "" }} · 문서번호: {{ doc.name or "" }}
+  </div>
+
+</div>
+</body>
+</html>

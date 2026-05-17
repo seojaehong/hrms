@@ -1,0 +1,41 @@
+{
+  "_comment": "멀티 테넌트 레지스트리. 자동 프로비저닝 스크립트가 tenants 배열을 읽고 씁니다.",
+  "_schema": {
+    "tenants[].id":         "tenant 식별자 (subdomain prefix). 예: acme",
+    "tenants[].name":       "고객사 표시 이름",
+    "tenants[].plan":       "starter | professional | enterprise",
+    "tenants[].status":     "provisioning | active | suspended | deleted",
+    "tenants[].site":       "Frappe site name. 예: acme.hrms.safeclaw.kr",
+    "tenants[].admin_email":"초기 관리자 이메일",
+    "tenants[].created_at": "ISO 8601 UTC",
+    "tenants[].updated_at": "ISO 8601 UTC",
+    "routing.base_domain":  "멀티 테넌트 기본 도메인",
+    "routing.tunnel_target":"cloudflared CNAME 대상. CLOUDFLARED_TUNNEL_ID 환경변수와 동기화",
+    "quotas.starter":       "plan별 리소스 상한",
+    "quotas.professional":  "plan별 리소스 상한",
+    "quotas.enterprise":    "plan별 리소스 상한"
+  },
+  "tenants": [],
+  "routing": {
+    "base_domain": "hrms.safeclaw.kr",
+    "tunnel_target": "${CLOUDFLARED_TUNNEL_ID}.cfargotunnel.com",
+    "note": "tunnel_target 실제값은 CLOUDFLARED_TUNNEL_ID 환경변수로 주입"
+  },
+  "quotas": {
+    "starter": {
+      "max_employees": 20,
+      "max_storage_gb": 5,
+      "db_max_connections": 10
+    },
+    "professional": {
+      "max_employees": 100,
+      "max_storage_gb": 20,
+      "db_max_connections": 25
+    },
+    "enterprise": {
+      "max_employees": -1,
+      "max_storage_gb": -1,
+      "db_max_connections": 50
+    }
+  }
+}

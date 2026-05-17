@@ -1,0 +1,160 @@
+groups:
+
+  # ---------------------------------------------------------------------------
+  # Frappe infrastructure alerts
+  # ---------------------------------------------------------------------------
+  - name: frappe_infrastructure
+    interval: 60s
+    rules:
+
+      # Frappe exporter unreachable — Frappe site likely down
+      - alert: FrappeExporterDown
+        expr: up{job="frappe_exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Frappe metrics exporter is down"
+          description: >
+            The Frappe metrics exporter (job={{ $labels.job }}) has been
+            unreachable for more than 5 minutes. Frappe site may be down.
+          runbook: "Check `docker compose logs frappe-exporter` and Frappe bench status."
+
+      # DB connection pool near exhaustion
+      # Default MariaDB max_connections is typically 151; alert at 80 %
+      - alert: FrappeDbConnectionsHigh
+        expr: frappe_db_connection_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frappe DB connection count is high ({{ $value }})"
+          description: >
+            Site {{ $labels.site }} has {{ $value }} active DB connections,
+            which is above the warning threshold of 80. Risk of connection
+            pool exhaustion.
+          runbook: "Review long-running queries and idle connections."
+
+      # Frappe job queue backlog
+      - alert: FrappeQueuePendingHigh
+        expr: frappe_queue_pending_count > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frappe queue {{ $labels.queue }} has {{ $value }} pending jobs"
+          description: >
+            Queue {{ $labels.queue }} has more than 500 pending jobs for 5+
+            minutes. Workers may be stalled or insufficient.
+          runbook: "Check `bench worker` processes and Redis connectivity."
+
+      # Critical queue backlog
+      - alert: FrappeQueuePendingCritical
+        expr: frappe_queue_pending_count > 2000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Frappe queue {{ $labels.queue }} critically backed up ({{ $value }})"
+          description: >
+            Queue {{ $labels.queue }} has more than 2,000 pending jobs —
+            likely a stuck worker or Redis issue.
+          runbook: "Immediately investigate `bench worker` and Redis status."
+
+  # ---------------------------------------------------------------------------
+  # Korea HRMS business alerts
+  # ---------------------------------------------------------------------------
+  - name: korea_hrms_business
+    interval: 300s
+    rules:
+
+      # Payroll Entry stuck in Draft for 7+ days
+      - alert: KoreaPayrollClosingDraftPending
+        expr: korea_payroll_closing_draft_pending_count > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Korea payroll draft older than 7 days ({{ $value }} entries)"
+          description: >
+            Site {{ $labels.site }} has {{ $value }} Payroll Entry record(s)
+            in Draft status older than 7 days. These should be reviewed and
+            either submitted or cancelled.
+          runbook: "Review stale Payroll Entry drafts in Frappe and action them."
+
+      # Korea compliance: high-severity findings
+      - alert: KoreaComplianceHighSeverity
+        expr: korea_compliance_high_severity_findings > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Korea compliance: {{ $value }} high-severity findings"
+          description: >
+            Site {{ $labels.site }} has {{ $value }} high-severity compliance
+            findings from the latest diagnosis run. Findings include: social
+            insurance enrollment gaps, wage-delay violations, or anti-bullying
+            policy absence.
+          runbook: "Run compliance diagnosis in Frappe and review findings."
+
+      # Critical compliance threshold
+      - alert: KoreaComplianceHighSeverityCritical
+        expr: korea_compliance_high_severity_findings > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Korea compliance CRITICAL: {{ $value }} high-severity findings"
+          description: >
+            Site {{ $labels.site }} has {{ $value }} high-severity compliance
+            findings — immediate legal/HR review required.
+
+      # Unmarked attendance (employees with no attendance this month)
+      - alert: KoreaAttendanceUnmarked
+        expr: korea_attendance_unmarked_count > 10
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} employees have no attendance record this month"
+          description: >
+            Site {{ $labels.site }}: {{ $value }} active employees have no
+            submitted attendance record for the current calendar month. This
+            may indicate data entry gaps or system issues.
+          runbook: "Review attendance entries and ensure closing is up to date."
+
+  # ---------------------------------------------------------------------------
+  # Cron / scheduled job health
+  # ---------------------------------------------------------------------------
+  - name: cron_health
+    interval: 60s
+    rules:
+
+      # Cron textfile collector — stale heartbeat
+      # Populated by scripts writing to node-exporter textfile directory.
+      # See docs/operations/monitoring.md §"Cron health textfile collector".
+      - alert: CronJobStale
+        expr: >
+          (time() - cron_last_success_timestamp_seconds) > 3600
+          unless absent(cron_last_success_timestamp_seconds)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cron job {{ $labels.job }} has not run in 1+ hours"
+          description: >
+            The scheduled job {{ $labels.job }} last succeeded at
+            {{ $value | humanizeTimestamp }}. Expected interval: 1 hour.
+          runbook: "Check cron job logs and the textfile collector output."
+
+      # Consecutive failures
+      - alert: CronJobConsecutiveFailures
+        expr: cron_consecutive_failures > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cron job {{ $labels.job }} has {{ $value }} consecutive failures"
+          description: >
+            {{ $labels.job }} has failed {{ $value }} times in a row.
+            Investigate immediately.

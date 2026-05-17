@@ -6,9 +6,17 @@
 포함된 엔드포인트:
   - chat_query_api      : AI 챗봇 (5-A-1)
   - global_search_api   : 통합 검색 (5-A-2)
+  - get_plan            : SaaS 플랜 조회 (5-B-1)
+  - get_all_plans       : 전체 플랜 목록 (5-B-1)
+  - calculate_monthly_invoice : 월 청구액 계산 (5-B-1)
+  - list_invoices       : 청구 history (5-B-1)
+  - initiate_subscription : 구독 시작 (5-B-1)
+  - cancel_subscription : 구독 해지 (5-B-1)
+  - upgrade_downgrade   : 플랜 변경 (5-B-1)
 """
 from __future__ import annotations
 
+import datetime as dt
 import uuid
 
 import frappe
@@ -199,3 +207,145 @@ def global_search_api(
         limit_per_doctype=limit_per_doctype,
         data_loader=_frappe_data_loader,
     )
+
+
+# ---------------------------------------------------------------------------
+# 5-B-1: SaaS 구독
+# ---------------------------------------------------------------------------
+
+from hrms.regional.south_korea.subscription import (
+    PAYMENT_PROVIDERS,
+    PLAN_TIERS,
+    calculate_monthly_invoice as _calculate_monthly_invoice,
+    cancel_subscription as _cancel_subscription,
+    get_plan as _get_plan,
+    initiate_subscription as _initiate_subscription,
+    list_invoices as _list_invoices,
+    upgrade_downgrade as _upgrade_downgrade,
+)
+
+
+@frappe.whitelist()
+def get_plan(tier: str) -> dict:
+    """플랜 정보 조회."""
+    try:
+        return _get_plan(tier)
+    except ValueError as e:
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def get_all_plans() -> dict:
+    """전체 플랜 목록 + 결제 수단 반환 (UI 초기 로드용)."""
+    return {
+        "plans": PLAN_TIERS,
+        "payment_providers": PAYMENT_PROVIDERS,
+    }
+
+
+@frappe.whitelist()
+def calculate_monthly_invoice(
+    tier: str,
+    employee_count: int,
+    period_start: str,
+    period_end: str,
+) -> dict:
+    """월 청구액 계산.
+
+    Args:
+        tier:            플랜 키.
+        employee_count:  현재 활성 직원 수 (int 또는 숫자 문자열).
+        period_start:    청구 시작일 (YYYY-MM-DD).
+        period_end:      청구 종료일 (YYYY-MM-DD).
+    """
+    try:
+        return _calculate_monthly_invoice(
+            tier=tier,
+            employee_count=int(employee_count),
+            period_start=dt.date.fromisoformat(period_start),
+            period_end=dt.date.fromisoformat(period_end),
+        )
+    except (ValueError, TypeError) as e:
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def list_invoices(company: str, limit: int = 12) -> list[dict]:
+    """청구 history 조회."""
+    return _list_invoices(company=company, limit=int(limit))
+
+
+@frappe.whitelist()
+def initiate_subscription(
+    company: str,
+    tier: str,
+    payment_method: str,
+    billing_email: str,
+    dry_run: bool = True,
+) -> dict:
+    """구독 시작.
+
+    human_approved는 서버 측에서 System Manager 역할 확인으로 대체.
+    UI confirm 다이얼로그는 프론트엔드에서 처리.
+    """
+    _assert_system_manager()
+    try:
+        return _initiate_subscription(
+            company=company,
+            tier=tier,
+            payment_method=payment_method,
+            billing_email=billing_email,
+            human_approved=True,
+            dry_run=_coerce_bool(dry_run),
+        )
+    except (ValueError, PermissionError, NotImplementedError) as e:
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def cancel_subscription(subscription_id: str) -> dict:
+    """구독 해지."""
+    _assert_system_manager()
+    try:
+        return _cancel_subscription(
+            subscription_id=subscription_id,
+            human_approved=True,
+        )
+    except (ValueError, PermissionError) as e:
+        frappe.throw(str(e))
+
+
+@frappe.whitelist()
+def upgrade_downgrade(subscription_id: str, new_tier: str) -> dict:
+    """플랜 변경."""
+    _assert_system_manager()
+    try:
+        return _upgrade_downgrade(
+            subscription_id=subscription_id,
+            new_tier=new_tier,
+            human_approved=True,
+        )
+    except (ValueError, PermissionError) as e:
+        frappe.throw(str(e))
+
+
+# ---------------------------------------------------------------------------
+# 내부 헬퍼 (구독 모듈용)
+# ---------------------------------------------------------------------------
+
+
+def _assert_system_manager() -> None:
+    """System Manager 역할이 없으면 PermissionError."""
+    if "System Manager" not in frappe.get_roles():
+        frappe.throw(
+            "이 작업은 시스템 관리자(System Manager) 권한이 필요합니다.",
+            frappe.PermissionError,
+        )
+
+
+def _coerce_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)

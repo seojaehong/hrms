@@ -178,6 +178,30 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 		self.assertIn("'human_approved': True", normalized)
 		self.assertNotIn('"human_approved": true', bench_payload)
 
+	def test_checkpoint_rejects_blank_browser_report_file_before_credential_apply(self):
+		commands = []
+
+		def fake_run(command, **kwargs):
+			commands.append(command)
+			return self.mod.CommandResult(returncode=0, stdout="{}", stderr="")
+
+		report = self.mod.verify_demo_browser_credential_apply(
+			repo_root=self.repo_root,
+			environ={"FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+			human_approved=True,
+			browser_report_file="  \t\n",
+			run_command=fake_run,
+		)
+
+		self.assertEqual(commands, [])
+		self.assertFalse(report["credential_apply"]["attempted"])
+		self.assertEqual(report["credential_apply"]["reason"], "browser_report_file must be a non-empty string")
+		self.assertFalse(report["browser_verification"]["attempted"])
+		self.assertEqual(report["browser_verification"]["reason"], "credential apply not ready")
+		self.assertFalse(report["runtime_verified"])
+		self.assertTrue(report["fixture_fallback_required"])
+		self.assertNotIn("runtime-secret", json.dumps(report))
+
 	def test_checkpoint_passes_redacted_browser_report_file_to_child_verifier(self):
 		commands = []
 		browser_report_file = "/tmp/korea-browser/nested/report.json"

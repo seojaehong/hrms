@@ -23,12 +23,72 @@ export default defineConfig({
 				enabled: true,
 			},
 			manifest: {
+				// ── 디자인 토큰 (2026-07 sprint에서 교체) ──────────────────
+				// DESIGN_TOKEN_THEME_COLOR: #0066ff
+				// DESIGN_TOKEN_BACKGROUND_COLOR: #ffffff
+				// ────────────────────────────────────────────────────────────
 				display: "standalone",
-				name: "Frappe HR",
-				short_name: "Frappe HR",
+				orientation: "portrait",
+				name: "노란봉투법 HRMS",
+				short_name: "NBP HRMS",
+				description: "한국 노동법 기반 HR 통합 관리 시스템",
 				start_url: "/hrms",
-				description: "Everyday HR & Payroll operations at your fingertips",
-				theme_color: "#ffffff",
+				scope: "/hrms",
+				theme_color: "#0066ff",
+				background_color: "#ffffff",
+				lang: "ko-KR",
+				dir: "ltr",
+				categories: ["business", "productivity"],
+				shortcuts: [
+					{
+						name: "출근 체크",
+						short_name: "출근",
+						description: "GPS 기반 출근/퇴근",
+						url: "/hrms/dashboard/attendance",
+						icons: [
+							{
+								src: "/assets/hrms/manifest/manifest-icon-192.maskable.png",
+								sizes: "192x192",
+							},
+						],
+					},
+					{
+						name: "결재 인박스",
+						short_name: "결재",
+						description: "미결 결재 목록",
+						url: "/hrms/dashboard/leaves",
+						icons: [
+							{
+								src: "/assets/hrms/manifest/manifest-icon-192.maskable.png",
+								sizes: "192x192",
+							},
+						],
+					},
+					{
+						name: "급여명세서",
+						short_name: "급여",
+						description: "한국 급여명세서 조회",
+						url: "/hrms/dashboard/salary-slips",
+						icons: [
+							{
+								src: "/assets/hrms/manifest/manifest-icon-192.maskable.png",
+								sizes: "192x192",
+							},
+						],
+					},
+					{
+						name: "경비 청구",
+						short_name: "경비",
+						description: "경비 청구 내역",
+						url: "/hrms/dashboard/expense-claims",
+						icons: [
+							{
+								src: "/assets/hrms/manifest/manifest-icon-192.maskable.png",
+								sizes: "192x192",
+							},
+						],
+					},
+				],
 				icons: [
 					{
 						src: "/assets/hrms/manifest/manifest-icon-192.maskable.png",

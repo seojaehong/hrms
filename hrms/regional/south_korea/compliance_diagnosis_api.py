@@ -15,16 +15,71 @@
 
 from __future__ import annotations
 
+import copy
+import datetime as dt
+import importlib.util as _ilu
+import json
+import pathlib as _pl
 import re
 from typing import Any
 
-import frappe
+# ---------------------------------------------------------------------------
+# Frappe 조건부 import — framework-free 테스트 환경에서 안전하게 로드
+# ---------------------------------------------------------------------------
+try:
+    import frappe  # noqa: PLC0415
 
-from hrms.regional.south_korea.compliance_diagnosis import (
-    DIAGNOSIS_RULES,
-    DataLoader,
-    run_full_compliance_diagnosis,
-)
+    _FRAPPE_AVAILABLE = True
+except ModuleNotFoundError:
+    frappe = None  # type: ignore[assignment]
+    _FRAPPE_AVAILABLE = False
+
+# compliance_checklist 모듈 동적 로드 (frappe 패키지 경로 우회)
+_MODULE_DIR = _pl.Path(__file__).resolve().parent
+_CHECKLIST_PATH = _MODULE_DIR / "compliance_checklist.py"
+_chk_spec = _ilu.spec_from_file_location("_compliance_checklist", _CHECKLIST_PATH)
+_chk_mod = _ilu.module_from_spec(_chk_spec)  # type: ignore[arg-type]
+_chk_spec.loader.exec_module(_chk_mod)  # type: ignore[union-attr]
+
+# compliance_diagnosis 모듈은 Frappe 런타임에서만 로드 (lazy)
+_diag_mod = None
+
+
+def _get_diag():
+    global _diag_mod
+    if _diag_mod is None:
+        _DIAG_PATH = _MODULE_DIR / "compliance_diagnosis.py"
+        _spec = _ilu.spec_from_file_location("_compliance_diagnosis", _DIAG_PATH)
+        _m = _ilu.module_from_spec(_spec)  # type: ignore[arg-type]
+        _spec.loader.exec_module(_m)  # type: ignore[union-attr]
+        _diag_mod = _m
+    return _diag_mod
+
+
+def _whitelist(fn):
+    """@_whitelist 데코레이터 — Frappe 없으면 no-op."""
+    if _FRAPPE_AVAILABLE and frappe is not None:
+        return frappe.whitelist()(fn)
+    return fn
+
+
+def _throw(msg: str) -> None:
+    if _FRAPPE_AVAILABLE and frappe is not None:
+        frappe.throw(msg)
+    raise ValueError(msg)
+
+
+# References used by Frappe-only functions
+try:
+    from hrms.regional.south_korea.compliance_diagnosis import (  # noqa: PLC0415
+        DIAGNOSIS_RULES,
+        DataLoader,
+        run_full_compliance_diagnosis,
+    )
+except (ModuleNotFoundError, ImportError):
+    DIAGNOSIS_RULES = {}  # type: ignore[assignment]
+    DataLoader = None  # type: ignore[assignment]
+    run_full_compliance_diagnosis = None  # type: ignore[assignment]
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -266,7 +321,7 @@ class FrappeDataLoader:
 # ---------------------------------------------------------------------------
 
 
-@frappe.whitelist()
+@_whitelist
 def run_compliance_diagnosis(
     company: str,
     workplace: str = "",
@@ -309,7 +364,7 @@ def run_compliance_diagnosis(
         frappe.throw(str(exc))
 
 
-@frappe.whitelist()
+@_whitelist
 def get_diagnosis_rules() -> dict[str, Any]:
     """진단 규칙 목록 반환 (참고용, read-only).
 
@@ -460,3 +515,129 @@ def _as_float(value: Any) -> float:
         return float(value or 0)
     except (TypeError, ValueError):
         return 0.0
+
+
+# ---------------------------------------------------------------------------
+# Phase 2-A Preview API — framework-free, 실제 mutation 없음
+# ---------------------------------------------------------------------------
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def preview_korea_compliance_diagnosis(
+    *,
+    items: list[dict] | str | None = None,
+    period_start: str | None = None,
+    period_end: str | None = None,
+    completed_codes: list[str] | str | None = None,
+    today: str | None = None,
+    evidence: dict[str, list[str]] | str | None = None,
+    reviewer: str = "HR Compliance Review Queue",
+) -> dict[str, Any]:
+    """컴플라이언스 진단 미리보기 — framework-free, 실제 mutation 없음."""
+    # Determine source mode: items OR period_start/period_end
+    has_items = items is not None
+    has_period = period_start is not None or period_end is not None
+
+    if has_items and has_period:
+        raise ValueError("provide either items or period_start/period_end, not both")
+    if not has_items and not has_period:
+        raise ValueError("items or period_start/period_end is required")
+
+    source_info: dict[str, Any] = {}
+
+    if has_items:
+        # Coerce items from JSON string
+        if isinstance(items, str):
+            # Check if it looks like a doc name (not JSON)
+            stripped = items.strip()
+            if not stripped.startswith("[") and not stripped.startswith("{"):
+                raise RuntimeError("Frappe runtime is required to load checklist by doc name")
+            try:
+                items = json.loads(items)
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise ValueError("JSON payload is invalid") from exc
+        if not isinstance(items, list):
+            raise ValueError("items must be a list")
+        checklist_items = [dict(item) for item in items]
+    else:
+        # Build from period_start/period_end
+        if period_start is None or period_end is None:
+            raise ValueError("period_start and period_end are both required")
+        if not isinstance(period_start, str) or not _ISO_DATE_RE.match(period_start):
+            raise ValueError("period_start must be an ISO date string (YYYY-MM-DD)")
+        if not isinstance(period_end, str) or not _ISO_DATE_RE.match(period_end):
+            raise ValueError("period_end must be an ISO date string (YYYY-MM-DD)")
+        try:
+            ps = dt.date.fromisoformat(period_start)
+            pe = dt.date.fromisoformat(period_end)
+        except ValueError as exc:
+            raise ValueError("period_start must be an ISO date string (YYYY-MM-DD)") from exc
+
+        # Parse completed_codes
+        if completed_codes is None:
+            codes_set: set[str] = set()
+        elif isinstance(completed_codes, str):
+            try:
+                completed_codes = json.loads(completed_codes)
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise ValueError("completed_codes must be a list") from exc
+        if completed_codes is not None and not isinstance(completed_codes, list):
+            raise ValueError("completed_codes must be a list")
+        if completed_codes is not None:
+            for code in completed_codes:
+                if not isinstance(code, str):
+                    raise ValueError("completed_codes entries must be strings")
+            codes_set = set(completed_codes)
+        else:
+            codes_set = set()
+
+        # Parse today
+        today_date: dt.date | None = None
+        if today:
+            try:
+                today_date = dt.date.fromisoformat(today)
+            except (ValueError, TypeError):
+                today_date = None
+
+        # Build checklist
+        checklist = _chk_mod.build_compliance_checklist(period_start=ps, period_end=pe)
+        checklist_items = _chk_mod.evaluate_compliance_checklist(
+            checklist, completed_codes=codes_set, today=today_date
+        )
+        source_info = {
+            "period_start": period_start,
+            "period_end": period_end,
+            "completed_codes": sorted(codes_set),
+        }
+
+    # Coerce evidence
+    if evidence is None:
+        evidence_dict: dict[str, list[str]] = {}
+    elif isinstance(evidence, str):
+        try:
+            evidence_dict = json.loads(evidence)
+        except (json.JSONDecodeError, TypeError) as exc:
+            raise ValueError("JSON payload is invalid") from exc
+    else:
+        evidence_dict = dict(evidence)
+
+    # Validate evidence values are lists
+    for k, v in evidence_dict.items():
+        if not isinstance(v, list):
+            raise ValueError("evidence values must be lists")
+
+    # Build diagnosis using checklist module
+    diagnosis = _chk_mod.build_compliance_diagnosis(
+        checklist_items,
+        evidence=evidence_dict,
+        reviewer=reviewer,
+    )
+
+    return {
+        "contract_type": "korea_compliance_diagnosis_preview_v1",
+        "runtime_action": "preview_only",
+        "requires_runtime_apply": True,
+        "source": source_info,
+        "diagnosis": diagnosis,
+    }

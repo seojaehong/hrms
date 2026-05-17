@@ -6,6 +6,8 @@ import leaveRoutes from "./leaves"
 import claimRoutes from "./claims"
 import employeeAdvanceRoutes from "./advances"
 import salarySlipRoutes from "./salary_slips"
+import koreaApprovalInboxRoutes from "./koreaApprovalInbox"
+import koreaRoutes from "./korea"
 
 const routes = [
 	{
@@ -80,6 +82,11 @@ const routes = [
 				name: "KoreaAttendanceDashboard",
 				component: () => import("@/views/KoreaAttendanceDashboard.vue"),
 			},
+			{
+				path: "/dashboard/korea-mobile-checkin",
+				name: "KoreaMobileCheckin",
+				component: () => import("@/views/KoreaMobileCheckin.vue"),
+			},
 		],
 	},
 	{
@@ -112,6 +119,8 @@ const routes = [
 	...claimRoutes,
 	...employeeAdvanceRoutes,
 	...salarySlipRoutes,
+	...koreaApprovalInboxRoutes,
+	...koreaRoutes,
 ]
 
 const router = createRouter({

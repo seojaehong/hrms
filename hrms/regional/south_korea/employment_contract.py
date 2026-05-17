@@ -596,5 +596,145 @@ def _statute_note() -> str:
 __all__ = [
 	"CONTRACT_TYPES",
 	"build_korea_employment_contract",
+	"build_contract_snapshot",
+	"contract_signature_hash",
 	"mask_rrn",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — 계약 스냅샷 빌더 (framework-free, 실제 발송 없음)
+# ---------------------------------------------------------------------------
+
+_EMPLOYMENT_TYPE_TO_CONTRACT_TYPE: dict[str, str] = {
+	"Regular": "Indefinite",
+	"Full Time": "Indefinite",
+	"Fixed Term": "Fixed Term",
+	"Part Time": "Part Time",
+	"Daily": "Daily",
+	"Contract": "Fixed Term",
+}
+
+
+def _is_strict_int(val: Any) -> bool:
+	"""Exactly int (not bool, not float, not int subclass)."""
+	return type(val) is int  # noqa: E721
+
+
+def build_contract_snapshot(
+	*,
+	employee: str,
+	company: str,
+	workplace: str,
+	start_date: date,
+	job_title: str,
+	employment_type: str,
+	working_hours_per_week: float | int,
+	monthly_wage: int,
+	pay_day: int,
+	end_date: date | None = None,
+	probation_months: int | None = None,
+	job_description: str = "",
+	**kwargs: Any,
+) -> dict[str, Any]:
+	"""근로계약 스냅샷 빌더 — framework-free, 실제 mutation 없음.
+
+	Returns:
+		{
+		  "employee": str,
+		  "company": str,
+		  "workplace": str,
+		  "start_date": "YYYY-MM-DD",
+		  "end_date": "YYYY-MM-DD" | None,
+		  "job_title": str,
+		  "employment_type": str,
+		  "contract_type": str,
+		  "working_hours_per_week": float,
+		  "monthly_wage": int,
+		  "pay_day": int,
+		  "probation_months": int | None,
+		  "required_terms_complete": bool,
+		  "missing_terms": list[str],
+		  "signature_hash": str,
+		}
+	"""
+	import datetime as _dt
+	import hashlib as _hashlib
+	import json as _json
+
+	# --- Type validation ---
+	# Dates: must be datetime.date but NOT datetime.datetime
+	for field, val in (("start_date", start_date), ("end_date", end_date)):
+		if val is None:
+			continue
+		if isinstance(val, _dt.datetime):
+			raise TypeError(f"{field} must be a datetime.date, not datetime.datetime")
+		if not isinstance(val, _dt.date):
+			raise TypeError(f"{field} must be a datetime.date")
+
+	# working_hours_per_week: numeric but reject bool
+	if isinstance(working_hours_per_week, bool):
+		raise ValueError("working_hours_per_week must be numeric")
+	if not isinstance(working_hours_per_week, (int, float)):
+		raise ValueError("working_hours_per_week must be numeric")
+
+	# Strict integer fields
+	for field, val in (
+		("monthly_wage", monthly_wage),
+		("pay_day", pay_day),
+	):
+		if not _is_strict_int(val):
+			raise ValueError(f"{field} must be an integer")
+
+	if probation_months is not None and not _is_strict_int(probation_months):
+		raise ValueError("probation_months must be an integer")
+
+	# --- Contract type mapping ---
+	contract_type = _EMPLOYMENT_TYPE_TO_CONTRACT_TYPE.get(employment_type, employment_type)
+
+	# --- Fixed-term end_date validation ---
+	if employment_type == "Fixed Term" and end_date is not None and start_date is not None:
+		if end_date <= start_date:
+			raise ValueError(f"end_date {end_date} must be after start_date {start_date}")
+
+	# --- Required terms check ---
+	_term_values: dict[str, Any] = {"workplace": workplace, "job_title": job_title}
+	missing = [f for f, v in _term_values.items() if not (isinstance(v, str) and v.strip())]
+
+	# --- Normalize ---
+	snapshot: dict[str, Any] = {
+		"employee": employee,
+		"company": company,
+		"workplace": workplace,
+		"start_date": start_date.isoformat() if start_date else None,
+		"end_date": end_date.isoformat() if end_date else None,
+		"job_title": job_title,
+		"employment_type": employment_type,
+		"contract_type": contract_type,
+		"working_hours_per_week": float(working_hours_per_week),
+		"monthly_wage": monthly_wage,
+		"pay_day": pay_day,
+		"probation_months": probation_months,
+		"job_description": job_description,
+		"required_terms_complete": len(missing) == 0,
+		"missing_terms": missing,
+	}
+
+	# Signature hash (deterministic, key-order-independent)
+	snapshot["signature_hash"] = contract_signature_hash(snapshot)
+
+	return snapshot
+
+
+def contract_signature_hash(snapshot: dict[str, Any]) -> str:
+	"""근로계약 스냅샷에 대한 결정론적 서명 해시 생성.
+
+	키 순서와 무관하게 동일한 해시를 반환합니다.
+	"""
+	import hashlib as _hashlib
+	import json as _json
+
+	# Exclude the signature_hash field itself from the hash computation
+	data = {k: v for k, v in snapshot.items() if k != "signature_hash"}
+	canonical = _json.dumps(data, sort_keys=True, ensure_ascii=False, default=str)
+	return _hashlib.sha256(canonical.encode()).hexdigest()

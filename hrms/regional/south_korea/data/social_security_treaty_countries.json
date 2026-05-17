@@ -1,0 +1,294 @@
+{
+  "_comment": "한국 사회보장협정 체결 국가 목록 (국민연금 상호면제 또는 총산입 협정)",
+  "as_of": "2025-12",
+  "source": "국민연금공단 사회보장협정 현황 (https://www.nps.or.kr)",
+  "note": "협정 내용은 국가별로 차이가 있습니다. 상호면제(exemption) 협정국 근로자는 자국 연금제도 가입증명서 제출 시 국민연금 가입 면제 가능. 총산입(totalization) 협정은 가입기간 합산만 허용하며 면제 아님.",
+  "exemption_eligible_countries": [
+    {
+      "country_code": "US",
+      "country_name_ko": "미국",
+      "country_name_en": "United States",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2001-04-01"
+    },
+    {
+      "country_code": "CA",
+      "country_name_ko": "캐나다",
+      "country_name_en": "Canada",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "1999-05-01"
+    },
+    {
+      "country_code": "DE",
+      "country_name_ko": "독일",
+      "country_name_en": "Germany",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2003-01-01"
+    },
+    {
+      "country_code": "GB",
+      "country_name_ko": "영국",
+      "country_name_en": "United Kingdom",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2000-08-01"
+    },
+    {
+      "country_code": "JP",
+      "country_name_ko": "일본",
+      "country_name_en": "Japan",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2005-04-01"
+    },
+    {
+      "country_code": "FR",
+      "country_name_ko": "프랑스",
+      "country_name_en": "France",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2007-06-01"
+    },
+    {
+      "country_code": "AU",
+      "country_name_ko": "호주",
+      "country_name_en": "Australia",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2008-10-01"
+    },
+    {
+      "country_code": "AT",
+      "country_name_ko": "오스트리아",
+      "country_name_en": "Austria",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2005-11-01"
+    },
+    {
+      "country_code": "NL",
+      "country_name_ko": "네덜란드",
+      "country_name_en": "Netherlands",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2003-10-01"
+    },
+    {
+      "country_code": "BE",
+      "country_name_ko": "벨기에",
+      "country_name_en": "Belgium",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2007-01-01"
+    },
+    {
+      "country_code": "ES",
+      "country_name_ko": "스페인",
+      "country_name_en": "Spain",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2007-08-01"
+    },
+    {
+      "country_code": "IT",
+      "country_name_ko": "이탈리아",
+      "country_name_en": "Italy",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2012-01-01"
+    },
+    {
+      "country_code": "SE",
+      "country_name_ko": "스웨덴",
+      "country_name_en": "Sweden",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2012-01-01"
+    },
+    {
+      "country_code": "DK",
+      "country_name_ko": "덴마크",
+      "country_name_en": "Denmark",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-06-01"
+    },
+    {
+      "country_code": "CH",
+      "country_name_ko": "스위스",
+      "country_name_en": "Switzerland",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2014-03-01"
+    },
+    {
+      "country_code": "HU",
+      "country_name_ko": "헝가리",
+      "country_name_en": "Hungary",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2014-04-01"
+    },
+    {
+      "country_code": "PL",
+      "country_name_ko": "폴란드",
+      "country_name_en": "Poland",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2012-03-01"
+    },
+    {
+      "country_code": "CZ",
+      "country_name_ko": "체코",
+      "country_name_en": "Czech Republic",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2012-11-01"
+    },
+    {
+      "country_code": "SK",
+      "country_name_ko": "슬로바키아",
+      "country_name_en": "Slovakia",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-03-01"
+    },
+    {
+      "country_code": "IE",
+      "country_name_ko": "아일랜드",
+      "country_name_en": "Ireland",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2009-01-01"
+    },
+    {
+      "country_code": "BG",
+      "country_name_ko": "불가리아",
+      "country_name_en": "Bulgaria",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2015-03-01"
+    },
+    {
+      "country_code": "RO",
+      "country_name_ko": "루마니아",
+      "country_name_en": "Romania",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2015-07-01"
+    },
+    {
+      "country_code": "HR",
+      "country_name_ko": "크로아티아",
+      "country_name_en": "Croatia",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-03-01"
+    },
+    {
+      "country_code": "LU",
+      "country_name_ko": "룩셈부르크",
+      "country_name_en": "Luxembourg",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-01-01"
+    },
+    {
+      "country_code": "FI",
+      "country_name_ko": "핀란드",
+      "country_name_en": "Finland",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2017-04-01"
+    },
+    {
+      "country_code": "TR",
+      "country_name_ko": "터키",
+      "country_name_en": "Turkey",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2015-06-01"
+    },
+    {
+      "country_code": "BR",
+      "country_name_ko": "브라질",
+      "country_name_en": "Brazil",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-11-01"
+    },
+    {
+      "country_code": "CL",
+      "country_name_ko": "칠레",
+      "country_name_en": "Chile",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2017-09-01"
+    },
+    {
+      "country_code": "PE",
+      "country_name_ko": "페루",
+      "country_name_en": "Peru",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2020-09-01"
+    },
+    {
+      "country_code": "UY",
+      "country_name_ko": "우루과이",
+      "country_name_en": "Uruguay",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2017-09-01"
+    },
+    {
+      "country_code": "CN",
+      "country_name_ko": "중국",
+      "country_name_en": "China",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2013-01-16"
+    },
+    {
+      "country_code": "IN",
+      "country_name_ko": "인도",
+      "country_name_en": "India",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2010-11-01"
+    },
+    {
+      "country_code": "VN",
+      "country_name_ko": "베트남",
+      "country_name_en": "Vietnam",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2016-12-01"
+    },
+    {
+      "country_code": "MN",
+      "country_name_ko": "몽골",
+      "country_name_en": "Mongolia",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2019-07-01"
+    },
+    {
+      "country_code": "UZ",
+      "country_name_ko": "우즈베키스탄",
+      "country_name_en": "Uzbekistan",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2020-04-01"
+    },
+    {
+      "country_code": "NZ",
+      "country_name_ko": "뉴질랜드",
+      "country_name_en": "New Zealand",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2014-11-01"
+    },
+    {
+      "country_code": "IR",
+      "country_name_ko": "이란",
+      "country_name_en": "Iran",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2017-08-01"
+    },
+    {
+      "country_code": "QC",
+      "country_name_ko": "퀘벡 (캐나다 별도 협정)",
+      "country_name_en": "Quebec (Canada, separate agreement)",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "1999-05-01"
+    },
+    {
+      "country_code": "PT",
+      "country_name_ko": "포르투갈",
+      "country_name_en": "Portugal",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2020-12-01"
+    },
+    {
+      "country_code": "RS",
+      "country_name_ko": "세르비아",
+      "country_name_en": "Serbia",
+      "agreement_type": "totalization_and_exemption",
+      "effective_date": "2017-08-01"
+    }
+  ],
+  "iso_code_set": [
+    "US", "CA", "DE", "GB", "JP", "FR", "AU", "AT", "NL", "BE",
+    "ES", "IT", "SE", "DK", "CH", "HU", "PL", "CZ", "SK", "IE",
+    "BG", "RO", "HR", "LU", "FI", "TR", "BR", "CL", "PE", "UY",
+    "CN", "IN", "VN", "MN", "UZ", "NZ", "IR", "QC", "PT", "RS"
+  ]
+}

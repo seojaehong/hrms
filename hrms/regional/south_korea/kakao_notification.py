@@ -405,11 +405,17 @@ def build_kakao_template_payload(
 	"""Phase 2-A wage_statement_kakao 호환 — 표준 payload dict 빌더.
 
 	실제 발송 X, payload 형식만 준비. send_kakao_alimtalk()의 입력으로 사용 가능.
+	recipient_phone은 숫자만 남겨서 정규화합니다.
 	"""
+	# Normalize phone to digits-only and validate
+	normalized_phone = "".join(ch for ch in str(recipient_phone) if ch.isdigit())
+	if not _validate_phone(normalized_phone):
+		raise ValueError(f"invalid recipient phone: {recipient_phone!r}")
 	return {
-		"to": recipient_phone,
-		"template_id": template_code,
-		"template_variables": dict(variables),
+		"recipient_phone": normalized_phone,
+		"template_code": template_code,
+		"variables": dict(variables),
+		"channel": "kakao_alimtalk",
 	}
 
 
@@ -426,27 +432,292 @@ def build_kakao_send_queue_item(
 
 	실제 dispatch X. 큐에 넣을 dict만 준비.
 	"""
-	to = (payload or {}).get("to", "")
+	to = (payload or {}).get("recipient_phone", "") or (payload or {}).get("to", "")
 	if not _validate_phone(to):
 		raise ValueError(f"invalid recipient phone: {to}")
 	if not recipient_consent:
-		raise ValueError("recipient consent required")
+		raise ValueError("recipient_consent is required")
 	if opted_out:
-		raise ValueError("recipient opted out")
+		raise ValueError("recipient has opted out")
+	# Strict integer validation for max_attempts
+	if not isinstance(max_attempts, int) or isinstance(max_attempts, bool):
+		raise ValueError("max_attempts must be an integer")
+	# Validate provider_key does not contain phone numbers (PII guard)
+	if _key_contains_phone_number(provider_key):
+		raise ValueError(f"provider_key must not contain phone numbers: {provider_key!r}")
+	# Validate scheduled_at has timezone info if provided
+	if scheduled_at is not None and isinstance(scheduled_at, str):
+		if "+" not in scheduled_at and "Z" not in scheduled_at and "-" not in scheduled_at[10:]:
+			raise ValueError(f"scheduled_at must include timezone: {scheduled_at!r}")
+	# dedupe key: kakao:<uuid> — must NOT expose template code or phone (PII guard)
+	dedupe_key = f"kakao:{uuid.uuid4().hex[:16]}"
 	return {
+		"queue_type": "korea_kakao_send_queue_v1",
 		"contract_type": "korea_kakao_send_queue_item_v1",
 		"runtime_action": "kakao_send_queue_enqueue",
+		"status": "queued",
+		"attempt_count": 0,
+		"dedupe_key": dedupe_key,
+		"next_attempt_at": scheduled_at,
 		"payload": dict(payload),
 		"recipient_consent": True,
 		"opted_out": False,
 		"scheduled_at": scheduled_at,
 		"provider_key": provider_key,
-		"max_attempts": int(max_attempts),
+		"max_attempts": max_attempts,
+	}
+
+
+def render_kakao_preview(template_str: str, variables: dict[str, str]) -> str:
+	"""템플릿 문자열의 변수를 치환하여 미리보기 반환. 변수 누락 시 ValueError."""
+	import re as _re
+	_VAR_PAT = _re.compile(r"\{\{(\w+)\}\}")
+	required = set(_VAR_PAT.findall(template_str))
+	missing = required - set(variables.keys())
+	if missing:
+		raise ValueError(f"missing template variables: {sorted(missing)}")
+	result = template_str
+	for k, v in variables.items():
+		result = result.replace(f"{{{{{k}}}}}", str(v))
+	return result
+
+
+def build_kakao_template_registry_entry(
+	*,
+	template_code: str,
+	template_name: str,
+	template_body: str,
+	required_variables: list[str],
+	consent_purpose: str,
+	provider_template_keys: dict[str, str] | None = None,
+	active: bool = True,
+) -> dict[str, Any]:
+	"""Phase 2-A 카카오 템플릿 레지스트리 엔트리 빌더."""
+	import re as _re
+	if not isinstance(active, bool):
+		raise TypeError("active must be a bool")
+	if not template_body or not template_body.strip():
+		raise ValueError("template_body is required")
+	# Validate body variables match required_variables
+	_VAR_PAT = _re.compile(r"\{\{(\w+)\}\}")
+	body_vars = set(_VAR_PAT.findall(template_body))
+	required_set = set(required_variables)
+	if body_vars != required_set:
+		raise ValueError("required_variables must match body variables")
+	# Validate provider_template_keys don't contain phone numbers
+	if provider_template_keys:
+		for k, v in provider_template_keys.items():
+			k_digits = "".join(ch for ch in str(k) if ch.isdigit())
+			v_digits = "".join(ch for ch in str(v) if ch.isdigit())
+			if len(k_digits) >= 9 or len(v_digits) >= 9:
+				raise ValueError("provider_template_keys must not contain phone numbers")
+	return {
+		"registry_type": "korea_kakao_template_registry_v1",
+		"channel": "kakao_alimtalk",
+		"template_code": template_code,
+		"template_name": template_name,
+		"template_body": template_body.strip(),
+		"required_variables": sorted(required_variables),
+		"consent_purpose": consent_purpose,
+		"provider_template_keys": dict(provider_template_keys) if provider_template_keys else {},
+		"active": active,
+		"requires_runtime_send": False,
+	}
+
+
+def build_registered_kakao_template_payload(
+	*,
+	recipient_phone: str,
+	template_registry_entry: dict[str, Any],
+	variables: dict[str, str],
+) -> dict[str, Any]:
+	"""Phase 2-A 등록된 템플릿 레지스트리 엔트리를 이용해 payload 빌더.
+
+	- active 플래그 검사
+	- required_variables 만 추출 (extra variables 무시)
+	- preview_text 렌더링
+	"""
+	import re as _re
+	# Validate active flag type
+	active = template_registry_entry.get("active")
+	if not isinstance(active, bool):
+		raise TypeError("template_registry_entry.active must be a bool")
+	if not active:
+		raise ValueError("template registry entry is inactive")
+	# Normalize phone
+	normalized_phone = "".join(ch for ch in str(recipient_phone) if ch.isdigit())
+	if not _validate_phone(normalized_phone):
+		raise ValueError(f"invalid recipient phone: {recipient_phone!r}")
+	required_variables = template_registry_entry.get("required_variables", [])
+	# Check all required variables are provided
+	missing = [v for v in required_variables if v not in variables]
+	if missing:
+		raise ValueError(f"missing template variables: {', '.join(sorted(missing))}")
+	# Extract only required variables (ignore extras)
+	filtered_vars = {k: variables[k] for k in required_variables}
+	# Render preview text
+	template_body = template_registry_entry.get("template_body", "")
+	_VAR_PAT = _re.compile(r"\{\{(\w+)\}\}")
+	preview_text = _VAR_PAT.sub(lambda m: str(filtered_vars.get(m.group(1), f"{{{{{m.group(1)}}}}}")), template_body)
+	return {
+		"recipient_phone": normalized_phone,
+		"template_code": template_registry_entry.get("template_code", ""),
+		"variables": filtered_vars,
+		"channel": "kakao_alimtalk",
+		"consent_purpose": template_registry_entry.get("consent_purpose", ""),
+		"preview_text": preview_text,
+	}
+
+
+def build_kakao_provider_dispatch_request(
+	*,
+	queue_item: dict[str, Any],
+	provider: dict[str, Any],
+	requested_at: str,
+) -> dict[str, Any]:
+	"""Phase 2-A 카카오 provider dispatch request 빌더 (실제 발송 없음)."""
+	import copy as _copy
+	ALLOWED_PROVIDER_TYPES = ("partner_api", "direct_api", "aggregator_api")
+	# Strict integer validation for queue_item counters
+	for field in ("attempt_count", "max_attempts"):
+		val = queue_item.get(field)
+		if val is not None and (not isinstance(val, int) or isinstance(val, bool)):
+			raise ValueError(f"queue_item.{field} must be an integer")
+	provider_key = provider.get("provider_key", "")
+	if _key_contains_phone_number(provider_key):
+		raise ValueError(f"provider.provider_key must not contain phone numbers: {provider_key!r}")
+	provider_type = provider.get("provider_type", "")
+	if provider_type not in ALLOWED_PROVIDER_TYPES:
+		raise ValueError(f"provider_type must be one of {ALLOWED_PROVIDER_TYPES}: {provider_type!r}")
+	queue_provider = queue_item.get("provider_key", "")
+	if provider_key and queue_provider and provider_key != queue_provider:
+		raise ValueError(f"provider.provider_key must match queue_item.provider_key: {provider_key!r} != {queue_provider!r}")
+	endpoint_key = provider.get("endpoint_key", "")
+	if _key_contains_phone_number(endpoint_key):
+		raise ValueError(f"provider.endpoint_key must not contain phone numbers: {endpoint_key!r}")
+	payload = queue_item.get("payload", {})
+	if not isinstance(payload, dict):
+		raise TypeError("queue_item.payload must be a dict")
+	dispatch_id = f"kakao-dispatch:{uuid.uuid4().hex[:16]}"
+	return {
+		"request_type": "korea_kakao_provider_dispatch_v1",
+		"runtime_action": "send_via_provider",
+		"requires_runtime_send": True,
+		"provider_key": provider_key,
+		"provider_type": provider_type,
+		"endpoint_key": endpoint_key,
+		"attempt_number": queue_item.get("attempt_count", 0) + 1,
+		"payload": _copy.deepcopy(payload),
+		"dispatch_request_id": dispatch_id,
+		"requested_at": requested_at,
+	}
+
+
+def build_kakao_delivery_audit_event(
+	*,
+	queue_item: dict[str, Any],
+	attempted_at: str,
+	provider_status: str,
+	provider_message_id: str | None = None,
+	error_code: str | None = None,
+	base_retry_delay_seconds: int = 60,
+	max_retry_delay_seconds: int = 3600,
+) -> dict[str, Any]:
+	"""Phase 2-A 카카오 delivery audit event 빌더 (실제 발송 없음).
+
+	provider_status: "delivered" | "retryable_error" | "permanent_error"
+	"""
+	import re as _re
+	import copy as _copy
+	# Strict integer validation for retry controls
+	for field, val in (("base_retry_delay_seconds", base_retry_delay_seconds), ("max_retry_delay_seconds", max_retry_delay_seconds)):
+		if not isinstance(val, int) or isinstance(val, bool):
+			raise ValueError(f"{field} must be an integer")
+	# Strict integer validation for queue_item counters
+	for field in ("attempt_count", "max_attempts"):
+		val = queue_item.get(field)
+		if val is not None and (not isinstance(val, int) or isinstance(val, bool)):
+			raise ValueError(f"queue_item.{field} must be an integer")
+	# Timezone validation
+	has_tz = "+" in attempted_at or "Z" in attempted_at or bool(_re.search(r"T\d\d:\d\d:\d\d-\d\d", attempted_at))
+	if not has_tz:
+		raise ValueError("attempted_at must include timezone")
+	# Validate phone not in provider_key
+	provider_key = queue_item.get("provider_key", "")
+	if _key_contains_phone_number(provider_key):
+		raise ValueError(f"queue_item.provider_key must not contain phone numbers: {provider_key!r}")
+	attempt_count = queue_item.get("attempt_count", 0)
+	# Compute next_retry_at for retryable statuses (exponential backoff)
+	RETRYABLE_STATUSES = ("retryable_error", "timeout")
+	next_retry_at = None
+	if provider_status in RETRYABLE_STATUSES:
+		# Exponential backoff: min(base * 2^attempt_count, max)
+		try:
+			import datetime as _dt
+			delay = min(base_retry_delay_seconds * (2 ** attempt_count), max_retry_delay_seconds)
+			# Parse ISO8601 with tz - handle +HH:MM format
+			_tz_match = _re.search(r"([+-]\d\d:\d\d)$", attempted_at)
+			if _tz_match:
+				tz_str = _tz_match.group(1)
+				dt_str = attempted_at[:_tz_match.start()]
+				base_dt = _dt.datetime.fromisoformat(dt_str)
+				tz_sign = 1 if tz_str[0] == "+" else -1
+				tz_h, tz_m = int(tz_str[1:3]), int(tz_str[4:6])
+				tz = _dt.timezone(_dt.timedelta(hours=tz_sign * tz_h, minutes=tz_sign * tz_m))
+				base_dt = base_dt.replace(tzinfo=tz)
+				retry_dt = base_dt + _dt.timedelta(seconds=delay)
+				next_retry_at = retry_dt.isoformat()
+		except Exception:
+			pass
+	return {
+		"event_type": "korea_kakao_delivery_audit_v1",
+		"dedupe_key": queue_item.get("dedupe_key", ""),
+		"provider_key": provider_key,
+		"attempt_number": attempt_count + 1,
+		"attempted_at": attempted_at,
+		"provider_status": provider_status,
+		"provider_message_id": provider_message_id,
+		"error_code": error_code,
+		"next_retry_at": next_retry_at,
 	}
 
 
 def _validate_phone(phone: str) -> bool:
+	"""휴대폰 번호 유효성 검사 — 010/011/016/017/018/019 시작 번호만 허용.
+
+	유선번호(02, 031 등) 또는 잘못된 형식은 False 반환.
+	"""
 	if not phone:
 		return False
 	digits = "".join(ch for ch in str(phone) if ch.isdigit())
-	return 9 <= len(digits) <= 11
+	if not (10 <= len(digits) <= 11):
+		return False
+	# 한국 휴대폰 번호 앞자리: 010, 011, 016, 017, 018, 019
+	mobile_prefixes = ("010", "011", "016", "017", "018", "019")
+	return digits.startswith(mobile_prefixes)
+
+
+def _key_contains_phone_number(key: str) -> bool:
+	"""키 문자열에 한국 휴대폰 번호가 포함됐는지 검사.
+
+	Date-like identifiers (e.g. "provider-20260101123456") are allowed.
+	Rejected patterns (checked against all digits concatenated from key):
+	  - 10-11 digit total starting with Korean mobile prefix (010/011/016/017/018/019)
+	  - 12-13 digit total starting with Korean country code prefix (8210/8211/8216/...)
+
+	Examples:
+	  "partner-010-1234-5678" → digits "01012345678" (11, starts 010) → True
+	  "+82-10-1234-5678"      → digits "821012345678" (12, starts 8210) → True
+	  "provider-20260101123456" → digits "20260101123456" (14) → False (allowed)
+	"""
+	mobile_prefixes = ("010", "011", "016", "017", "018", "019")
+	intl_prefixes = ("8210", "8211", "8216", "8217", "8218", "8219")
+	digits = "".join(ch for ch in str(key) if ch.isdigit())
+	n = len(digits)
+	# Domestic mobile: 10-11 digits starting with Korean mobile prefix
+	if 10 <= n <= 11 and digits.startswith(mobile_prefixes):
+		return True
+	# International mobile: 12-13 digits starting with Korean country code + mobile prefix
+	if 12 <= n <= 13 and digits.startswith(intl_prefixes):
+		return True
+	return False

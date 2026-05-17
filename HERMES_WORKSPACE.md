@@ -129,8 +129,8 @@ Current verified state
   - `develop` also includes `3f59cccec test(gate14): harden browser verifier blank scope`: the browser verifier now rejects explicit blank `base-url`, `company`, `username`, `chromium`, and `FRAPPE_BROWSER_PASSWORD` values instead of silently defaulting or falling back, and still writes fail-closed JSON/report artifacts on setup failures.
   - 2026-05-17 cron test evidence on `3f59cccec`: `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py`, and `python3 scripts/run_korea_regional_smoke.py` passed.
   - 2026-05-17 non-browser runtime evidence on `c1b12a78d`: `python3 scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모' --report-file /tmp/korea-runtime-current-cron.json` returned `runtime_verified: true`, source/app checkout matched the mounted workspace, positive scoped runtime rows were verified, and `fixture_fallback_required_until_positive_runtime_rows: false`. This is runtime source/row evidence, not authenticated browser proof.
-  - Latest authenticated-browser status: session-handoff, read-only bootstrap-call hardening, user verification docs, blank-password reason reporting, browser-verifier report-file hardening, credential-checkpoint child browser report-file pass-through, blank child browser report-file rejection, and browser-verifier blank-scope fail-closed hardening are now on `develop`, but no positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven in cron because the credential mutation path still requires an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit `--human-approved` execution.
-  - **2026-05-17 KST 08:42 — FIRST POSITIVE AUTHENTICATED BROWSER PROOF**: control-plane operator-approved run executed `python3 scripts/verify_korea_demo_browser_credential_apply.py --base-url http://localhost:8000 --human-approved` and produced `runtime_verified: true`, `fixture_fallback_required: false`, `credential_apply.human_approval_verified: true`, and observed 9 read-only browser API calls including `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime` and `hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime`. Loopback `http://localhost:8000` was used because the host systemd-resolved (Oracle 169.254.169.254 stub) returned NXDOMAIN for the public `hrms.safeclaw.kr` domain; Frappe `serve_default_site=true` + `default_site=hrms.localhost` makes the loopback request identical from the site's perspective. Mutation boundary held (credential-only then browser read-only, no payroll submit/approve/send/provider call). Evidence in `docs/korea_hrms/gate14_positive_browser_proof.md`. Cron may now treat Gate 14 as closed and progress to Gate 15 candidate work (e.g. statutory payroll end-to-end, compliance diagnosis, kakao notification path, annual leave/attendance closing, authenticated browser walkthroughs of additional screens). Cron-side automation of the credential-apply path still requires operator secret provisioning + `--human-approved` and must not bypass the human-approval gate.
+  - Latest authenticated-browser status: session-handoff, read-only bootstrap-call hardening, user verification docs, blank-password reason reporting, browser-verifier report-file hardening, credential-checkpoint child browser report-file pass-through, blank child browser report-file rejection, and browser-verifier blank-scope fail-closed hardening are on `develop`; Gate 14 credential/browser proof is operator-controlled and outside Gate 15 cron scope unless explicitly re-enabled.
+  - **2026-05-17 KST 08:42 — FIRST POSITIVE AUTHENTICATED BROWSER PROOF**: control-plane operator-approved run executed `python3 scripts/verify_korea_demo_browser_credential_apply.py --base-url http://localhost:8000 --human-approved` and produced `runtime_verified: true`, `fixture_fallback_required: false`, `credential_apply.human_approval_verified: true`, and observed 9 read-only browser API calls including `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime` and `hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime`. Loopback `http://localhost:8000` was used because the host systemd-resolved (Oracle 169.254.169.254 stub) returned NXDOMAIN for the public `hrms.safeclaw.kr` domain; Frappe `serve_default_site=true` + `default_site=hrms.localhost` makes the loopback request identical from the site's perspective. Mutation boundary held (credential-only then browser read-only, no payroll submit/approve/send/provider call). Evidence in `docs/korea_hrms/gate14_positive_browser_proof.md`. Cron may now treat Gate 14 as closed and progress to Gate 15 candidate work. Cron-side automation of the credential-apply path still requires operator secret provisioning + `--human-approved` and must not bypass the human-approval gate.
 
 Autonomous cron runway
 - Implementation cron:
@@ -145,7 +145,13 @@ Autonomous cron runway
 Next gate
 - Gate 15: Korean localization and demo-readiness closeout.
 - Operator override: Gate 14 credential/browser proof is being handled separately by the operator; autonomous runway should not keep cycling on Gate 14 unless explicitly re-enabled.
-- Current Gate 15 status: PR #225 / branch `feat/hrms-korean-locale-batch1` expands `hrms/locale/ko.po` to 816 Korean entries and adds `docs/korea_hrms/feature_map_user_guide.md` for a 30-minute operator/demo walkthrough. Gate 15 scope is localization, demo guidance, validation, and source-of-truth alignment only; no credential mutation, payroll submit/approve/send/provider call, or AI scoring/probability output.
+- Current Gate 15 status: PR #225 / branch `feat/hrms-korean-locale-batch1` expands `hrms/locale/ko.po` to 916 Korean entries and adds `docs/korea_hrms/feature_map_user_guide.md` for a 30-minute operator/demo walkthrough. Gate 15 scope is localization, demo guidance, validation, and source-of-truth alignment only; no credential mutation, payroll submit/approve/send/provider call, or AI scoring/probability output.
+- 2026-05-17 Gate 15 validation evidence on PR #225:
+  - custom PO syntax/placeholder parser: `entries=2335 translated=916 errors=0` because `msgfmt`/`polib` are unavailable in this environment
+  - high-value Korea payroll/guardrail untranslated scan: `missing_high_value=0`
+  - `python3 scripts/run_korea_regional_smoke.py`: passed, 62 direct Korea targets, 0 failures
+  - `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`: passed
+  - `cd frontend && yarn build`: passed with existing Vite/Browserslist/chunk-size warnings only
 - Gate 14 checkpoint evidence retained for handoff:
   - 2026-05-09 implementation-cron merged PR #185 (`15f9c24a7 test: add Korea demo browser credential handoff`) into `develop`.
   - 2026-05-10 stale Gate 2 cron closeout confirmed Gate 2 was already merged as #152 and merged PR #187 (`e03eabb70 docs: align Gate 13 plan head`) to align the active correction plan with Gate 14 priority.
@@ -173,16 +179,14 @@ Next gate
   - 2026-05-17 evidence on `3f59cccec` confirms browser-verifier blank-scope fail-closed hardening is on `develop`; `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py`, and `python3 scripts/run_korea_regional_smoke.py` passed, and explicit blank browser-verifier scope/password inputs fail before proof can be reported.
   - 2026-05-17 non-browser runtime evidence on `c1b12a78d` confirms the local Docker/Bench runtime is source-aligned and positive for scoped runtime rows. This is not authenticated browser proof.
   - The credential helper returns no secret, requires explicit human approval before `update_password`, and does not submit/approve/send/payroll-submit/call providers.
-  - No positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven after applying an employee credential.
-- Likely branch:
-  - `test/korea-payroll-closing-browser-runtime-positive-credential`
-- Goal:
-  - with an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit human approval, run `scripts/verify_korea_demo_browser_credential_apply.py --human-approved`
-  - apply only the demo employee browser credential boundary
-  - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` until it returns `runtime_verified: true` with positive read-only worklist rows; validate whether the current session-handoff/bootstrap-call/report-file/blank-scope hardening now produces authenticated browser proof
+  - Gate 14 credential/browser proof is operator-controlled and outside Gate 15 cron scope unless explicitly re-enabled.
+- Gate 15 goal:
+  - finish PR #225 (`feat/hrms-korean-locale-batch1`) as a localization/demo-readiness closeout
+  - validate Korean PO syntax/placeholders, Korea regional smoke, browser runtime JS guardrail test, and frontend build
+  - keep docs and source-of-truth aligned to Gate 15 without requesting, printing, or mutating browser credentials
   - keep fixture fallback for static/no-runtime contexts
   - keep evidence/session views read-only and human-review-only
-  - preserve `runtime_action=browser_runtime_read_only`, `requires_runtime_apply=false`, `requires_human_approval=true`, and `ai_role=assistant_only`
+  - preserve `requires_human_approval=true`, `ai_role=assistant_only`, and no save/submit/approve/send/provider mutation
 
 Useful commands
 - Repo status:

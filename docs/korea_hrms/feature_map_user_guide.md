@@ -225,7 +225,7 @@ Employment Contract      ←표준 + → employment_contract
 A. 표준 ERPNext는 글로벌 회계/HR. 한국 특화 영역은 우리가 `hrms/regional/south_korea/`로 추가. 4대보험/연차/공휴일/마감 워크플로우 등.
 
 **Q. 자동화 어느 수준?**
-A. 계산/집계/검증은 AI 자동. **mutation (저장/승인/제출)은 사람 승인 필수**. 자동 승인 절대 없음.
+A. 계산/집계/검증은 시스템이 자동화하고, AI는 비교·체크리스트·초안 보조 역할만 수행합니다. **mutation (저장/승인/제출)은 사람 승인 필수**이며 자동 승인/자동 제출은 없습니다.
 
 **Q. 다른 회사도 쓸 수 있나?**
 A. 멀티 테넌트. Frappe site 단위로 분리. 회사/사업장 단위로 데이터 격리.
@@ -234,7 +234,7 @@ A. 멀티 테넌트. Frappe site 단위로 분리. 회사/사업장 단위로 �
 A. `/hrms`가 PWA. 홈 화면 추가 → 앱처럼 사용. 출근/휴가/명세서 조회 모두 모바일 친화.
 
 **Q. 한글화 완성도?**
-A. 1차 batch 완료 (Frappe 1,866 / ERPNext 2,027 / HRMS 816 entries). 자주 보이는 UI는 한글. 빈도 낮은 시스템 메시지는 일부 영어 잔존. 2차 batch에서 80%+ 목표.
+A. 1차 batch 완료 (Frappe 1,866 / ERPNext 2,027 / HRMS 916 entries). 자주 보이는 UI와 한국 페이롤 마감/사람 승인/assistant-only 가드레일 문자열을 우선 한글화했습니다. 빈도 낮은 시스템 메시지는 일부 영어가 남아 있으며 후속 batch에서 계속 줄입니다.
 
 **Q. 카카오 알림은?**
 A. `kakao_notification` 모듈 있음. 알림톡 발송 가능. 운영 시 비즈니스 채널 + 템플릿 등록 필요.
@@ -243,8 +243,8 @@ A. `kakao_notification` 모듈 있음. 알림톡 발송 가능. 운영 시 비�
 
 ## 8. 다음 단계 (운영자 액션)
 
-1. **Gate 14 unblock** — `FRAPPE_BROWSER_PASSWORD` 환경변수 설정 + `--human-approved` 실행 → cron 자동화가 다음 게이트로 진행
-2. **2차 한글화 batch** — 1차 미번역 ~1,500개 + 자주 영어로 남는 부분 우선 처리
+1. **Gate 15 PR #225 closeout** — PO placeholder/syntax, Korea regional smoke, browser runtime JS guardrail, frontend build 결과를 PR에 반영하고 source-of-truth 문서를 Gate 15 기준으로 정리
+2. **후속 한글화 batch** — 빈도 낮은 HRMS 시스템 메시지와 데모 중 노출되는 잔여 영어 우선 처리
 3. **시연 데이터 추가** — 직원 10명 + 마감 3개월치로 풍부하게
 4. **카카오 알림 채널 연동** — 비즈니스 채널 가입 + 템플릿 등록
 5. **컴플라이언스 진단 결과** — 첫 진단 실행해서 결과 화면 채우기

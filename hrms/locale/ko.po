@@ -1883,7 +1883,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Closing Period"
-msgstr ""
+msgstr "마감 기간"
 
 #. Label of the closing_section (Section Break) field in DocType 'Korea
 #. Workplace Profile'
@@ -2000,7 +2000,7 @@ msgstr ""
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:227
 msgid "Could not acquire Korea Payroll Closing Draft duplicate guard lock."
-msgstr ""
+msgstr "한국 급여 마감 초안 중복 방지 잠금을 획득할 수 없습니다."
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1647
 msgid "Could not submit some Salary Slips: {}"
@@ -3228,7 +3228,7 @@ msgstr ""
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:34
 msgid "Employee company must match Korea Employment Profile company."
-msgstr ""
+msgstr "직원 회사는 한국 고용 프로필의 회사와 일치해야 합니다."
 
 #. Label of the employee_name (Data) field in DocType 'Leave Policy Assignment'
 #: hrms/hr/doctype/leave_policy_assignment/leave_policy_assignment.json
@@ -4774,11 +4774,11 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:100
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:451
 msgid "Human approval is required for Korea payroll closing drafts."
-msgstr ""
+msgstr "한국 급여 마감 초안에는 사람 승인이 필요합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:95
 msgid "Human approval is required for Korea payroll closing review audit logs."
-msgstr ""
+msgstr "한국 급여 마감 검토 감사 로그에는 사람 승인이 필요합니다."
 
 #: hrms/payroll/report/salary_payments_via_ecs/salary_payments_via_ecs.py:60
 msgid "IFSC"
@@ -5700,7 +5700,7 @@ msgstr "핵심역할"
 #. Name of a DocType
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 msgid "Korea Employment Profile"
-msgstr ""
+msgstr "한국 고용 프로필"
 
 #: frontend/src/views/Home.vue:62
 msgid "Korea Payroll Closing"
@@ -5714,24 +5714,24 @@ msgstr "한국 급여 마감 임시저장"
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:207
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:240
 msgid "Korea Payroll Closing Draft already exists for this company/workplace/period."
-msgstr ""
+msgstr "이 회사/사업장/기간에 대한 한국 급여 마감 초안이 이미 있습니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:92
 msgid "Korea Payroll Closing Draft status must stay within guarded human-review states."
-msgstr ""
+msgstr "한국 급여 마감 초안 상태는 보호된 사람 검토 상태 안에 있어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:445
 msgid "Korea Payroll Closing Draft stays draft_pending_human_approval."
-msgstr ""
+msgstr "한국 급여 마감 초안은 draft_pending_human_approval 상태로 유지됩니다."
 
 #. Name of a DocType
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Korea Payroll Closing Review Audit Log"
-msgstr ""
+msgstr "한국 급여 마감 검토 감사 로그"
 
 #: frontend/src/views/Home.vue:67
 msgid "Korea Payroll Review Audit Logs"
-msgstr ""
+msgstr "한국 급여 검토 감사 로그"
 
 #. Label of the workplace_profile (Link) field in DocType 'Korea Employment
 #. Profile'
@@ -5739,37 +5739,37 @@ msgstr ""
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korea Workplace Profile"
-msgstr ""
+msgstr "한국 사업장 프로필"
 
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.py:23
 msgid "Korea business registration number must use the 000-00-00000 format."
-msgstr ""
+msgstr "한국 사업자등록번호는 000-00-00000 형식을 사용해야 합니다."
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:22
 msgid "Korea masked RRN must use the 000000-1****** format."
-msgstr ""
+msgstr "한국 마스킹 주민등록번호는 000000-1****** 형식을 사용해야 합니다."
 
 #. Description of the 'Workplace Management Number' (Data) field in DocType
 #. 'Korea Workplace Profile'
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korea social insurance workplace management number; digits only."
-msgstr ""
+msgstr "한국 사회보험 사업장관리번호; 숫자만 입력합니다."
 
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.py:30
 msgid "Korea workplace management number must contain 11 digits."
-msgstr ""
+msgstr "한국 사업장관리번호는 11자리 숫자여야 합니다."
 
 #. Label of the policy_section (Section Break) field in DocType 'Korea
 #. Workplace Profile'
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korean Labor Policy"
-msgstr ""
+msgstr "한국 노무 정책"
 
 #. Description of the 'Business Registration Number' (Data) field in DocType
 #. 'Korea Workplace Profile'
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korean business registration number in 000-00-00000 format."
-msgstr ""
+msgstr "000-00-00000 형식의 한국 사업자등록번호입니다."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2738
 msgid "LWP Days Reversed ({0}) does not match actual Payroll Corrections total ({1}) for employee {2} from {3} to {4}"
@@ -6768,15 +6768,15 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Mutation Boundary"
-msgstr ""
+msgstr "변경 경계"
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:93
 msgid "Mutation boundary must remain audit_log_only_no_submit_no_send_no_provider_call."
-msgstr ""
+msgstr "변경 경계는 audit_log_only_no_submit_no_send_no_provider_call로 유지되어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:96
 msgid "Mutation boundary must remain draft_only_no_submit_no_approve_no_send."
-msgstr ""
+msgstr "변경 경계는 draft_only_no_submit_no_approve_no_send 상태를 유지해야 합니다."
 
 #: frontend/src/views/employee_advance/List.vue:19
 msgid "My Advances"
@@ -7649,7 +7649,7 @@ msgstr "페이로드"
 #. Draft'
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 msgid "Payload JSON"
-msgstr ""
+msgstr "페이로드 JSON"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.js:461
 msgid "Payment Account is mandatory"
@@ -7934,7 +7934,7 @@ msgstr "성과"
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Period End"
-msgstr ""
+msgstr "기간 종료일"
 
 #. Label of the period_start (Date) field in DocType 'Korea Payroll Closing
 #. Draft'
@@ -7943,13 +7943,13 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Period Start"
-msgstr ""
+msgstr "기간 시작일"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:74
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:460
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:81
 msgid "Period start must be on or before period end."
-msgstr ""
+msgstr "기간 시작일은 기간 종료일보다 늦을 수 없습니다."
 
 #: frontend/src/components/FormView.vue:291
 msgid "Permanently cancel {0}"
@@ -8299,7 +8299,7 @@ msgstr "이전 상태"
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:89
 msgid "Previous status must be draft_pending_human_approval."
-msgstr ""
+msgstr "이전 상태는 draft_pending_human_approval이어야 합니다."
 
 #. Label of the principal_amount (Currency) field in DocType 'Salary Slip Loan'
 #: hrms/payroll/doctype/salary_slip_loan/salary_slip_loan.json
@@ -8817,7 +8817,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Requires Human Approval"
-msgstr ""
+msgstr "사람 승인 필요"
 
 #: hrms/hr/doctype/interview/interview.js:31
 msgid "Reschedule Interview"
@@ -8894,7 +8894,7 @@ msgstr "검토 작업"
 #. Review Audit Log'
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Review Actor"
-msgstr ""
+msgstr "검토 수행자"
 
 #: hrms/hr/doctype/hr_settings/hr_settings.js:41
 msgid "Review various other settings related to Employee Leaves and Expense Claim"
@@ -9017,7 +9017,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Safety Boundary"
-msgstr ""
+msgstr "안전 경계"
 
 #. Label of the salary_component (Link) field in DocType 'Overtime Salary
 #. Component'
@@ -10042,7 +10042,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Source Artifacts"
-msgstr ""
+msgstr "원본 증빙 자료"
 
 #. Label of the source_audit_log_contract_type (Data) field in DocType 'Korea
 #. Payroll Closing Review Audit Log'
@@ -10063,7 +10063,7 @@ msgstr "소스 급여 항목"
 #. Payroll Closing Review Audit Log'
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Source Runtime Apply JSON"
-msgstr ""
+msgstr "원본 런타임 적용 JSON"
 
 #. Label of the source_session_contract_type (Data) field in DocType 'Korea
 #. Payroll Closing Draft'
@@ -10077,12 +10077,12 @@ msgstr ""
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:91
 msgid "Source audit log contract type must be korea_payroll_closing_draft_review_audit_log_v1."
-msgstr ""
+msgstr "원본 감사 로그 계약 유형은 korea_payroll_closing_draft_review_audit_log_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:94
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:447
 msgid "Source session contract type must be korea_payroll_closing_session_v1."
-msgstr ""
+msgstr "원본 세션 계약 유형은 korea_payroll_closing_session_v1이어야 합니다."
 
 #. Label of the sponsored_amount (Currency) field in DocType 'Travel Request
 #. Costing'
@@ -11745,7 +11745,7 @@ msgstr "근무처 이름"
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:43
 msgid "Workplace Profile company must match Korea Employment Profile company."
-msgstr ""
+msgstr "사업장 프로필 회사는 한국 고용 프로필의 회사와 일치해야 합니다."
 
 #. Option for the 'Type' (Select) field in DocType 'Training Event'
 #: hrms/hr/doctype/training_event/training_event.json
@@ -11873,7 +11873,7 @@ msgstr "작업"
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:85
 msgid "action must be one of approve_draft, reject_draft, request_changes."
-msgstr ""
+msgstr "action은 approve_draft, reject_draft, request_changes 중 하나여야 합니다."
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:121
 msgid "active"
@@ -11881,101 +11881,101 @@ msgstr "활성"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:383
 msgid "apply_plan must be a JSON object."
-msgstr ""
+msgstr "apply_plan은 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:478
 msgid "apply_plan.actor must match actor."
-msgstr ""
+msgstr "apply_plan.actor는 actor와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:395
 msgid "apply_plan.ai_role must be assistant_only."
-msgstr ""
+msgstr "apply_plan.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:385
 msgid "apply_plan.contract_type must be korea_payroll_closing_draft_apply_plan_v1."
-msgstr ""
+msgstr "apply_plan.contract_type은 korea_payroll_closing_draft_apply_plan_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:401
 msgid "apply_plan.docstatus must be 0."
-msgstr ""
+msgstr "apply_plan.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:393
 msgid "apply_plan.requires_human_approval must be true."
-msgstr ""
+msgstr "apply_plan.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:391
 msgid "apply_plan.requires_runtime_apply must be true."
-msgstr ""
+msgstr "apply_plan.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:389
 msgid "apply_plan.runtime_action must be preview_runtime_draft_apply."
-msgstr ""
+msgstr "apply_plan.runtime_action은 preview_runtime_draft_apply여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:387
 msgid "apply_plan.source_draft_contract_type must be korea_payroll_closing_draft_v1."
-msgstr ""
+msgstr "apply_plan.source_draft_contract_type은 korea_payroll_closing_draft_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:399
 msgid "apply_plan.would_create_doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "apply_plan.would_create_doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #. Option for the 'Review Action' (Select) field in DocType 'Korea Payroll
 #. Closing Review Audit Log'
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "approve_draft"
-msgstr ""
+msgstr "초안 승인"
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:154
 msgid "audit_log must be a JSON object."
-msgstr ""
+msgstr "audit_log는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:194
 msgid "audit_log.action must be one of approve_draft, reject_draft, request_changes."
-msgstr ""
+msgstr "audit_log.action은 approve_draft, reject_draft, request_changes 중 하나여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:168
 msgid "audit_log.ai_role must be assistant_only."
-msgstr ""
+msgstr "audit_log.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:170
 msgid "audit_log.audit_actor must match audit_actor."
-msgstr ""
+msgstr "audit_log.audit_actor는 audit_actor와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:156
 msgid "audit_log.contract_type must be korea_payroll_closing_draft_review_audit_log_v1."
-msgstr ""
+msgstr "audit_log.contract_type은 korea_payroll_closing_draft_review_audit_log_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:164
 msgid "audit_log.mutation_boundary must remain audit_log_only_no_submit_no_send_no_provider_call."
-msgstr ""
+msgstr "audit_log.mutation_boundary는 audit_log_only_no_submit_no_send_no_provider_call로 유지되어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:192
 msgid "audit_log.period_start must be on or before audit_log.period_end."
-msgstr ""
+msgstr "audit_log.period_start는 audit_log.period_end 이전이거나 같은 날이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:198
 msgid "audit_log.previous_status must be draft_pending_human_approval."
-msgstr ""
+msgstr "audit_log.previous_status는 draft_pending_human_approval이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:166
 msgid "audit_log.requires_human_approval must be true."
-msgstr ""
+msgstr "audit_log.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:160
 msgid "audit_log.requires_runtime_apply must be true."
-msgstr ""
+msgstr "audit_log.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:158
 msgid "audit_log.runtime_action must be preview_only."
-msgstr ""
+msgstr "audit_log.runtime_action은 preview_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:196
 msgid "audit_log.status must match action."
-msgstr ""
+msgstr "audit_log.status는 action과 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:162
 msgid "audit_log.would_create_doctype must be Korea Payroll Closing Review Audit Log."
-msgstr ""
+msgstr "audit_log.would_create_doctype은 Korea Payroll Closing Review Audit Log여야 합니다."
 
 #: hrms/public/js/templates/feedback_summary.html:16
 msgid "based on"
@@ -11999,31 +11999,31 @@ msgstr "생성됨"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:405
 msgid "doctype_insert_preview must be a JSON object."
-msgstr ""
+msgstr "doctype_insert_preview는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:407
 msgid "doctype_insert_preview.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "doctype_insert_preview.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:416
 msgid "doctype_insert_preview.fields must be a JSON object."
-msgstr ""
+msgstr "doctype_insert_preview.fields는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:443
 msgid "doctype_insert_preview.fields.docstatus must be 0."
-msgstr ""
+msgstr "doctype_insert_preview.fields.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:440
 msgid "doctype_insert_preview.fields.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "doctype_insert_preview.fields.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:411
 msgid "doctype_insert_preview.requires_runtime_apply must be true."
-msgstr ""
+msgstr "doctype_insert_preview.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:409
 msgid "doctype_insert_preview.runtime_action must be preview_only."
-msgstr ""
+msgstr "doctype_insert_preview.runtime_action은 preview_only여야 합니다."
 
 #. Option for the 'Status' (Select) field in DocType 'Korea Payroll Closing
 #. Draft'
@@ -12032,7 +12032,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "draft_changes_requested"
-msgstr ""
+msgstr "초안 수정 요청됨"
 
 #. Option for the 'Status' (Select) field in DocType 'Korea Payroll Closing
 #. Draft'
@@ -12041,7 +12041,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "draft_human_approved"
-msgstr ""
+msgstr "사람 검토 승인 초안"
 
 #. Option for the 'Status' (Select) field in DocType 'Korea Payroll Closing
 #. Draft'
@@ -12050,13 +12050,13 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "draft_human_rejected"
-msgstr ""
+msgstr "사람 검토 반려 초안"
 
 #. Option for the 'Status' (Select) field in DocType 'Korea Payroll Closing
 #. Draft'
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 msgid "draft_pending_human_approval"
-msgstr ""
+msgstr "사람 승인 대기 초안"
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:80
 msgid "here"
@@ -12075,7 +12075,7 @@ msgstr ""
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:413
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:449
 msgid "mutation_boundary must remain draft_only_no_submit_no_approve_no_send."
-msgstr ""
+msgstr "mutation_boundary는 draft_only_no_submit_no_approve_no_send로 유지되어야 합니다."
 
 #: hrms/hr/doctype/department_approver/department_approver.py:103
 msgid "or for the Employee's Department: {0}"
@@ -12097,13 +12097,13 @@ msgstr "사유"
 #. Closing Review Audit Log'
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "reject_draft"
-msgstr ""
+msgstr "초안 반려"
 
 #. Option for the 'Review Action' (Select) field in DocType 'Korea Payroll
 #. Closing Review Audit Log'
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "request_changes"
-msgstr ""
+msgstr "수정 요청"
 
 #: hrms/www/jobs/index.html:122
 msgid "result"
@@ -12119,59 +12119,59 @@ msgstr "검토"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:279
 msgid "review_action must be a JSON object."
-msgstr ""
+msgstr "review_action은 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:298
 msgid "review_action.actor must match actor."
-msgstr ""
+msgstr "review_action.actor는 actor와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:296
 msgid "review_action.ai_role must be assistant_only."
-msgstr ""
+msgstr "review_action.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:341
 msgid "review_action.audit_preview must be a JSON object."
-msgstr ""
+msgstr "review_action.audit_preview는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:282
 msgid "review_action.contract_type must be korea_payroll_closing_draft_review_action_v1."
-msgstr ""
+msgstr "review_action.contract_type은 korea_payroll_closing_draft_review_action_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:290
 msgid "review_action.mutation_boundary must be human_review_only_no_submit_no_send_no_provider_call."
-msgstr ""
+msgstr "review_action.mutation_boundary는 human_review_only_no_submit_no_send_no_provider_call이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:294
 msgid "review_action.requires_human_approval must be true."
-msgstr ""
+msgstr "review_action.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:288
 msgid "review_action.requires_runtime_apply must be true."
-msgstr ""
+msgstr "review_action.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:286
 msgid "review_action.runtime_action must be preview_only."
-msgstr ""
+msgstr "review_action.runtime_action은 preview_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:302
 msgid "review_action.source_draft must be a JSON object."
-msgstr ""
+msgstr "review_action.source_draft는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:284
 msgid "review_action.source_draft_contract_type must be korea_payroll_closing_draft_runtime_insert_v1."
-msgstr ""
+msgstr "review_action.source_draft_contract_type은 korea_payroll_closing_draft_runtime_insert_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:327
 msgid "review_action.would_set_status must be a guarded human-review result status."
-msgstr ""
+msgstr "review_action.would_set_status는 보호된 사람 검토 결과 상태여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:351
 msgid "review_action.would_set_status must match audit_preview.would_set_status."
-msgstr ""
+msgstr "review_action.would_set_status는 audit_preview.would_set_status와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:292
 msgid "review_action.would_update_doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "review_action.would_update_doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/public/js/templates/feedback_summary.html:16
 msgid "reviews"
@@ -12179,47 +12179,47 @@ msgstr ""
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:320
 msgid "source_draft.ai_role must be assistant_only."
-msgstr ""
+msgstr "source_draft.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:323
 msgid "source_draft.approver must match review_action.actor."
-msgstr ""
+msgstr "source_draft.approver는 review_action.actor와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:304
 msgid "source_draft.contract_type must be korea_payroll_closing_draft_runtime_insert_v1."
-msgstr ""
+msgstr "source_draft.contract_type은 korea_payroll_closing_draft_runtime_insert_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:316
 msgid "source_draft.docstatus must be 0."
-msgstr ""
+msgstr "source_draft.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:312
 msgid "source_draft.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "source_draft.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:310
 msgid "source_draft.mutation_boundary must remain draft_only_no_submit_no_approve_no_send."
-msgstr ""
+msgstr "source_draft.mutation_boundary는 draft_only_no_submit_no_approve_no_send로 유지되어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:318
 msgid "source_draft.requires_human_approval must be true."
-msgstr ""
+msgstr "source_draft.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:308
 msgid "source_draft.requires_runtime_apply must be false."
-msgstr ""
+msgstr "source_draft.requires_runtime_apply는 false여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:306
 msgid "source_draft.runtime_action must be runtime_draft_created."
-msgstr ""
+msgstr "source_draft.runtime_action은 runtime_draft_created여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:314
 msgid "source_draft.status must be draft_pending_human_approval."
-msgstr ""
+msgstr "source_draft.status는 draft_pending_human_approval이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:87
 msgid "status must stay within guarded human-review audit states."
-msgstr ""
+msgstr "상태는 보호된 사람 검토 감사 상태 안에 있어야 합니다."
 
 #: frontend/src/components/RequestActionSheet.vue:291
 msgid "submitted"
@@ -12227,11 +12227,11 @@ msgstr "제출됨"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:377
 msgid "target draft approver must match the review actor."
-msgstr ""
+msgstr "대상 초안 승인자는 검토 수행자와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:374
 msgid "target draft requires_human_approval must be true."
-msgstr ""
+msgstr "대상 초안의 requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/page/organizational_chart/organizational_chart.js:30
 msgid "the selected company"

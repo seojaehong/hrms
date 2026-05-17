@@ -221,7 +221,7 @@ def ensure_demo_browser_credential(username=DEMO_BROWSER_USERNAME, password=None
     }
 
 
-def ensure_user(email, first_name, last_name, role_profile=None):
+def ensure_user(email, first_name, last_name, roles=None):
     if frappe.db.exists("User", email):
         user = frappe.get_doc("User", email)
         created = False
@@ -237,7 +237,7 @@ def ensure_user(email, first_name, last_name, role_profile=None):
             "new_password": build_demo_user_password(),
         }).insert(ignore_permissions=True)
         created = True
-    wanted_roles = {"HR Manager", "HR User", "Employee"}
+    wanted_roles = set(roles or {"Employee"})
     existing_roles = {r.role for r in user.roles}
     for role in wanted_roles - existing_roles:
         user.append("roles", {"role": role})
@@ -258,7 +258,7 @@ def ensure_employee(company, department, designation, user_email, first_name, la
         "company": company,
         "department": department,
         "designation": designation,
-        "employment_type": "Full-time",
+        "employment_type": custom.get("employment_type", "Full-time"),
         "employment_type_kr": custom.get("employment_type_kr", "Regular"),
         "branch": branch,
         "prefered_email": user_email,
@@ -709,58 +709,15 @@ def ensure_demo_blocker_transactions(company, employees):
     }
 
 
-def main():
-    created = []
-    updated = []
+def build_demo_employee_roster():
+    """Return Korea SME/franchise demo employee personas for runtime seeding.
 
-    holiday_list, changed = ensure_holiday_list()
-    (updated if changed else created).append(f"Holiday List::{holiday_list.name}")
+    This fixture is intentionally static and secret-free. It enriches the demo
+    tenant with mixed employment types and workplaces without adding payroll
+    submission, approval, messaging, provider, or AI scoring behavior.
+    """
 
-    warehouse_type, warehouse_created = ensure_warehouse_type("Transit")
-    (created if warehouse_created else updated).append(f"Warehouse Type::{warehouse_type.name}")
-
-    company, company_created = ensure_company()
-    (created if company_created else updated).append(f"Company::{company.name}")
-
-    for name in ["운영", "매장운영"]:
-        doc, was_created = ensure_department(company.name, name)
-        (created if was_created else updated).append(f"Department::{doc.name}")
-
-    for name in ["HR Manager", "Store Supervisor"]:
-        doc, was_created = ensure_designation(name)
-        (created if was_created else updated).append(f"Designation::{doc.name}")
-
-    for name in ["Full-time", "Part-time"]:
-        doc, was_created = ensure_employment_type(name)
-        (created if was_created else updated).append(f"Employment Type::{doc.name}")
-
-    for name in ["Male", "Female"]:
-        doc, was_created = ensure_gender(name)
-        (created if was_created else updated).append(f"Gender::{doc.name}")
-
-    for name in ["서울 본사", "강남 매장"]:
-        doc, was_created = ensure_branch(name)
-        (created if was_created else updated).append(f"Branch::{doc.name}")
-
-    shift, shift_created = ensure_shift_type(holiday_list.name)
-    (created if shift_created else updated).append(f"Shift Type::{shift.name}")
-
-    for component_name in ensure_salary_components():
-        updated.append(f"Salary Component::{component_name}")
-
-    leave_configs = [
-        ("Annual Leave", {"is_earned_leave": 1, "earned_leave_frequency": "Monthly", "is_carry_forward": 1, "maximum_carry_forwarded_leaves": 25}),
-        ("Sick Leave", {"is_lwp": 0, "is_carry_forward": 0}),
-        ("Family Event Leave", {"is_lwp": 0, "is_carry_forward": 0}),
-    ]
-    for leave_name, options in leave_configs:
-        doc, was_created = ensure_leave_type(leave_name, **options)
-        (created if was_created else updated).append(f"Leave Type::{doc.name}")
-
-    ensure_user("demo.hr.manager@node.pe.kr", "Demo", "Manager")
-    ensure_user("demo.store@node.pe.kr", "Demo", "Store")
-
-    employees = [
+    return [
         {
             "user": "demo.hr.manager@node.pe.kr",
             "first_name": "민지",
@@ -772,6 +729,7 @@ def main():
             "designation": "HR Manager",
             "branch": "서울 본사",
             "custom": {
+                "employment_type": "Full-time",
                 "employment_type_kr": "Regular",
                 "work_location_name": "서울 본사",
                 "bank_name": "국민은행",
@@ -794,6 +752,7 @@ def main():
             "designation": "Store Supervisor",
             "branch": "강남 매장",
             "custom": {
+                "employment_type": "Full-time",
                 "employment_type_kr": "Regular",
                 "work_location_name": "강남 매장",
                 "bank_name": "신한은행",
@@ -805,7 +764,248 @@ def main():
                 "cell_number": "010-2000-2000",
             },
         },
+        {
+            "user": "demo.ops.lead@node.pe.kr",
+            "first_name": "서연",
+            "last_name": "이",
+            "gender": "Female",
+            "dob": "1988-11-20",
+            "doj": "2023-01-16",
+            "department": "운영 - NBG",
+            "designation": "Operations Lead",
+            "branch": "서울 본사",
+            "custom": {
+                "employment_type": "Full-time",
+                "employment_type_kr": "Regular",
+                "work_location_name": "서울 본사",
+                "bank_name": "우리은행",
+                "bank_ac_no": "100-3000-3000",
+                "bank_account_holder_name": "이서연",
+                "resident_zip_code": "04524",
+                "road_address": "서울특별시 중구 세종대로 110",
+                "rrn_masked": "881120-2******",
+                "cell_number": "010-3000-3000",
+            },
+        },
+        {
+            "user": "demo.payroll@node.pe.kr",
+            "first_name": "준호",
+            "last_name": "최",
+            "gender": "Male",
+            "dob": "1990-05-08",
+            "doj": "2024-09-02",
+            "department": "운영 - NBG",
+            "designation": "Payroll Specialist",
+            "branch": "서울 본사",
+            "custom": {
+                "employment_type": "Full-time",
+                "employment_type_kr": "Fixed-term",
+                "work_location_name": "서울 본사",
+                "bank_name": "하나은행",
+                "bank_ac_no": "160-4000-4000",
+                "bank_account_holder_name": "최준호",
+                "resident_zip_code": "04524",
+                "road_address": "서울특별시 중구 세종대로 110",
+                "rrn_masked": "900508-1******",
+                "cell_number": "010-4000-4000",
+            },
+        },
+        {
+            "user": "demo.gangnam.ft@node.pe.kr",
+            "first_name": "하은",
+            "last_name": "정",
+            "gender": "Female",
+            "dob": "1998-02-11",
+            "doj": "2025-02-03",
+            "department": "매장운영 - NBG",
+            "designation": "Store Staff",
+            "branch": "강남 매장",
+            "custom": {
+                "employment_type": "Full-time",
+                "employment_type_kr": "Regular",
+                "work_location_name": "강남 매장",
+                "bank_name": "카카오뱅크",
+                "bank_ac_no": "3333-5000-5000",
+                "bank_account_holder_name": "정하은",
+                "resident_zip_code": "06134",
+                "road_address": "서울특별시 강남구 테헤란로 152",
+                "rrn_masked": "980211-2******",
+                "cell_number": "010-5000-5000",
+            },
+        },
+        {
+            "user": "demo.gangnam.pt@node.pe.kr",
+            "first_name": "도윤",
+            "last_name": "한",
+            "gender": "Male",
+            "dob": "2001-09-19",
+            "doj": "2026-01-05",
+            "department": "매장운영 - NBG",
+            "designation": "Part-time Crew",
+            "branch": "강남 매장",
+            "custom": {
+                "employment_type": "Part-time",
+                "employment_type_kr": "Part-time",
+                "work_location_name": "강남 매장",
+                "bank_name": "토스뱅크",
+                "bank_ac_no": "190-6000-6000",
+                "bank_account_holder_name": "한도윤",
+                "resident_zip_code": "06134",
+                "road_address": "서울특별시 강남구 테헤란로 152",
+                "rrn_masked": "010919-3******",
+                "cell_number": "010-6000-6000",
+            },
+        },
+        {
+            "user": "demo.hongdae.lead@node.pe.kr",
+            "first_name": "지아",
+            "last_name": "윤",
+            "gender": "Female",
+            "dob": "1994-12-03",
+            "doj": "2024-11-01",
+            "department": "매장운영 - NBG",
+            "designation": "Store Supervisor",
+            "branch": "홍대 매장",
+            "custom": {
+                "employment_type": "Full-time",
+                "employment_type_kr": "Regular",
+                "work_location_name": "홍대 매장",
+                "bank_name": "국민은행",
+                "bank_ac_no": "110-7000-7000",
+                "bank_account_holder_name": "윤지아",
+                "resident_zip_code": "04050",
+                "road_address": "서울특별시 마포구 양화로 160",
+                "rrn_masked": "941203-2******",
+                "cell_number": "010-7000-7000",
+            },
+        },
+        {
+            "user": "demo.hongdae.pt@node.pe.kr",
+            "first_name": "서준",
+            "last_name": "강",
+            "gender": "Male",
+            "dob": "2000-04-24",
+            "doj": "2026-03-02",
+            "department": "매장운영 - NBG",
+            "designation": "Part-time Crew",
+            "branch": "홍대 매장",
+            "custom": {
+                "employment_type": "Part-time",
+                "employment_type_kr": "Part-time",
+                "work_location_name": "홍대 매장",
+                "bank_name": "신한은행",
+                "bank_ac_no": "140-8000-8000",
+                "bank_account_holder_name": "강서준",
+                "resident_zip_code": "04050",
+                "road_address": "서울특별시 마포구 양화로 160",
+                "rrn_masked": "000424-3******",
+                "cell_number": "010-8000-8000",
+            },
+        },
+        {
+            "user": "demo.busan.manager@node.pe.kr",
+            "first_name": "수빈",
+            "last_name": "오",
+            "gender": "Female",
+            "dob": "1991-08-14",
+            "doj": "2023-10-10",
+            "department": "매장운영 - NBG",
+            "designation": "Store Supervisor",
+            "branch": "부산 매장",
+            "custom": {
+                "employment_type": "Full-time",
+                "employment_type_kr": "Fixed-term",
+                "work_location_name": "부산 매장",
+                "bank_name": "부산은행",
+                "bank_ac_no": "101-9000-9000",
+                "bank_account_holder_name": "오수빈",
+                "resident_zip_code": "48058",
+                "road_address": "부산광역시 해운대구 센텀중앙로 97",
+                "rrn_masked": "910814-2******",
+                "cell_number": "010-9000-9000",
+            },
+        },
+        {
+            "user": "demo.busan.pt@node.pe.kr",
+            "first_name": "민재",
+            "last_name": "장",
+            "gender": "Male",
+            "dob": "2002-06-30",
+            "doj": "2026-04-01",
+            "department": "매장운영 - NBG",
+            "designation": "Part-time Crew",
+            "branch": "부산 매장",
+            "custom": {
+                "employment_type": "Part-time",
+                "employment_type_kr": "Part-time",
+                "work_location_name": "부산 매장",
+                "bank_name": "농협은행",
+                "bank_ac_no": "301-1010-1010",
+                "bank_account_holder_name": "장민재",
+                "resident_zip_code": "48058",
+                "road_address": "부산광역시 해운대구 센텀중앙로 97",
+                "rrn_masked": "020630-3******",
+                "cell_number": "010-1010-1010",
+            },
+        },
     ]
+
+
+def main():
+    created = []
+    updated = []
+
+    holiday_list, changed = ensure_holiday_list()
+    (updated if changed else created).append(f"Holiday List::{holiday_list.name}")
+
+    warehouse_type, warehouse_created = ensure_warehouse_type("Transit")
+    (created if warehouse_created else updated).append(f"Warehouse Type::{warehouse_type.name}")
+
+    company, company_created = ensure_company()
+    (created if company_created else updated).append(f"Company::{company.name}")
+
+    for name in ["운영", "매장운영"]:
+        doc, was_created = ensure_department(company.name, name)
+        (created if was_created else updated).append(f"Department::{doc.name}")
+
+    for name in ["HR Manager", "Store Supervisor", "Operations Lead", "Payroll Specialist", "Store Staff", "Part-time Crew"]:
+        doc, was_created = ensure_designation(name)
+        (created if was_created else updated).append(f"Designation::{doc.name}")
+
+    for name in ["Full-time", "Part-time"]:
+        doc, was_created = ensure_employment_type(name)
+        (created if was_created else updated).append(f"Employment Type::{doc.name}")
+
+    for name in ["Male", "Female"]:
+        doc, was_created = ensure_gender(name)
+        (created if was_created else updated).append(f"Gender::{doc.name}")
+
+    for name in ["서울 본사", "강남 매장", "홍대 매장", "부산 매장"]:
+        doc, was_created = ensure_branch(name)
+        (created if was_created else updated).append(f"Branch::{doc.name}")
+
+    shift, shift_created = ensure_shift_type(holiday_list.name)
+    (created if shift_created else updated).append(f"Shift Type::{shift.name}")
+
+    for component_name in ensure_salary_components():
+        updated.append(f"Salary Component::{component_name}")
+
+    leave_configs = [
+        ("Annual Leave", {"is_earned_leave": 1, "earned_leave_frequency": "Monthly", "is_carry_forward": 1, "maximum_carry_forwarded_leaves": 25}),
+        ("Sick Leave", {"is_lwp": 0, "is_carry_forward": 0}),
+        ("Family Event Leave", {"is_lwp": 0, "is_carry_forward": 0}),
+    ]
+    for leave_name, options in leave_configs:
+        doc, was_created = ensure_leave_type(leave_name, **options)
+        (created if was_created else updated).append(f"Leave Type::{doc.name}")
+
+    employees = build_demo_employee_roster()
+    for payload in employees:
+        roles = {"Employee"}
+        if payload["user"] in {"demo.hr.manager@node.pe.kr", "demo.store@node.pe.kr"}:
+            roles = {"HR Manager", "HR User", "Employee"}
+        user_doc, user_created = ensure_user(payload["user"], payload["first_name"], payload["last_name"], roles=roles)
+        (created if user_created else updated).append(f"User::{user_doc.name}")
 
     employee_docs = []
     employee_names = []

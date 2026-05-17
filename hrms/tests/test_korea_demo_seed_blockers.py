@@ -166,6 +166,27 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 				employees=[SimpleNamespace(name="", work_location_name="서울 본사"), SimpleNamespace(name="HR-EMP-0002")],
 			)
 
+	def test_demo_employee_roster_has_ten_korean_sme_personas_without_secrets_or_scores(self):
+		roster = self.mod.build_demo_employee_roster()
+
+		self.assertGreaterEqual(len(roster), 10)
+		self.assertEqual(roster[0]["user"], "demo.hr.manager@node.pe.kr")
+		self.assertEqual(roster[1]["user"], "demo.store@node.pe.kr")
+		self.assertGreaterEqual(
+			len({row["custom"]["work_location_name"] for row in roster}),
+			3,
+		)
+		self.assertTrue(
+			{"Regular", "Fixed-term", "Part-time"}.issubset(
+				{row["custom"]["employment_type_kr"] for row in roster}
+			)
+		)
+		self.assertEqual(len({row["user"] for row in roster}), len(roster))
+		self.assertEqual(len({(row["first_name"], row["last_name"]) for row in roster}), len(roster))
+		serialized = json.dumps(roster, ensure_ascii=False).lower()
+		for forbidden in ("password", "secret", "score", "risk", "probability", "success_rate", "success rate"):
+			self.assertNotIn(forbidden, serialized)
+
 	def test_demo_seed_creates_positive_payroll_closing_draft_row_for_runtime_worklist(self):
 		calls = []
 

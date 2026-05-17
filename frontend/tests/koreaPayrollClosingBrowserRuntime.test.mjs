@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { spawnSync } from "node:child_process"
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -12,6 +13,7 @@ import {
 	buildBrowserRouteUrl,
 	extractDevtoolsPortFromText,
 	extractFrappeApiMethodFromUrl,
+	normalizeBrowserRuntimeOptions,
 	writeBrowserRuntimeReportFile,
 } from "../../scripts/verify_korea_payroll_closing_browser_runtime.mjs"
 
@@ -111,6 +113,52 @@ assert.equal(
 )
 assert.equal(extractFrappeApiMethodFromUrl("http://hrms.localhost:8000/hrms/dashboard/korea-payroll-closing"), null)
 
+const normalizedOptions = normalizeBrowserRuntimeOptions({
+	args: { "base-url": " http://hrms.localhost:8000/ ", company: " 노란봉투법 데모 ", username: " demo.hr.manager@node.pe.kr ", chromium: " chromium-browser " },
+	env: { FRAPPE_BROWSER_PASSWORD: " runtime-secret " },
+})
+assert.equal(normalizedOptions.baseUrl, "http://hrms.localhost:8000")
+assert.equal(normalizedOptions.company, "노란봉투법 데모")
+assert.equal(normalizedOptions.username, "demo.hr.manager@node.pe.kr")
+assert.equal(normalizedOptions.password, "runtime-secret")
+assert.equal(normalizedOptions.chromium, "chromium-browser")
+
+for (const [field, args] of [
+	["base-url", { "base-url": "  \t\n", company: "노란봉투법 데모", username: "demo.hr.manager@node.pe.kr", chromium: "chromium-browser" }],
+	["company", { "base-url": "http://hrms.localhost:8000", company: "  \t\n", username: "demo.hr.manager@node.pe.kr", chromium: "chromium-browser" }],
+	["username", { "base-url": "http://hrms.localhost:8000", company: "노란봉투법 데모", username: "  \t\n", chromium: "chromium-browser" }],
+	["chromium", { "base-url": "http://hrms.localhost:8000", company: "노란봉투법 데모", username: "demo.hr.manager@node.pe.kr", chromium: "  \t\n" }],
+]) {
+	assert.throws(
+		() => normalizeBrowserRuntimeOptions({ args, env: { FRAPPE_BROWSER_PASSWORD: "runtime-secret" } }),
+		new RegExp(`${field} is required`),
+	)
+}
+
+assert.throws(
+	() => normalizeBrowserRuntimeOptions({
+		args: { "base-url": "http://hrms.localhost:8000", company: "노란봉투법 데모", username: "demo.hr.manager@node.pe.kr", chromium: "chromium-browser", "report-file": "  \t\n" },
+		env: { FRAPPE_BROWSER_PASSWORD: "runtime-secret" },
+	}),
+	/report-file must be a non-empty string/,
+)
+
+assert.throws(
+	() => normalizeBrowserRuntimeOptions({
+		args: { "base-url": "http://hrms.localhost:8000", company: "노란봉투법 데모", username: "demo.hr.manager@node.pe.kr", chromium: "chromium-browser" },
+		env: { FRAPPE_BROWSER_PASSWORD: "  \t\n" },
+	}),
+	/password is required/,
+)
+
+assert.throws(
+	() => normalizeBrowserRuntimeOptions({
+		args: { "base-url": "http://hrms.localhost:8000", company: "노란봉투법 데모", username: "demo.hr.manager@node.pe.kr", chromium: "chromium-browser" },
+		env: { FRAPPE_BROWSER_PASSWORD: "  \t\n", FRAPPE_PASSWORD: "fallback-secret" },
+	}),
+	/password is required/,
+)
+
 assert.equal(
 	extractDevtoolsPortFromText("DevTools listening on ws://127.0.0.1:45359/devtools/browser/session-id"),
 	45359,
@@ -194,6 +242,34 @@ try {
 	}
 	await writeBrowserRuntimeReportFile(reportPath, reportPayload)
 	assert.deepEqual(JSON.parse(await readFile(reportPath, "utf8")), reportPayload)
+
+	const failedCliReportPath = join(reportTempDir, "cli", "missing-password.json")
+	const failedCli = spawnSync(
+		process.execPath,
+		[
+			"scripts/verify_korea_payroll_closing_browser_runtime.mjs",
+			"--no-throw",
+			"--base-url",
+			"http://hrms.localhost:8000",
+			"--company",
+			"노란봉투법 데모",
+			"--username",
+			"demo.hr.manager@node.pe.kr",
+			"--chromium",
+			"chromium-browser",
+			"--report-file",
+			failedCliReportPath,
+		],
+		{
+			cwd: new URL("../..", import.meta.url),
+			env: { ...process.env, FRAPPE_BROWSER_PASSWORD: "", FRAPPE_PASSWORD: "" },
+			encoding: "utf8",
+		},
+	)
+	assert.equal(failedCli.status, 0)
+	const failedCliPayload = JSON.parse(await readFile(failedCliReportPath, "utf8"))
+	assert.equal(failedCliPayload.runtime_verified, false)
+	assert.match(failedCliPayload.browser_blockers.join("\n"), /password is required/)
 } finally {
 	await rm(reportTempDir, { recursive: true, force: true })
 }

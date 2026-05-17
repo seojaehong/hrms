@@ -25,17 +25,17 @@ const READ_ONLY_RUNTIME_METHODS = new Set([
 ])
 
 async function main() {
-	const args = parseArgs(process.argv.slice(2))
-	const baseUrl = String(args["base-url"] || DEFAULT_BASE_URL).replace(/\/$/, "")
-	const company = String(args.company || DEFAULT_COMPANY)
-	const username = args.username || process.env.FRAPPE_BROWSER_USERNAME || process.env.FRAPPE_USERNAME
-	const password = process.env.FRAPPE_BROWSER_PASSWORD || process.env.FRAPPE_PASSWORD
-	const chromium = String(args.chromium || process.env.CHROMIUM_BIN || "chromium-browser")
-	const reportFile = args["report-file"] ? String(args["report-file"]) : null
-
+	let args = {}
+	let reportFile = null
 	let report
 	try {
-		report = await verifyBrowserRuntime({ baseUrl, company, username, password, chromium })
+		args = parseArgs(process.argv.slice(2))
+		if (Object.prototype.hasOwnProperty.call(args, "report-file")) {
+			reportFile = requireNonEmptyReportFile(args["report-file"])
+		}
+		const options = normalizeBrowserRuntimeOptions({ args, env: process.env })
+		reportFile = options.reportFile
+		report = await verifyBrowserRuntime(options)
 	} catch (error) {
 		report = {
 			contract_type: "korea_payroll_closing_browser_runtime_walkthrough_v1",
@@ -63,6 +63,34 @@ async function main() {
 export async function writeBrowserRuntimeReportFile(reportFile, report) {
 	await mkdir(dirname(reportFile), { recursive: true })
 	await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`)
+}
+
+export function normalizeBrowserRuntimeOptions({ args = {}, env = process.env } = {}) {
+	const baseUrl = requireNonEmptyInput(
+		Object.prototype.hasOwnProperty.call(args, "base-url") ? args["base-url"] : DEFAULT_BASE_URL,
+		"base-url",
+	).replace(/\/$/, "")
+	const company = requireNonEmptyInput(
+		Object.prototype.hasOwnProperty.call(args, "company") ? args.company : DEFAULT_COMPANY,
+		"company",
+	)
+	const username = requireNonEmptyInput(
+		Object.prototype.hasOwnProperty.call(args, "username") ? args.username : env.FRAPPE_BROWSER_USERNAME || env.FRAPPE_USERNAME,
+		"username",
+	)
+	const password = requireNonEmptyInput(
+		Object.prototype.hasOwnProperty.call(env, "FRAPPE_BROWSER_PASSWORD") ? env.FRAPPE_BROWSER_PASSWORD : env.FRAPPE_PASSWORD,
+		"password",
+	)
+	const chromium = requireNonEmptyInput(
+		Object.prototype.hasOwnProperty.call(args, "chromium") ? args.chromium : env.CHROMIUM_BIN || "chromium-browser",
+		"chromium",
+	)
+	let reportFile = null
+	if (Object.prototype.hasOwnProperty.call(args, "report-file")) {
+		reportFile = requireNonEmptyReportFile(args["report-file"])
+	}
+	return { baseUrl, company, username, password, chromium, reportFile }
 }
 
 export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company = DEFAULT_COMPANY, username, password, chromium = "chromium-browser" } = {}) {
@@ -132,6 +160,17 @@ export async function verifyBrowserRuntime({ baseUrl = DEFAULT_BASE_URL, company
 }
 
 function requireNonEmptyOption(value, label) {
+	return requireNonEmptyInput(value, label)
+}
+
+function requireNonEmptyReportFile(value) {
+	if (typeof value !== "string" || !value.trim()) {
+		throw new Error("report-file must be a non-empty string")
+	}
+	return value.trim()
+}
+
+function requireNonEmptyInput(value, label) {
 	if (typeof value !== "string" || !value.trim()) {
 		throw new Error(`${label} is required for authenticated browser runtime verification`)
 	}

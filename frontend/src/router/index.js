@@ -65,6 +65,21 @@ const routes = [
 				name: "KoreaPayrollReviewAuditLogDetail",
 				component: () => import("@/views/KoreaPayrollReviewAuditLogDetail.vue"),
 			},
+			{
+				path: "/dashboard/korea-annual-leave",
+				name: "KoreaAnnualLeaveDashboard",
+				component: () => import("@/views/KoreaAnnualLeaveDashboard.vue"),
+			},
+			{
+				path: "/korea-annual-leave/:employeeId",
+				name: "KoreaAnnualLeaveDetail",
+				component: () => import("@/views/KoreaAnnualLeaveDetail.vue"),
+			},
+			{
+				path: "/dashboard/korea-attendance",
+				name: "KoreaAttendanceDashboard",
+				component: () => import("@/views/KoreaAttendanceDashboard.vue"),
+			},
 		],
 	},
 	{

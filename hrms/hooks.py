@@ -82,6 +82,7 @@ website_generators = ["Job Opening"]
 website_route_rules = [
 	{"from_route": "/hrms/<path:app_path>", "to_route": "hrms"},
 	{"from_route": "/hr/<path:app_path>", "to_route": "roster"},
+	{"from_route": "/search", "to_route": "hrms"},  # redirect bare /search to hrms SPA
 ]
 # Jinja
 # ----------

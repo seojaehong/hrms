@@ -133,6 +133,8 @@ def apply_korea_attendance_closing(
     # --- persist snapshot into the draft ---
     doc = _frappe.get_doc(CLOSING_DRAFT_DOCTYPE, existing_name)
     doc.attendance_snapshot = _json_dumps(snapshot)
+    doc.flags.ignore_permissions = True
+    doc.flags.ignore_links = True
     doc.save()
 
     return {

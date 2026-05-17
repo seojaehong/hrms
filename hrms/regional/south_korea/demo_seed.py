@@ -193,6 +193,34 @@ def ensure_holiday_list():
     return holiday_list, created or changed
 
 
+def ensure_holiday_list_assignment(company, holiday_list_name):
+    """Create a submitted Holiday List Assignment for the company.
+
+    Required for Salary Slip validate (HRMS override uses tabHoliday List Assignment,
+    not Company.default_holiday_list).
+    """
+    filters = {
+        "applicable_for": "Company",
+        "assigned_to": company,
+        "holiday_list": holiday_list_name,
+        "docstatus": ("<", 2),
+    }
+    if frappe.db.exists("Holiday List Assignment", filters):
+        doc = frappe.get_doc("Holiday List Assignment", frappe.db.get_value("Holiday List Assignment", filters, "name"))
+        if doc.docstatus == 0:
+            doc.submit()
+        return doc, False
+    doc = frappe.new_doc("Holiday List Assignment")
+    doc.applicable_for = "Company"
+    doc.assigned_to = company
+    doc.employee_company = company
+    doc.holiday_list = holiday_list_name
+    doc.from_date = "2026-01-01"
+    doc.insert(ignore_permissions=True)
+    doc.submit()
+    return doc, True
+
+
 def ensure_shift_type(holiday_list_name):
     values = {
         "start_time": "09:00:00",
@@ -347,8 +375,10 @@ def ensure_salary_structure(company):
 
     if created:
         doc.insert(ignore_permissions=True)
+        doc.submit()
     else:
-        doc.save(ignore_permissions=True)
+        if doc.docstatus == 0:
+            doc.submit()
     return doc, created
 
 
@@ -361,11 +391,15 @@ def ensure_salary_structure_assignment(employee, company, salary_structure, base
         "currency": "KRW",
         "base": base,
     }
-    return ensure_doc(
+    doc, created = ensure_doc(
         "Salary Structure Assignment",
         filters={"employee": employee, "salary_structure": salary_structure, "docstatus": ("<", 2)},
         values=values,
     )
+    # SSA must be submitted for Salary Slip lookup to work
+    if doc.docstatus == 0:
+        doc.submit()
+    return doc, created
 
 
 def ensure_demo_payroll_closing_draft(company):
@@ -1276,6 +1310,10 @@ def seed_korea_demo():
 
     company, company_created = ensure_company()
     (created_list if company_created else updated_list).append(f"Company::{company.name}")
+
+    # Holiday List Assignment must be submitted so Salary Slip validation can find it
+    hla, hla_created = ensure_holiday_list_assignment(company.name, holiday_list.name)
+    (created_list if hla_created else updated_list).append(f"Holiday List Assignment::{hla.name}")
 
     for name in ["운영", "매장운영"]:
         doc, was_created = ensure_department(company.name, name)

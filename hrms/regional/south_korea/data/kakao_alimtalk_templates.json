@@ -1,0 +1,51 @@
+[
+	{
+		"template_id": "korea_wage_statement",
+		"title": "임금명세서 발행 알림",
+		"content": "안녕하세요 #{employee_name}님,\n\n#{period} 임금명세서가 발행되었습니다.\n총 지급액: #{total_amount}원\n\n자세히 보기: #{link}",
+		"variables": ["employee_name", "period", "total_amount", "link"],
+		"scenario": "salary_slip_submit"
+	},
+	{
+		"template_id": "korea_leave_approved",
+		"title": "휴가 승인 알림",
+		"content": "안녕하세요 #{employee_name}님,\n\n신청하신 휴가가 승인되었습니다.\n\n휴가 종류: #{leave_type}\n기간: #{from_date} ~ #{to_date} (#{leave_days}일)\n승인자: #{approver_name}\n\n즐거운 휴가 되세요!",
+		"variables": ["employee_name", "leave_type", "from_date", "to_date", "leave_days", "approver_name"],
+		"scenario": "leave_application_approve"
+	},
+	{
+		"template_id": "korea_leave_rejected",
+		"title": "휴가 반려 알림",
+		"content": "안녕하세요 #{employee_name}님,\n\n신청하신 휴가가 반려되었습니다.\n\n휴가 종류: #{leave_type}\n기간: #{from_date} ~ #{to_date}\n반려자: #{approver_name}\n사유: #{reason}\n\n문의사항이 있으시면 담당자에게 연락해 주세요.",
+		"variables": ["employee_name", "leave_type", "from_date", "to_date", "approver_name", "reason"],
+		"scenario": "leave_application_reject"
+	},
+	{
+		"template_id": "korea_payroll_closing",
+		"title": "급여 마감 안내",
+		"content": "#{company_name} 급여 담당자님,\n\n#{period} 급여 마감 일정을 안내드립니다.\n\n마감 일시: #{closing_datetime}\n대상 인원: #{employee_count}명\n예상 총액: #{total_amount}원\n\n마감 전 근태/공제 항목을 최종 확인해 주세요.",
+		"variables": ["company_name", "period", "closing_datetime", "employee_count", "total_amount"],
+		"scenario": "payroll_closing_reminder"
+	},
+	{
+		"template_id": "korea_compliance_alert",
+		"title": "노무 컴플라이언스 알림",
+		"content": "#{company_name} 담당자님,\n\n[컴플라이언스 알림] #{alert_title}\n\n내용: #{alert_description}\n조치 기한: #{due_date}\n\n즉시 확인 및 조치가 필요합니다.\n문의: #{contact_info}",
+		"variables": ["company_name", "alert_title", "alert_description", "due_date", "contact_info"],
+		"scenario": "compliance_alert"
+	},
+	{
+		"template_id": "korea_contract_renewal",
+		"title": "근로계약 갱신 안내",
+		"content": "안녕하세요 #{employee_name}님,\n\n근로계약 갱신 시기가 다가왔습니다.\n\n계약 만료일: #{expiry_date}\n갱신 여부 확인 기한: #{confirm_deadline}\n\n인사담당자에게 연락해 갱신 절차를 진행해 주세요.\n담당자: #{hr_contact}",
+		"variables": ["employee_name", "expiry_date", "confirm_deadline", "hr_contact"],
+		"scenario": "contract_renewal_reminder"
+	},
+	{
+		"template_id": "korea_attendance_correction",
+		"title": "근태 수정 처리 완료",
+		"content": "안녕하세요 #{employee_name}님,\n\n#{correction_date} 근태 수정이 처리되었습니다.\n\n수정 내용: #{correction_detail}\n처리자: #{processor_name}\n처리 일시: #{processed_at}\n\n이의가 있으실 경우 인사팀으로 문의해 주세요.",
+		"variables": ["employee_name", "correction_date", "correction_detail", "processor_name", "processed_at"],
+		"scenario": "attendance_correction_complete"
+	}
+]

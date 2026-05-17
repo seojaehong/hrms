@@ -160,6 +160,13 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+	"Salary Slip": {
+		"before_validate": "hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook",
+		"on_submit": "hrms.regional.south_korea.notification_dispatcher.on_salary_slip_submit",
+	},
+	"Leave Application": {
+		"on_update": "hrms.regional.south_korea.notification_dispatcher.on_leave_application_approve",
+	},
 	"User": {
 		"validate": [
 			"erpnext.setup.doctype.employee.employee.validate_employee_role",
@@ -203,9 +210,6 @@ doc_events = {
 		],
 	},
 	"Loan": {"validate": "hrms.hr.utils.validate_loan_repay_from_salary"},
-	"Salary Slip": {
-		"before_validate": "hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook",
-	},
 	"Employee": {
 		"validate": "hrms.overrides.employee_master.validate_onboarding_process",
 		"on_update": [

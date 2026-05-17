@@ -1,0 +1,123 @@
+{%- set terms = doc.contract_terms_json | parse_json if doc.contract_terms_json else {} -%}
+{%- set company_info = doc.company_info_json | parse_json if doc.company_info_json else {} -%}
+{%- set employee_info = doc.employee_info_json | parse_json if doc.employee_info_json else {} -%}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family: 'Malgun Gothic', '맑은 고딕', 'NanumGothic', '나눔고딕', sans-serif; font-size: 10pt; line-height: 1.7; color: #111; }
+.contract-wrapper { max-width: 800px; margin: 0 auto; padding: 30px 40px; }
+h2.contract-title { text-align: center; font-size: 16pt; font-weight: bold; margin: 16px 0 32px; letter-spacing: 2px; }
+table.ct { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+table.ct th, table.ct td { border: 1px solid #333; padding: 6px 10px; vertical-align: top; }
+table.ct th { background: #f5f5f5; width: 28%; font-weight: bold; white-space: nowrap; }
+.sec { font-weight: bold; font-size: 11pt; margin: 20px 0 8px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+.note { font-size: 9pt; color: #555; margin: 4px 0 12px; }
+.sig-area { margin-top: 48px; }
+.sig-row { display: flex; justify-content: space-between; margin-top: 28px; gap: 20px; }
+.sig-block { width: 45%; }
+.sig-block p { margin: 3px 0; }
+.sig-line { border-bottom: 1px solid #333; margin-top: 44px; }
+.statute { font-size: 9pt; color: #555; margin-top: 24px; border-top: 1px dashed #aaa; padding-top: 10px; }
+</style>
+</head>
+<body>
+<div class="contract-wrapper">
+
+<h2 class="contract-title">단시간근로자 표준근로계약서</h2>
+
+<p class="note">※ 단시간근로자: 1주 동안의 소정근로시간이 그 사업장에서 같은 종류의 업무에 종사하는 통상근로자의 소정근로시간에 비하여 짧은 근로자 (근로기준법 제2조제1항제9호)</p>
+
+<p>사업주 <strong>{{ company_info.company_name or doc.company }}</strong>(이하 "사업주"라 함)와 단시간근로자 <strong>{{ employee_info.employee_name or doc.employee_name }}</strong>(이하 "근로자"라 함)는 다음과 같이 근로계약을 체결한다.</p>
+
+<div class="sec">제1조 (근로계약기간)</div>
+<table class="ct">
+  <tr><th>계약 시작일</th><td>{{ terms.contract_start_date or doc.start_date or "" }}</td></tr>
+  <tr><th>주 소정근로시간</th><td>{{ terms.weekly_work_hours or "" }}시간 (주 40시간 미만)</td></tr>
+</table>
+
+<div class="sec">제2조 (근무장소 및 업무)</div>
+<table class="ct">
+  <tr><th>근무장소</th><td>{{ terms.workplace or "" }}</td></tr>
+  <tr><th>업무 내용</th><td>{{ terms.job_description or "" }}</td></tr>
+</table>
+
+<div class="sec">제3조 (소정근로시간 및 근무일)</div>
+<table class="ct">
+  <tr><th>근로시간</th><td>{{ terms.work_start_time or "" }} ~ {{ terms.work_end_time or "" }}
+    (휴게시간 {{ terms.break_time or "해당 법령에 따름" }})</td></tr>
+  <tr><th>근무일</th><td>{{ terms.work_days or "" }}</td></tr>
+  <tr><th>주 소정근로시간 합계</th><td>{{ terms.weekly_work_hours or "" }}시간</td></tr>
+</table>
+
+<div class="sec">제4조 (휴일)</div>
+<table class="ct">
+  <tr><th>주휴일</th><td>{{ terms.holidays or "" }}</td></tr>
+  <tr><th>기타 휴일</th><td>{{ terms.other_holidays or "근로기준법 및 취업규칙에 따름" }}</td></tr>
+</table>
+<p class="note">※ 주 15시간 이상 근로 시 주휴수당 발생 (근로기준법 제55조)</p>
+
+<div class="sec">제5조 (임금)</div>
+<table class="ct">
+  <tr><th>시급 / 기본급</th><td>{{ terms.base_wage or "" }} 원</td></tr>
+  <tr><th>기타 수당</th><td>{{ terms.other_allowances or "해당 없음" }}</td></tr>
+  <tr><th>임금 지급일</th><td>매월 {{ terms.wage_payment_date or "" }}일</td></tr>
+  <tr><th>지급 방법</th><td>{{ terms.wage_payment_method or "" }}</td></tr>
+</table>
+<p class="note">※ 최저임금 이상 지급 의무 (최저임금법 제6조)</p>
+
+<div class="sec">제6조 (연차유급휴가)</div>
+<table class="ct">
+  <tr><th>연차유급휴가</th><td>{{ terms.annual_leave or "근로기준법에서 정하는 비례 계산에 따름 (통상근로자 소정근로시간 대비 비례 적용)" }}</td></tr>
+</table>
+
+<div class="sec">제7조 (초과근로)</div>
+<table class="ct">
+  <tr><th>초과근로</th><td>{{ terms.overtime_terms or "근로자 동의 시에 한하며, 1주 12시간 이내. 초과근로 가산임금 지급 (근로기준법 제56조)" }}</td></tr>
+</table>
+
+<div class="sec">제8조 (사회보험 적용)</div>
+<table class="ct">
+  <tr><th>적용 보험</th><td>{{ terms.social_insurance or "고용·산재 가입. 국민연금·건강보험은 월 60시간 이상 근무 시 적용" }}</td></tr>
+</table>
+
+<div class="sec">제9조 (근로계약서 교부)</div>
+<p>사업주는 근로계약을 체결함과 동시에 본 계약서를 근로자에게 교부한다 (근로기준법 제17조제2항).</p>
+
+<div class="sec">제10조 (기타)</div>
+<p>이 계약에 정함이 없는 사항은 근로기준법령 및 기간제 및 단시간근로자 보호 등에 관한 법률에 의한다.</p>
+{% if terms.other_terms %}<p>{{ terms.other_terms }}</p>{% endif %}
+
+<div class="sig-area">
+  <p style="text-align:center; margin-top:28px;">{{ frappe.utils.formatdate(frappe.utils.today(), "yyyy년 MM월 dd일") }}</p>
+  <div class="sig-row">
+    <div class="sig-block">
+      <p><strong>사업주</strong></p>
+      <p>사업체명: {{ company_info.company_name or doc.company }}</p>
+      <p>대표자: {{ company_info.representative_name or "" }}</p>
+      <p>주소: {{ company_info.address or "" }}</p>
+      <p>사업자등록번호: {{ company_info.business_registration_number or "" }}</p>
+      <div class="sig-line"></div>
+      <p style="text-align:right;">(서명 또는 인)</p>
+    </div>
+    <div class="sig-block">
+      <p><strong>근로자</strong></p>
+      <p>성명: {{ employee_info.employee_name or doc.employee_name or "" }}</p>
+      <p>주소: {{ employee_info.address or "" }}</p>
+      <p>주민등록번호: {{ employee_info.resident_registration_number or "" }}</p>
+      <div class="sig-line"></div>
+      <p style="text-align:right;">(서명 또는 인)</p>
+    </div>
+  </div>
+</div>
+
+<div class="statute">
+<p>※ 근로기준법 제17조에 따라 사업주는 임금, 소정근로시간, 휴일, 연차 유급휴가, 기타 대통령령이 정하는 사항을 명시하여야 합니다.</p>
+<p>※ 단시간근로자 차별적 처우 금지 (기간제법 제8조).</p>
+<p>※ 위반 시 500만원 이하의 벌금이 부과될 수 있습니다 (근로기준법 제114조).</p>
+</div>
+
+</div>
+</body>
+</html>

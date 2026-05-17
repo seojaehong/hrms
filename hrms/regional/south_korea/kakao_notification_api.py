@@ -1,220 +1,125 @@
-"""Frappe-facing preview API for Korea Kakao notification contracts.
+"""Frappe whitelist API — 카카오 알림톡 발송 엔드포인트.
 
-This module is intentionally preview-only. It normalizes JSON/dict inputs and
-returns side-effect-free queue/dispatch contracts without saving queue rows,
-calling Kakao providers, or assuming public/government API routes. Direct file
-tests can run without a bench; when Frappe is present the functions are
-whitelisted.
+이 모듈은 Frappe RPC 레이어에 노출되는 함수들을 정의합니다.
+내부 로직은 kakao_notification.py 에 위임합니다.
 """
 
 from __future__ import annotations
 
-import importlib.util
-import json
-from copy import deepcopy
-from pathlib import Path
 from typing import Any
 
-try:  # pragma: no cover - exercised only inside a Frappe bench
-	import frappe  # type: ignore
-except ImportError:  # pragma: no cover - direct-run no-bench mode
-	frappe = None  # type: ignore
+import frappe
+
+from hrms.regional.south_korea.kakao_notification import (
+	list_alimtalk_templates,
+	preview_kakao_alimtalk,
+	send_kakao_alimtalk,
+)
 
 
-def _whitelist(fn):
-	if frappe is None:
-		return fn
-	return frappe.whitelist()(fn)
-
-
-@_whitelist
-def preview_korea_kakao_template_registry_entry(
-	*,
-	template_code: str,
-	template_name: str,
-	template_body: str,
-	required_variables: Any,
-	consent_purpose: str,
-	provider_template_keys: Any | None = None,
-	active: bool | str = True,
+@frappe.whitelist()
+def api_send_kakao_alimtalk(
+	pf_id: str,
+	template_id: str,
+	to: str,
+	template_variables: dict[str, str] | str | None = None,
+	human_approved: bool | str = False,
+	dry_run: bool | str = False,
 ) -> dict[str, Any]:
-	"""Return a side-effect-free Kakao approved-template registry preview."""
+	"""카카오 알림톡 발송 API (Frappe whitelist).
 
-	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
-	registry_entry = kakao.build_kakao_template_registry_entry(
-		template_code=template_code,
-		template_name=template_name,
-		template_body=template_body,
-		required_variables=_coerce_list(required_variables, "required_variables"),
-		consent_purpose=consent_purpose,
-		provider_template_keys=_coerce_optional_mapping(provider_template_keys, "provider_template_keys"),
-		active=_coerce_bool(active, "active"),
+	Args:
+		pf_id: 발신 프로필 ID (카카오 비즈니스 채널)
+		template_id: 알림톡 템플릿 ID (사전 등록 필수)
+		to: 수신자 휴대폰 번호
+		template_variables: 템플릿 변수 딕셔너리 또는 JSON 문자열
+		human_approved: True 일 때만 실제 발송. 기본 False (fail-closed)
+		dry_run: True 이면 preview만 반환, 발송 X
+
+	Returns:
+		send_kakao_alimtalk() 반환값 참조
+	"""
+	if not pf_id or not template_id or not to:
+		frappe.throw("pf_id, template_id, to 는 필수입니다.")
+
+	variables = _coerce_template_variables(template_variables)
+	approved = _coerce_bool(human_approved)
+	is_dry_run = _coerce_bool(dry_run)
+
+	return send_kakao_alimtalk(
+		pf_id=pf_id,
+		template_id=template_id,
+		to=to,
+		template_variables=variables,
+		human_approved=approved,
+		dry_run=is_dry_run,
 	)
-	return {
-		"contract_type": "korea_kakao_template_registry_preview_v1",
-		"runtime_action": "preview_only",
-		"requires_runtime_send": False,
-		"registry_entry": deepcopy(registry_entry),
-	}
 
 
-@_whitelist
-def preview_korea_kakao_registered_queue_item(
-	*,
-	recipient_phone: str,
-	template_registry_entry: Any,
-	variables: Any,
-	recipient_consent: bool,
-	opted_out: bool = False,
-	scheduled_at: str | None = None,
-	provider_key: str = "unassigned",
-	max_attempts: int | str = 3,
+@frappe.whitelist()
+def api_preview_kakao_alimtalk(
+	pf_id: str,
+	template_id: str,
+	to: str,
+	template_variables: dict[str, str] | str | None = None,
 ) -> dict[str, Any]:
-	"""Return a side-effect-free Kakao registered-template queue preview."""
+	"""카카오 알림톡 발송 전 preview API (Frappe whitelist).
 
-	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
-	payload = kakao.build_registered_kakao_template_payload(
-		recipient_phone=recipient_phone,
-		template_registry_entry=_coerce_mapping(template_registry_entry, "template_registry_entry"),
-		variables=_coerce_mapping(variables, "variables"),
+	실제 발송 없이 템플릿 변수 치환 결과를 반환합니다.
+
+	Returns:
+		preview_kakao_alimtalk() 반환값 참조
+	"""
+	if not pf_id or not template_id or not to:
+		frappe.throw("pf_id, template_id, to 는 필수입니다.")
+
+	variables = _coerce_template_variables(template_variables)
+
+	return preview_kakao_alimtalk(
+		pf_id=pf_id,
+		template_id=template_id,
+		to=to,
+		template_variables=variables,
 	)
-	queue_item = kakao.build_kakao_send_queue_item(
-		payload=payload,
-		recipient_consent=_coerce_bool(recipient_consent, "recipient_consent"),
-		opted_out=_coerce_bool(opted_out, "opted_out"),
-		scheduled_at=scheduled_at,
-		provider_key=provider_key,
-		max_attempts=_coerce_int(max_attempts, "max_attempts"),
-	)
-	return {
-		"contract_type": "korea_kakao_queue_preview_v1",
-		"runtime_action": "preview_only",
-		"requires_runtime_send": True,
-		"payload": deepcopy(payload),
-		"queue_item": deepcopy(queue_item),
-	}
 
 
-@_whitelist
-def preview_korea_kakao_provider_dispatch(*, queue_item: Any, provider: Any, requested_at: str) -> dict[str, Any]:
-	"""Return a side-effect-free Kakao provider dispatch request preview."""
+@frappe.whitelist()
+def api_list_alimtalk_templates() -> list[dict[str, Any]]:
+	"""등록된 알림톡 템플릿 카탈로그 조회 API (Frappe whitelist).
 
-	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
-	dispatch_request = kakao.build_kakao_provider_dispatch_request(
-		queue_item=_coerce_mapping(queue_item, "queue_item"),
-		provider=_coerce_mapping(provider, "provider"),
-		requested_at=requested_at,
-	)
-	return {
-		"contract_type": "korea_kakao_dispatch_preview_v1",
-		"runtime_action": "preview_only",
-		"requires_runtime_send": True,
-		"dispatch_request": deepcopy(dispatch_request),
-	}
+	Returns:
+		템플릿 목록 (kakao_alimtalk_templates.json 기반)
+	"""
+	return list_alimtalk_templates()
 
 
-@_whitelist
-def preview_korea_kakao_delivery_audit_event(
-	*,
-	queue_item: Any,
-	attempted_at: str,
-	provider_status: str,
-	provider_message_id: str | None = None,
-	error_code: str | None = None,
-	base_retry_delay_seconds: int | str = 60,
-	max_retry_delay_seconds: int | str = 3600,
-) -> dict[str, Any]:
-	"""Return a side-effect-free Kakao delivery audit event preview."""
-
-	kakao = _load_sibling_module("kakao_notification.py", "korea_kakao_notification")
-	audit_event = kakao.build_kakao_delivery_audit_event(
-		queue_item=_coerce_mapping(queue_item, "queue_item"),
-		attempted_at=attempted_at,
-		provider_status=provider_status,
-		provider_message_id=provider_message_id,
-		error_code=error_code,
-		base_retry_delay_seconds=_coerce_int(base_retry_delay_seconds, "base_retry_delay_seconds"),
-		max_retry_delay_seconds=_coerce_int(max_retry_delay_seconds, "max_retry_delay_seconds"),
-	)
-	return {
-		"contract_type": "korea_kakao_delivery_audit_preview_v1",
-		"runtime_action": "preview_only",
-		"requires_runtime_send": True,
-		"audit_event": deepcopy(audit_event),
-	}
+# ---------------------------------------------------------------------------
+# 내부 헬퍼
+# ---------------------------------------------------------------------------
 
 
-def _coerce_mapping(value: Any, fieldname: str) -> dict[str, Any]:
-	coerced = _coerce_json_if_needed(value)
-	if not isinstance(coerced, dict):
-		raise ValueError(f"{fieldname} must be a dict or JSON object")
-	return coerced
+def _coerce_template_variables(variables: Any) -> dict[str, str]:
+	"""template_variables 를 dict 로 정규화 (JSON 문자열도 수용)."""
+	import json  # noqa: PLC0415
 
-
-def _coerce_optional_mapping(value: Any | None, fieldname: str) -> dict[str, Any]:
-	if value is None:
+	if variables is None:
 		return {}
-	return _coerce_mapping(value, fieldname)
+	if isinstance(variables, dict):
+		return {str(k): str(v) for k, v in variables.items()}
+	if isinstance(variables, str):
+		try:
+			parsed = json.loads(variables)
+			if isinstance(parsed, dict):
+				return {str(k): str(v) for k, v in parsed.items()}
+		except (json.JSONDecodeError, TypeError):
+			pass
+	return {}
 
 
-def _coerce_list(value: Any, fieldname: str) -> list[Any]:
-	coerced = _coerce_json_if_needed(value)
-	if not isinstance(coerced, list):
-		raise ValueError(f"{fieldname} must be a list")
-	return list(coerced)
-
-
-def _coerce_json_if_needed(value: Any) -> Any:
-	if isinstance(value, str):
-		text = value.strip()
-		if text.startswith("{") or text.startswith("["):
-			try:
-				return json.loads(text)
-			except json.JSONDecodeError as exc:
-				raise ValueError("JSON payload is invalid") from exc
-	return value
-
-
-def _coerce_bool(value: Any, fieldname: str) -> bool:
+def _coerce_bool(value: Any) -> bool:
+	"""Frappe form dict 에서 넘어오는 문자열 bool 처리."""
 	if isinstance(value, bool):
 		return value
 	if isinstance(value, str):
-		text = value.strip().lower()
-		if text in {"true", "1", "yes"}:
-			return True
-		if text in {"false", "0", "no"}:
-			return False
-	raise ValueError(f"{fieldname} must be a bool")
-
-
-def _coerce_int(value: Any, fieldname: str) -> int:
-	if isinstance(value, bool):
-		raise ValueError(f"{fieldname} must be an integer")
-	try:
-		if isinstance(value, str):
-			text = value.strip()
-			if not text or "." in text:
-				raise ValueError
-			return int(text)
-		if isinstance(value, int):
-			return value
-	except ValueError as exc:
-		raise ValueError(f"{fieldname} must be an integer") from exc
-	raise ValueError(f"{fieldname} must be an integer")
-
-
-def _load_sibling_module(filename: str, module_name: str):
-	path = Path(__file__).with_name(filename)
-	spec = importlib.util.spec_from_file_location(module_name, path)
-	module = importlib.util.module_from_spec(spec)
-	assert spec.loader is not None
-	spec.loader.exec_module(module)
-	return module
-
-
-__all__ = [
-	"preview_korea_kakao_template_registry_entry",
-	"preview_korea_kakao_registered_queue_item",
-	"preview_korea_kakao_provider_dispatch",
-	"preview_korea_kakao_delivery_audit_event",
-]
+		return value.strip().lower() in {"1", "true", "yes", "y"}
+	return bool(value)

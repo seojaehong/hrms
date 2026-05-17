@@ -6759,7 +6759,7 @@ msgstr "복수 교대 배정"
 #. 'Overtime Type'
 #: hrms/hr/doctype/overtime_type/overtime_type.json
 msgid "Multipliers that adjust the hourly overtime amount for specific scenarios\n\n"
-msgstr ""
+msgstr "특정 상황에 따라 시간당 초과근무 금액을 조정하는 배율\n\n"
 
 #. Label of the mutation_boundary (Data) field in DocType 'Korea Payroll
 #. Closing Draft'

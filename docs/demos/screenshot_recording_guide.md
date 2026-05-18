@@ -225,7 +225,7 @@ docs/demos/assets/
 ```
 데모 URL: https://hrms.safeclaw.kr/hrms
 계정: demo.hr.manager@node.pe.kr
-비밀번호: DemoHRMS!2026
+비밀번호: <redacted-demo-password>
 
 노무법인 위너스 | 공인노무사 서재홍
 문의: [연락처]

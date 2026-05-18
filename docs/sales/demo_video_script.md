@@ -3,7 +3,7 @@
 **대상**: 중소 사업장 사업주 / 담당자  
 **포맷**: 화면 녹화 + 내레이션 (자막 권장)  
 **데모 URL**: https://hrms.safeclaw.kr  
-**계정**: demo.hr.manager@node.pe.kr / DemoHRMS!2026
+**계정**: demo.hr.manager@node.pe.kr / <redacted-demo-password>
 
 ---
 
@@ -84,7 +84,7 @@
 **CTA**:
 - "지금 바로 데모 계정으로 직접 써보세요"
 - https://hrms.safeclaw.kr
-- 계정: demo.hr.manager@node.pe.kr / DemoHRMS!2026
+- 계정: demo.hr.manager@node.pe.kr / <redacted-demo-password>
 - 문의: abc@winhr.co.kr
 
 ---

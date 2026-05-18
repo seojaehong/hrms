@@ -26,7 +26,7 @@ msgstr "직원 선급금 취소 시 지급 연결 해제"
 
 #: hrms/hr/report/employee_leave_balance/employee_leave_balance.py:23
 msgid "\"From Date\" can not be greater than or equal to \"To Date\""
-msgstr ""시작일"은 "종료일"보다 같거나 클 수 없습니다"
+msgstr "\"시작일\"은 \"종료일\"보다 같거나 클 수 없습니다"
 
 #: hrms/hr/report/employee_hours_utilization_based_on_timesheet/employee_hours_utilization_based_on_timesheet.py:86
 msgid "% Utilization (B + NB) / T"
@@ -51,7 +51,7 @@ msgstr "...직원 가져오는 중"
 
 #: hrms/payroll/doctype/bulk_salary_structure_assignment/bulk_salary_structure_assignment.js:272
 msgid "<b>Base</b> amount has not been set for the following employee(s): {0}"
-msgstr ""
+msgstr "다음 직원의 <b>기본</b> 금액이 설정되지 않았습니다: {0}"
 
 #. Description of the 'Password Policy' (Data) field in DocType 'Payroll
 #. Settings'
@@ -417,7 +417,7 @@ msgstr "고급 필터"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:476
 msgid "All Exchange Gain/Loss amount of {0} has been booked through {1}"
-msgstr ""
+msgstr "{0}의 모든 환차익/환차손 금액이 {1}을(를) 통해 처리되었습니다"
 
 #: hrms/hr/doctype/goal/goal_tree.js:215
 msgid "All Goals"
@@ -429,11 +429,11 @@ msgstr "전체 직무"
 
 #: hrms/hr/doctype/full_and_final_statement/full_and_final_statement.py:101
 msgid "All allocated assets should be returned before submission"
-msgstr ""
+msgstr "제출 전 배정된 자산을 모두 반납해야 합니다"
 
 #: hrms/hr/doctype/employee_onboarding/employee_onboarding.py:80
 msgid "All the mandatory tasks for employee creation are not completed yet."
-msgstr ""
+msgstr "직원 생성을 위한 필수 작업이 아직 모두 완료되지 않았습니다."
 
 #. Label of the allocate_based_on_leave_policy (Check) field in DocType 'Leave
 #. Control Panel'
@@ -492,7 +492,7 @@ msgstr "배정이 만료되었습니다!"
 
 #: hrms/hr/doctype/leave_adjustment/leave_adjustment.py:86
 msgid "Allocation is greater than the maximum allowed {0} for leave type {1}"
-msgstr ""
+msgstr "배분 일수가 휴가 유형 {1}의 최대 허용치 {0}을(를) 초과합니다"
 
 #. Label of the leave_allocation (Link) field in DocType 'Leave Adjustment'
 #: hrms/hr/doctype/leave_adjustment/leave_adjustment.json
@@ -576,7 +576,7 @@ msgstr "전액 급여청구 허용"
 #. Block List'
 #: hrms/hr/doctype/leave_block_list/leave_block_list.json
 msgid "Allow the following users to approve Leave Applications for block days."
-msgstr ""
+msgstr "다음 사용자에게 차단일의 휴가신청 승인을 허용합니다."
 
 #. Description of the 'Allow Over Allocation' (Check) field in DocType 'Leave
 #. Type'
@@ -588,7 +588,7 @@ msgstr "배정 기간의 일수보다 더 많은 휴가를 배정할 수 있습�
 #. 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Alternating entries as IN and OUT during the same shift"
-msgstr ""
+msgstr "동일 교대 내 IN과 OUT이 교차 입력됨"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:83
 msgid "Amount Based on Formula"
@@ -890,7 +890,7 @@ msgstr "평가 템플릿 제목"
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:160
 msgid "Appraisal Template not found for some designations."
-msgstr ""
+msgstr "일부 직무에 대한 평가 템플릿을 찾을 수 없습니다."
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:150
 msgid "Appraisal creation is queued. It may take a few minutes."
@@ -979,11 +979,11 @@ msgstr "{0}을(를) 삭제하시겠습니까?"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip_list.js:19
 msgid "Are you sure you want to email the selected salary slips?"
-msgstr ""
+msgstr "선택한 급여명세서를 이메일로 전송하시겠습니까?"
 
 #: hrms/hr/doctype/employee_referral/employee_referral.js:9
 msgid "Are you sure you want to reject the Employee Referral?"
-msgstr ""
+msgstr "직원 추천을 반려하시겠습니까?"
 
 #. Name of a DocType
 #: hrms/payroll/doctype/arrear/arrear.json
@@ -1016,7 +1016,7 @@ msgstr "도착 일시"
 
 #: hrms/payroll/doctype/employee_benefit_application/employee_benefit_application.py:49
 msgid "As per your assigned Salary Structure you cannot apply for benefits"
-msgstr ""
+msgstr "배정된 급여체계에 따라 복리후생 신청이 불가합니다"
 
 #: hrms/hr/doctype/full_and_final_statement/full_and_final_statement.py:132
 msgid "Asset Recovery Cost for {0}: {1}"
@@ -1073,7 +1073,7 @@ msgstr "배정 기준"
 
 #: hrms/hr/doctype/holiday_list_assignment/holiday_list_assignment.py:66
 msgid "Assignment start date cannot be outside holiday list dates"
-msgstr ""
+msgstr "배정 시작일은 휴일목록 날짜 범위를 벗어날 수 없습니다"
 
 #: hrms/hr/doctype/job_requisition/job_requisition.js:50
 #: hrms/hr/doctype/job_requisition/job_requisition.js:74
@@ -1154,7 +1154,7 @@ msgstr "출근기록 시작일"
 
 #: hrms/hr/doctype/upload_attendance/upload_attendance.js:20
 msgid "Attendance From Date and Attendance To Date is mandatory"
-msgstr ""
+msgstr "출근기록 시작일과 종료일은 필수입니다"
 
 #: hrms/hr/report/shift_attendance/shift_attendance.py:126
 msgid "Attendance ID"
@@ -1205,7 +1205,7 @@ msgstr "출근 경고"
 
 #: hrms/hr/doctype/attendance/attendance.py:97
 msgid "Attendance date {0} can not be less than employee {1}'s joining date: {2}"
-msgstr ""
+msgstr "출근기록 날짜 {0}은(는) 직원 {1}의 입사일 {2}보다 이전일 수 없습니다"
 
 #: hrms/hr/doctype/employee_attendance_tool/employee_attendance_tool.js:99
 msgid "Attendance for all the employees under this criteria has been marked already."
@@ -1217,19 +1217,19 @@ msgstr "직원 {0}의 출근기록이 중복 교대 {1}: {2}에 이미 처리되
 
 #: hrms/hr/doctype/attendance/attendance.py:109
 msgid "Attendance for employee {0} is already marked for the date {1}: {2}"
-msgstr ""
+msgstr "직원 {0}의 {1} 날짜 출근기록이 이미 존재합니다: {2}"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:641
 msgid "Attendance for employee {0} is already marked for the following dates: {1}"
-msgstr ""
+msgstr "직원 {0}의 다음 날짜에 대한 출근기록이 이미 존재합니다: {1}"
 
 #: hrms/hr/doctype/attendance_request/attendance_warnings.html:2
 msgid "Attendance for the following dates will be skipped/overwritten on submission"
-msgstr ""
+msgstr "제출 시 다음 날짜의 출근기록은 건너뛰거나 덮어씁니다"
 
 #: hrms/hr/doctype/attendance/attendance_list.js:101
 msgid "Attendance from {0} to {1} has already been marked for the Employee {2}"
-msgstr ""
+msgstr "{0}부터 {1}까지의 출근기록이 직원 {2}에 대해 이미 등록되었습니다"
 
 #: hrms/public/js/templates/employees_with_unmarked_attendance.html:36
 msgid "Attendance has been marked for all the employees between the selected payroll dates."
@@ -1249,17 +1249,17 @@ msgstr "출근이 성공적으로 표시되었습니다."
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:206
 msgid "Attendance not submitted for {0} as it is a Holiday."
-msgstr ""
+msgstr "{0}은(는) 공휴일이므로 출근기록을 제출하지 않았습니다."
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:215
 msgid "Attendance not submitted for {0} as {1} is on leave."
-msgstr ""
+msgstr "{1}이(가) 휴가 중이므로 {0}에 대한 출근기록을 제출하지 않았습니다."
 
 #. Description of the 'Process Attendance After' (Date) field in DocType 'Shift
 #. Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Attendance will be marked automatically only after this date."
-msgstr ""
+msgstr "이 날짜 이후에만 출근기록이 자동으로 기록됩니다."
 
 #: frontend/src/views/attendance/Dashboard.vue:19
 msgid "AttendanceRequestListView"
@@ -1329,7 +1329,7 @@ msgstr "다음 적립 휴가에 대한 자동 휴가 배정이 실패했습니�
 #. and Final Statement'
 #: hrms/hr/doctype/full_and_final_statement/full_and_final_statement.json
 msgid "Automatically fetches all assets allocated to the employee, if any"
-msgstr ""
+msgstr "직원에게 배정된 자산이 있으면 자동으로 가져옵니다"
 
 #. Label of the auto_update_last_sync (Check) field in DocType 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
@@ -1360,7 +1360,7 @@ msgstr "평균 등급"
 #. Description of the 'Final Score' (Float) field in DocType 'Appraisal'
 #: hrms/hr/doctype/appraisal/appraisal.json
 msgid "Average of Goal Score, Feedback Score, and Self Appraisal Score"
-msgstr ""
+msgstr "목표 점수, 피드백 점수, 자기평가 점수의 평균"
 
 #: hrms/public/js/templates/interview_feedback.html:16
 msgid "Average rating of demonstrated skills"
@@ -1385,7 +1385,7 @@ msgstr "대기중 응답"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:216
 msgid "Backdated Leave Application is restricted. Please set the {} in {}"
-msgstr ""
+msgstr "소급 휴가신청이 제한되어 있습니다. {}에서 {}을(를) 설정하세요"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.js:290
 msgid "Bank Entries"
@@ -1420,7 +1420,7 @@ msgstr "기본, 변동 및 휴가 보상"
 #. 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Begin check-in before shift start time (in minutes)"
-msgstr ""
+msgstr "교대 시작 전 체크인 허용 시간 (분)"
 
 #: hrms/controllers/employee_reminders.py:75
 msgid "Below is the list of upcoming holidays for you:"
@@ -1457,7 +1457,7 @@ msgstr "항목 {0}의 복리후생 금액이 {1}을 초과합니다"
 
 #: hrms/payroll/doctype/employee_benefit_application/employee_benefit_application.py:56
 msgid "Benefit amount of component {0} should be greater than 0"
-msgstr ""
+msgstr "항목 {0}의 복리후생 금액은 0보다 커야 합니다"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:487
 msgid "Benefit amount {0} for Salary Component {1} should not be greater than maximum benefit amount {2} set in {3}"
@@ -1640,7 +1640,7 @@ msgstr "시간을 수정할 수 없습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:357
 msgid "Cannot allocate leaves outside the allocation period {0} - {1}"
-msgstr ""
+msgstr "배분 기간 {0} - {1} 외에는 휴가를 배분할 수 없습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:486
 msgid "Cannot allocate more leaves due to maximum leave allocation limit of {0} in leave policy assignment"
@@ -1660,23 +1660,23 @@ msgstr "시작일 이전에는 교대를 분할할 수 없습니다"
 
 #: hrms/hr/doctype/shift_assignment/shift_assignment.py:93
 msgid "Cannot cancel Shift Assignment: {0} as it is linked to Attendance: {1}"
-msgstr ""
+msgstr "교대 배정 {0}은(는) 출근기록 {1}에 연결되어 있어 취소할 수 없습니다"
 
 #: hrms/hr/doctype/shift_assignment/shift_assignment.py:76
 msgid "Cannot cancel Shift Assignment: {0} as it is linked to Employee Checkin: {1}"
-msgstr ""
+msgstr "교대 배정 {0}은(는) 직원 체크인 {1}에 연결되어 있어 취소할 수 없습니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:389
 msgid "Cannot create Salary Slip for Employee joining after Payroll Period"
-msgstr ""
+msgstr "급여 기간 이후 입사한 직원의 급여명세서를 생성할 수 없습니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:392
 msgid "Cannot create Salary Slip for Employee who has left before Payroll Period"
-msgstr ""
+msgstr "급여 기간 이전에 퇴사한 직원의 급여명세서를 생성할 수 없습니다"
 
 #: hrms/hr/doctype/job_applicant/job_applicant.py:77
 msgid "Cannot create a Job Applicant against a closed Job Opening"
-msgstr ""
+msgstr "마감된 채용공고에 대해 지원자를 생성할 수 없습니다"
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:226
 msgid "Cannot create or change transactions against an Appraisal Cycle with status {0}."
@@ -1688,15 +1688,15 @@ msgstr "활성 휴가 기간을 찾을 수 없습니다"
 
 #: hrms/hr/doctype/attendance/attendance.py:189
 msgid "Cannot mark attendance for an Inactive employee {0}"
-msgstr ""
+msgstr "비활성 직원 {0}의 출근기록을 등록할 수 없습니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:112
 msgid "Cannot submit. Attendance is not marked for some employees."
-msgstr ""
+msgstr "제출할 수 없습니다. 일부 직원의 출근기록이 없습니다."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:174
 msgid "Cannot update allocation for {0} after submission"
-msgstr ""
+msgstr "제출 후에는 {0}의 배분을 수정할 수 없습니다"
 
 #: hrms/hr/doctype/goal/goal_list.js:101
 msgid "Cannot update status of Goal groups"
@@ -1732,7 +1732,7 @@ msgstr "출근기록 요청을 통해 상태를 {0}에서 {1}(으)로, 나머지
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:175
 msgid "Changed the status from {0} to {1} via Attendance Request"
-msgstr ""
+msgstr "출근기록 요청을 통해 상태가 {0}에서 {1}(으)로 변경되었습니다"
 
 #: hrms/hr/doctype/leave_application/leave_application.js:188
 msgid "Changing '{0}' to {1}."
@@ -1793,13 +1793,13 @@ msgstr "출퇴근 반경"
 
 #: hrms/hr/doctype/goal/goal_tree.js:52
 msgid "Child nodes can only be created under 'Group' type nodes"
-msgstr ""
+msgstr "하위 노드는 '그룹' 유형 노드 아래에만 생성할 수 있습니다"
 
 #. Description of the 'Payroll Date' (Date) field in DocType 'Payroll
 #. Correction'
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.json
 msgid "Choose the date on which you want to create these components as arrears."
-msgstr ""
+msgstr "이 항목들을 소급분으로 생성할 날짜를 선택하세요."
 
 #. Label of the earning_component (Link) field in DocType 'Employee Benefit
 #. Claim'
@@ -1829,11 +1829,11 @@ msgstr "청구 금액"
 
 #: hrms/payroll/doctype/employee_benefit_claim/employee_benefit_claim.py:56
 msgid "Claimed amount of employee {0} exceeds maximum amount eligible for claim {1}"
-msgstr ""
+msgstr "직원 {0}의 청구 금액이 최대 청구 가능 금액 {1}을(를) 초과합니다"
 
 #: hrms/payroll/doctype/employee_benefit_claim/employee_benefit_claim.py:52
 msgid "Claimed amount of employee {0} should be greater than 0"
-msgstr ""
+msgstr "직원 {0}의 청구 금액은 0보다 커야 합니다"
 
 #. Label of a Card Break in the Expenses Workspace
 #: hrms/hr/workspace/expenses/expenses.json
@@ -1850,7 +1850,7 @@ msgstr "완료"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.js:300
 msgid "Click {0} to change the configuration and then resave salary slip"
-msgstr ""
+msgstr "{0}을(를) 클릭하여 설정을 변경한 후 급여명세서를 다시 저장하세요"
 
 #. Label of the closed_on (Date) field in DocType 'Job Opening'
 #: hrms/hr/doctype/job_opening/job_opening.json
@@ -2000,7 +2000,7 @@ msgstr "초대/공지 사본"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:227
 msgid "Could not acquire Korea Payroll Closing Draft duplicate guard lock."
-msgstr ""
+msgstr "한국 급여 마감 초안 중복 방지 잠금을 획득하지 못했습니다."
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1647
 msgid "Could not submit some Salary Slips: {}"
@@ -2134,7 +2134,7 @@ msgstr "급여체계 배정 생성이 대기열에 추가되었습니다. 몇 �
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.py:227
 msgid "Creation of {0} has been queued. It may take a few minutes."
-msgstr ""
+msgstr "{0} 생성이 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다."
 
 #. Description of the 'Rating Criteria' (Table) field in DocType 'Appraisal
 #. Template'
@@ -2150,7 +2150,7 @@ msgstr "통화"
 
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.py:127
 msgid "Currency of selected Income Tax Slab should be {0} instead of {1}"
-msgstr ""
+msgstr "선택한 소득세 구간의 통화는 {1} 대신 {0}이어야 합니다"
 
 #. Label of the current_ctc (Currency) field in DocType 'Employee Promotion'
 #: hrms/hr/doctype/employee_promotion/employee_promotion.json
@@ -2180,7 +2180,7 @@ msgstr "현재 월 수입 세금"
 
 #: hrms/hr/doctype/vehicle_log/vehicle_log.py:41
 msgid "Current Odometer Value should be greater than Last Odometer Value {0}"
-msgstr ""
+msgstr "현재 주행거리 값은 이전 주행거리 값 {0}보다 커야 합니다"
 
 #. Label of the odometer (Int) field in DocType 'Vehicle Log'
 #: hrms/hr/doctype/vehicle_log/vehicle_log.json
@@ -2291,7 +2291,7 @@ msgstr "날짜 기준"
 
 #: hrms/setup.py:123
 msgid "Days for which Holidays are blocked for this department."
-msgstr ""
+msgstr "해당 부서에서 휴일이 차단된 날짜입니다."
 
 #. Label of the days_to_reverse (Float) field in DocType 'Payroll Correction'
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.json
@@ -2616,7 +2616,7 @@ msgstr "발생 휴가"
 
 #: hrms/hr/doctype/leave_type/leave_type.py:68
 msgid "Earned Leaves are allocated as per the configured frequency via scheduler."
-msgstr ""
+msgstr "발생 휴가는 스케줄러를 통해 설정된 주기에 따라 배분됩니다."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:178
 msgid "Earned Leaves are auto-allocated via scheduler based on the annual allocation set in the Leave Policy: {0}"
@@ -2653,7 +2653,7 @@ msgstr "지급항목 구성요소"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:175
 msgid "Earning Salary Component is required for Employee Referral Bonus."
-msgstr ""
+msgstr "직원 추천 보너스에는 지급 급여항목이 필요합니다."
 
 #. Label of the earnings (Table) field in DocType 'Salary Slip'
 #. Label of the earnings (Table) field in DocType 'Salary Structure'
@@ -2714,7 +2714,7 @@ msgstr "이메일 수신자"
 #. 'Payroll Settings'
 #: hrms/payroll/doctype/payroll_settings/payroll_settings.json
 msgid "Emails salary slip to employee based on preferred email selected in Employee"
-msgstr ""
+msgstr "직원에 설정된 선호 이메일로 급여명세서를 전송합니다"
 
 #: hrms/payroll/report/bank_remittance/bank_remittance.py:40
 msgid "Employee A/C Number"
@@ -3032,7 +3032,7 @@ msgstr "직원 온보딩 템플릿"
 
 #: hrms/hr/doctype/employee_onboarding/employee_onboarding.py:64
 msgid "Employee Onboarding: {0} already exists for Job Applicant: {1}"
-msgstr ""
+msgstr "직원 온보딩 {0}이(가) 지원자 {1}에 대해 이미 존재합니다"
 
 #. Name of a DocType
 #: hrms/payroll/doctype/employee_other_income/employee_other_income.json
@@ -3061,7 +3061,7 @@ msgstr "직원 승진 상세"
 
 #: hrms/hr/doctype/employee_promotion/employee_promotion.py:44
 msgid "Employee Promotion cannot be submitted before Promotion Date"
-msgstr ""
+msgstr "승진일 이전에 직원 승진을 제출할 수 없습니다"
 
 #. Name of a DocType
 #: hrms/hr/doctype/employee_property_history/employee_property_history.json
@@ -3082,11 +3082,11 @@ msgstr "직원 추천"
 
 #: hrms/hr/doctype/employee_referral/employee_referral.py:56
 msgid "Employee Referral {0} already exists for email: {1}"
-msgstr ""
+msgstr "직원 추천 {0}이(가) 이메일 {1}에 대해 이미 존재합니다"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:171
 msgid "Employee Referral {0} is not applicable for referral bonus."
-msgstr ""
+msgstr "직원 추천 {0}은(는) 추천 보너스 대상이 아닙니다."
 
 #: hrms/hr/doctype/job_requisition/job_requisition.js:15
 msgid "Employee Referrals"
@@ -3215,12 +3215,12 @@ msgstr "직원 이전 상세"
 
 #: hrms/hr/doctype/employee_transfer/employee_transfer.py:42
 msgid "Employee Transfer cannot be submitted before Transfer Date"
-msgstr ""
+msgstr "발령일 이전에 직원 발령을 제출할 수 없습니다"
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:120
 #: hrms/hr/doctype/employee_advance/employee_advance.py:190
 msgid "Employee advance account {0} should be of type {1}."
-msgstr ""
+msgstr "직원 선급금 계정 {0}은(는) {1} 유형이어야 합니다."
 
 #: hrms/hr/doctype/hr_settings/hr_settings.js:27
 msgid "Employee can be named by Employee ID if you assign one, or via Naming Series. Select your preference here."
@@ -3228,7 +3228,7 @@ msgstr "직원 ID를 배정하거나 명명 시리즈를 통해 직원에게 이
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:34
 msgid "Employee company must match Korea Employment Profile company."
-msgstr ""
+msgstr "직원의 회사는 한국 고용 프로필의 회사와 일치해야 합니다."
 
 #. Label of the employee_name (Data) field in DocType 'Leave Policy Assignment'
 #: hrms/hr/doctype/leave_policy_assignment/leave_policy_assignment.json
@@ -3243,19 +3243,19 @@ msgstr "직원을 찾을 수 없습니다"
 #. Settings'
 #: hrms/hr/doctype/hr_settings/hr_settings.json
 msgid "Employee records are created using the selected option"
-msgstr ""
+msgstr "직원 레코드는 선택된 옵션으로 생성됩니다"
 
 #: hrms/hr/doctype/shift_type/shift_type.py:325
 msgid "Employee was marked Absent due to missing Employee Checkins."
-msgstr ""
+msgstr "직원 체크인 기록이 없어 결근으로 처리되었습니다."
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:274
 msgid "Employee was marked Absent for not meeting the working hours threshold."
-msgstr ""
+msgstr "근무시간 기준을 충족하지 못해 결근으로 처리되었습니다."
 
 #: hrms/hr/doctype/shift_type/shift_type.py:459
 msgid "Employee was marked Absent for other half due to missing Employee Checkins."
-msgstr ""
+msgstr "직원 체크인 기록이 없어 나머지 반일이 결근으로 처리되었습니다."
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:480
 msgid "Employee {0} : {1}"
@@ -3271,7 +3271,7 @@ msgstr "직원 {0}에게 이 기간 내에 중복되는 활성 교대 {1}: {2}�
 
 #: hrms/payroll/doctype/employee_benefit_application/employee_benefit_application.py:82
 msgid "Employee {0} already submitted an application {1} for the payroll period {2}"
-msgstr ""
+msgstr "직원 {0}은(는) 급여 기간 {2}에 대해 신청서 {1}을(를) 이미 제출했습니다"
 
 #: hrms/hr/doctype/shift_request/shift_request.py:148
 msgid "Employee {0} has already applied for Shift {1}: {2} that overlaps within this period"
@@ -3295,7 +3295,7 @@ msgstr "직원 {0}은(는) {1}에 휴가 중입니다"
 
 #: hrms/hr/doctype/training_feedback/training_feedback.py:44
 msgid "Employee {0} not found in Training Event Participants."
-msgstr ""
+msgstr "직원 {0}이(가) 교육 행사 참가자 목록에 없습니다."
 
 #: hrms/hr/doctype/attendance/attendance.py:217
 msgid "Employee {0} on Half day on {1}"
@@ -3303,11 +3303,11 @@ msgstr "직원 {0}은(는) {1}에 반일 근무입니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:731
 msgid "Employee {0} relieved on {1} must be set as 'Left'"
-msgstr ""
+msgstr "{1}에 퇴직한 직원 {0}은(는) '퇴사'로 설정해야 합니다"
 
 #: hrms/payroll/doctype/gratuity/gratuity.py:190
 msgid "Employee: {0} have to complete minimum {1} years for gratuity"
-msgstr ""
+msgstr "직원 {0}은(는) 퇴직금 지급을 위해 최소 {1}년을 근무해야 합니다"
 
 #. Label of the employees_html (HTML) field in DocType 'Leave Control Panel'
 #. Label of the employees_html (HTML) field in DocType 'Shift Assignment Tool'
@@ -3327,7 +3327,7 @@ msgstr "휴일 근무 직원"
 
 #: hrms/hr/doctype/employee_performance_feedback/employee_performance_feedback.py:60
 msgid "Employees cannot give feedback to themselves. Use {0} instead: {1}"
-msgstr ""
+msgstr "직원은 자신에게 피드백을 줄 수 없습니다. 대신 {0}을(를) 사용하세요: {1}"
 
 #. Label of the half_marked_employees_html (HTML) field in DocType 'Employee
 #. Attendance Tool'
@@ -3452,7 +3452,7 @@ msgstr "보상 일"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:162
 msgid "Encashment Days cannot exceed {0} {1} as per Leave Type settings"
-msgstr ""
+msgstr "휴가 유형 설정에 따라 현금화 일수는 {0} {1}을(를) 초과할 수 없습니다"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:152
 msgid "Encashment Limit Applied"
@@ -3496,7 +3496,7 @@ msgstr "환원할 무급결근(LWP) 일수를 입력하세요. 이 값은 선택
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.js:259
 msgid "Enter the number of leaves you want to allocate for the period."
-msgstr ""
+msgstr "해당 기간에 배분할 휴가 일수를 입력하세요."
 
 #. Description of the 'Flexible Benefits' (Table) field in DocType 'Salary
 #. Structure'
@@ -3527,7 +3527,7 @@ msgstr "공식 또는 조건 오류"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2630
 msgid "Error in formula or condition: {0} in Income Tax Slab"
-msgstr ""
+msgstr "소득세 구간 수식 또는 조건 오류: {0}"
 
 #: hrms/hr/doctype/upload_attendance/upload_attendance.js:57
 msgid "Error in some rows"
@@ -3615,11 +3615,11 @@ msgstr "매주"
 
 #: hrms/controllers/employee_reminders.py:218
 msgid "Everyone, let’s congratulate them on their work anniversary!"
-msgstr ""
+msgstr "모두 함께 근속 기념일을 축하해 드립시다!"
 
 #: hrms/controllers/employee_reminders.py:125
 msgid "Everyone, let’s congratulate {0} on their birthday."
-msgstr ""
+msgstr "모두 함께 {0}의 생일을 축하해 드립시다."
 
 #. Option for the 'Type' (Select) field in DocType 'Training Event'
 #: hrms/hr/doctype/training_event/training_event.json
@@ -3630,7 +3630,7 @@ msgstr "시험"
 #. Advance'
 #: hrms/hr/doctype/expense_claim_advance/expense_claim_advance.json
 msgid "Exchange rate of Payment Entry against Employee Advance"
-msgstr ""
+msgstr "직원 선급금에 대한 지급 입력의 환율"
 
 #: hrms/hr/doctype/attendance/attendance_list.js:84
 msgid "Exclude Holidays"
@@ -3728,7 +3728,7 @@ msgstr "퇴직 면담 요약"
 
 #: hrms/hr/doctype/exit_interview/exit_interview.py:64
 msgid "Exit Interview {0} already exists for Employee: {1}"
-msgstr ""
+msgstr "퇴사 면담 {0}이(가) 직원 {1}에 대해 이미 존재합니다"
 
 #. Label of the exit_questionnaire_section (Section Break) field in DocType
 #. 'Exit Interview'
@@ -3853,7 +3853,7 @@ msgstr "차량 기록 {0} 경비청구"
 
 #: hrms/hr/doctype/vehicle_log/vehicle_log.py:62
 msgid "Expense Claim {0} already exists for the Vehicle Log"
-msgstr ""
+msgstr "경비청구 {0}이(가) 차량 운행 일지에 대해 이미 존재합니다"
 
 #. Label of a chart in the Expenses Workspace
 #: frontend/src/views/expense_claim/Dashboard.vue:2
@@ -4031,7 +4031,7 @@ msgstr "면접 {0}에 대한 피드백이 이미 제출되었습니다. 계속�
 
 #: hrms/hr/doctype/training_feedback/training_feedback.py:50
 msgid "Feedback cannot be recorded for an absent Employee."
-msgstr ""
+msgstr "결근한 직원에 대해 피드백을 기록할 수 없습니다."
 
 #: hrms/public/js/performance/performance_feedback.js:120
 msgid "Feedback {0} added successfully"
@@ -4258,35 +4258,35 @@ msgstr "시작일은 종료일보다 앞서야 합니다"
 
 #: hrms/payroll/doctype/arrear/arrear.py:73
 msgid "From Date {0} cannot be after Payroll Period end date {1}"
-msgstr ""
+msgstr "시작일 {0}은(는) 급여 기간 종료일 {1} 이후일 수 없습니다"
 
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.py:92
 msgid "From Date {0} cannot be after employee's relieving Date {1}"
-msgstr ""
+msgstr "시작일 {0}은(는) 직원 퇴직일 {1} 이후일 수 없습니다"
 
 #: hrms/payroll/doctype/arrear/arrear.py:67
 msgid "From Date {0} cannot be before Payroll Period start date {1}"
-msgstr ""
+msgstr "시작일 {0}은(는) 급여 기간 시작일 {1} 이전일 수 없습니다"
 
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.py:84
 msgid "From Date {0} cannot be before employee's joining Date {1}"
-msgstr ""
+msgstr "시작일 {0}은(는) 직원 입사일 {1} 이전일 수 없습니다"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:144
 msgid "From and to dates are madatory for recurring type additional salaries."
-msgstr ""
+msgstr "반복 유형 추가 급여의 시작일과 종료일은 필수입니다."
 
 #: hrms/hr/utils.py:199
 msgid "From date can not be less than employee's joining date"
-msgstr ""
+msgstr "시작일은 직원 입사일보다 이전일 수 없습니다"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:152
 msgid "From date can not be less than employee's joining date."
-msgstr ""
+msgstr "시작일은 직원 입사일보다 이전일 수 없습니다."
 
 #: hrms/hr/doctype/leave_type/leave_type.js:54
 msgid "From here, you can enable encashment for the balance leaves."
-msgstr ""
+msgstr "여기에서 잔여 휴가의 현금화를 활성화할 수 있습니다."
 
 #: hrms/payroll/report/salary_register/salary_register.html:8
 msgid "From {0} to {1}"
@@ -4369,7 +4369,7 @@ msgstr "위치 오류"
 #: frontend/src/components/CheckInPanel.vue:140
 #: hrms/public/js/utils/index.js:185
 msgid "Geolocation is not supported by your current browser"
-msgstr ""
+msgstr "현재 브라우저는 위치 정보를 지원하지 않습니다"
 
 #: hrms/payroll/doctype/employee_tax_exemption_proof_submission/employee_tax_exemption_proof_submission.js:47
 msgid "Get Details From Declaration"
@@ -4398,11 +4398,11 @@ msgstr "가져오기 템플릿"
 
 #: frontend/src/components/InstallPrompt.vue:8
 msgid "Get the app on your device for easy access & a better experience!"
-msgstr ""
+msgstr "더 편리한 접근과 더 나은 경험을 위해 기기에 앱을 설치하세요!"
 
 #: frontend/src/components/InstallPrompt.vue:41
 msgid "Get the app on your iPhone for easy access & a better experience"
-msgstr ""
+msgstr "더 편리한 접근과 더 나은 경험을 위해 iPhone에 앱을 설치하세요"
 
 #. Option for the 'Meal Preference' (Select) field in DocType 'Travel
 #. Itinerary'
@@ -4440,19 +4440,19 @@ msgstr "목표 점수(가중)"
 
 #: hrms/hr/doctype/goal/goal.py:108
 msgid "Goal progress percentage cannot be more than 100."
-msgstr ""
+msgstr "목표 진행률은 100%를 초과할 수 없습니다."
 
 #: hrms/hr/doctype/goal/goal.py:98
 msgid "Goal should be aligned with the same KRA as its parent goal."
-msgstr ""
+msgstr "목표는 상위 목표와 동일한 KRA에 맞춰야 합니다."
 
 #: hrms/hr/doctype/goal/goal.py:94
 msgid "Goal should be owned by the same employee as its parent goal."
-msgstr ""
+msgstr "목표는 상위 목표와 동일한 직원이 담당해야 합니다."
 
 #: hrms/hr/doctype/goal/goal.py:102
 msgid "Goal should belong to the same Appraisal Cycle as its parent goal."
-msgstr ""
+msgstr "목표는 상위 목표와 동일한 평가 주기에 속해야 합니다."
 
 #: hrms/hr/doctype/goal/goal_tree.js:288
 msgid "Goal updated successfully"
@@ -4564,7 +4564,7 @@ msgstr "연간 총지급액(회사 통화)"
 
 #: hrms/hr/doctype/goal/goal.js:13
 msgid "Group goal's progress is auto-calculated based on the child goals."
-msgstr ""
+msgstr "그룹 목표의 진행률은 하위 목표를 기반으로 자동 산출됩니다."
 
 #: hrms/setup.py:328
 msgid "HR"
@@ -4632,11 +4632,11 @@ msgstr "반차 날짜 필수"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:919
 msgid "Half Day Date should be between From Date and To Date"
-msgstr ""
+msgstr "반일 날짜는 시작일과 종료일 사이여야 합니다"
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:50
 msgid "Half Day Date should be in between Work From Date and Work End Date"
-msgstr ""
+msgstr "반일 날짜는 근무 시작일과 근무 종료일 사이여야 합니다"
 
 #. Label of the half_day_marked_employee_header (HTML) field in DocType
 #. 'Employee Attendance Tool'
@@ -4650,7 +4650,7 @@ msgstr "반차 기록"
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:55
 msgid "Half day date should be in between from date and to date"
-msgstr ""
+msgstr "반일 날짜는 시작일과 종료일 사이여야 합니다"
 
 #. Label of the has_certificate (Check) field in DocType 'Training Event'
 #: hrms/hr/doctype/training_event/training_event.json
@@ -4677,7 +4677,7 @@ msgstr "건강보험 기관"
 
 #: hrms/controllers/employee_reminders.py:72
 msgid "Hey {}! This email is to remind you about the upcoming holidays."
-msgstr ""
+msgstr "안녕하세요 {}! 다가오는 휴일을 알려드리는 이메일입니다."
 
 #: frontend/src/components/CheckInPanel.vue:4
 msgid "Hey, {0} 👋"
@@ -4711,7 +4711,7 @@ msgstr "휴일목록 배정"
 
 #: hrms/hr/doctype/holiday_list_assignment/holiday_list_assignment.py:51
 msgid "Holiday List Assignment for {0} already exists for date {1}: {2}"
-msgstr ""
+msgstr "{0}에 대한 휴일목록 배정이 날짜 {1}에 이미 존재합니다: {2}"
 
 #. Label of the holiday_list_end (Date) field in DocType 'Holiday List
 #. Assignment'
@@ -4765,20 +4765,20 @@ msgstr "주거비 지급일이 {0}과 중복됩니다"
 
 #: hrms/regional/india/utils.py:162
 msgid "House rented dates required for exemption calculation"
-msgstr ""
+msgstr "공제 계산을 위해 임차 날짜가 필요합니다"
 
 #: hrms/regional/india/utils.py:165
 msgid "House rented dates should be atleast 15 days apart"
-msgstr ""
+msgstr "임차 날짜는 최소 15일 이상 차이가 있어야 합니다"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:100
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:451
 msgid "Human approval is required for Korea payroll closing drafts."
-msgstr ""
+msgstr "한국 급여 마감 초안에는 담당자 승인이 필요합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:95
 msgid "Human approval is required for Korea payroll closing review audit logs."
-msgstr ""
+msgstr "한국 급여 마감 검토 감사 로그에는 담당자 승인이 필요합니다."
 
 #: hrms/payroll/report/salary_payments_via_ecs/salary_payments_via_ecs.py:60
 msgid "IFSC"
@@ -4811,7 +4811,7 @@ msgstr "신분증 유형"
 #. (Check) field in DocType 'Payroll Settings'
 #: hrms/payroll/doctype/payroll_settings/payroll_settings.json
 msgid "If checked, Payroll Payable will be booked against each employee"
-msgstr ""
+msgstr "체크 시, 급여 미지급금이 각 직원별로 처리됩니다"
 
 #. Description of the 'Mandatory Benefit Application' (Check) field in DocType
 #. 'Payroll Settings'
@@ -4823,7 +4823,7 @@ msgstr "선택 시, 복리후생 신청서가 있는 경우에만 유연 복리�
 #. Settings'
 #: hrms/payroll/doctype/payroll_settings/payroll_settings.json
 msgid "If checked, hides and disables Rounded Total field in Salary Slips"
-msgstr ""
+msgstr "체크 시, 급여명세서의 반올림 합계 항목을 숨기고 비활성화합니다"
 
 #. Description of the 'Create Overtime Slip For Eligible Employee(s)' (Check)
 #. field in DocType 'Payroll Settings'
@@ -4904,7 +4904,7 @@ msgstr "활성화 시, 이 항목은 지급에 추가하지 않고 금액을 발
 #. Component'
 #: hrms/payroll/doctype/salary_component/salary_component.json
 msgid "If enabled, this component will be included in arrear calculations"
-msgstr ""
+msgstr "활성화 시, 이 항목이 소급분 계산에 포함됩니다"
 
 #. Description of the 'Include holidays in Total no. of Working Days' (Check)
 #. field in DocType 'Payroll Settings'
@@ -4933,7 +4933,7 @@ msgstr "선택 시, 이 항목에서 지정되거나 계산된 값이 지급 또
 #. Description of the 'Closes On' (Date) field in DocType 'Job Opening'
 #: hrms/hr/doctype/job_opening/job_opening.json
 msgid "If set, the job opening will be closed automatically after this date"
-msgstr ""
+msgstr "설정 시, 이 날짜 이후 채용공고가 자동으로 마감됩니다"
 
 #: hrms/patches/v15_0/notify_about_loan_app_separation.py:17
 msgid "If you are using loans in salary slips, please install the {0} app from Frappe Cloud Marketplace or GitHub to continue using loan integration with payroll."
@@ -5001,7 +5001,7 @@ msgstr "포괄임금"
 #. Employment Profile'
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 msgid "Inclusive wage arrangements require legal review before use."
-msgstr ""
+msgstr "포괄임금제 적용 전 법률 검토가 필요합니다."
 
 #. Label of the income_source_details_section (Section Break) field in DocType
 #. 'Employee Other Income'
@@ -5086,7 +5086,7 @@ msgstr "소득세 구간은 급여처리 기간 시작일 {0} 이전에 유효�
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1950
 msgid "Income Tax Slab not set in Salary Structure Assignment: {0}"
-msgstr ""
+msgstr "급여체계 배정 {0}에 소득세 구간이 설정되지 않았습니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1958
 msgid "Income Tax Slab: {0} is disabled"
@@ -5268,7 +5268,7 @@ msgstr "면접 유형 이름"
 
 #: hrms/hr/doctype/job_applicant/job_applicant.py:96
 msgid "Interview Type {0} is only applicable for the Designation {1}"
-msgstr ""
+msgstr "면접 유형 {0}은(는) 직무 {1}에만 적용됩니다"
 
 #: hrms/hr/doctype/interview/interview.py:79
 msgid "Interview Type {0} is only for Designation {1}. Job Applicant has applied for the role {2}"
@@ -5343,7 +5343,7 @@ msgstr "유효하지 않음 휴가 원장 항목"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:328
 msgid "Invalid Payroll Payable Account. The account currency must be {0} or {1}"
-msgstr ""
+msgstr "급여 미지급금 계정이 올바르지 않습니다. 계정 통화는 {0} 또는 {1}이어야 합니다"
 
 #: hrms/hr/doctype/shift_type/shift_type.py:87
 #: hrms/hr/doctype/shift_type/shift_type.py:96
@@ -5352,7 +5352,7 @@ msgstr "유효하지 않은 교대 시간"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:995
 msgid "Invalid parameters provided. Please pass the required arguments."
-msgstr ""
+msgstr "유효하지 않은 매개변수입니다. 필수 인수를 전달하세요."
 
 #. Option for the 'Status' (Select) field in DocType 'Employee Grievance'
 #: hrms/hr/doctype/employee_grievance/employee_grievance.json
@@ -5556,7 +5556,7 @@ msgstr "채용 제안 상태"
 
 #: hrms/hr/doctype/job_offer/job_offer.py:50
 msgid "Job Offer: {0} is already for Job Applicant: {1}"
-msgstr ""
+msgstr "채용 제안 {0}은(는) 이미 지원자 {1}에 대한 것입니다"
 
 #. Label of the job_opening (Link) field in DocType 'Interview'
 #. Label of the job_title (Link) field in DocType 'Job Applicant'
@@ -5614,7 +5614,7 @@ msgstr "채용 요청"
 
 #: hrms/hr/doctype/job_requisition/job_requisition.py:75
 msgid "Job Requisition {0} has been associated with Job Opening {1}"
-msgstr ""
+msgstr "채용 요청 {0}이(가) 채용공고 {1}에 연결되었습니다"
 
 #. Description of the 'Description' (Text Editor) field in DocType 'Job
 #. Opening'
@@ -5722,7 +5722,7 @@ msgstr "한국 급여 마감 초안 상태는 감시된 인사 검토 상태 내
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:445
 msgid "Korea Payroll Closing Draft stays draft_pending_human_approval."
-msgstr ""
+msgstr "한국 급여 마감 초안이 '담당자 승인 대기 초안' 상태를 유지합니다."
 
 #. Name of a DocType
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
@@ -5743,21 +5743,21 @@ msgstr "한국 사업장 프로필"
 
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.py:23
 msgid "Korea business registration number must use the 000-00-00000 format."
-msgstr ""
+msgstr "한국 사업자등록번호는 000-00-00000 형식이어야 합니다."
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:22
 msgid "Korea masked RRN must use the 000000-1****** format."
-msgstr ""
+msgstr "한국 마스킹 주민등록번호는 000000-1****** 형식이어야 합니다."
 
 #. Description of the 'Workplace Management Number' (Data) field in DocType
 #. 'Korea Workplace Profile'
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korea social insurance workplace management number; digits only."
-msgstr ""
+msgstr "한국 사회보험 사업장관리번호; 숫자만 입력."
 
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.py:30
 msgid "Korea workplace management number must contain 11 digits."
-msgstr ""
+msgstr "한국 사업장관리번호는 11자리 숫자여야 합니다."
 
 #. Label of the policy_section (Section Break) field in DocType 'Korea
 #. Workplace Profile'
@@ -5769,7 +5769,7 @@ msgstr "한국 노동법 정책"
 #. 'Korea Workplace Profile'
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korean business registration number in 000-00-00000 format."
-msgstr ""
+msgstr "000-00-00000 형식의 한국 사업자등록번호."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2738
 msgid "LWP Days Reversed ({0}) does not match actual Payroll Corrections total ({1}) for employee {2} from {3} to {4}"
@@ -5816,7 +5816,7 @@ msgstr "지각"
 #. field in DocType 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Late Entry & Early Exit Settings for Auto Attendance"
-msgstr ""
+msgstr "자동 출근기록의 지각 및 조퇴 설정"
 
 #: hrms/hr/report/shift_attendance/shift_attendance.py:88
 msgid "Late Entry By"
@@ -5829,7 +5829,7 @@ msgstr "지각 유예 시간"
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:127
 msgid "Latitude and longitude values are required for checking in."
-msgstr ""
+msgstr "체크인을 위해 위도와 경도 값이 필요합니다."
 
 #: frontend/src/components/CheckInPanel.vue:128
 msgid "Latitude: {0}°"
@@ -6112,7 +6112,7 @@ msgstr "휴가 정책 상세"
 
 #: hrms/hr/doctype/leave_policy_assignment/leave_policy_assignment.py:85
 msgid "Leave Policy: {0} already assigned for Employee {1} for period {2} to {3}"
-msgstr ""
+msgstr "휴가 정책 {0}이(가) 직원 {1}의 {2}부터 {3}까지 기간에 이미 배정되었습니다"
 
 #. Label of the leave_settings_section (Section Break) field in DocType 'HR
 #. Settings'
@@ -6174,11 +6174,11 @@ msgstr "휴가유형명"
 
 #: hrms/hr/doctype/leave_type/leave_type.py:67
 msgid "Leave Type can either be compensatory or earned leave."
-msgstr ""
+msgstr "휴가 유형은 보상 휴가 또는 발생 휴가 중 하나여야 합니다."
 
 #: hrms/hr/doctype/leave_type/leave_type.py:79
 msgid "Leave Type can either be without pay or partial pay"
-msgstr ""
+msgstr "휴가 유형은 무급 휴가 또는 부분 유급 휴가 중 하나여야 합니다"
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:55
 msgid "Leave Type is mandatory"
@@ -6186,7 +6186,7 @@ msgstr "휴가유형은 필수입니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:219
 msgid "Leave Type {0} cannot be allocated since it is leave without pay"
-msgstr ""
+msgstr "휴가 유형 {0}은(는) 무급 휴가이므로 배분할 수 없습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:597
 msgid "Leave Type {0} cannot be carry-forwarded"
@@ -6205,7 +6205,7 @@ msgstr "무급휴가"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:596
 msgid "Leave Without Pay does not match with approved {} records"
-msgstr ""
+msgstr "무급 휴가가 승인된 {} 기록과 일치하지 않습니다"
 
 #: hrms/hr/doctype/leave_policy_assignment/leave_policy_assignment.py:151
 msgid "Leave allocation is skipped for {0}, because number of leaves to be allocated is 0."
@@ -6213,11 +6213,11 @@ msgstr "{0}의 배정 휴가 일수가 0이므로 휴가 배정을 건너뜁니�
 
 #: hrms/hr/doctype/leave_ledger_entry/leave_ledger_entry.py:79
 msgid "Leave allocation {0} is linked with the Leave Application {1}"
-msgstr ""
+msgstr "휴가 배분 {0}은(는) 휴가신청 {1}에 연결되어 있습니다"
 
 #: hrms/hr/doctype/leave_policy_assignment/leave_policy_assignment.py:111
 msgid "Leave already have been assigned for this Leave Policy Assignment"
-msgstr ""
+msgstr "이 휴가 정책 배정에 대한 휴가가 이미 배정되었습니다"
 
 #: hrms/hr/doctype/leave_type/leave_type.py:60
 msgid "Leave application is linked with leave allocations {0}. Leave application cannot be set as leave without pay"
@@ -6391,7 +6391,7 @@ msgstr "로그 유형"
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:109
 msgid "Log Type is required for check-ins falling in the shift: {0}."
-msgstr ""
+msgstr "교대 {0}에 해당하는 체크인의 로그 유형이 필요합니다."
 
 #: frontend/src/views/InvalidEmployee.vue:7
 msgid "Login Failed"
@@ -6482,7 +6482,7 @@ msgstr "{0}으로 표시"
 
 #: hrms/hr/doctype/attendance/attendance_list.js:108
 msgid "Mark attendance as {0} for {1} on selected dates?"
-msgstr ""
+msgstr "선택한 날짜에 {1}의 출근기록을 {0}(으)로 처리하시겠습니까?"
 
 #. Description of the 'Enable Auto Attendance' (Check) field in DocType 'Shift
 #. Type'
@@ -6527,7 +6527,7 @@ msgstr "주민번호(마스킹)"
 #. Profile'
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 msgid "Masked resident registration number only; never store a full RRN here."
-msgstr ""
+msgstr "마스킹 처리된 주민등록번호만 저장; 완전한 주민등록번호 저장 금지."
 
 #. Label of the max_amount_eligible (Currency) field in DocType 'Employee
 #. Benefit Claim'
@@ -6624,7 +6624,7 @@ msgstr "최대 면제 금액"
 #. Label of the max_leaves_allowed (Float) field in DocType 'Leave Type'
 #: hrms/hr/doctype/leave_type/leave_type.json
 msgid "Maximum Leave Allocation Allowed per Leave Period"
-msgstr ""
+msgstr "휴가 기간당 최대 허용 휴가 배분"
 
 #. Label of the maximum_overtime_hours_allowed (Float) field in DocType
 #. 'Overtime Details'
@@ -6650,7 +6650,7 @@ msgstr "{0}의 최대 현금화 가능 휴가일수는 {1}입니다"
 
 #: hrms/hr/doctype/leave_policy/leave_policy.py:34
 msgid "Maximum leave allowed in the leave type {0} is {1}"
-msgstr ""
+msgstr "휴가 유형 {0}의 최대 허용 휴가는 {1}입니다"
 
 #: hrms/hr/report/monthly_attendance_sheet/monthly_attendance_sheet.js:40
 #: hrms/public/js/salary_slip_deductions_report_filters.js:23
@@ -6687,7 +6687,7 @@ msgstr "퇴직금 최소 연수"
 #. field in DocType 'Leave Type'
 #: hrms/hr/doctype/leave_type/leave_type.json
 msgid "Minimum working days required since Date of Joining to apply for this leave"
-msgstr ""
+msgstr "이 휴가를 신청하려면 입사일 이후 최소 근무일수가 필요합니다"
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:95
 msgid "Missing Advance Account"
@@ -6776,7 +6776,7 @@ msgstr "변경 경계는 audit_log_only_no_submit_no_send_no_provider_call이어
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:96
 msgid "Mutation boundary must remain draft_only_no_submit_no_approve_no_send."
-msgstr ""
+msgstr "변경 경계는 '초안 전용(제출·승인·발송 불가)' 상태를 유지해야 합니다."
 
 #: frontend/src/views/employee_advance/List.vue:19
 msgid "My Advances"
@@ -6876,7 +6876,7 @@ msgstr "신규 배정 휴가(일)"
 #. Schedule Assignment'
 #: hrms/hr/doctype/shift_schedule_assignment/shift_schedule_assignment.json
 msgid "New shift assignments will be created after this date."
-msgstr ""
+msgstr "이 날짜 이후 새로운 교대 배정이 생성됩니다."
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:426
 msgid "No Bank/Cash Account found for currency {0}. Please create one under company {1}."
@@ -6888,7 +6888,7 @@ msgstr "직원을 찾을 수 없습니다"
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:195
 msgid "No Employee found for the given employee field value. '{}': {}"
-msgstr ""
+msgstr "입력한 직원 필드 값에 해당하는 직원을 찾을 수 없습니다. '{}': {}"
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:136 hrms/hr/utils.py:934
 msgid "No Employees Selected"
@@ -6908,7 +6908,7 @@ msgstr "휴가 기간 미발견"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:172
 msgid "No Leaves Allocated to Employee: {0} for Leave Type: {1}"
-msgstr ""
+msgstr "직원 {0}에게 휴가 유형 {1}에 대한 휴가가 배분되지 않았습니다"
 
 #: hrms/payroll/doctype/gratuity/gratuity.py:294
 msgid "No Salary Slip found for Employee: {0}"
@@ -6916,19 +6916,19 @@ msgstr "직원 {0}의 급여명세서를 찾을 수 없습니다"
 
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.py:111
 msgid "No Salary Slips with {0} found for employee {1} for payroll period {2}."
-msgstr ""
+msgstr "직원 {1}의 급여 기간 {2}에 대한 {0} 급여명세서를 찾을 수 없습니다."
 
 #: hrms/payroll/doctype/employee_benefit_application/employee_benefit_application.py:95
 msgid "No Salary Structure Assignment found for employee {0} on date {1}"
-msgstr ""
+msgstr "직원 {0}의 {1} 날짜에 대한 급여체계 배정을 찾을 수 없습니다"
 
 #: hrms/payroll/doctype/salary_withholding/salary_withholding.py:147
 msgid "No Salary Structure Assignment found for employee {0} on or before {1}"
-msgstr ""
+msgstr "직원 {0}의 {1} 이전 날짜에 대한 급여체계 배정을 찾을 수 없습니다"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:68
 msgid "No Salary Structure assigned to Employee {0} on the given date {1}"
-msgstr ""
+msgstr "직원 {0}에게 {1} 날짜에 배정된 급여체계가 없습니다"
 
 #: hrms/payroll/doctype/salary_component/salary_component.js:115
 msgid "No Salary Structures"
@@ -6968,7 +6968,7 @@ msgstr "퇴직금 규칙 {0}의 마지막 급여명세서에 적용 가능한 �
 
 #: hrms/payroll/doctype/gratuity/gratuity.py:318
 msgid "No applicable Earning components found for Gratuity Rule: {0}"
-msgstr ""
+msgstr "퇴직금 규정 {0}에 적용 가능한 지급 항목이 없습니다"
 
 #: hrms/payroll/doctype/gratuity/gratuity.py:283
 msgid "No applicable slab found for the calculation of gratuity amount as per the Gratuity Rule: {0}"
@@ -6976,7 +6976,7 @@ msgstr "퇴직금 규칙 {0}에 따른 퇴직금 계산에 적용 가능한 구�
 
 #: hrms/payroll/doctype/arrear/arrear.py:220
 msgid "No arrear components found in the existing salary slips."
-msgstr ""
+msgstr "기존 급여명세서에서 소급분 항목을 찾을 수 없습니다."
 
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.py:190
 msgid "No arrear components found in the salary slip. Ensure Arrear Component is checked in the Salary Component master."
@@ -6989,7 +6989,7 @@ msgstr "소급 상세 없음"
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:189
 msgid "No attendance records found for employee {0} between {1} and {2}"
-msgstr ""
+msgstr "직원 {0}의 {1}부터 {2} 사이 출근기록을 찾을 수 없습니다"
 
 #: hrms/hr/report/monthly_attendance_sheet/monthly_attendance_sheet.py:71
 msgid "No attendance records found for this criteria."
@@ -7001,7 +7001,7 @@ msgstr "출근 기록이 없습니다."
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:73
 msgid "No attendance records to create due to following reasons"
-msgstr ""
+msgstr "다음 이유로 생성할 출근기록이 없습니다"
 
 #: hrms/hr/doctype/interview/interview.py:116
 msgid "No changes found in timings."
@@ -7021,7 +7021,7 @@ msgstr "선택한 조건에 해당하는 직원이 없습니다"
 
 #: hrms/payroll/report/income_tax_computation/income_tax_computation.py:71
 msgid "No employees found with selected filters and active salary structure"
-msgstr ""
+msgstr "선택한 필터와 활성 급여체계에 해당하는 직원이 없습니다"
 
 #: frontend/src/components/ExpensesTable.vue:64
 msgid "No expenses added"
@@ -7037,7 +7037,7 @@ msgstr "항목 미선택"
 
 #: hrms/hr/doctype/leave_adjustment/leave_adjustment.js:46
 msgid "No leave allocation found for {0} for {1} on given date."
-msgstr ""
+msgstr "지정된 날짜에 {0}의 {1}에 대한 휴가 배분을 찾을 수 없습니다."
 
 #: hrms/hr/doctype/attendance/attendance.py:234
 msgid "No leave record found for employee {0} on {1}"
@@ -7049,7 +7049,7 @@ msgstr "배정된 휴가가 없습니다."
 
 #: frontend/src/views/Login.vue:53
 msgid "No login methods are available. Please contact your administrator."
-msgstr ""
+msgstr "사용 가능한 로그인 방법이 없습니다. 관리자에게 문의하세요."
 
 #: hrms/hr/page/team_updates/team_updates.js:49
 msgid "No more updates"
@@ -7074,7 +7074,7 @@ msgstr "급여명세서 없음"
 
 #: hrms/payroll/doctype/arrear/arrear.py:162
 msgid "No salary slips found for the selected employee from {0}"
-msgstr ""
+msgstr "{0}부터 선택한 직원의 급여명세서를 찾을 수 없습니다"
 
 #: frontend/src/components/ExpenseTaxesTable.vue:56
 msgid "No taxes added"
@@ -7131,7 +7131,7 @@ msgstr "비채식"
 #. Description of the 'Shift' (Link) field in DocType 'Attendance Request'
 #: hrms/hr/doctype/attendance_request/attendance_request.json
 msgid "Note: Shift will not be overwritten in existing attendance records"
-msgstr ""
+msgstr "참고: 기존 출근기록의 교대 정보는 덮어쓰지 않습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:190
 msgid "Note: Total allocated leaves {0} shouldn't be less than already approved leaves {1} for the period"
@@ -7194,7 +7194,7 @@ msgstr "보류 주기 수"
 #. Encashment'
 #: hrms/hr/doctype/leave_encashment/leave_encashment.json
 msgid "Number of leaves eligible for encashment based on leave type settings"
-msgstr ""
+msgstr "휴가 유형 설정에 따른 현금화 가능 휴가 일수"
 
 #: frontend/src/views/Login.vue:88
 msgid "OTP Code"
@@ -7292,15 +7292,15 @@ msgstr "완료된 문서만 제출 가능합니다"
 
 #: hrms/hr/doctype/employee_grievance/employee_grievance.py:42
 msgid "Only Employee Grievance with status {0} or {1} can be submitted"
-msgstr ""
+msgstr "상태가 {0} 또는 {1}인 직원 고충만 제출할 수 있습니다"
 
 #: hrms/hr/doctype/interview/interview.py:354
 msgid "Only Interviewer Are allowed to submit Interview Feedback"
-msgstr ""
+msgstr "면접관만 면접 피드백을 제출할 수 있습니다"
 
 #: hrms/hr/doctype/interview/interview.py:53
 msgid "Only Interviews with Cleared or Rejected status can be submitted."
-msgstr ""
+msgstr "합격 또는 불합격 상태의 면접만 제출할 수 있습니다."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:137
 msgid "Only Leave Applications with status 'Approved' and 'Rejected' can be submitted"
@@ -7308,7 +7308,7 @@ msgstr "상태가 '승인' 또는 '반려'인 휴가신청만 제출할 수 있�
 
 #: hrms/hr/doctype/shift_request/shift_request.py:66
 msgid "Only Shift Request with status 'Approved' and 'Rejected' can be submitted"
-msgstr ""
+msgstr "상태가 '승인' 또는 '반려'인 교대 요청만 제출할 수 있습니다"
 
 #: hrms/hr/doctype/leave_ledger_entry/leave_ledger_entry.py:58
 msgid "Only expired allocation can be cancelled"
@@ -7320,7 +7320,7 @@ msgstr "면접관만 피드백 제출 가능"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:224
 msgid "Only users with the {0} role can create backdated leave applications"
-msgstr ""
+msgstr "{0} 역할이 있는 사용자만 소급 휴가신청을 생성할 수 있습니다"
 
 #: hrms/hr/doctype/goal/goal_list.js:110
 msgid "Only {0} Goals can be {1}"
@@ -7355,7 +7355,7 @@ msgstr "공고가 마감되었습니다."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:664
 msgid "Optional Holiday List not set for leave period {0}"
-msgstr ""
+msgstr "휴가 기간 {0}에 대한 선택적 휴일목록이 설정되지 않았습니다"
 
 #: hrms/hr/doctype/leave_type/leave_type.js:35
 msgid "Optional Leaves are holidays that Employees can choose to avail from a list of holidays published by the company."
@@ -7439,7 +7439,7 @@ msgstr "연장근로 기간"
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:98
 msgid "Overtime Duration for {0} is greater than Maximum Overtime Hours Allowed"
-msgstr ""
+msgstr "{0}의 초과근무 시간이 최대 허용 초과근무 시간을 초과합니다"
 
 #. Name of a DocType
 #. Label of the overtime_salary_component (Link) field in DocType 'Overtime
@@ -7489,15 +7489,15 @@ msgstr "{0}명 직원 초과근무명세서 생성됨"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1290
 msgid "Overtime Slip creation is queued. It may take a few minutes"
-msgstr ""
+msgstr "초과근무 명세서 생성이 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1314
 msgid "Overtime Slip submission is queued. It may take a few minutes"
-msgstr ""
+msgstr "초과근무 명세서 제출이 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다"
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:73
 msgid "Overtime Slip:{0} has been created between {1} and {2}"
-msgstr ""
+msgstr "초과근무 명세서 {0}이(가) {1}과 {2} 사이에 생성되었습니다"
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:487
 msgid "Overtime Slips Created"
@@ -7530,7 +7530,7 @@ msgstr "연장근로 유형"
 #. 'Overtime Type'
 #: hrms/hr/doctype/overtime_type/overtime_type.json
 msgid "Overtime earnings will be booked under this salary component for payout."
-msgstr ""
+msgstr "초과근무 수당은 지급을 위해 이 급여항목으로 처리됩니다."
 
 #. Label of the overwrite_salary_structure_amount (Check) field in DocType
 #. 'Additional Salary'
@@ -7637,7 +7637,7 @@ msgstr "급여명세서로 지급"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:191
 msgid "Payable Account is mandatory to submit an Expense Claim"
-msgstr ""
+msgstr "경비청구 제출을 위해 지급 계정이 필수입니다"
 
 #. Label of the payload_section (Section Break) field in DocType 'Korea Payroll
 #. Closing Draft'
@@ -7680,7 +7680,7 @@ msgstr "지급일 의존성"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.js:284
 msgid "Payment Days calculations are based on these Payroll Settings"
-msgstr ""
+msgstr "지급일 계산은 이 급여 설정을 기반으로 합니다"
 
 #. Label of the section_break_5 (Tab Break) field in DocType 'Gratuity'
 #: hrms/payroll/doctype/gratuity/gratuity.json
@@ -7780,7 +7780,7 @@ msgstr "급여 직원 상세"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:181
 msgid "Payroll Entry cancellation is queued. It may take a few minutes"
-msgstr ""
+msgstr "급여처리 취소가 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다"
 
 #. Label of the payroll_frequency (Select) field in DocType 'Payroll Entry'
 #. Label of the payroll_frequency (Select) field in DocType 'Salary Slip'
@@ -7876,11 +7876,11 @@ msgstr "급여 설정"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:158
 msgid "Payroll date can not be greater than employee's relieving date."
-msgstr ""
+msgstr "급여 날짜는 직원 퇴직일보다 늦을 수 없습니다."
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:150
 msgid "Payroll date can not be less than employee's joining date."
-msgstr ""
+msgstr "급여 날짜는 직원 입사일보다 이전일 수 없습니다."
 
 #: hrms/payroll/doctype/employee_benefit_claim/employee_benefit_claim.py:46
 msgid "Payroll date cannot be in the past. This is to ensure that claims are made for the current or future payroll cycles."
@@ -7888,7 +7888,7 @@ msgstr "급여처리일은 과거일 수 없습니다. 현재 또는 미래 급�
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:146
 msgid "Payroll date is mandatory for non-recurring type additional salaries."
-msgstr ""
+msgstr "비반복 유형 추가 급여의 급여 날짜는 필수입니다."
 
 #. Description of the 'Pending Amount' (Currency) field in DocType 'Employee
 #. Advance'
@@ -7970,7 +7970,7 @@ msgstr "계획 직위 수"
 
 #: hrms/hr/doctype/shift_type/shift_type.js:16
 msgid "Please Enable Auto Attendance and complete the setup first."
-msgstr ""
+msgstr "먼저 자동 출근기록을 활성화하고 설정을 완료하세요."
 
 #: hrms/payroll/doctype/retention_bonus/retention_bonus.js:8
 msgid "Please Select Company First"
@@ -7982,7 +7982,7 @@ msgstr "먼저 직원 {0}에게 {1} 이전부터 적용되는 급여체계를 �
 
 #: hrms/templates/emails/training_event.html:17
 msgid "Please confirm once you have completed your training"
-msgstr ""
+msgstr "교육 이수 후 확인해 주세요"
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:122
 msgid "Please create a new {0} for the date {1} first."
@@ -7990,7 +7990,7 @@ msgstr "먼저 날짜 {1}에 대한 새 {0}을 생성하세요."
 
 #: hrms/hr/doctype/employee_transfer/employee_transfer.py:80
 msgid "Please delete the Employee {0} to cancel this document"
-msgstr ""
+msgstr "이 문서를 취소하려면 직원 {0}을(를) 삭제하세요"
 
 #: hrms/hr/doctype/daily_work_summary_group/daily_work_summary_group.py:65
 msgid "Please enable default incoming account before creating Daily Work Summary Group"
@@ -8006,7 +8006,7 @@ msgstr "초과근무 상세를 가져오기 전에 직원, 전기일, 회사를 
 
 #: hrms/hr/doctype/shift_type/shift_type.py:97
 msgid "Please reduce {0} to avoid shift time overlapping with itself"
-msgstr ""
+msgstr "교대 시간이 겹치지 않도록 {0}을(를) 줄여주세요"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2251
 msgid "Please see attachment"
@@ -8031,7 +8031,7 @@ msgstr "필터 기준을 선택하세요"
 
 #: hrms/payroll/doctype/salary_withholding/salary_withholding.js:25
 msgid "Please select From Date and Payroll Frequency first"
-msgstr ""
+msgstr "먼저 시작일과 급여 주기를 선택하세요"
 
 #: hrms/payroll/doctype/bulk_salary_structure_assignment/bulk_salary_structure_assignment.js:113
 msgid "Please select From Date."
@@ -8039,11 +8039,11 @@ msgstr "시작일을 선택하세요."
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.js:167
 msgid "Please select Shift Schedule and assignment date(s)."
-msgstr ""
+msgstr "교대 일정과 배정 날짜를 선택하세요."
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.js:160
 msgid "Please select Shift Type and assignment date(s)."
-msgstr ""
+msgstr "교대 유형과 배정 날짜를 선택하세요."
 
 #: hrms/public/js/hierarchy_chart/hierarchy_chart_mobile.js:240
 msgid "Please select a company first"
@@ -8072,15 +8072,15 @@ msgstr "계속하기 전에 직원을 선택하세요."
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.py:287
 msgid "Please select at least one Shift Request to perform this action."
-msgstr ""
+msgstr "이 작업을 수행하려면 교대 요청을 하나 이상 선택하세요."
 
 #: hrms/hr/utils.py:933
 msgid "Please select at least one employee to perform this action."
-msgstr ""
+msgstr "이 작업을 수행하려면 직원을 한 명 이상 선택하세요."
 
 #: hrms/public/js/utils/index.js:47
 msgid "Please select at least one row to perform this action."
-msgstr ""
+msgstr "이 작업을 수행하려면 행을 하나 이상 선택하세요."
 
 #: hrms/hr/report/monthly_attendance_sheet/monthly_attendance_sheet.py:55
 msgid "Please select company."
@@ -8093,7 +8093,7 @@ msgstr "직원을 먼저 선택하세요"
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:136
 msgid "Please select employees to create appraisals for"
-msgstr ""
+msgstr "평가를 생성할 직원을 선택하세요"
 
 #: hrms/hr/doctype/employee_attendance_tool/employee_attendance_tool.js:256
 msgid "Please select half day attendance status."
@@ -8113,7 +8113,7 @@ msgstr "출근 상태를 선택하세요."
 
 #: hrms/hr/doctype/employee_attendance_tool/employee_attendance_tool.js:243
 msgid "Please select the employees you want to mark attendance for."
-msgstr ""
+msgstr "출근기록을 등록할 직원을 선택하세요."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip_list.js:15
 msgid "Please select the salary slips to email"
@@ -8121,15 +8121,15 @@ msgstr "이메일로 보낼 급여명세서를 선택하세요"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:320
 msgid "Please set \"Default Payroll Payable Account\" in Company Defaults"
-msgstr ""
+msgstr "회사 기본값에서 \"기본 급여 미지급금 계정\"을 설정하세요"
 
 #: hrms/regional/india/utils.py:18
 msgid "Please set Basic and HRA component in Company {0}"
-msgstr ""
+msgstr "회사 {0}에서 기본급 및 주거수당 항목을 설정하세요"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:194
 msgid "Please set Earning Component for Leave type: {0}."
-msgstr ""
+msgstr "휴가 유형 {0}에 대한 지급 항목을 설정하세요."
 
 #: hrms/hr/doctype/leave_application/leave_application_calendar.js:494
 msgid "Please set Leave Approver for the Employee: {0}"
@@ -8154,11 +8154,11 @@ msgstr "급여항목 {0}에 계정을 설정하세요"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:719
 msgid "Please set default template for Leave Approval Notification in HR Settings."
-msgstr ""
+msgstr "인사 설정에서 휴가 승인 알림의 기본 템플릿을 설정하세요."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:694
 msgid "Please set default template for Leave Status Notification in HR Settings."
-msgstr ""
+msgstr "인사 설정에서 휴가 상태 알림의 기본 템플릿을 설정하세요."
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:79
 msgid "Please set the Advance Account {0} or in {1}"
@@ -8208,11 +8208,11 @@ msgstr "{0}을(를) 설정하세요."
 
 #: hrms/overrides/employee_master.py:16
 msgid "Please setup Employee Naming System in Human Resource > HR Settings"
-msgstr ""
+msgstr "인사 > 인사 설정에서 직원 명명 체계를 설정하세요"
 
 #: hrms/hr/doctype/upload_attendance/upload_attendance.py:171
 msgid "Please setup numbering series for Attendance via Setup > Numbering Series"
-msgstr ""
+msgstr "설정 > 번호 시리즈에서 출근기록의 번호 시리즈를 설정하세요"
 
 #: hrms/hr/notification/training_feedback/training_feedback.html:6
 msgid "Please share your feedback to the training by clicking on 'Training Feedback' and then 'New'"
@@ -8228,11 +8228,11 @@ msgstr "향후 급여명세서의 정확한 세금 계산을 위해 {0}과 {1}(�
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:182
 msgid "Please submit the {0} before marking the cycle as Completed"
-msgstr ""
+msgstr "주기를 완료로 표시하기 전에 {0}을(를) 제출하세요"
 
 #: hrms/templates/emails/training_event.html:13
 msgid "Please update your status for this training event"
-msgstr ""
+msgstr "이 교육 행사의 상태를 업데이트하세요"
 
 #. Label of the posted_on (Datetime) field in DocType 'Job Opening'
 #: hrms/hr/doctype/job_opening/job_opening.json
@@ -8277,13 +8277,13 @@ msgstr "출근 기록"
 #. Settings'
 #: hrms/hr/doctype/hr_settings/hr_settings.json
 msgid "Prevent self approval for expense claims even if user has permissions"
-msgstr ""
+msgstr "권한이 있더라도 경비청구 자기 승인 방지"
 
 #. Label of the prevent_self_leave_approval (Check) field in DocType 'HR
 #. Settings'
 #: hrms/hr/doctype/hr_settings/hr_settings.json
 msgid "Prevent self approval for leaves even if user has permissions"
-msgstr ""
+msgstr "권한이 있더라도 휴가 자기 승인 방지"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.js:155
 #: hrms/payroll/doctype/salary_structure/salary_structure.js:193
@@ -8344,7 +8344,7 @@ msgstr "이후 출근 처리"
 #: hrms/payroll/doctype/payroll_settings/payroll_settings.json
 #: hrms/setup.py:851
 msgid "Process Payroll Accounting Entry based on Employee"
-msgstr ""
+msgstr "직원 기준으로 급여 회계 분개 처리"
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.js:123
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.js:130
@@ -8361,7 +8361,7 @@ msgstr "교대 요청 처리"
 #. Encashment'
 #: hrms/hr/doctype/leave_encashment/leave_encashment.json
 msgid "Process leave encashment via a separate Payment Entry instead of Salary Slip"
-msgstr ""
+msgstr "급여명세서 대신 별도 지급 입력으로 휴가 현금화 처리"
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.js:289
 msgid "Process {0} Shift Request(s) as <b>{1}</b>?"
@@ -8377,7 +8377,7 @@ msgstr "요청 처리 중..."
 
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.py:298
 msgid "Processing of Shift Requests has been queued. It may take a few minutes."
-msgstr ""
+msgstr "교대 요청 처리가 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다."
 
 #. Name of a report
 #. Label of a Link in the Payroll Workspace
@@ -8479,7 +8479,7 @@ msgstr "푸시 알림 비활성화됨"
 
 #: frontend/src/views/AppSettings.vue:80
 msgid "Push notifications have been disabled on your site"
-msgstr ""
+msgstr "사이트에서 푸시 알림이 비활성화되었습니다"
 
 #. Label of the questionnaire_email_sent (Check) field in DocType 'Exit
 #. Interview'
@@ -8506,7 +8506,7 @@ msgstr "빠른 링크"
 #. Description of the 'Checkin Radius' (Int) field in DocType 'Shift Location'
 #: hrms/hr/doctype/shift_location/shift_location.json
 msgid "Radius within which check-in is allowed (in meters)"
-msgstr ""
+msgstr "체크인 허용 반경 (미터)"
 
 #. Label of the rate_goals_manually (Check) field in DocType 'Appraisal'
 #: hrms/hr/doctype/appraisal/appraisal.json
@@ -8571,7 +8571,7 @@ msgstr "최근 교대 요청"
 #. in DocType 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Recommended for a single biometric device / checkins via mobile app"
-msgstr ""
+msgstr "단일 생체인식 장치 / 모바일 앱 체크인에 권장"
 
 #. Option for the 'Action' (Select) field in DocType 'Full and Final Asset'
 #: hrms/hr/doctype/full_and_final_asset/full_and_final_asset.json
@@ -8612,7 +8612,7 @@ msgstr "배정 후 최대 허용 휴가를 줄이면 스케줄러가 잘못된 �
 
 #: hrms/hr/doctype/leave_adjustment/leave_adjustment.py:101
 msgid "Reduction is more than {0}'s available leave balance {1} for leave type {2}"
-msgstr ""
+msgstr "감소량이 휴가 유형 {2}에 대한 {0}의 잔여 휴가 {1}보다 많습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:405
 #: hrms/hr/doctype/leave_application/leave_application.py:561
@@ -8735,7 +8735,7 @@ msgstr "급여에서 상환"
 
 #: hrms/hr/utils.py:837
 msgid "Repay From Salary can be selected only for term loans"
-msgstr ""
+msgstr "급여에서 상환은 기간제 대출에만 선택할 수 있습니다"
 
 #. Label of the repay_unclaimed_amount_from_salary (Check) field in DocType
 #. 'Employee Advance'
@@ -8882,7 +8882,7 @@ msgstr "배정 재시도 중"
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:236
 msgid "Return amount cannot be greater than unclaimed amount"
-msgstr ""
+msgstr "반납 금액은 미청구 금액을 초과할 수 없습니다"
 
 #. Label of the action (Select) field in DocType 'Korea Payroll Closing Review
 #. Audit Log'
@@ -8898,7 +8898,7 @@ msgstr "검토자"
 
 #: hrms/hr/doctype/hr_settings/hr_settings.js:41
 msgid "Review various other settings related to Employee Leaves and Expense Claim"
-msgstr ""
+msgstr "직원 휴가 및 경비청구 관련 기타 설정 검토"
 
 #. Label of the reviewer (Link) field in DocType 'Employee Performance
 #. Feedback'
@@ -8922,7 +8922,7 @@ msgstr "조정된 CTC"
 #: hrms/hr/doctype/hr_settings/hr_settings.json
 #: hrms/hr/doctype/leave_application/leave_application.py:217
 msgid "Role Allowed to Create Backdated Leave Application"
-msgstr ""
+msgstr "소급 휴가신청 생성 허용 역할"
 
 #. Label of a Workspace Sidebar Item
 #: hrms/public/js/utils/index.js:252 hrms/public/js/utils/index.js:273
@@ -8964,7 +8964,7 @@ msgstr "행 #{0}: 과세 급여 기반 변동 급여항목 {1}에 금액 또는 
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:139
 msgid "Row #{0}: The {1} Component has the options {2} and {3} enabled."
-msgstr ""
+msgstr "행 #{0}: {1} 항목에 {2} 및 {3} 옵션이 활성화되어 있습니다."
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:163
 msgid "Row #{0}: Timesheet amount will overwrite the Earning component amount for the Salary Component {1}"
@@ -8976,23 +8976,23 @@ msgstr "행 번호 {0}: 금액이 경비청구서 {1}의 미결 금액 {2}보다
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:561
 msgid "Row {0}# Allocated amount {1} cannot be greater than unclaimed amount {2}"
-msgstr ""
+msgstr "행 {0}# 배분 금액 {1}은(는) 미청구 금액 {2}을(를) 초과할 수 없습니다"
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:320
 msgid "Row {0}# Paid Amount cannot be greater than Encashment amount"
-msgstr ""
+msgstr "행 {0}# 지급 금액은 현금화 금액을 초과할 수 없습니다"
 
 #: hrms/payroll/doctype/gratuity/gratuity.py:162
 msgid "Row {0}# Paid Amount cannot be greater than Total amount"
-msgstr ""
+msgstr "행 {0}# 지급 금액은 합계 금액을 초과할 수 없습니다"
 
 #: hrms/hr/doctype/employee_advance/employee_advance.py:228
 msgid "Row {0}# Paid Amount cannot be greater than requested advance amount"
-msgstr ""
+msgstr "행 {0}# 지급 금액은 요청 선급금 금액을 초과할 수 없습니다"
 
 #: hrms/payroll/doctype/gratuity_rule/gratuity_rule.py:39
 msgid "Row {0}: From (Year) can not be greater than To (Year)"
-msgstr ""
+msgstr "행 {0}: 시작 연도는 종료 연도보다 클 수 없습니다"
 
 #: hrms/hr/doctype/appraisal/appraisal.py:174
 msgid "Row {0}: Goal Score cannot be greater than {1}"
@@ -9008,7 +9008,7 @@ msgstr "행 {0}: {1}"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:486
 msgid "Row {0}: {1} is required in the expenses table to book an expense claim."
-msgstr ""
+msgstr "행 {0}: 경비청구를 처리하려면 경비 표에 {1}이(가) 필요합니다."
 
 #. Label of the safety_section (Section Break) field in DocType 'Korea Payroll
 #. Closing Draft'
@@ -9079,11 +9079,11 @@ msgstr "타임시트 급여 기반 급여항목"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:476
 msgid "Salary Component {0} cannot be selected more than once in Employee Benefits"
-msgstr ""
+msgstr "급여항목 {0}은(는) 직원 복리후생에서 한 번만 선택할 수 있습니다"
 
 #: hrms/payroll/doctype/salary_component/salary_component.js:113
 msgid "Salary Component {0} is currently not used in any Salary Structure."
-msgstr ""
+msgstr "급여항목 {0}은(는) 현재 어떤 급여체계에도 사용되지 않습니다."
 
 #: hrms/payroll/doctype/employee_benefit_ledger/employee_benefit_ledger.py:39
 msgid "Salary Component {0} must be of type 'Earning' to be used in Employee Benefit Ledger"
@@ -9203,11 +9203,11 @@ msgstr "급여명세서 타임시트"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:137
 msgid "Salary Slip already exists for {0} for the given dates"
-msgstr ""
+msgstr "{0}에 대한 지정 날짜의 급여명세서가 이미 존재합니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:330
 msgid "Salary Slip creation is queued. It may take a few minutes"
-msgstr ""
+msgstr "급여명세서 생성이 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다"
 
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.py:151
 msgid "Salary Slip not found."
@@ -9215,15 +9215,15 @@ msgstr "급여명세서를 찾을 수 없습니다."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:419
 msgid "Salary Slip of employee {0} already created for this period"
-msgstr ""
+msgstr "직원 {0}의 해당 기간 급여명세서가 이미 생성되었습니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:425
 msgid "Salary Slip of employee {0} already created for time sheet {1}"
-msgstr ""
+msgstr "직원 {0}의 작업 일지 {1}에 대한 급여명세서가 이미 생성되었습니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:375
 msgid "Salary Slip submission is queued. It may take a few minutes"
-msgstr ""
+msgstr "급여명세서 제출이 대기열에 추가되었습니다. 몇 분 정도 걸릴 수 있습니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1570
 msgid "Salary Slip {0} failed for Payroll Entry {1}"
@@ -9231,7 +9231,7 @@ msgstr "급여명세서 {0}이 급여처리 {1}에 실패했습니다"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.js:117
 msgid "Salary Slip {0} failed. You can resolve the {1} and retry {0}."
-msgstr ""
+msgstr "급여명세서 {0}이(가) 실패했습니다. {1}을(를) 해결한 후 {0}을(를) 재시도하세요."
 
 #: frontend/src/views/salary_slip/Dashboard.vue:2
 msgid "Salary Slips"
@@ -9253,7 +9253,7 @@ msgstr "직원 {}의 급여명세서가 이미 존재하며 이번 급여처리�
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1639
 msgid "Salary Slips submitted for period from {0} to {1}"
-msgstr ""
+msgstr "{0}부터 {1}까지의 급여명세서가 제출되었습니다"
 
 #. Label of the salary_structure (Link) field in DocType 'Arrear'
 #. Label of the salary_structure (Link) field in DocType 'Bulk Salary Structure
@@ -9291,11 +9291,11 @@ msgstr "급여구조 배정 필드"
 
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.py:79
 msgid "Salary Structure Assignment for Employee already exists"
-msgstr ""
+msgstr "직원에 대한 급여체계 배정이 이미 존재합니다"
 
 #: hrms/payroll/doctype/employee_benefit_claim/employee_benefit_claim.py:247
 msgid "Salary Structure Assignment not found for employee {0} on date {1}"
-msgstr ""
+msgstr "직원 {0}의 {1} 날짜에 대한 급여체계 배정을 찾을 수 없습니다"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:525
 msgid "Salary Structure Missing"
@@ -9303,15 +9303,15 @@ msgstr "급여구조 누락"
 
 #: hrms/regional/india/utils.py:29
 msgid "Salary Structure must be submitted before submission of {0}"
-msgstr ""
+msgstr "{0} 제출 전에 급여체계를 제출해야 합니다"
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:117
 msgid "Salary Structure not assigned for employee {0} for date {1}"
-msgstr ""
+msgstr "직원 {0}의 {1} 날짜에 급여체계가 배정되지 않았습니다"
 
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.py:103
 msgid "Salary Structure {0} does not belong to company {1}"
-msgstr ""
+msgstr "급여체계 {0}은(는) 회사 {1}에 속하지 않습니다"
 
 #: hrms/payroll/doctype/salary_component/salary_component.js:150
 msgid "Salary Structures updated successfully"
@@ -9357,11 +9357,11 @@ msgstr "퇴직연금, 추가 퇴직연금 또는 퇴직연금 대출 유형의 �
 #. in DocType 'Gratuity Rule'
 #: hrms/payroll/doctype/gratuity_rule/gratuity_rule.json
 msgid "Salary components should be part of the Salary Structure."
-msgstr ""
+msgstr "급여항목은 급여체계의 일부여야 합니다."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2805
 msgid "Salary slip emails have been enqueued for sending. Check {0} for status."
-msgstr ""
+msgstr "급여명세서 이메일이 발송 대기열에 추가되었습니다. {0}에서 상태를 확인하세요."
 
 #. Label of the sanctioned_amount (Currency) field in DocType 'Expense Claim
 #. Detail'
@@ -9378,7 +9378,7 @@ msgstr "승인금액(회사 통화)"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:585
 msgid "Sanctioned Amount cannot be greater than Claim Amount in Row {0}."
-msgstr ""
+msgstr "행 {0}의 승인 금액은 청구 금액을 초과할 수 없습니다."
 
 #. Label of the scheduled_on (Date) field in DocType 'Interview'
 #: hrms/hr/doctype/interview/interview.json
@@ -9472,11 +9472,11 @@ msgstr "직원 선급금을 받을 직원을 선택하세요."
 #. Request'
 #: hrms/hr/doctype/attendance_request/attendance_request.json
 msgid "Select if any of the days selected for request are holidays"
-msgstr ""
+msgstr "요청 날짜 중 공휴일이 있으면 선택하세요"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.js:237
 msgid "Select the Employee for which you want to allocate leaves."
-msgstr ""
+msgstr "휴가를 배분할 직원을 선택하세요."
 
 #: hrms/hr/doctype/leave_application/leave_application.js:318
 msgid "Select the Employee."
@@ -9484,15 +9484,15 @@ msgstr "직원을 선택하세요."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.js:242
 msgid "Select the Leave Type like Sick leave, Privilege Leave, Casual Leave, etc."
-msgstr ""
+msgstr "병가, 연차, 경조사 휴가 등 휴가 유형을 선택하세요."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.js:254
 msgid "Select the date after which this Leave Allocation will expire."
-msgstr ""
+msgstr "이 휴가 배분이 만료되는 날짜 이후를 선택하세요."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.js:249
 msgid "Select the date from which this Leave Allocation will be valid."
-msgstr ""
+msgstr "이 휴가 배분이 유효한 시작 날짜를 선택하세요."
 
 #: hrms/hr/doctype/leave_application/leave_application.js:335
 msgid "Select the end date for your Leave Application."
@@ -9506,7 +9506,7 @@ msgstr "시간당 초과근무 요율 계산을 위해 급여명세서에서 합
 
 #: hrms/hr/doctype/leave_application/leave_application.js:330
 msgid "Select the start date for your Leave Application."
-msgstr ""
+msgstr "휴가신청의 시작 날짜를 선택하세요."
 
 #. Description of the 'Enabled' (Check) field in DocType 'Shift Schedule
 #. Assignment'
@@ -9524,7 +9524,7 @@ msgstr "휴가 승인자 즉, 휴가를 승인하거나 반려하는 담당자�
 
 #: hrms/hr/doctype/expense_claim/expense_claim.js:607
 msgid "Selected employee advance is not of employee {0}"
-msgstr ""
+msgstr "선택한 직원 선급금이 직원 {0}의 것이 아닙니다"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:554
 msgid "Selected employee advance is not of employee {}"
@@ -9604,7 +9604,7 @@ msgstr "보낸 사람 복사"
 
 #: hrms/hr/doctype/exit_interview/exit_interview.py:170
 msgid "Sending Failed due to missing email information for employee(s): {1}"
-msgstr ""
+msgstr "직원 {1}의 이메일 정보가 없어 전송에 실패했습니다"
 
 #: hrms/hr/doctype/exit_interview/exit_interview.py:166
 msgid "Sent Successfully: {0}"
@@ -9640,7 +9640,7 @@ msgstr "서비스 비용"
 #. 'Gratuity Rule'
 #: hrms/payroll/doctype/gratuity_rule/gratuity_rule.json
 msgid "Set \"From(Year)\" and \"To(Year)\" to 0 for no upper and lower limit."
-msgstr ""
+msgstr "상한과 하한 없이 설정하려면 \"시작(년)\"과 \"종료(년)\"을 0으로 설정하세요."
 
 #. Label of the set_assignment_details_section (Section Break) field in DocType
 #. 'Bulk Salary Structure Assignment'
@@ -9668,13 +9668,13 @@ msgstr "직원 가져오기 필터 설정"
 #. 'Salary Structure Assignment'
 #: hrms/payroll/doctype/salary_structure_assignment/salary_structure_assignment.json
 msgid "Set opening balances for earnings and taxes from the previous employer"
-msgstr ""
+msgstr "이전 사업주로부터의 소득 및 세금 기초 잔액을 설정하세요"
 
 #. Description of the 'Filters' (Section Break) field in DocType 'Appraisal
 #. Cycle'
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.json
 msgid "Set optional filters to fetch employees in the appraisee list"
-msgstr ""
+msgstr "평가 대상자 목록에서 직원을 조회할 선택적 필터를 설정하세요"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:746
 msgid "Set the default account for the {0} {1}"
@@ -9709,11 +9709,11 @@ msgstr "선급금 정산"
 
 #: hrms/hr/doctype/full_and_final_statement/full_and_final_statement.py:86
 msgid "Settle all Payables and Receivables before submission"
-msgstr ""
+msgstr "제출 전 모든 미지급금과 미수금을 정산하세요"
 
 #: hrms/hr/utils.py:785
 msgid "Shared document with the user {0} with 'Submit' permission"
-msgstr ""
+msgstr "사용자 {0}에게 '제출' 권한으로 문서를 공유했습니다"
 
 #. Label of a Desktop Icon
 #. Name of a Workspace
@@ -9846,12 +9846,12 @@ msgstr "교대 요청 필터"
 #. Tool'
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.json
 msgid "Shift Requests ending before this date will be excluded."
-msgstr ""
+msgstr "이 날짜 이전에 종료된 교대 요청은 제외됩니다."
 
 #. Description of the 'To Date' (Date) field in DocType 'Shift Assignment Tool'
 #: hrms/hr/doctype/shift_assignment_tool/shift_assignment_tool.json
 msgid "Shift Requests starting after this date will be excluded."
-msgstr ""
+msgstr "이 날짜 이후에 시작하는 교대 요청은 제외됩니다."
 
 #. Label of the shift_schedule (Link) field in DocType 'Shift Assignment Tool'
 #. Name of a DocType
@@ -9974,7 +9974,7 @@ msgstr "급여명세서에 휴가 잔액 표시"
 #. in DocType 'HR Settings'
 #: hrms/hr/doctype/hr_settings/hr_settings.json
 msgid "Show Leaves Of All Department Members In Calendar"
-msgstr ""
+msgstr "캘린더에 모든 부서원의 휴가 표시"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.js:204
 msgid "Show Salary Slip"
@@ -10082,7 +10082,7 @@ msgstr "소스 감사 로그 계약 유형은 korea_payroll_closing_draft_review
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:94
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:447
 msgid "Source session contract type must be korea_payroll_closing_session_v1."
-msgstr ""
+msgstr "소스 세션 계약 유형은 korea_payroll_closing_session_v1이어야 합니다."
 
 #. Label of the sponsored_amount (Currency) field in DocType 'Travel Request
 #. Costing'
@@ -10114,7 +10114,7 @@ msgstr "인력 계획 상세"
 
 #: hrms/hr/doctype/staffing_plan/staffing_plan.py:91
 msgid "Staffing Plan {0} already exist for designation {1}"
-msgstr ""
+msgstr "직무 {1}에 대한 인력 계획 {0}이(가) 이미 존재합니다"
 
 #. Label of the standard_multiplier (Float) field in DocType 'Overtime Type'
 #: hrms/hr/doctype/overtime_type/overtime_type.json
@@ -10156,7 +10156,7 @@ msgstr "표준 근로시간"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1889
 msgid "Start and end dates not in a valid Payroll Period, cannot calculate {0}."
-msgstr ""
+msgstr "시작일과 종료일이 유효한 급여 기간에 없어 {0}을(를) 산출할 수 없습니다."
 
 #: hrms/hr/doctype/overtime_slip/overtime_slip.py:52
 msgid "Start date cannot be greater than end date"
@@ -10198,7 +10198,7 @@ msgstr "재고 옵션"
 #. Block List'
 #: hrms/hr/doctype/leave_block_list/leave_block_list.json
 msgid "Stop users from making Leave Applications on following days."
-msgstr ""
+msgstr "다음 날짜에 휴가신청 생성을 차단합니다."
 
 #. Option for the 'Determine Check-in and Check-out' (Select) field in DocType
 #. 'Shift Type'
@@ -10262,7 +10262,7 @@ msgstr "급여처리로 제출됨"
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.js:430
 msgid "Submitting Salary Slips and creating Journal Entry..."
-msgstr ""
+msgstr "급여명세서 제출 및 분개 생성 중..."
 
 #: hrms/payroll/doctype/payroll_entry/payroll_entry.py:1694
 msgid "Submitting Salary Slips..."
@@ -10278,7 +10278,7 @@ msgstr "직원의 {0} 생성 성공:"
 
 #: hrms/public/js/utils/index.js:160
 msgid "Successfully {0} {1} for the following employees:"
-msgstr ""
+msgstr "다음 직원에 대해 {1}을(를) 성공적으로 {0}했습니다:"
 
 #. Option for the 'Calculate Gratuity Amount Based On' (Select) field in
 #. DocType 'Gratuity Rule'
@@ -10288,7 +10288,7 @@ msgstr "이전 구간 합계"
 
 #: hrms/payroll/doctype/employee_benefit_application/employee_benefit_application.py:70
 msgid "Sum of benefit amounts {0} exceeds maximum limit of {1}"
-msgstr ""
+msgstr "복리후생 금액의 합계 {0}이(가) 최대 한도 {1}을(를) 초과합니다"
 
 #: hrms/hr/report/monthly_attendance_sheet/monthly_attendance_sheet.js:128
 msgid "Summarized View"
@@ -10304,7 +10304,7 @@ msgstr "문법 오류"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2628
 msgid "Syntax error in condition: {0} in Income Tax Slab"
-msgstr ""
+msgstr "소득세 구간 조건 구문 오류: {0}"
 
 #. Option for the 'Work Experience Calculation Method' (Select) field in
 #. DocType 'Gratuity Rule'
@@ -10455,7 +10455,7 @@ msgstr "금액이 있는 급여항목이 급여명세서의 지급/공제에 반
 #. Description of the 'Allocate on Day' (Select) field in DocType 'Leave Type'
 #: hrms/hr/doctype/leave_type/leave_type.json
 msgid "The day of the month when leaves should be allocated"
-msgstr ""
+msgstr "매월 휴가를 배분할 날짜"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:445
 msgid "The day(s) on which you are applying for leave are holidays. You need not apply for leave."
@@ -10463,21 +10463,21 @@ msgstr "휴가를 신청하려는 날짜가 휴일입니다. 휴가 신청이 �
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:85
 msgid "The days between {0} to {1} are not valid holidays."
-msgstr ""
+msgstr "{0}부터 {1} 사이의 날짜는 유효한 공휴일이 아닙니다."
 
 #: hrms/setup.py:132
 msgid "The first Approver in the list will be set as the default Approver."
-msgstr ""
+msgstr "목록의 첫 번째 승인자가 기본 승인자로 설정됩니다."
 
 #: hrms/hr/doctype/leave_type/leave_type.py:84
 msgid "The fraction of Daily Salary per Leave should be between 0 and 1"
-msgstr ""
+msgstr "일일 급여 대비 휴가 비율은 0에서 1 사이여야 합니다"
 
 #. Description of the 'Fraction of Daily Salary for Half Day' (Float) field in
 #. DocType 'Payroll Settings'
 #: hrms/payroll/doctype/payroll_settings/payroll_settings.json
 msgid "The fraction of daily wages to be paid for half-day attendance"
-msgstr ""
+msgstr "반일 출근 시 지급될 일일 임금의 비율"
 
 #: hrms/hr/report/project_profitability/project_profitability.py:101
 msgid "The metrics for this report are calculated based on the {0}. Please set {0} in {1}."
@@ -10518,7 +10518,7 @@ msgstr "이론"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:577
 msgid "There are more holidays than working days this month."
-msgstr ""
+msgstr "이번 달 공휴일이 근무일보다 많습니다."
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:87
 msgid "There are multiple shifts assigned to the employee for the same period. Please mention the shift"
@@ -10558,15 +10558,15 @@ msgstr "이 체크인은 배정된 교대 시간 외로 출근기록에 고려�
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:118
 msgid "This compensatory leave will be applicable from {0}."
-msgstr ""
+msgstr "이 보상 휴가는 {0}부터 적용됩니다."
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:75
 msgid "This employee already has a log with the same timestamp.{0}"
-msgstr ""
+msgstr "이 직원은 이미 동일한 타임스탬프의 기록이 있습니다.{0}"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1408
 msgid "This error can be due to invalid formula or condition."
-msgstr ""
+msgstr "이 오류는 유효하지 않은 수식 또는 조건으로 인해 발생할 수 있습니다."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1401
 msgid "This error can be due to invalid syntax."
@@ -10574,7 +10574,7 @@ msgstr "이 오류는 잘못된 구문으로 인한 것일 수 있습니다."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:1394
 msgid "This error can be due to missing or deleted field."
-msgstr ""
+msgstr "이 오류는 누락되거나 삭제된 필드로 인해 발생할 수 있습니다."
 
 #: hrms/hr/doctype/leave_type/leave_type.js:28
 msgid "This field allows you to set the maximum number of consecutive leaves an Employee can apply for."
@@ -10586,7 +10586,7 @@ msgstr "휴가 정책 생성 시 이 휴가 유형에 연간 배정 가능한 �
 
 #: hrms/overrides/dashboard_overrides.py:63
 msgid "This is based on the attendance of this Employee"
-msgstr ""
+msgstr "이 직원의 출근기록을 기반으로 합니다"
 
 #: hrms/www/hrms.py:20
 msgid "This method is only meant for developer mode"
@@ -10653,7 +10653,7 @@ msgstr "허용하려면 {1}에서 {0}을 활성화하세요."
 
 #: hrms/hr/doctype/leave_application/leave_application.js:340
 msgid "To apply for a Half Day check 'Half Day' and select the Half Day Date"
-msgstr ""
+msgstr "반일 휴가를 신청하려면 '반일'을 체크하고 반일 날짜를 선택하세요"
 
 #: hrms/hr/doctype/leave_period/leave_period.py:35
 msgid "To date can not be equal or less than from date"
@@ -10661,7 +10661,7 @@ msgstr "종료일은 시작일과 같거나 앞설 수 없습니다"
 
 #: hrms/payroll/doctype/additional_salary/additional_salary.py:156
 msgid "To date can not be greater than employee's relieving date."
-msgstr ""
+msgstr "종료일은 직원 퇴직일보다 늦을 수 없습니다."
 
 #: hrms/hr/utils.py:195
 msgid "To date can not be less than from date"
@@ -10669,7 +10669,7 @@ msgstr "종료일은 시작일보다 앞설 수 없습니다"
 
 #: hrms/hr/utils.py:201
 msgid "To date can not greater than employee's relieving date"
-msgstr ""
+msgstr "종료일은 직원 퇴직일보다 늦을 수 없습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:214
 #: hrms/hr/doctype/leave_application/leave_application.py:230
@@ -10968,7 +10968,7 @@ msgstr "자기 평가 합계"
 
 #: hrms/hr/doctype/expense_claim/expense_claim.py:579
 msgid "Total advance amount cannot be greater than total sanctioned amount"
-msgstr ""
+msgstr "총 선급금 금액은 총 승인 금액을 초과할 수 없습니다"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:107
 msgid "Total allocated leaves are more than maximum allocation allowed for {0} leave type for employee {1} in the period"
@@ -10990,11 +10990,11 @@ msgstr "합계 (문자, 회사 통화)"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:401
 msgid "Total leaves allocated cannot exceed annual allocation of {0}."
-msgstr ""
+msgstr "총 배분 휴가는 연간 배분 {0}을(를) 초과할 수 없습니다."
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:287
 msgid "Total leaves allocated is mandatory for Leave Type {0}"
-msgstr ""
+msgstr "휴가 유형 {0}의 총 배분 휴가는 필수입니다"
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.py:500
 msgid "Total of all employee benefits cannot be greater that Max Benefits Amount {0}"
@@ -11018,7 +11018,7 @@ msgstr "이 직원의 연초(급여처리 기간 또는 회계연도)부터 현�
 
 #: hrms/hr/doctype/appraisal/appraisal.py:193 hrms/mixins/appraisal.py:17
 msgid "Total weightage for all {0} must add up to 100. Currently, it is {1}%"
-msgstr ""
+msgstr "모든 {0}의 총 가중치는 100이어야 합니다. 현재 {1}%입니다"
 
 #. Label of the total_working_days_per_year (Float) field in DocType 'Gratuity
 #. Rule'
@@ -11028,7 +11028,7 @@ msgstr "연간 총 근무일수"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:262
 msgid "Total working hours should not be greater than max working hours {0}"
-msgstr ""
+msgstr "총 근무시간은 최대 근무시간 {0}을(를) 초과할 수 없습니다"
 
 #. Option for the 'Mode of Travel' (Select) field in DocType 'Travel Itinerary'
 #: hrms/hr/doctype/travel_itinerary/travel_itinerary.json
@@ -11141,7 +11141,7 @@ msgstr "교육훈련(이번 주)"
 
 #: hrms/hr/utils.py:808
 msgid "Transactions cannot be created for an Inactive Employee {0}."
-msgstr ""
+msgstr "비활성 직원 {0}에 대한 거래를 생성할 수 없습니다."
 
 #. Label of the transfer_date (Date) field in DocType 'Employee Transfer'
 #: hrms/hr/doctype/employee_transfer/employee_transfer.json
@@ -11213,7 +11213,7 @@ msgstr "증빙 유형"
 
 #: hrms/hr/doctype/leave_application/leave_application_calendar.js:349
 msgid "Unable to load leave allocation details right now."
-msgstr ""
+msgstr "현재 휴가 배분 세부 정보를 불러올 수 없습니다."
 
 #: hrms/public/js/utils/index.js:208
 msgid "Unable to retrieve your location"
@@ -11243,7 +11243,7 @@ msgstr "검토중"
 
 #: hrms/hr/doctype/attendance/attendance.py:268
 msgid "Unlinked Attendance record from Employee Checkins: {}"
-msgstr ""
+msgstr "직원 체크인에서 출근기록 연결 해제: {}"
 
 #: hrms/hr/doctype/attendance/attendance.py:271
 msgid "Unlinked logs"
@@ -11361,7 +11361,7 @@ msgstr "업데이트 세금"
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:181
 msgid "Updated status from {0} to {1} for date {2} in the attendance record {3}"
-msgstr ""
+msgstr "출근기록 {3}의 {2} 날짜 상태가 {0}에서 {1}(으)로 업데이트되었습니다"
 
 #: hrms/hr/doctype/interview/interview.py:230
 msgid "Updated the Job Applicant status to {0}"
@@ -11369,11 +11369,11 @@ msgstr "입사지원자 상태를 {0}(으)로 업데이트했습니다"
 
 #: hrms/overrides/employee_master.py:77
 msgid "Updated the status of Job Offer {0} for the linked Job Applicant {1} to {2}"
-msgstr ""
+msgstr "연결된 지원자 {1}에 대한 채용 제안 {0}의 상태가 {2}(으)로 업데이트되었습니다"
 
 #: hrms/overrides/employee_master.py:63
 msgid "Updated the status of linked Job Applicant {0} to {1}"
-msgstr ""
+msgstr "연결된 지원자 {0}의 상태가 {1}(으)로 업데이트되었습니다"
 
 #. Name of a DocType
 #. Label of a Link in the Shift & Attendance Workspace
@@ -11431,7 +11431,7 @@ msgstr "공석"
 
 #: hrms/hr/doctype/staffing_plan/staffing_plan.js:81
 msgid "Vacancies cannot be lower than the current openings"
-msgstr ""
+msgstr "공석 수는 현재 모집 인원보다 적을 수 없습니다"
 
 #: hrms/hr/doctype/job_opening/job_opening.py:123
 msgid "Vacancies fulfilled"
@@ -11536,7 +11536,7 @@ msgstr "보라"
 
 #: hrms/patches/v15_0/notify_about_loan_app_separation.py:16
 msgid "WARNING: Loan Management module has been separated from ERPNext."
-msgstr ""
+msgstr "경고: 대출 관리 모듈이 ERPNext에서 분리되었습니다."
 
 #. Label of the wage_section (Section Break) field in DocType 'Korea Employment
 #. Profile'
@@ -11551,15 +11551,15 @@ msgstr "임금 유형"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:472
 msgid "Warning: Insufficient leave balance for Leave Type {0} in this allocation."
-msgstr ""
+msgstr "경고: 이 배분에서 휴가 유형 {0}의 잔여 휴가가 부족합니다."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:480
 msgid "Warning: Insufficient leave balance for Leave Type {0}."
-msgstr ""
+msgstr "경고: 휴가 유형 {0}의 잔여 휴가가 부족합니다."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:418
 msgid "Warning: Leave application contains following block dates"
-msgstr ""
+msgstr "경고: 휴가신청에 다음 차단일이 포함되어 있습니다"
 
 #: hrms/hr/doctype/shift_assignment/shift_assignment.py:114
 msgid "Warning: {0} already has an active Shift Assignment {1} for some/all of these dates."
@@ -11610,7 +11610,7 @@ msgstr "보상 휴가는 보상 휴가 요청 제출 시 자동으로 생성되�
 #. Referral'
 #: hrms/hr/doctype/employee_referral/employee_referral.json
 msgid "Why is this Candidate Qualified for this Position?"
-msgstr ""
+msgstr "이 지원자가 해당 직위에 적합한 이유는 무엇입니까?"
 
 #. Option for the 'Status' (Select) field in DocType 'Salary Slip'
 #. Option for the 'Status' (Select) field in DocType 'Salary Withholding'
@@ -11715,13 +11715,13 @@ msgstr "반차 근로시간 기준"
 #. DocType 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Working hours below which Absent is marked. (Zero to disable)"
-msgstr ""
+msgstr "결근으로 처리되는 근무시간 기준. (비활성화하려면 0 입력)"
 
 #. Description of the 'Working Hours Threshold for Half Day' (Float) field in
 #. DocType 'Shift Type'
 #: hrms/hr/doctype/shift_type/shift_type.json
 msgid "Working hours below which Half Day is marked. (Zero to disable)"
-msgstr ""
+msgstr "반일로 처리되는 근무시간 기준. (비활성화하려면 0 입력)"
 
 #. Label of the workplace (Data) field in DocType 'Korea Payroll Closing Draft'
 #. Label of the workplace (Data) field in DocType 'Korea Payroll Closing Review
@@ -11745,7 +11745,7 @@ msgstr "근무처 이름"
 
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.py:43
 msgid "Workplace Profile company must match Korea Employment Profile company."
-msgstr ""
+msgstr "사업장 프로필의 회사는 한국 고용 프로필의 회사와 일치해야 합니다."
 
 #. Option for the 'Type' (Select) field in DocType 'Training Event'
 #: hrms/hr/doctype/training_event/training_event.json
@@ -11788,7 +11788,7 @@ msgstr "차단일의 휴가를 승인할 권한이 없습니다"
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:79
 msgid "You are not present all day(s) between compensatory leave request days"
-msgstr ""
+msgstr "보상 휴가 요청 기간 동안 전일 출근하지 않은 날이 있습니다"
 
 #: hrms/payroll/doctype/gratuity_rule/gratuity_rule.py:48
 msgid "You can not define multiple slabs if you have a slab with no lower and upper limits."
@@ -11804,11 +11804,11 @@ msgstr "상위 회사 {4}의 인력계획 {3}에 따라 {2}에 대해 최대 {0}
 
 #: hrms/hr/doctype/leave_encashment/leave_encashment.py:75
 msgid "You can only submit Leave Encashment for a valid encashment amount"
-msgstr ""
+msgstr "유효한 현금화 금액에 대해서만 휴가 현금화를 제출할 수 있습니다"
 
 #: hrms/api/__init__.py:741
 msgid "You can only upload JPG, PNG, PDF, TXT or Microsoft documents."
-msgstr ""
+msgstr "JPG, PNG, PDF, TXT 또는 Microsoft 문서만 업로드할 수 있습니다."
 
 #: hrms/payroll/doctype/payroll_correction/payroll_correction.py:78
 msgid "You cannot reverse more than the total LWP days {0}. You have already reversed {1} days for this employee."
@@ -11817,7 +11817,7 @@ msgstr "총 무급결근일수 {0}보다 더 많이 환원할 수 없습니다. 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:457
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:620
 msgid "You do not have permission to complete this action"
-msgstr ""
+msgstr "이 작업을 완료할 권한이 없습니다"
 
 #: frontend/src/components/EmployeeAdvanceBalance.vue:26
 msgid "You have no advances"
@@ -11849,11 +11849,11 @@ msgstr "{1}에 대한 {0}을 아직 생성하지 않았습니다."
 
 #: hrms/overrides/employee_master.py:83
 msgid "You may add additional details, if any, and submit the offer."
-msgstr ""
+msgstr "추가 세부 정보가 있으면 입력한 후 제안을 제출하세요."
 
 #: hrms/hr/doctype/employee_checkin/employee_checkin.py:154
 msgid "You must be within {0} meters of your shift location to check in."
-msgstr ""
+msgstr "체크인하려면 교대 위치에서 {0}미터 이내에 있어야 합니다."
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:73
 msgid "You were only present for Half Day on {}. Cannot apply for a full day compensatory leave"
@@ -11861,11 +11861,11 @@ msgstr "{}에 반일 출근했습니다. 하루 전체의 보상 휴가를 신�
 
 #: hrms/hr/doctype/interview/interview.py:133
 msgid "Your Interview session is rescheduled from {0} {1} - {2} to {3} {4} - {5}"
-msgstr ""
+msgstr "면접 일정이 {0} {1} - {2}에서 {3} {4} - {5}(으)로 변경되었습니다"
 
 #: frontend/src/views/Login.vue:63
 msgid "Your password has expired. Please reset your password to continue"
-msgstr ""
+msgstr "비밀번호가 만료되었습니다. 계속하려면 비밀번호를 재설정하세요"
 
 #: hrms/hr/doctype/attendance_request/attendance_request.py:69
 msgid "action"
@@ -11873,7 +11873,7 @@ msgstr "작업"
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:85
 msgid "action must be one of approve_draft, reject_draft, request_changes."
-msgstr ""
+msgstr "action은 approve_draft, reject_draft, request_changes 중 하나여야 합니다."
 
 #: hrms/hr/doctype/compensatory_leave_request/compensatory_leave_request.py:121
 msgid "active"
@@ -11893,7 +11893,7 @@ msgstr "apply_plan.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:385
 msgid "apply_plan.contract_type must be korea_payroll_closing_draft_apply_plan_v1."
-msgstr ""
+msgstr "apply_plan.contract_type은 korea_payroll_closing_draft_apply_plan_v1이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:401
 msgid "apply_plan.docstatus must be 0."
@@ -11901,7 +11901,7 @@ msgstr "apply_plan.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:393
 msgid "apply_plan.requires_human_approval must be true."
-msgstr ""
+msgstr "apply_plan.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:391
 msgid "apply_plan.requires_runtime_apply must be true."
@@ -11909,7 +11909,7 @@ msgstr "apply_plan.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:389
 msgid "apply_plan.runtime_action must be preview_runtime_draft_apply."
-msgstr ""
+msgstr "apply_plan.runtime_action은 preview_runtime_draft_apply여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:387
 msgid "apply_plan.source_draft_contract_type must be korea_payroll_closing_draft_v1."
@@ -11917,7 +11917,7 @@ msgstr "apply_plan.source_draft_contract_type은 korea_payroll_closing_draft_v1�
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:399
 msgid "apply_plan.would_create_doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "apply_plan.would_create_doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #. Option for the 'Review Action' (Select) field in DocType 'Korea Payroll
 #. Closing Review Audit Log'
@@ -11951,11 +11951,11 @@ msgstr "audit_log.mutation_boundary는 audit_log_only_no_submit_no_send_no_provi
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:192
 msgid "audit_log.period_start must be on or before audit_log.period_end."
-msgstr ""
+msgstr "audit_log.period_start는 audit_log.period_end 이전이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:198
 msgid "audit_log.previous_status must be draft_pending_human_approval."
-msgstr ""
+msgstr "audit_log.previous_status는 draft_pending_human_approval이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:166
 msgid "audit_log.requires_human_approval must be true."
@@ -12003,27 +12003,27 @@ msgstr "doctype_insert_preview는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:407
 msgid "doctype_insert_preview.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "doctype_insert_preview.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:416
 msgid "doctype_insert_preview.fields must be a JSON object."
-msgstr ""
+msgstr "doctype_insert_preview.fields는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:443
 msgid "doctype_insert_preview.fields.docstatus must be 0."
-msgstr ""
+msgstr "doctype_insert_preview.fields.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:440
 msgid "doctype_insert_preview.fields.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "doctype_insert_preview.fields.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:411
 msgid "doctype_insert_preview.requires_runtime_apply must be true."
-msgstr ""
+msgstr "doctype_insert_preview.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:409
 msgid "doctype_insert_preview.runtime_action must be preview_only."
-msgstr ""
+msgstr "doctype_insert_preview.runtime_action은 preview_only여야 합니다."
 
 #. Option for the 'Status' (Select) field in DocType 'Korea Payroll Closing
 #. Draft'
@@ -12075,7 +12075,7 @@ msgstr "반차 상태 변경"
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:413
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:449
 msgid "mutation_boundary must remain draft_only_no_submit_no_approve_no_send."
-msgstr ""
+msgstr "mutation_boundary는 draft_only_no_submit_no_approve_no_send 상태를 유지해야 합니다."
 
 #: hrms/hr/doctype/department_approver/department_approver.py:103
 msgid "or for the Employee's Department: {0}"
@@ -12131,7 +12131,7 @@ msgstr "review_action.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:341
 msgid "review_action.audit_preview must be a JSON object."
-msgstr ""
+msgstr "review_action.audit_preview는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:282
 msgid "review_action.contract_type must be korea_payroll_closing_draft_review_action_v1."
@@ -12143,19 +12143,19 @@ msgstr "review_action.mutation_boundary는 human_review_only_no_submit_no_send_n
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:294
 msgid "review_action.requires_human_approval must be true."
-msgstr ""
+msgstr "review_action.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:288
 msgid "review_action.requires_runtime_apply must be true."
-msgstr ""
+msgstr "review_action.requires_runtime_apply는 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:286
 msgid "review_action.runtime_action must be preview_only."
-msgstr ""
+msgstr "review_action.runtime_action은 preview_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:302
 msgid "review_action.source_draft must be a JSON object."
-msgstr ""
+msgstr "review_action.source_draft는 JSON 객체여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:284
 msgid "review_action.source_draft_contract_type must be korea_payroll_closing_draft_runtime_insert_v1."
@@ -12167,11 +12167,11 @@ msgstr "review_action.would_set_status는 감시된 인사 검토 결과 상태�
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:351
 msgid "review_action.would_set_status must match audit_preview.would_set_status."
-msgstr ""
+msgstr "review_action.would_set_status는 audit_preview.would_set_status와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:292
 msgid "review_action.would_update_doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "review_action.would_update_doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/public/js/templates/feedback_summary.html:16
 msgid "reviews"
@@ -12183,7 +12183,7 @@ msgstr "source_draft.ai_role은 assistant_only여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:323
 msgid "source_draft.approver must match review_action.actor."
-msgstr ""
+msgstr "source_draft.approver는 review_action.actor와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:304
 msgid "source_draft.contract_type must be korea_payroll_closing_draft_runtime_insert_v1."
@@ -12195,7 +12195,7 @@ msgstr "source_draft.docstatus는 0이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:312
 msgid "source_draft.doctype must be Korea Payroll Closing Draft."
-msgstr ""
+msgstr "source_draft.doctype은 Korea Payroll Closing Draft여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:310
 msgid "source_draft.mutation_boundary must remain draft_only_no_submit_no_approve_no_send."
@@ -12203,23 +12203,23 @@ msgstr "source_draft.mutation_boundary는 draft_only_no_submit_no_approve_no_sen
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:318
 msgid "source_draft.requires_human_approval must be true."
-msgstr ""
+msgstr "source_draft.requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:308
 msgid "source_draft.requires_runtime_apply must be false."
-msgstr ""
+msgstr "source_draft.requires_runtime_apply는 false여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:306
 msgid "source_draft.runtime_action must be runtime_draft_created."
-msgstr ""
+msgstr "source_draft.runtime_action은 runtime_draft_created여야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:314
 msgid "source_draft.status must be draft_pending_human_approval."
-msgstr ""
+msgstr "source_draft.status는 draft_pending_human_approval이어야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.py:87
 msgid "status must stay within guarded human-review audit states."
-msgstr ""
+msgstr "status는 보호된 담당자 검토 감사 상태 내에 있어야 합니다."
 
 #: frontend/src/components/RequestActionSheet.vue:291
 msgid "submitted"
@@ -12227,11 +12227,11 @@ msgstr "제출됨"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:377
 msgid "target draft approver must match the review actor."
-msgstr ""
+msgstr "대상 초안의 승인자는 검토 담당자와 일치해야 합니다."
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:374
 msgid "target draft requires_human_approval must be true."
-msgstr ""
+msgstr "대상 초안의 requires_human_approval은 true여야 합니다."
 
 #: hrms/hr/page/organizational_chart/organizational_chart.js:30
 msgid "the selected company"
@@ -12255,7 +12255,7 @@ msgstr "{0} 및 {1}개 더"
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2624
 msgid "{0} <br> This error can be due to missing or deleted field."
-msgstr ""
+msgstr "{0} <br> 이 오류는 누락되거나 삭제된 필드로 인해 발생할 수 있습니다."
 
 #: hrms/hr/doctype/appraisal_cycle/appraisal_cycle.py:180
 msgid "{0} Appraisal(s) are not submitted yet"
@@ -12275,7 +12275,7 @@ msgstr "{0} 행 #{1}: 수식이 설정되어 있지만 급여항목 {3}에서 {2
 
 #: hrms/payroll/doctype/salary_structure/salary_structure.js:319
 msgid "{0} Row #{1}: {2} needs to be enabled for the formula to be considered."
-msgstr ""
+msgstr "{0} 행 #{1}: 수식을 적용하려면 {2}이(가) 활성화되어야 합니다."
 
 #: frontend/src/views/Notifications.vue:27
 msgid "{0} Unread"
@@ -12283,15 +12283,15 @@ msgstr "{0}개 읽지 않음"
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:237
 msgid "{0} already allocated for Employee {1} for period {2} to {3}"
-msgstr ""
+msgstr "{0}이(가) 직원 {1}의 {2}부터 {3}까지 기간에 이미 배분되었습니다"
 
 #: hrms/hr/utils.py:271
 msgid "{0} already exists for employee {1} and period {2}"
-msgstr ""
+msgstr "{0}이(가) 직원 {1}의 {2} 기간에 이미 존재합니다"
 
 #: hrms/hr/doctype/shift_assignment/shift_assignment.py:122
 msgid "{0} already has an active Shift Assignment {1} for some/all of these dates."
-msgstr ""
+msgstr "{0}은(는) 일부 또는 모든 날짜에 활성 교대 배정 {1}이(가) 이미 있습니다."
 
 #: hrms/hr/doctype/leave_application/leave_application.py:201
 msgid "{0} applicable after {1} working days"
@@ -12335,7 +12335,7 @@ msgstr "{0}은(는) 휴일이 아닙니다."
 
 #: hrms/hr/doctype/interview_feedback/interview_feedback.py:50
 msgid "{0} is not allowed to submit Interview Feedback for the Interview: {1}"
-msgstr ""
+msgstr "{0}은(는) 면접 {1}에 대한 면접 피드백을 제출할 권한이 없습니다"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:672
 msgid "{0} is not in Optional Holiday List"
@@ -12351,7 +12351,7 @@ msgstr "{1} 휴가 유형의 배정에서 {0}일의 휴가가 만료되어 다�
 
 #: hrms/hr/doctype/leave_allocation/leave_allocation.py:390
 msgid "{0} leaves were manually allocated by {1} on {2}"
-msgstr ""
+msgstr "{0}일의 휴가가 {2}에 {1}에 의해 수동으로 배분되었습니다"
 
 #: hrms/hr/doctype/training_feedback/training_feedback.py:33
 #: hrms/hr/doctype/training_result/training_result.py:32
@@ -12384,7 +12384,7 @@ msgstr "{3}의 자회사들에 대해 {2}에 {0}개 공석과 예산 {1}이 이�
 
 #: hrms/payroll/doctype/salary_component/salary_component.js:130
 msgid "{0} will be updated for the following Salary Structures: {1}."
-msgstr ""
+msgstr "{0}이(가) 다음 급여체계에 업데이트됩니다: {1}."
 
 #: hrms/hr/doctype/goal/goal_list.js:70
 msgid "{0} {1} {2}?"
@@ -12396,7 +12396,7 @@ msgstr "{0}. 자세한 내용은 오류 로그를 확인하세요."
 
 #: hrms/payroll/doctype/salary_slip/salary_slip.py:2285
 msgid "{0}: Employee email not found, hence email not sent"
-msgstr ""
+msgstr "{0}: 직원 이메일을 찾을 수 없어 이메일을 전송하지 않았습니다"
 
 #: hrms/hr/doctype/leave_application/leave_application.py:103
 msgid "{0}: From {0} of type {1}"

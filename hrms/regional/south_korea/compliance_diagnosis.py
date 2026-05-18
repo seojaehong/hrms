@@ -20,9 +20,25 @@
 
 from __future__ import annotations
 
+import importlib.util
 import re
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
+
+
+def _load_mask_helpers():
+    """kakao_notification.py에서 PII 마스킹 헬퍼를 지연 로드합니다.
+
+    hrms/__init__.py가 frappe를 import하므로 file-path 직접 로드.
+    Returns: (mask_korean_name, mask_phone_number) tuple.
+    """
+    _path = Path(__file__).resolve().with_name("kakao_notification.py")
+    _spec = importlib.util.spec_from_file_location("_kakao_notification_helpers", _path)
+    _mod = importlib.util.module_from_spec(_spec)
+    assert _spec.loader is not None
+    _spec.loader.exec_module(_mod)
+    return _mod.mask_korean_name, _mod.mask_phone_number
 
 # ---------------------------------------------------------------------------
 # 규칙 정의 (Diagnosis Rule Definitions)
@@ -682,6 +698,7 @@ def run_full_compliance_diagnosis(
     workplace: str,
     as_of_date: str,
     data_loader: DataLoader,
+    mask_pii: bool = True,
 ) -> dict[str, Any]:
     """전체 컴플라이언스 진단 실행.
 
@@ -693,6 +710,8 @@ def run_full_compliance_diagnosis(
         workplace: 사업장명.
         as_of_date: 진단 기준일 (YYYY-MM-DD).
         data_loader: DataLoader 프로토콜 구현체 (Frappe 또는 mock).
+        mask_pii: findings의 직원명(employee_name) 마스킹 여부 (기본 True).
+            감사(audit) 목적으로 원본 확인이 필요한 경우 False로 명시적 해제.
 
     Returns:
         {
@@ -710,6 +729,7 @@ def run_full_compliance_diagnosis(
             "overall_status": "good" | "needs_attention" | "high_risk",
             "high_severity_findings": int,
             "recommendation_summary": str,
+            "pii_masked": bool,
         }
 
     주의:
@@ -796,6 +816,10 @@ def run_full_compliance_diagnosis(
     overall_status = _compute_overall_status(diagnoses)
     recommendation_summary = _build_recommendation_summary(diagnoses, overall_status)
 
+    # PII 마스킹 — findings의 직원명 마스킹 (기본 ON, audit 시 명시적 해제)
+    if mask_pii:
+        _mask_findings_pii(diagnoses)
+
     return {
         "contract_type": "korea_compliance_diagnosis_v1",
         "as_of_date": as_of_date,
@@ -805,12 +829,31 @@ def run_full_compliance_diagnosis(
         "overall_status": overall_status,
         "high_severity_findings": high_severity_findings,
         "recommendation_summary": recommendation_summary,
+        "pii_masked": mask_pii,
     }
 
 
 # ---------------------------------------------------------------------------
 # 내부 헬퍼 (Internal Helpers)
 # ---------------------------------------------------------------------------
+
+
+def _mask_findings_pii(diagnoses: dict[str, dict[str, Any]]) -> None:
+    """diagnoses 내 모든 finding의 employee_name을 in-place 마스킹합니다.
+
+    mask_pii=True(기본값)일 때 run_full_compliance_diagnosis 종료 시점에 호출됩니다.
+    kakao_notification의 mask_korean_name 헬퍼를 사용합니다.
+    """
+    try:
+        mask_korean_name, _ = _load_mask_helpers()
+    except Exception:
+        # 마스킹 헬퍼 로드 실패 시 안전하게 건너뜀 (로그만 남기고 진단 결과는 반환)
+        return
+
+    for diagnosis in diagnoses.values():
+        for finding in diagnosis.get("findings", []):
+            if finding.get("employee_name"):
+                finding["employee_name"] = mask_korean_name(finding["employee_name"])
 
 
 def _make_result(

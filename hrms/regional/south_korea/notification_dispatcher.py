@@ -20,6 +20,7 @@ import frappe
 
 from hrms.regional.south_korea.kakao_notification import (
 	list_alimtalk_templates,
+	mask_phone_number,
 	preview_kakao_alimtalk,
 )
 
@@ -238,10 +239,13 @@ def _insert_pending_comment(
 	if missing_variables:
 		missing_note = f"\n미입력 변수: {', '.join(missing_variables)} (발송 전 확인 필요)"
 
+	# PII 마스킹: 수신자 전화번호를 Comment 본문에 그대로 노출하지 않음.
+	masked_to = mask_phone_number(to) if to else ""
+
 	content = (
 		f"[카카오 알림톡 발송 대기]\n"
 		f"템플릿: {template_id}\n"
-		f"수신자: {to}\n"
+		f"수신자: {masked_to}\n"
 		f"미리보기:\n{preview_content}"
 		f"{missing_note}\n\n"
 		f"실제 발송은 api_send_kakao_alimtalk(human_approved=True) 를 호출해 주세요."

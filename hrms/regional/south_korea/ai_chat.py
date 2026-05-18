@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -313,6 +314,48 @@ def call_llm_with_context(
     raise NotImplementedError("LLM integration is v2 (연말 에이전트)")
 
 
+def _mask_pii_in_text(text: str) -> str:
+    """감사 로그 저장 전 텍스트 내 PII 마스킹.
+
+    적용 순서:
+    1. 주민등록번호 (6자리-7자리) → 앞부분-1******
+    2. 휴대폰 번호 (010/011/016/017/018/019 포함) → 010-****-5678
+    3. 이메일 → a**@domain
+
+    citations (법령 조문)은 이 함수를 통과하지 않으므로 별도 호출 없음.
+    """
+    if not text:
+        return text
+
+    # 주민등록번호: NNNNNN-NNNNNNN 또는 NNNNNNNNNNNNN (13자리 연속)
+    text = re.sub(
+        r"\b(\d{6})-(\d{7})\b",
+        lambda m: f"{m.group(1)}-{m.group(2)[0]}{'*' * 6}",
+        text,
+    )
+    text = re.sub(
+        r"\b(\d{6})(\d{7})\b",
+        lambda m: f"{m.group(1)}{m.group(2)[0]}{'*' * 6}",
+        text,
+    )
+
+    # 휴대폰: 010-NNNN-NNNN / 01012345678 / 010 1234 5678
+    text = re.sub(
+        r"\b(01[016789])[-\s]?(\d{3,4})[-\s]?(\d{4})\b",
+        lambda m: f"{m.group(1)}-{'*' * len(m.group(2))}-{m.group(3)}",
+        text,
+    )
+
+    # 이메일
+    text = re.sub(
+        r"\b([A-Za-z0-9._%+\-]{2,})(@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})\b",
+        lambda m: f"{m.group(1)[0]}{'*' * (len(m.group(1)) - 1)}{m.group(2)}",
+        text,
+    )
+
+    return text
+
+
 def store_chat_audit_log(
     session_id: str,
     user_id: str,
@@ -326,13 +369,16 @@ def store_chat_audit_log(
     v2: Frappe DB / audit 테이블로 영구 저장.
 
     # TODO v2: frappe.get_doc("Korea AI Chat Log").insert()
+
+    PII 보호: question/answer 저장 시 전화번호·주민번호·이메일을 마스킹합니다.
+    citations는 법령 조문이므로 마스킹하지 않습니다.
     """
     entry = {
         "log_id": str(uuid.uuid4()),
         "session_id": session_id,
         "user_id": user_id,
-        "question": question,
-        "answer": answer,
+        "question": _mask_pii_in_text(question),
+        "answer": _mask_pii_in_text(answer),
         "citations": citations,
         "ai_role": AI_ROLE,
         "no_mutation_performed": True,

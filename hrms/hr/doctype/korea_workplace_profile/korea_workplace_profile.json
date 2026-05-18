@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-04 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "branch",
+  "business_registration_number",
+  "workplace_management_number",
+  "workplace_name",
+  "regular_employee_count",
+  "policy_section",
+  "leave_grant_basis",
+  "weekly_holiday",
+  "standard_work_hours_per_day",
+  "standard_work_hours_per_week",
+  "break_minutes_per_day",
+  "closing_section",
+  "attendance_cutoff_day",
+  "payroll_cutoff_day",
+  "payroll_payment_day",
+  "uses_flexible_work",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "description": "Korean business registration number in 000-00-00000 format.",
+   "fieldname": "business_registration_number",
+   "fieldtype": "Data",
+   "label": "Business Registration Number"
+  },
+  {
+   "description": "Korea social insurance workplace management number; digits only.",
+   "fieldname": "workplace_management_number",
+   "fieldtype": "Data",
+   "label": "Workplace Management Number"
+  },
+  {
+   "fieldname": "workplace_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workplace Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "regular_employee_count",
+   "fieldtype": "Int",
+   "label": "Regular Employee Count"
+  },
+  {
+   "fieldname": "policy_section",
+   "fieldtype": "Section Break",
+   "label": "Korean Labor Policy"
+  },
+  {
+   "default": "Hire Date",
+   "fieldname": "leave_grant_basis",
+   "fieldtype": "Select",
+   "label": "Leave Grant Basis",
+   "options": "Hire Date\nFiscal Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "weekly_holiday",
+   "fieldtype": "Data",
+   "label": "Weekly Holiday"
+  },
+  {
+   "default": "8",
+   "fieldname": "standard_work_hours_per_day",
+   "fieldtype": "Float",
+   "label": "Standard Work Hours Per Day"
+  },
+  {
+   "default": "40",
+   "fieldname": "standard_work_hours_per_week",
+   "fieldtype": "Float",
+   "label": "Standard Work Hours Per Week"
+  },
+  {
+   "default": "60",
+   "fieldname": "break_minutes_per_day",
+   "fieldtype": "Int",
+   "label": "Break Minutes Per Day"
+  },
+  {
+   "fieldname": "closing_section",
+   "fieldtype": "Section Break",
+   "label": "Closing Rules"
+  },
+  {
+   "fieldname": "attendance_cutoff_day",
+   "fieldtype": "Int",
+   "label": "Attendance Cutoff Day"
+  },
+  {
+   "fieldname": "payroll_cutoff_day",
+   "fieldtype": "Int",
+   "label": "Payroll Cutoff Day"
+  },
+  {
+   "fieldname": "payroll_payment_day",
+   "fieldtype": "Int",
+   "label": "Payroll Payment Day"
+  },
+  {
+   "default": "0",
+   "fieldname": "uses_flexible_work",
+   "fieldtype": "Check",
+   "label": "Uses Flexible Work"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Korea Workplace Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "workplace_name"
+}

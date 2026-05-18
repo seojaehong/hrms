@@ -808,167 +808,6 @@ components:
 }
 ```
 
-### 8.7 연말정산 결과 import API
-
-#### 목적
-- 외부 급여엔진이 계산한 연말정산 결과를 Frappe Salary Slip에 반영한다.
-- **7단계 계산 로직 자체는 engine-side SoT**로 유지한다.
-- Frappe는 결과 수신, 링크, 감사 추적만 수행한다.
-
-#### 엔드포인트
-- Method: `POST`
-- Path: `/api/method/hrms.api.korea_integration.import_year_end_settlement_result`
-
-#### JSON Schema (request)
-
-```json
-{
-  "$id": "https://winners.example/schemas/year-end-settlement-import-request.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "YearEndSettlementImportRequest",
-  "type": "object",
-  "required": [
-    "run_id",
-    "employee_id",
-    "settlement_year",
-    "settlement_kind",
-    "applied_pay_year_month",
-    "prepaid_tax",
-    "determined_tax",
-    "adjustment_tax"
-  ],
-  "properties": {
-    "run_id": { "type": "string" },
-    "employee_id": { "type": "string" },
-    "settlement_year": { "type": "integer", "minimum": 2000 },
-    "settlement_kind": {
-      "type": "string",
-      "enum": ["annual_february", "mid_year_termination"]
-    },
-    "applied_pay_year_month": {
-      "type": "string",
-      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
-    },
-    "salary_slip_external_ref": { "type": ["string", "null"] },
-    "prepaid_tax": { "type": "number", "description": "기납부세액" },
-    "determined_tax": { "type": "number", "description": "결정세액" },
-    "adjustment_tax": { "type": "number", "description": "차감징수세액" },
-    "local_income_tax": { "type": ["number", "null"] },
-    "engine_version": { "type": ["string", "null"] },
-    "ruleset_version": { "type": ["string", "null"] },
-    "note": { "type": ["string", "null"] }
-  },
-  "additionalProperties": false,
-  "not": {
-    "anyOf": [
-      { "required": ["resident_registration_number"] },
-      { "required": ["foreigner_registration_number"] },
-      { "required": ["bank_account_number"] },
-      { "required": ["address"] }
-    ]
-  }
-}
-```
-
-#### JSON Schema (response)
-
-```json
-{
-  "$id": "https://winners.example/schemas/year-end-settlement-import-response.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "YearEndSettlementImportResponse",
-  "type": "object",
-  "required": ["status", "employee_id", "settlement_year", "applied_pay_year_month"],
-  "properties": {
-    "status": { "type": "string", "enum": ["received", "updated", "rejected"] },
-    "employee_id": { "type": "string" },
-    "settlement_year": { "type": "integer" },
-    "applied_pay_year_month": { "type": "string" },
-    "salary_slip": { "type": ["string", "null"] },
-    "korea_calc_reference": { "type": ["string", "null"] },
-    "message": { "type": ["string", "null"] }
-  },
-  "additionalProperties": false
-}
-```
-
-### 8.8 퇴직금 결과 import API
-
-#### 목적
-- 외부 급여엔진이 계산한 퇴직금/퇴직소득세 결과를 Frappe로 수신한다.
-- **평균임금, 근속연수 산정, 퇴직소득세 계산은 engine-side SoT**로 유지한다.
-- Frappe는 별도 `Korea Severance Slip` 문서로 반영/감사한다.
-
-#### 엔드포인트
-- Method: `POST`
-- Path: `/api/method/hrms.api.korea_integration.import_severance_result`
-
-#### JSON Schema (request)
-
-```json
-{
-  "$id": "https://winners.example/schemas/severance-result-import-request.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "SeveranceResultImportRequest",
-  "type": "object",
-  "required": [
-    "run_id",
-    "employee_id",
-    "retirement_date",
-    "average_wage",
-    "service_years",
-    "severance_pay",
-    "severance_income_tax",
-    "net_pay"
-  ],
-  "properties": {
-    "run_id": { "type": "string" },
-    "employee_id": { "type": "string" },
-    "retirement_date": { "type": "string", "format": "date" },
-    "linked_salary_slip": { "type": ["string", "null"] },
-    "average_wage": { "type": "number", "description": "평균임금" },
-    "service_years": { "type": "number", "description": "근속연수" },
-    "severance_pay": { "type": "number", "description": "퇴직금" },
-    "severance_income_tax": { "type": "number", "description": "퇴직소득세" },
-    "local_income_tax": { "type": ["number", "null"] },
-    "net_pay": { "type": "number", "description": "실지급액" },
-    "engine_version": { "type": ["string", "null"] },
-    "ruleset_version": { "type": ["string", "null"] },
-    "note": { "type": ["string", "null"] }
-  },
-  "additionalProperties": false,
-  "not": {
-    "anyOf": [
-      { "required": ["resident_registration_number"] },
-      { "required": ["foreigner_registration_number"] },
-      { "required": ["bank_account_number"] },
-      { "required": ["address"] }
-    ]
-  }
-}
-```
-
-#### JSON Schema (response)
-
-```json
-{
-  "$id": "https://winners.example/schemas/severance-result-import-response.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "SeveranceResultImportResponse",
-  "type": "object",
-  "required": ["status", "employee_id", "retirement_date"],
-  "properties": {
-    "status": { "type": "string", "enum": ["received", "updated", "rejected"] },
-    "employee_id": { "type": "string" },
-    "retirement_date": { "type": "string", "format": "date" },
-    "korea_severance_slip": { "type": ["string", "null"] },
-    "korea_calc_reference": { "type": ["string", "null"] },
-    "message": { "type": ["string", "null"] }
-  },
-  "additionalProperties": false
-}
-```
-
 ---
 
 ## 9. Custom Doctype 설계
@@ -1028,39 +867,7 @@ components:
 | validation_message | Long Text | 검증 결과 |
 | synced_at | Datetime | 반영 시각 |
 
-### 9.3 Korea Severance Slip
-
-#### 목적
-- 퇴직금/퇴직소득세 결과를 표준 Salary Slip과 분리해 저장한다.
-- 퇴직자 단위 audit trail과 재전송 기준 문서로 사용한다.
-
-#### 권장 주요 필드
-| fieldname | type | 설명 |
-|---|---|---|
-| employee | Link(Employee) | 직원 |
-| retirement_date | Date | 퇴직일 |
-| linked_salary_slip | Link(Salary Slip) | 퇴직월 급여 Slip 연결(있을 때만) |
-| average_wage | Currency | 평균임금 |
-| service_years | Float | 근속연수 |
-| severance_pay | Currency | 퇴직금 |
-| severance_income_tax | Currency | 퇴직소득세 |
-| local_income_tax | Currency | 지방소득세 |
-| net_pay | Currency | 실지급액 |
-| external_run_id | Data | 외부 엔진 실행 ID |
-| ruleset_version | Data | 룰 버전 |
-| linked_calc_reference | Link(Korea Calc Reference) | 원본 payload 연결 |
-
-### 9.4 PII 금지 적용 결과
-
-1. `docs/korea/10-frappe-customization.md`의 `kr_resident_id` 저장 제안은 **본 계약에서 reject** 한다.
-2. Employee 확장 필드에는 주민번호/외국인등록번호/계좌/주소 전문을 저장하지 않는다.
-3. 엔진 측 식별 보강이 필요할 때는 **privacy_broker 경유 일회성 조회 패턴**을 사용한다.
-   - Frappe → privacy broker: `employee_id`, `employee_number`, `company`, `lookup_purpose`
-   - privacy broker → engine/Frappe: `broker_lookup_id`, `subject_match_status`, `expires_at`
-   - 주민번호 원문/부분값/복원 가능한 토큰은 Frappe에 저장하지 않는다.
-4. `Korea Calc Reference`에는 broker lookup 결과가 필요하면 `broker_lookup_id`와 성공/실패 상태만 남긴다.
-
-### 9.5 표준 Salary Slip vs Korea Salary Slip 충돌 룰
+### 9.3 표준 Salary Slip vs Korea Salary Slip 충돌 룰
 
 1. **한국 급여 결과 값은 외부 엔진이 우선**
 2. 표준 `Salary Slip`의 계산 필드와 `Korea Salary Slip Extension` 값이 다르면
@@ -1083,8 +890,6 @@ components:
 - `notify_worksite_master_change()`
 - `apply_worksite_master_from_yaml()`
 - `import_payroll_result()`
-- `import_year_end_settlement_result()`
-- `import_severance_result()`
 
 ### 기존 레포 구조와의 연결 포인트
 - Employee 조회: ERPNext Employee + HRMS override 사용 가능
@@ -1096,40 +901,28 @@ components:
 
 ## 11. docs/korea/ 와의 정합성 체크 표
 
-> 실파일 확인 기준: `origin/feature/korea-payroll-docs` 브랜치의 `docs/korea/README.md` + `01`~`10` 문서.
+> 주의: 현재 레포에는 `docs/korea/` 문서 파일이 아직 존재하지 않는다. 아래 표는 PM 지시에서 언급한 `docs/korea/*`를 기준 문서로 간주한 정합성 매핑이다.
 
-| docs/korea 항목 | 핵심 주제 | 본 계약 반영 위치 | 정합성 판단 |
-|---|---|---|---|
-| `docs/korea/README.md` | 전체 로드맵, 단계별 우선순위, Korea 모듈 범위 | §1 결론, §2 범위와 비범위, §3 SoT 분할 | **부분 정합** — 계약 범위는 맞지만 README의 Phase 2~4 계산/신고 범위 전체를 아직 담지 않음 |
-| `docs/korea/01-salary-structure.md` | 과세/비과세/공제 급여 구성요소 | §8 `import_payroll_result`, §9 `Korea Salary Slip Extension`, §10 `Korea Calc Reference` | **정합** — 명세서 표시·과세/비과세·공제 구조와 직접 연결 |
-| `docs/korea/02-social-insurance.md` | 4대보험 요율·면제·정산 규칙 | §8 `import_payroll_result`, §10 `Korea Calc Reference` | **부분 정합** — 결과 수신 필드는 있으나 요율표/면제판정/연말정산 입력 계약은 없음 |
-| `docs/korea/03-income-tax.md` | 간이세액표·맞춤 원천징수·지방소득세 | §8 `import_payroll_result`, §10 `Korea Calc Reference` | **부분 정합** — 원천세 결과 수신은 있으나 간이세액표 lookup 변수와 지방소득세 세분 필드가 비어 있음 |
-| `docs/korea/04-year-end-settlement.md` | 연말정산 7단계 계산 | §8.7 `import_year_end_settlement_result`, §9.2 `Korea Calc Reference` | **정합** — Frappe 측 범위인 결과 import 계약을 추가했고, 7단계 계산은 engine-side SoT로 분리 |
-| `docs/korea/05-severance.md` | 퇴직금·퇴직소득세 계산 | §8.8 `import_severance_result`, §9.3 `Korea Severance Slip`, §9.2 `Korea Calc Reference` | **정합** — Frappe 측 범위인 severance 결과 import·별도 slip·audit 연결을 반영했고 계산 로직은 engine-side SoT로 분리 |
-| `docs/korea/06-minimum-wage.md` | 최저임금 검증·209시간 기준 | 직접 반영 없음 | **불일치/누락** — minimum wage compliance 검증 결과를 주고받는 계약 부재 |
-| `docs/korea/07-working-hours.md` | 근로시간·가산수당·주휴수당 | §6 `export_time_and_leave` | **부분 정합** — 시간 분리 필드는 있으나 주휴수당/통상시급 산정 입력은 명시되지 않음 |
-| `docs/korea/08-daily-workers.md` | 일용직 세금·보험·분기 신고 | §5 `export_employee_master`, §8 `import_payroll_result` | **부분 정합** — 일용직 구분 enum은 있으나 일급·분기신고·de minimis 규칙용 계약 필드 없음 |
-| `docs/korea/09-foreign-workers.md` | 외국인 단일세율·비자별 보험 예외 | §5 `export_employee_master` | **부분 정합** — `visa_status_code`는 있으나 flat tax/연금협정/고용보험 opt-in 필드가 없음 |
-| `docs/korea/10-frappe-customization.md` | 커스텀 필드, Salary Slip 확장, 훅/리포트 | §9 Custom Doctype 설계 전반, §9.4 PII 금지 적용 결과 | **부분 정합** — 확장 방향은 유지하되 `kr_resident_id` 저장 제안은 reject하고 privacy_broker 일회성 조회 패턴으로 대체 |
-
-| 어긋난/누락 항목 | 관련 docs/korea 문서 | 영향 범위 | 우선순위 |
-|---|---|---|---|
-| 4대보험 요율표·면제판정·보수총액정산 입력 계약 없음 | `02-social-insurance.md` | 보험 계산근거를 Frappe에서 추적/감사하기 어려움 | 중간 |
-| 간이세액표 lookup 변수·지방소득세 세분 필드 없음 | `03-income-tax.md` | 소득세 계산 근거와 결과 검증 포인트 부족 | 중간 |
-| 최저임금 검증 결과 계약 없음 | `06-minimum-wage.md` | 계산 후 compliance check 전달 경로 없음 | 중간 |
-| 일용직 전용 일급/분기신고 payload 없음 | `08-daily-workers.md` | 일용직을 일반 근로자와 구분 처리하기 어려움 | 중간 |
-| 외국인 flat tax/연금협정/임의가입 상태 필드 없음 | `09-foreign-workers.md` | 외국인 예외 규칙을 계약 레벨에서 재현 불가 | 중간 |
-| 주휴수당·통상시급 산정 입력 필드 없음 | `07-working-hours.md` | 근로시간 export만으로 가산수당 산정 근거가 불완전 | 낮음 |
+| docs/korea 항목 | 반영 위치 | 표현 방식 |
+|---|---|---|
+| `docs/korea/01 한국 명세서 양식 기준` | `Korea Salary Slip Extension`, `import_payroll_result` | 과세/비과세/공제/실지급액 구조로 표현 |
+| `docs/korea/07 근로시간 기준` | `export_time_and_leave` | `regular_hours`, `overtime_hours`, `night_hours`, `holiday_hours`로 분리 |
+| 직원 기본 정보 문서 | `export_employee_master` | 사번/이름/입퇴사일/부서/사업장/직급/근무형태 |
+| 휴가 사용 기준 문서 | `export_time_and_leave.leave_records` | 연차/병가/경조사 내역 |
+| 사업장 기준 문서 | `notify_worksite_master_change`, `apply_worksite_master_from_yaml` | 사업장 마스터 양방향 sync, YAML 우선 |
+| 급여 결과 수신 문서 | `import_payroll_result` | 외부 엔진 결과를 Salary Slip 계층으로 push |
+| 감사/추적 기준 문서 | `Korea Calc Reference` | 외부 결과 캐시와 감사 로그 기준 |
+| PII 정책 문서 | 전 API 공통 보안 규칙 | schema 차원에서 금지 필드 배제 |
 
 ---
 
 ## 12. 권고
 
-지금 단계에서는 Frappe 측 계약에서 **높음 우선순위 3건을 닫았고**, 다음은 중간 우선순위 정리로 가는 것이 맞다.
+지금 단계에서는 이 문서로 계약을 먼저 고정하고, 다음 순서로 가는 것이 맞다.
 
-1. `docs/korea/02-social-insurance.md` 기준 요율표·면제판정·보수총액정산 입력 계약 추가
-2. `docs/korea/03-income-tax.md` 기준 간이세액표 lookup 변수·지방소득세 세분 필드 추가
-3. `docs/korea/06-minimum-wage.md` 기준 compliance 결과 import contract 추가
-4. 실제 구현 전 PII 차단 테스트 케이스와 privacy_broker 경유 로그 정책 확정
+1. `docs/korea/` 문서가 실제 레포에 반영되면 정합성 표 보정
+2. `hrms/api/korea_integration.py` 초안 구현
+3. Custom DocType 정의서(JSON/메타 초안) 작성
+4. 실제 구현 전 PII 차단 테스트 케이스 추가
 
-이상으로 Frappe 측 계약 범위는 현재 사이클 기준으로 문서 고정한다.
+이상으로 Frappe 측 계약 범위는 문서로 고정한다.

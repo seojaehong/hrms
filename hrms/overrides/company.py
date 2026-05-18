@@ -2,6 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 import json
+from pathlib import Path
 
 import frappe
 from frappe import _
@@ -25,30 +26,53 @@ def delete_company_fixtures():
 	)
 
 	for country in countries:
-		try:
-			module_name = f"hrms.regional.{frappe.scrub(country)}.setup.uninstall"
-			frappe.get_attr(module_name)()
-		except (ImportError, AttributeError):
-			# regional file or method does not exist
-			pass
-		except Exception as e:
-			frappe.log_error("Unable to delete country fixtures for Frappe HR")
-			msg = _("Failed to delete defaults for country {0}.").format(frappe.bold(country))
-			msg += "<br><br>" + _("{0}: {1}").format(frappe.bold(_("Error")), get_error_message(e))
-			frappe.throw(msg, title=_("Country Fixture Deletion Failed"))
+		for slug in get_regional_country_modules(country):
+			try:
+				module_name = f"hrms.regional.{slug}.setup.uninstall"
+				frappe.get_attr(module_name)()
+				break
+			except (ImportError, AttributeError):
+				# regional file or method does not exist
+				continue
+			except Exception as e:
+				frappe.log_error("Unable to delete country fixtures for Frappe HR")
+				msg = _("Failed to delete defaults for country {0}.").format(frappe.bold(country))
+				msg += "<br><br>" + _("{0}: {1}").format(frappe.bold(_("Error")), get_error_message(e))
+				frappe.throw(msg, title=_("Country Fixture Deletion Failed"))
+
+
+def get_regional_country_modules(country):
+	base_slug = frappe.scrub(country)
+	canonical_aliases = {
+		"korea,_republic_of": ["south_korea", "korea_republic_of"],
+		"korea_republic_of": ["south_korea", "korea_republic_of"],
+	}
+	candidates = canonical_aliases.get(base_slug, [base_slug])
+	if "," in base_slug:
+		candidates.append(base_slug.replace(",_", "_").replace(",", ""))
+
+	regional_root = Path(frappe.get_app_path("hrms", "regional"))
+	modules = []
+	for slug in candidates:
+		if slug and slug not in modules and (regional_root / slug).exists():
+			modules.append(slug)
+	return modules
+
 
 
 def run_regional_setup(country):
-	try:
-		module_name = f"hrms.regional.{frappe.scrub(country)}.setup.setup"
-		frappe.get_attr(module_name)()
-	except ImportError:
-		pass
-	except Exception as e:
-		frappe.log_error("Unable to setup country fixtures for Frappe HR")
-		msg = _("Failed to setup defaults for country {0}.").format(frappe.bold(country))
-		msg += "<br><br>" + _("{0}: {1}").format(frappe.bold(_("Error")), get_error_message(e))
-		frappe.throw(msg, title=_("Country Setup failed"))
+	for slug in get_regional_country_modules(country):
+		try:
+			module_name = f"hrms.regional.{slug}.setup.setup"
+			frappe.get_attr(module_name)()
+			return
+		except ImportError:
+			continue
+		except Exception as e:
+			frappe.log_error("Unable to setup country fixtures for Frappe HR")
+			msg = _("Failed to setup defaults for country {0}.").format(frappe.bold(country))
+			msg += "<br><br>" + _("{0}: {1}").format(frappe.bold(_("Error")), get_error_message(e))
+			frappe.throw(msg, title=_("Country Setup failed"))
 
 
 def get_error_message(error) -> str:
@@ -74,8 +98,9 @@ def make_salary_components(country):
 		file_path = frappe.get_app_path("hrms", "payroll", "data", file_name)
 		docs.extend(json.loads(read_data_file(file_path)))
 
-	file_path = frappe.get_app_path("hrms", "regional", frappe.scrub(country), "data", file_name)
-	docs.extend(json.loads(read_data_file(file_path)))
+	for slug in get_regional_country_modules(country):
+		file_path = frappe.get_app_path("hrms", "regional", slug, "data", file_name)
+		docs.extend(json.loads(read_data_file(file_path)))
 
 	for d in docs:
 		try:

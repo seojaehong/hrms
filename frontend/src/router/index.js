@@ -6,6 +6,9 @@ import leaveRoutes from "./leaves"
 import claimRoutes from "./claims"
 import employeeAdvanceRoutes from "./advances"
 import salarySlipRoutes from "./salary_slips"
+import koreaApprovalInboxRoutes from "./koreaApprovalInbox"
+import koreaRoutes from "./korea"
+import koreaSubscriptionRoutes from "./korea_subscription"
 
 const routes = [
 	{
@@ -45,7 +48,62 @@ const routes = [
 				name: "SalarySlipsDashboard",
 				component: () => import("@/views/salary_slip/Dashboard.vue"),
 			},
+			{
+				path: "/dashboard/korea-payroll-closing",
+				name: "KoreaPayrollClosingDashboard",
+				component: () => import("@/views/KoreaPayrollClosing.vue"),
+			},
+			{
+				path: "/korea-payroll-closing-session/:name",
+				name: "KoreaPayrollClosingSessionPreview",
+				component: () => import("@/views/KoreaPayrollClosing.vue"),
+			},
+			{
+				path: "/dashboard/korea-payroll-review-audit-logs",
+				name: "KoreaPayrollReviewAuditLogs",
+				component: () => import("@/views/KoreaPayrollReviewAuditLogs.vue"),
+			},
+			{
+				path: "/korea-payroll-review-audit-logs/:name",
+				name: "KoreaPayrollReviewAuditLogDetail",
+				component: () => import("@/views/KoreaPayrollReviewAuditLogDetail.vue"),
+			},
+			{
+				path: "/dashboard/korea-annual-leave",
+				name: "KoreaAnnualLeaveDashboard",
+				component: () => import("@/views/KoreaAnnualLeaveDashboard.vue"),
+			},
+			{
+				path: "/korea-annual-leave/:employeeId",
+				name: "KoreaAnnualLeaveDetail",
+				component: () => import("@/views/KoreaAnnualLeaveDetail.vue"),
+			},
+			{
+				path: "/dashboard/korea-attendance",
+				name: "KoreaAttendanceDashboard",
+				component: () => import("@/views/KoreaAttendanceDashboard.vue"),
+			},
+			{
+				path: "/dashboard/korea-mobile-checkin",
+				name: "KoreaMobileCheckin",
+				component: () => import("@/views/KoreaMobileCheckin.vue"),
+			},
+			{
+				path: "/dashboard/korea-ai-chat",
+				name: "KoreaAIChat",
+				component: () => import("@/views/KoreaAIChat.vue"),
+			},
 		],
+	},
+	{
+		path: "/search",
+		name: "KoreaGlobalSearch",
+		component: () => import("@/views/KoreaGlobalSearch.vue"),
+	},
+	{
+		path: "/offline",
+		name: "Offline",
+		component: () => import("@/views/Offline.vue"),
 	},
 	{
 		path: "/login",
@@ -77,6 +135,9 @@ const routes = [
 	...claimRoutes,
 	...employeeAdvanceRoutes,
 	...salarySlipRoutes,
+	...koreaApprovalInboxRoutes,
+	...koreaRoutes,
+	...koreaSubscriptionRoutes,
 ]
 
 const router = createRouter({

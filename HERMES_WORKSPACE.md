@@ -1,0 +1,229 @@
+# Hermes HRMS Workspace Notes
+
+Workspace
+- Repo: `/home/ubuntu/workspaces/seojaehong-hrms-100h`
+- Remote: `seojaehong/hrms`
+- Primary base branch: `develop`
+- Operating model: 1,000-hour Korea HRMS SaaS commercialization + Agentic HR runway.
+- Runtime baseline: Docker/Bench runtime when needed; static Vercel preview is used only for frontend/UI smoke checks.
+
+Current source of truth
+- Uploaded guide: Korea HRMS SaaS 1,000h commercialization and AI-agentization roadmap.
+- Active correction snapshot: `.hermes/plans/2026-05-09_015000-korea-hrms-1000h-autonomous-runway-correction.md`
+- Gate 1 completion snapshot: `.hermes/plans/2026-05-08_162000-gate-1-runtime-read-ui-bridge-snapshot.md`
+
+Current verified state
+- `develop` includes Gate 1:
+  - `4226bc967 feat: add Korea payroll closing runtime read UI bridge (#151)`
+- `develop` includes Gate 2:
+  - `d14ee6dd2 feat: add Korea payroll closing worklist runtime bridge (#152)`
+- `develop` includes Gate 3:
+  - `3fc50a300 feat: add Korea salary slip statutory apply hook (#154)`
+- `develop` includes Gate 4:
+  - `b971c3af8 feat(korea): seed realistic demo payroll blockers (#157)`
+- `develop` includes Gate 5:
+  - `17c4bc7e5 ci: harden Korea regional smoke reporting (#159)`
+- `develop` includes Gate 6:
+  - `7c4dd63c2 test: add Korea payroll closing runtime verification checkpoint (#161)`
+- `develop` includes Gate 7 closeout hardening:
+  - `2f1cc60b5 test: harden payroll closing runtime evidence gate (#163)`
+- Gate 1 result:
+  - `frontend/src/views/KoreaPayrollClosing.vue` attempts runtime read via Frappe when available.
+  - `frontend/src/data/koreaPayrollClosingRuntime.js` calls `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime`.
+  - static fixture fallback is retained for Vercel/static preview.
+  - no save/approve/send/DB mutation was introduced.
+- Gate 2 result:
+  - `hrms/regional/south_korea/payroll_closing_worklist_runtime_api.py` exposes a read-only runtime worklist/session bridge over `Korea Payroll Closing Draft` rows.
+  - `frontend/src/data/koreaPayrollClosingRuntime.js` and `frontend/src/views/KoreaPayrollClosing.vue` bind runtime worklist/session rows when present.
+  - static fixture fallback remains in place when runtime worklist data is unavailable.
+  - evidence packet/session display remains read-only; no save/approve/send/DB mutation was added in the UI bridge.
+- Gate 3 result:
+  - `hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_statutory_to_salary_slip` applies Korea statutory deduction rows idempotently to draft Salary Slip-shaped documents.
+  - `hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook` is opt-in via operator-set Korea statutory fields and rejects non-KR/malformed inputs.
+  - `hrms/hooks.py` registers a narrow `Salary Slip.before_validate` hook.
+  - mutation boundary remains row-only: no save/submit/approve/send/provider call was introduced.
+- Gate 4 result:
+  - `hrms/regional/south_korea/demo_seed.py` seeds realistic Korea demo blocker transactions for the payroll closing operator flow.
+  - `hrms/tests/test_korea_demo_seed_blockers.py` covers idempotent blocker seed behavior and the no-submit/no-approve/no-send/no-provider mutation boundary.
+  - seed output remains explicitly demo-scoped with `ai_role: assistant_only` and no approval/submission/provider automation.
+- Gate 5 result:
+  - `scripts/run_korea_regional_smoke.py` now reports the current Python executable, writes optional JSON reports for CI/cron artifacts, and continues to discover `hrms/tests/test_korea*.py` dynamically while excluding the harness self-test.
+  - `hrms/tests/test_korea_regional_smoke_harness.py` covers report-file output, current-interpreter command construction, fail-closed zero-target behavior, and dry-run reporting.
+  - optional bench probes remain explicit (`--include-bench --site ...`) and skipped safely when `bench` is unavailable.
+- Gate 6 result:
+  - `scripts/verify_korea_payroll_closing_runtime.py` records a cron-safe read-only runtime/bench verification checkpoint for the payroll closing worklist path.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers no-bench direct behavior, Docker Compose parsing, optional bench command construction, output redaction, and fail-closed skipped-command semantics.
+  - Current cron evidence from PR #161: Docker Compose returned no running Frappe service rows and `bench` was unavailable, so runtime verification is not green yet; fixture fallback remains required until positive runtime rows are proven.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 7 closeout result:
+  - `scripts/verify_korea_payroll_closing_runtime.py` now distinguishes skipped command checks from passed checks, parses Docker Compose service state safely, summarizes Gate 6 blocker closeout state, and only closes the runtime gate when positive read-only worklist rows are verified.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers running/stopped/non-Frappe Docker services, missing bench, bench failure, positive bench worklist rows, and malformed bench rows.
+  - PR #163 closed the false-positive evidence gap but did not prove live runtime rows on this cron host; fixture fallback remains required until Docker/Bench runtime plus positive `Korea Payroll Closing Draft` rows are verified.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 8 runtime ownership evidence result:
+  - `develop` includes `b5926a910 test: add Korea payroll closing runtime ownership evidence (#165)`.
+  - `scripts/verify_korea_payroll_closing_runtime.py` now returns a report-safe `runtime_ownership` decision with `authoritative_runtime`, `decision_status`, evidence, and next actions.
+  - Current cron-host evidence remains blocked: Docker Compose has no running Frappe service rows and `bench` is unavailable, so `authoritative_runtime` is `operator_provided_runtime_required` and fixture fallback remains required.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 9 runtime handoff evidence-path result:
+  - `develop` includes `0da583aea test: add Korea runtime handoff evidence path (#167)`.
+  - `scripts/verify_korea_payroll_closing_runtime.py` now accepts an explicit report-safe runtime handoff contract for `operator_provided_bench` or `local_docker_compose_bench`, forces the read-only bench probe when handoff data is supplied, and redacts site/company/workplace command details.
+  - `hrms/tests/test_korea_runtime_verification_checkpoint.py` covers handoff normalization, invalid handoff rejection, and a positive mocked operator-provided bench path.
+  - Current cron-host evidence remains blocked when no handoff is supplied: Docker Compose has no running Frappe service rows and `bench` is unavailable, so fixture fallback remains required until an actual runtime handoff plus positive scoped rows are available.
+  - Boundary remains read-only: no save/submit/approve/send/provider/payroll document mutation.
+- Gate 10 source-alignment, runtime-probe, and positive-row capture result:
+  - `develop` includes `be2806d40 test: align Korea Docker runtime source (#171)`.
+  - `develop` includes `f949ae1dc fix: trust mounted HRMS source in Docker init (#172)`.
+  - `develop` includes `74b58e450 fix: run Korea runtime probe through Docker bench (#173)`.
+  - `develop` includes `d63d0e1a7 fix: require positive rows for Korea runtime verification (#174)`.
+  - `develop` includes `12a37c4e8 docs: align Gate 10 runtime checkpoint state (#175)`.
+  - `develop` includes `2f276f0b5 fix: fail closed on stale Korea runtime source (#176)`.
+  - `develop` includes `51f0e3d2 fix: sync existing Docker HRMS runtime source (#177)`.
+  - `develop` includes `9dd80e49d feat: seed Korea payroll closing runtime rows (#179)`.
+  - Docker Compose mounts this repo at `/workspace/hrms-source`, `docker/init.sh` installs/syncs HRMS from that mounted workspace even when an existing bench checkout is present, and the checkpoint can execute Bench inside the `frappe` container without requiring host `bench`.
+  - The demo seed now creates a scoped, draft-only `Korea Payroll Closing Draft` row for human review without submit/approve/send/payroll-submit/provider calls.
+  - 2026-05-09 post-merge Docker/Bench verification after restarting `frappe` returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
+- Gate 11 runtime-positive operator UI/browser closeout result:
+  - `develop` includes `d603fffa5 feat: close runtime-positive payroll closing UI state (#181)`.
+  - `frontend/src/data/koreaPayrollClosingRuntime.js` now centralizes runtime UI-state decisions so positive read-only worklist rows win over dashboard-only/static fallback copy.
+  - `frontend/src/views/KoreaPayrollClosing.vue` keeps fallback copy conditional and preserves read-only evidence, human-approval, and `assistant_only` boundaries.
+  - 2026-05-09 post-merge cron verification restarted the `frappe` container, synced runtime source to `d603fffa5`, and the read-only runtime checkpoint returned `runtime_verified: true`, `source_matches_mounted_workspace: true`, `positive_runtime_rows_verified: true`, and `fixture_fallback_required_until_positive_runtime_rows: false`.
+  - Route smoke: `http://127.0.0.1:8000/hrms/dashboard/korea-payroll-closing` returned HTTP 200 and the served lazy chunk `KoreaPayrollClosing-oazgujqG.js` returned HTTP 200 with runtime-positive/read-only/assistant-only copy present.
+- Gate 12 browser runtime verifier result:
+  - `develop` includes `e7e0aedc5 test: add Korea payroll closing browser runtime verifier (#183)`.
+  - `frontend/src/data/koreaPayrollClosingBrowserRuntime.js` and `scripts/verify_korea_payroll_closing_browser_runtime.mjs` provide an authenticated browser/CDP verifier for the payroll closing route.
+  - The verifier only allows the Korea admin-dashboard runtime read and payroll-closing worklist runtime read methods, requires positive runtime worklist rows, rejects mutation markers and score/risk/probability keys, and preserves `requires_human_approval: true` plus `ai_role: assistant_only`.
+  - Snap Chromium on this cron host did not write `DevToolsActivePort`; PR #183 hardened the verifier to parse the DevTools port from Chromium stderr.
+  - Post-merge focused tests and Korea regional smoke passed, but the live authenticated browser run remained blocked by demo credential/session readiness: Administrator login reached an HRMS "No active employee" page, while demo employee-user passwords were not reportable/available in cron.
+- Gate 13 demo employee browser credential handoff result:
+  - `develop` includes `15f9c24a7 test: add Korea demo browser credential handoff (#185)`.
+  - `hrms/regional/south_korea/demo_seed.py` now emits a report-safe `korea_demo_browser_credential_handoff_v1` payload for the employee-linked demo user without printing or storing the password.
+  - The optional credential apply helper requires explicit `human_approved=True` before `update_password`, verifies the approved demo user and active Employee link, reads the verifier password from `FRAPPE_BROWSER_PASSWORD`, and returns no secret value.
+  - Reviewer-requested hardening landed before merge: no password update occurs before explicit human approval, the handoff/apply env var contract is consistent, and `human_approval_verified` is returned after the approved boundary.
+  - This did not yet prove a positive authenticated browser walkthrough; later Gate 14 work added credential-apply/browser checkpointing, kwargs/title fixes, session-handoff hardening, and read-only bootstrap-call allowlisting. A positive authenticated browser proof still requires an operator-approved credential run.
+- Gate 14 credential apply checkpoint result:
+  - `develop` includes `13f061046 test: add Korea demo browser credential checkpoint (#189)`.
+  - `scripts/verify_korea_demo_browser_credential_apply.py` provides a cron-safe checkpoint that first verifies `FRAPPE_BROWSER_PASSWORD` and an explicit `--human-approved` flag, then applies only the approved demo credential boundary and runs the authenticated browser verifier.
+  - `hrms/tests/test_korea_browser_credential_apply_checkpoint.py` covers missing-secret fail-closed behavior, explicit human-approval gating, redacted command/report output, and no browser run after credential-apply failure.
+  - Historical no-secret/no-approval evidence failed closed before mutation: credential apply was not attempted, browser verification was skipped, `runtime_verified: false`, and fixture fallback remained required.
+  - `develop` also includes post-checkpoint runtime-boundary hardening at `681563105 fix: harden korea payroll review runtime boundaries`: draft/review/audit runtime APIs now fail closed harder on forged wrapper/provenance/status/scope and recursive score/risk/probability/success-rate leakage without adding payroll submit/approve/send/provider mutation.
+  - `develop` also includes `2e17155dd test: harden Korea browser checkpoint safety metadata`: the Gate 14 checkpoint now requires the browser verifier output to preserve the expected read-only runtime action, no-runtime-apply flag, human-approval flag, `assistant_only` role, and read-only mutation boundary before it can mark browser runtime proof green.
+  - `develop` also includes `f4af2a3c0 test: harden Korea browser credential apply summary`: the Gate 14 checkpoint summary now keeps fixture fallback required unless both credential apply and browser verification pass, and tests cover inconsistent browser-positive / credential-failed reports.
+  - `develop` also includes `9cf60a396 test: reject blank Korea browser password checkpoint`: the Gate 14 checkpoint now rejects blank/whitespace-only `FRAPPE_BROWSER_PASSWORD` before credential apply, skips browser verification, and leaves fixture fallback required.
+  - `develop` also includes `4f2c5fb0e test: tolerate noisy Korea browser checkpoint JSON`: the Gate 14 checkpoint now parses the final JSON report even when Docker/Bench emits setup noise before the JSON payload, without treating noisy output as credential/browser proof.
+  - `develop` also includes `abff52b09 test: harden Korea browser checkpoint JSON parsing`: the Gate 14 checkpoint now recovers the final JSON object when noisy output wraps or follows the payload, while still requiring credential-apply/browser safety metadata before reporting proof.
+  - `develop` also includes `7d2072d92 test: fail closed on invalid Korea browser checkpoint scope`: the Gate 14 credential/browser checkpoint now rejects blank `site`, `company`, `base_url`, `username`, or `chromium` values before credential apply, skips browser verification, and keeps secrets redacted.
+  - `develop` also includes `b389fa336 test: harden Korea browser checkpoint report files`: the Gate 14 checkpoint now creates parent directories for `--report-file`, writes UTF-8 JSON matching stdout, and keeps secret values out of report artifacts.
+  - `develop` also includes `97344eb48 test: report Korea browser checkpoint command failures (#206)`: the Gate 14 checkpoint now reports explicit browser verifier command-failure reasons after a successful credential apply instead of leaving browser failures ambiguous.
+  - `develop` also includes `54b041d47 test: harden Korea browser checkpoint scope report (#208)`: the Gate 14 checkpoint now reports all required scope-provided flags with whitespace-aware validation, including username and Chromium path flags, before credential apply/browser verification.
+  - `develop` also includes `75207e165 fix(gate14): bench kwargs Python literal + browser title Korean match (#210)`: the credential apply command now sends a Python literal `{'human_approved': True}` to `bench execute --kwargs` instead of JSON `true`, and the browser verifier accepts the localized `한국 급여 마감` route title as well as the English fallback.
+  - `develop` also includes `de03f017a fix(gate14): verify browser session handoff`: the browser verifier now navigates with scoped company context and confirms authentication through the read-only `frappe.auth.get_logged_user` endpoint when the bootstrapped `window.frappe.session.user` remains stale as `Guest`.
+  - `develop` also includes `73680c445 test(gate14): allow read-only browser bootstrap calls`: the browser network verifier remains strict on mutation markers while allowing known read-only UI bootstrap calls observed during authenticated UI loading.
+  - `develop` also includes `fabf13309 docs: add Korea HRMS user verification guide (#214)`: operator-facing credential/browser verification guidance is documented without storing secrets.
+  - `develop` also includes `c1b12a78d test(gate14): report blank browser password checkpoint`: the credential/browser checkpoint now reports blank/whitespace-only `FRAPPE_BROWSER_PASSWORD` as `FRAPPE_BROWSER_PASSWORD blank` instead of the missing-secret reason while still failing closed before credential mutation.
+  - `develop` also includes `60cb542c3 docs: align Gate 14 blank-password checkpoint state (#216)`: the active source-of-truth docs were aligned to the blank-password checkpoint and positive non-browser runtime evidence.
+  - `develop` also includes `980235b9a test(gate14): harden browser verifier report files (#217)`: the browser runtime verifier now creates parent directories for `--report-file`, writes UTF-8 JSON matching stdout, and keeps authenticated-browser proof gated on read-only runtime metadata rather than report-file creation.
+  - `develop` also includes `f4d603e3a docs: align Gate 14 browser report-file checkpoint (#218)`: source-of-truth docs were aligned to the browser-verifier report-file checkpoint.
+  - `develop` also includes `73c9c639b test(gate14): pass browser report file through credential checkpoint`: the credential apply checkpoint now passes a redacted `--browser-report-file` through to the child browser verifier and reports the artifact path without treating artifact creation as browser proof.
+  - `develop` also includes `23d104927 test(gate14): reject blank browser report file before credential apply`: the credential apply checkpoint now rejects blank/whitespace-only child browser report-file paths before any credential apply or browser verification command can run.
+  - `develop` also includes `3f59cccec test(gate14): harden browser verifier blank scope`: the browser verifier now rejects explicit blank `base-url`, `company`, `username`, `chromium`, and `FRAPPE_BROWSER_PASSWORD` values instead of silently defaulting or falling back, and still writes fail-closed JSON/report artifacts on setup failures.
+  - 2026-05-17 cron test evidence on `3f59cccec`: `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py`, and `python3 scripts/run_korea_regional_smoke.py` passed.
+  - 2026-05-17 non-browser runtime evidence on `c1b12a78d`: `python3 scripts/verify_korea_payroll_closing_runtime.py --include-bench --site hrms.localhost --company '노란봉투법 데모' --report-file /tmp/korea-runtime-current-cron.json` returned `runtime_verified: true`, source/app checkout matched the mounted workspace, positive scoped runtime rows were verified, and `fixture_fallback_required_until_positive_runtime_rows: false`. This is runtime source/row evidence, not authenticated browser proof.
+  - Latest authenticated-browser status: session-handoff, read-only bootstrap-call hardening, user verification docs, blank-password reason reporting, browser-verifier report-file hardening, credential-checkpoint child browser report-file pass-through, blank child browser report-file rejection, and browser-verifier blank-scope fail-closed hardening are now on `develop`, but no positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven in cron because the credential mutation path still requires an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit `--human-approved` execution.
+  - **2026-05-17 KST 08:42 — FIRST POSITIVE AUTHENTICATED BROWSER PROOF**: control-plane operator-approved run executed `python3 scripts/verify_korea_demo_browser_credential_apply.py --base-url http://localhost:8000 --human-approved` and produced `runtime_verified: true`, `fixture_fallback_required: false`, `credential_apply.human_approval_verified: true`, and observed 9 read-only browser API calls including `hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime` and `hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime`. Loopback `http://localhost:8000` was used because the host systemd-resolved (Oracle 169.254.169.254 stub) returned NXDOMAIN for the public `hrms.safeclaw.kr` domain; Frappe `serve_default_site=true` + `default_site=hrms.localhost` makes the loopback request identical from the site's perspective. Mutation boundary held (credential-only then browser read-only, no payroll submit/approve/send/provider call). Evidence in `docs/korea_hrms/gate14_positive_browser_proof.md`. Cron may now treat Gate 14 as closed and progress to Gate 15 candidate work (e.g. statutory payroll end-to-end, compliance diagnosis, kakao notification path, annual leave/attendance closing, authenticated browser walkthroughs of additional screens). Cron-side automation of the credential-apply path still requires operator secret provisioning + `--human-approved` and must not bypass the human-approval gate.
+
+Autonomous cron runway
+- Implementation cron:
+  - `0fabfbb750ac frappe-hrms-1000h-saas-agentic-productization-runway`
+  - cadence: every 30 minutes
+  - role: implement next PR-sized gate with tests/build/commit/push/PR URL
+- PDCA/grill cron:
+  - `995e2065fd60 frappe-hrms-1000h-pdca-briefing-grill`
+  - cadence: every 30 minutes
+  - role: check plan/doc alignment, stale assumptions, risks, and next action
+
+Next gate
+- Gate 15: Korean localization and demo-readiness closeout.
+- Operator override: Gate 14 credential/browser proof is being handled separately by the operator; autonomous runway should not keep cycling on Gate 14 unless explicitly re-enabled.
+- Current Gate 15 status: PR #225 / branch `feat/hrms-korean-locale-batch1` expands `hrms/locale/ko.po` to 816 Korean entries and adds `docs/korea_hrms/feature_map_user_guide.md` for a 30-minute operator/demo walkthrough. Gate 15 scope is localization, demo guidance, validation, and source-of-truth alignment only; no credential mutation, payroll submit/approve/send/provider call, or AI scoring/probability output.
+- Gate 14 checkpoint evidence retained for handoff:
+  - 2026-05-09 implementation-cron merged PR #185 (`15f9c24a7 test: add Korea demo browser credential handoff`) into `develop`.
+  - 2026-05-10 stale Gate 2 cron closeout confirmed Gate 2 was already merged as #152 and merged PR #187 (`e03eabb70 docs: align Gate 13 plan head`) to align the active correction plan with Gate 14 priority.
+  - 2026-05-10 implementation-cron merged PR #189 (`13f061046 test: add Korea demo browser credential checkpoint`) into `develop`.
+  - `scripts/verify_korea_demo_browser_credential_apply.py` now records the fail-closed credential-apply/browser-verification checkpoint, redacts the password value from reports/commands, writes redacted report files, and reports explicit apply/browser command-failure reasons.
+  - Historical no-secret/no-approval runs returned fail-closed checkpoint reports such as `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`; the 2026-05-17 no-approval run on `75207e165` failed closed earlier on the missing human-approval flag.
+  - 2026-05-16 cron evidence on `2e17155dd` again failed closed before mutation without an approved credential apply: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+  - 2026-05-15 UTC evidence on `f4af2a3c0` again failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent: `credential_apply.attempted: false`, `credential_apply.reason: FRAPPE_BROWSER_PASSWORD missing`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+  - 2026-05-16 evidence on `9cf60a396` confirms blank-password hardening is on `develop`; the checkpoint rejects blank/whitespace-only `FRAPPE_BROWSER_PASSWORD`, and this cron run still failed closed before credential mutation because the secret is absent.
+  - 2026-05-16 evidence on `4f2c5fb0e` confirms noisy Docker/Bench JSON-output hardening is on `develop`; the checkpoint still fails closed before credential mutation when the secret is absent and does not treat parser tolerance as positive browser proof.
+  - 2026-05-16 evidence on `abff52b09` confirms final-object JSON parsing hardening is on `develop`; the checkpoint still fails closed before credential mutation when the secret is absent and does not treat parser tolerance as positive browser proof.
+  - 2026-05-16 test evidence on `7d2072d92` confirms invalid required-scope hardening is on `develop`; focused checkpoint tests passed 9 tests, including blank `site`, `company`, `base_url`, `username`, and `chromium` fail-closed coverage before credential apply.
+  - 2026-05-16 checkpoint evidence on `7d2072d92` again failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent: `credential_apply.attempted: false`, `browser_verification.attempted: false`, `runtime_verified: false`, and `fixture_fallback_required: true`.
+  - 2026-05-16 evidence on `b389fa336` confirms report-file artifact hardening is on `develop`; focused checkpoint tests passed 10 tests and the credential/browser checkpoint wrote a redacted JSON report artifact while still failing closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
+  - 2026-05-16 evidence on `97344eb48` confirms browser command-failure reporting is on `develop`; focused checkpoint tests passed 11 tests, the credential/browser checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent, and no browser verification was attempted.
+  - 2026-05-16 evidence on `54b041d47` confirms scope-report hardening is on `develop`; focused checkpoint tests passed 11 tests, the checkpoint reports whitespace-aware `site/company/base_url/username/chromium` availability flags, and the live checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
+  - 2026-05-17 evidence on `75207e165` confirms the Gate 14 kwargs/title fixes are on `develop`; focused checkpoint tests still passed 11 tests, the credential apply command now uses a Python `{'human_approved': True}` literal for Bench kwargs, and the browser verifier accepts `한국 급여 마감` as the route title.
+  - 2026-05-17 evidence on `de03f017a` confirms browser session-handoff hardening is on `develop`; the verifier navigates the company-scoped operator route and uses read-only `frappe.auth.get_logged_user` to verify auth when `window.frappe.session.user` is stale.
+  - 2026-05-17 evidence on `73680c445` confirms read-only browser bootstrap-call allowlisting is on `develop`; `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs` passed and keeps mutation-marker rejection coverage.
+  - 2026-05-17 evidence on `fabf13309` confirms the operator-facing Korea HRMS user verification guide is on `develop`; it documents the remaining human-approved credential/browser proof path without committing or reporting secrets.
+  - 2026-05-17 evidence on `c1b12a78d` confirms distinct blank-password checkpoint reporting is on `develop`; `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py` passed 12 tests, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs` passed, and the live no-approval checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
+  - 2026-05-17 evidence on `980235b9a` confirms browser-verifier report-file hardening is on `develop`; `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs` passed, `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py` passed 12 tests, and report-file directory creation remains artifact handling only, not positive authenticated browser proof.
+  - 2026-05-17 evidence on `73c9c639b` confirms credential-checkpoint child browser report-file pass-through is on `develop`; `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py` passed 13 tests, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs` passed, and the live no-approval checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
+  - 2026-05-17 evidence on `23d104927` confirms blank child browser report-file fail-closed hardening is on `develop`; `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py` passed 14 tests, `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs` passed, and the live no-approval checkpoint still failed closed before credential mutation because `FRAPPE_BROWSER_PASSWORD` was absent.
+  - 2026-05-17 evidence on `3f59cccec` confirms browser-verifier blank-scope fail-closed hardening is on `develop`; `node frontend/tests/koreaPayrollClosingBrowserRuntime.test.mjs`, `python3 hrms/tests/test_korea_browser_credential_apply_checkpoint.py`, and `python3 scripts/run_korea_regional_smoke.py` passed, and explicit blank browser-verifier scope/password inputs fail before proof can be reported.
+  - 2026-05-17 non-browser runtime evidence on `c1b12a78d` confirms the local Docker/Bench runtime is source-aligned and positive for scoped runtime rows. This is not authenticated browser proof.
+  - The credential helper returns no secret, requires explicit human approval before `update_password`, and does not submit/approve/send/payroll-submit/call providers.
+  - No positive `scripts/verify_korea_payroll_closing_browser_runtime.mjs` run has been proven after applying an employee credential.
+- Likely branch:
+  - `test/korea-payroll-closing-browser-runtime-positive-credential`
+- Goal:
+  - with an operator-provided `FRAPPE_BROWSER_PASSWORD` and explicit human approval, run `scripts/verify_korea_demo_browser_credential_apply.py --human-approved`
+  - apply only the demo employee browser credential boundary
+  - rerun `scripts/verify_korea_payroll_closing_browser_runtime.mjs` until it returns `runtime_verified: true` with positive read-only worklist rows; validate whether the current session-handoff/bootstrap-call/report-file/blank-scope hardening now produces authenticated browser proof
+  - keep fixture fallback for static/no-runtime contexts
+  - keep evidence/session views read-only and human-review-only
+  - preserve `runtime_action=browser_runtime_read_only`, `requires_runtime_apply=false`, `requires_human_approval=true`, and `ai_role=assistant_only`
+
+Useful commands
+- Repo status:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && git status --short --branch`
+- Frontend build:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h/frontend && yarn build`
+- Gate 1 focused frontend test:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && node frontend/tests/koreaPayrollClosingRuntime.test.mjs`
+- Korea regional smoke harness:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && python3 scripts/run_korea_regional_smoke.py`
+- Docker runtime status:
+  - `docker compose -f /home/ubuntu/workspaces/seojaehong-hrms-100h/docker/docker-compose.yml ps`
+- Runtime verification checkpoint:
+  - `cd /home/ubuntu/workspaces/seojaehong-hrms-100h && python3 scripts/verify_korea_payroll_closing_runtime.py --report-file /tmp/korea-payroll-closing-runtime-report.json || true`
+
+Key paths
+- Korea runtime APIs and domain logic:
+  - `hrms/regional/south_korea/`
+- Korea payroll closing UI:
+  - `frontend/src/views/KoreaPayrollClosing.vue`
+  - `frontend/src/data/koreaPayrollClosingRuntime.js`
+  - `frontend/src/data/koreaPayrollClosingFixture.js`
+- Runtime API:
+  - `hrms/regional/south_korea/admin_dashboard_runtime_api.py`
+- Salary Slip adapter:
+  - `hrms/regional/south_korea/payroll_salary_slip_adapter.py`
+- Demo seed:
+  - `hrms/regional/south_korea/demo_seed.py`
+- Runtime verification checkpoint:
+  - `scripts/verify_korea_payroll_closing_runtime.py`
+
+Guardrails
+- Korean business logic stays under `hrms/regional/south_korea/`.
+- Do not modify `hrms/__init__.py` to bypass Frappe imports.
+- AI remains assistant-only.
+- AI must not directly mutate DB.
+- Runtime mutation paths must follow preview/read-only -> human approval -> apply.
+- Do not store full resident-registration numbers or secrets.
+- Avoid numeric AI confidence for HR/legal decisions; use evidence status and human-review flags.
+
+Notes
+- `import hrms` alone can fail outside a Bench/Frappe runtime because `frappe` may not be installed in the active system Python.
+- Use isolated/direct tests for pure JS/Python adapters first, then Bench/Docker runtime checks for actual Frappe execution.
+- If cron or a live session has an active feature branch, inspect branch/status before switching or editing. Prefer clean `develop` for the next PR-sized branch.

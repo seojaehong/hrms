@@ -1,0 +1,15 @@
+{
+  "leave_policy_name": "KR Standard Leave Policy 2026 Demo",
+  "country": "Korea, Republic of",
+  "notes": [
+    "입사 1년 미만은 1개월 개근 시 1일 부여",
+    "1년 이상 출근율 80% 이상은 15일 부여",
+    "3년 이상은 2년마다 1일 가산, 최대 25일",
+    "회계연도 기준 운영 여부는 회사 정책으로 확정"
+  ],
+  "allocations": [
+    {"leave_type": "Annual Leave", "rule_note": "근로기준법 연차 기본정책 기반 데모"},
+    {"leave_type": "Sick Leave", "rule_note": "법정 의무가 아닌 회사 정책형 유급병가 예시"},
+    {"leave_type": "Family Event Leave", "rule_note": "경조휴가 예시. 취업규칙/단체협약 기준으로 조정"}
+  ]
+}

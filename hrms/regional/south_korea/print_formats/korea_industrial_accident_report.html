@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<!--
+  산재발생신고서 / 중대재해보고서
+  고용노동부 표준 서식 (산업재해보상보험법 시행규칙 별지 제1호 서식)
+  산업안전보건법 시행규칙 별지 제2호 서식
+
+  렌더링 방식:
+  - Jinja 변수: {{ fields.필드명 }}
+  - PDF payload: generate_accident_report_pdf_payload() 반환값의 fields 딕셔너리
+  - Frappe Print Format 또는 독립 렌더러에서 모두 사용 가능
+
+  PII 주의: 이 템플릿은 재해자 성명(fields.재해자성명)을 포함합니다.
+  목격자 정보(fields.목격자)도 포함될 수 있습니다.
+  생성된 PDF는 개인정보보호 정책에 따라 관리하세요.
+-->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ fields.보고서유형 | default('산재발생신고서') }}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "맑은 고딕", "Malgun Gothic", "나눔고딕", NanumGothic, sans-serif;
+      font-size: 10pt;
+      color: #000;
+      background: #fff;
+      padding: 20mm 15mm;
+    }
+
+    .report-title {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: bold;
+      border-bottom: 3px solid #000;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+      letter-spacing: 4px;
+    }
+
+    .report-subtitle {
+      text-align: center;
+      font-size: 9pt;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #333;
+      padding: 5px 8px;
+      vertical-align: top;
+    }
+
+    table th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+      width: 25%;
+      white-space: nowrap;
+    }
+
+    table td {
+      text-align: left;
+    }
+
+    .section-header {
+      background-color: #d0d0d0;
+      font-weight: bold;
+      text-align: center;
+      font-size: 10pt;
+      padding: 5px 8px;
+      border: 1px solid #333;
+      margin-top: 6px;
+    }
+
+    .obligation-yes {
+      color: #cc0000;
+      font-weight: bold;
+    }
+
+    .obligation-no {
+      color: #006600;
+      font-weight: bold;
+    }
+
+    .notice-box {
+      border: 1px solid #aaa;
+      padding: 8px 12px;
+      margin-top: 12px;
+      background: #fffbe6;
+      font-size: 8.5pt;
+      line-height: 1.6;
+    }
+
+    .notice-box strong {
+      font-size: 9pt;
+    }
+
+    .signature-area {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .signature-block {
+      border: 1px solid #333;
+      padding: 10px 20px;
+      min-width: 240px;
+      text-align: center;
+      font-size: 9.5pt;
+      line-height: 2;
+    }
+
+    .signature-block .seal-placeholder {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      border: 1px dashed #aaa;
+      line-height: 60px;
+      font-size: 8pt;
+      color: #aaa;
+      margin-top: 6px;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 8pt;
+      color: #555;
+      line-height: 1.5;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+    }
+
+    .badge-critical {
+      display: inline-block;
+      background: #cc0000;
+      color: #fff;
+      font-weight: bold;
+      padding: 2px 10px;
+      border-radius: 3px;
+      font-size: 9.5pt;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 서식 제목 -->
+  <div class="report-title">
+    {{ fields.보고서유형 | default('산재발생신고서') }}
+    {% if fields.보고서유형 == '중대재해보고서' %}
+    <span class="badge-critical">중대재해</span>
+    {% endif %}
+  </div>
+  <div class="report-subtitle">
+    산업재해보상보험법 제73조 / 산업안전보건법 제57조에 따른 신고서
+  </div>
+
+  <!-- 사업장 정보 -->
+  <div class="section-header">1. 사업장 정보</div>
+  <table>
+    <tr>
+      <th>사업장명</th>
+      <td>{{ fields.사업장명 | default('') }}</td>
+      <th>사업자등록번호</th>
+      <td>{{ fields.사업자등록번호 | default('') }}</td>
+    </tr>
+    <tr>
+      <th>사업장 소재지</th>
+      <td colspan="3">{{ fields.사업장소재지 | default('') }}</td>
+    </tr>
+  </table>
+
+  <!-- 재해자 정보 -->
+  <div class="section-header">2. 재해자 정보</div>
+  <table>
+    <tr>
+      <th>재해자 성명</th>
+      <td colspan="3">{{ fields.재해자성명 | default('') }}</td>
+    </tr>
+  </table>
+
+  <!-- 재해 발생 정보 -->
+  <div class="section-header">3. 재해 발생 정보</div>
+  <table>
+    <tr>
+      <th>재해 발생 일시</th>
+      <td>{{ fields.재해발생일시 | default('') }}</td>
+      <th>재해 발생 장소</th>
+      <td>{{ fields.재해발생장소 | default('') }}</td>
+    </tr>
+    <tr>
+      <th>상해 종류</th>
+      <td>{{ fields.상해종류 | default('') }}</td>
+      <th>상해 부위</th>
+      <td>{{ fields.상해부위 | default('') }}</td>
+    </tr>
+    <tr>
+      <th>요양 예상 일수</th>
+      <td colspan="3">{{ fields.요양예상일수 | default('0') }}일</td>
+    </tr>
+    <tr>
+      <th>재해 발생 경위</th>
+      <td colspan="3" style="min-height: 60px; white-space: pre-wrap;">{{ fields.재해발생경위 | default('') }}</td>
+    </tr>
+    <tr>
+      <th>목격자</th>
+      <td colspan="3">{{ fields.목격자 | default('없음') }}</td>
+    </tr>
+    <tr>
+      <th>초기 치료 내용</th>
+      <td colspan="3">{{ fields.초기치료내용 | default('') }}</td>
+    </tr>
+  </table>
+
+  <!-- 신고 의무 판정 -->
+  <div class="section-header">4. 신고 의무 판정</div>
+  <table>
+    <tr>
+      <th>신고 의무 여부</th>
+      <td>
+        {% if fields.신고의무여부 == '예' %}
+        <span class="obligation-yes">예 (신고 필수)</span>
+        {% else %}
+        <span class="obligation-no">아니오 (자체 처리 가능)</span>
+        {% endif %}
+      </td>
+      <th>신고 기한</th>
+      <td>
+        {% if fields.신고기한 and fields.신고기한 != '해당없음' %}
+        <strong>{{ fields.신고기한 }}</strong>까지
+        {% else %}
+        해당 없음
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>보고서 유형</th>
+      <td colspan="3">{{ fields.보고서유형 | default('해당없음') }}</td>
+    </tr>
+  </table>
+
+  <!-- 안내 사항 -->
+  <div class="notice-box">
+    <strong>안내 사항</strong><br />
+    1. <strong>요양 4일 이상</strong> 산재 사고는 재해 발생일로부터 <strong>1개월 이내</strong>에 산재발생신고서를
+       근로복지공단에 제출하여야 합니다. (산재보험법 §53조의2)<br />
+    2. <strong>사망 사고</strong>는 <strong>즉시</strong> 중대재해보고서를 제출하고 관할 지방고용노동관서에
+       보고하여야 합니다. (산업안전보건법 §57조)<br />
+    3. 요양 <strong>3일 미만</strong>의 경미한 사고는 신고 의무가 없으며 자체 관리대장으로 처리할 수 있습니다.<br />
+    4. 허위 신고 또는 신고 해태 시 과태료 및 형사처벌을 받을 수 있습니다.
+  </div>
+
+  <!-- 서명란 -->
+  <div class="signature-area">
+    <div class="signature-block">
+      위와 같이 신고합니다.<br />
+      <br />
+      년 &nbsp;&nbsp;&nbsp;&nbsp; 월 &nbsp;&nbsp;&nbsp;&nbsp; 일<br />
+      <br />
+      사업주(대표자):<br />
+      <span class="seal-placeholder">(인)</span>
+    </div>
+  </div>
+
+  <!-- 제출처 -->
+  <div class="footer-note">
+    <strong>제출처:</strong> 근로복지공단 관할 지사 / 온라인(고용산재보험토탈서비스 total.kcomwel.or.kr)<br />
+    <strong>첨부서류:</strong> 재해 경위 진술서, 목격자 진술서(있는 경우), 의사 소견서(요양 4일 이상인 경우)<br />
+    <strong>문의:</strong> 근로복지공단 대표번호 1588-0075<br />
+    <em>이 서식은 hrms/regional/south_korea/industrial_accident.py v1에 의해 자동 생성되었습니다.
+    실제 제출 전 담당자 검토가 필요합니다.</em>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+week1_goal: 한국 중소사업장/다지점 데모 가능한 HRMS 시제품 출시
+release_window: 7_days
+principles:
+  - 코어 포크 최소화
+  - 설정과 regional scaffold 우선
+  - 작은 수정 후 즉시 검증
+  - 법률 자동판정처럼 보이는 UX 금지
+  - 민감정보 최소수집
+tracks:
+  pm_orchestrator:
+    outcomes:
+      - 우선순위 보드 유지
+      - 범위 통제
+      - 리스크/차단이슈 정리
+  backend_regional:
+    outcomes:
+      - korea regional setup 보강
+      - company/employee field 점검
+      - holiday/leave/shift/payroll 템플릿 보강
+  qa_runtime:
+    outcomes:
+      - docker/readiness 확인
+      - 로그인 진입/핵심 동선 확인
+      - 데모 가능 여부 판정
+week1_definition_of_done:
+  - 관리자 로그인 가능
+  - Company와 Employee 한국 필드 노출 확인
+  - Salary Component / Salary Structure 생성 가능
+  - Holiday List / Leave Policy / Shift Type 샘플 운영 가능
+  - 한국어 핵심 동선 1차 적용
+  - 데모용 운영 가이드 존재

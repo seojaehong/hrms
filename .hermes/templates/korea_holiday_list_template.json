@@ -1,0 +1,32 @@
+{
+  "holiday_list_name": "KR Public Holidays 2026 Demo",
+  "country": "Korea, Republic of",
+  "from_date": "2026-01-01",
+  "to_date": "2026-12-31",
+  "notes": [
+    "2026 데모 기준 공휴일 초안",
+    "음력 공휴일과 임시공휴일은 운영 반영 전 최종 재확인",
+    "사업장별 약정휴일은 별도 추가"
+  ],
+  "sample_holidays": [
+    {"description": "신정", "holiday_date": "2026-01-01"},
+    {"description": "설날 전날", "holiday_date": "2026-02-16"},
+    {"description": "설날", "holiday_date": "2026-02-17"},
+    {"description": "설날 다음날", "holiday_date": "2026-02-18"},
+    {"description": "삼일절", "holiday_date": "2026-03-01"},
+    {"description": "삼일절 대체공휴일", "holiday_date": "2026-03-02"},
+    {"description": "어린이날", "holiday_date": "2026-05-05"},
+    {"description": "부처님오신날", "holiday_date": "2026-05-24"},
+    {"description": "부처님오신날 대체공휴일", "holiday_date": "2026-05-25"},
+    {"description": "현충일", "holiday_date": "2026-06-06"},
+    {"description": "광복절", "holiday_date": "2026-08-15"},
+    {"description": "광복절 대체공휴일", "holiday_date": "2026-08-17"},
+    {"description": "추석 전날(검증 필요)", "holiday_date": "2026-09-23"},
+    {"description": "추석(검증 필요)", "holiday_date": "2026-09-24"},
+    {"description": "추석 다음날(검증 필요)", "holiday_date": "2026-09-25"},
+    {"description": "개천절", "holiday_date": "2026-10-03"},
+    {"description": "개천절 대체공휴일", "holiday_date": "2026-10-05"},
+    {"description": "한글날", "holiday_date": "2026-10-09"},
+    {"description": "성탄절", "holiday_date": "2026-12-25"}
+  ]
+}

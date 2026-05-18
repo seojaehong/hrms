@@ -1,0 +1,99 @@
+[
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Basic Pay",
+    "description": "기본급",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Ordinary Wage"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Meal Allowance",
+    "description": "식대",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Position Allowance",
+    "description": "직책수당",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Overtime Allowance",
+    "description": "연장근로수당",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Night Work Allowance",
+    "description": "야간근로수당",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Holiday Work Allowance",
+    "description": "휴일근로수당",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Unused Leave Payout",
+    "description": "미사용 연차수당",
+    "type": "Earning",
+    "is_tax_applicable": 1,
+    "korea_component_category": "Allowance"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "National Pension",
+    "description": "국민연금",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "korea_component_category": "Statutory Deduction"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Health Insurance",
+    "description": "건강보험",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "korea_component_category": "Statutory Deduction"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Long-term Care Insurance",
+    "description": "장기요양보험",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "korea_component_category": "Statutory Deduction"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Employment Insurance",
+    "description": "고용보험",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "korea_component_category": "Statutory Deduction"
+  },
+  {
+    "doctype": "Salary Component",
+    "salary_component": "Industrial Accident Insurance",
+    "description": "산재보험",
+    "type": "Deduction",
+    "exempted_from_income_tax": 1,
+    "is_company_contribution_only": 1,
+    "korea_component_category": "Employer Statutory Contribution"
+  }
+]

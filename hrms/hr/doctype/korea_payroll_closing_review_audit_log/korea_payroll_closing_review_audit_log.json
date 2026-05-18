@@ -1,0 +1,198 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "workplace",
+  "period_section",
+  "period_start",
+  "period_end",
+  "status",
+  "action",
+  "source_section",
+  "draft_name",
+  "source_payroll_entry",
+  "previous_status",
+  "review_actor",
+  "audit_actor",
+  "source_audit_log_contract_type",
+  "safety_section",
+  "mutation_boundary",
+  "requires_human_approval",
+  "ai_role",
+  "payload_section",
+  "audit_event",
+  "source_runtime_apply"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workplace",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workplace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Closing Period"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Period Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Period End",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "draft_human_approved\ndraft_human_rejected\ndraft_changes_requested",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Review Action",
+   "options": "approve_draft\nreject_draft\nrequest_changes",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source Artifacts"
+  },
+  {
+   "fieldname": "draft_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Payroll Closing Draft",
+   "options": "Korea Payroll Closing Draft",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_payroll_entry",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Payroll Entry",
+   "options": "Payroll Entry",
+   "reqd": 1
+  },
+  {
+   "default": "draft_pending_human_approval",
+   "fieldname": "previous_status",
+   "fieldtype": "Data",
+   "label": "Previous Status",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_actor",
+   "fieldtype": "Link",
+   "label": "Review Actor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "audit_actor",
+   "fieldtype": "Link",
+   "label": "Audit Actor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "korea_payroll_closing_draft_review_audit_log_v1",
+   "fieldname": "source_audit_log_contract_type",
+   "fieldtype": "Data",
+   "label": "Source Audit Log Contract Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "safety_section",
+   "fieldtype": "Section Break",
+   "label": "Safety Boundary"
+  },
+  {
+   "default": "audit_log_only_no_submit_no_send_no_provider_call",
+   "fieldname": "mutation_boundary",
+   "fieldtype": "Data",
+   "label": "Mutation Boundary",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "requires_human_approval",
+   "fieldtype": "Check",
+   "label": "Requires Human Approval",
+   "read_only": 1
+  },
+  {
+   "default": "assistant_only",
+   "fieldname": "ai_role",
+   "fieldtype": "Data",
+   "label": "AI Role",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_section",
+   "fieldtype": "Section Break",
+   "label": "Audit Payload"
+  },
+  {
+   "fieldname": "audit_event",
+   "fieldtype": "Long Text",
+   "label": "Audit Event JSON",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_runtime_apply",
+   "fieldtype": "Long Text",
+   "label": "Source Runtime Apply JSON",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-05-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Korea Payroll Closing Review Audit Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "HR Manager"
+  },
+  {
+   "read": 1,
+   "role": "HR User"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "draft_name"
+}

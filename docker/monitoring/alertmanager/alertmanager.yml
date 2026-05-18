@@ -1,0 +1,57 @@
+global:
+  resolve_timeout: 5m
+
+# ---------------------------------------------------------------------------
+# Routing tree
+# ---------------------------------------------------------------------------
+route:
+  receiver: telegram-default
+  group_by: ["alertname", "site"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # Critical alerts: shorter repeat, dedicated receiver
+    - match:
+        severity: critical
+      receiver: telegram-critical
+      repeat_interval: 1h
+
+    # Korea business alerts: business-hours grouping
+    - match_re:
+        alertname: "^Korea.*"
+      receiver: telegram-korea
+      group_interval: 10m
+      repeat_interval: 8h
+
+# ---------------------------------------------------------------------------
+# Receivers
+# ---------------------------------------------------------------------------
+receivers:
+
+  - name: telegram-default
+    webhook_configs:
+      - url: "http://alert-webhook:5001/"
+        send_resolved: true
+
+  - name: telegram-critical
+    webhook_configs:
+      - url: "http://alert-webhook:5001/"
+        send_resolved: true
+
+  - name: telegram-korea
+    webhook_configs:
+      - url: "http://alert-webhook:5001/"
+        send_resolved: true
+
+# ---------------------------------------------------------------------------
+# Inhibition rules — suppress child alerts when parent fires
+# ---------------------------------------------------------------------------
+inhibit_rules:
+  # Suppress queue warning if exporter is already down
+  - source_match:
+      alertname: FrappeExporterDown
+    target_match_re:
+      alertname: "^Frappe.*"
+    equal: ["job"]

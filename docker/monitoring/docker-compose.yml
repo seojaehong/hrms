@@ -1,0 +1,174 @@
+version: "3.8"
+
+# Frappe HRMS Korea — Monitoring Stack
+# Self-hosted: Prometheus + Loki + Grafana + Alertmanager + alert webhook
+#
+# Start:   docker compose -f docker/monitoring/docker-compose.yml up -d
+# Stop:    docker compose -f docker/monitoring/docker-compose.yml down
+# Logs:    docker compose -f docker/monitoring/docker-compose.yml logs -f
+#
+# Grafana UI: http://localhost:3000  (admin/admin — change on first login)
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — metrics collection
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: frappe_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager — alert routing → Telegram webhook
+  # ---------------------------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: frappe_alertmanager
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Loki — log aggregation (Frappe app/worker logs)
+  # ---------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: frappe_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Promtail — log shipper: reads Frappe log files → Loki
+  # ---------------------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: frappe_promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./loki/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      # Mount the Frappe bench logs directory (adjust path to match your bench)
+      - /home/frappe/frappe-bench/logs:/frappe-logs:ro
+      # Docker daemon socket for container log collection
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  # ---------------------------------------------------------------------------
+  # Grafana — dashboards
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: frappe_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "${GRAFANA_ROOT_URL:-http://localhost:3000}"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/frappe_overview.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana/provisioning/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+
+  # ---------------------------------------------------------------------------
+  # Frappe metrics exporter — custom Prometheus metrics
+  # ---------------------------------------------------------------------------
+  frappe-exporter:
+    image: python:3.11-slim
+    container_name: frappe_exporter
+    restart: unless-stopped
+    working_dir: /app
+    command: >
+      sh -c "pip install prometheus-client redis --quiet &&
+             python frappe_metrics_exporter.py"
+    environment:
+      EXPORTER_PORT: "9101"
+      EXPORTER_INTERVAL_SECS: "15"
+      FRAPPE_SITE_LIST: "${FRAPPE_SITE_LIST:-localhost}"
+      FRAPPE_HTTP_HOST: "${FRAPPE_HTTP_HOST:-http://frappe:8000}"
+      FRAPPE_API_KEY: "${FRAPPE_API_KEY:-}"
+      FRAPPE_API_SECRET: "${FRAPPE_API_SECRET:-}"
+      REDIS_QUEUE_URL: "${REDIS_QUEUE_URL:-redis://redis:6379}"
+    volumes:
+      - ../../scripts/monitoring/frappe_metrics_exporter.py:/app/frappe_metrics_exporter.py:ro
+    ports:
+      - "9101:9101"
+    networks:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Alert webhook — Alertmanager → Telegram forwarding
+  # ---------------------------------------------------------------------------
+  alert-webhook:
+    image: python:3.11-slim
+    container_name: frappe_alert_webhook
+    restart: unless-stopped
+    working_dir: /app
+    command: python alert_webhook.py
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID}"
+      WEBHOOK_PORT: "5001"
+      WEBHOOK_SECRET: "${WEBHOOK_SECRET:-}"
+    volumes:
+      - ../../scripts/monitoring/alert_webhook.py:/app/alert_webhook.py:ro
+    ports:
+      - "5001:5001"
+    networks:
+      - monitoring
+
+# ---------------------------------------------------------------------------
+# Volumes & networks
+# ---------------------------------------------------------------------------
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  loki_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge

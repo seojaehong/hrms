@@ -1,0 +1,46 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+
+  # ---------------------------------------------------------------------------
+  # Frappe bench logs (gunicorn, worker, scheduler)
+  # ---------------------------------------------------------------------------
+  - job_name: frappe_bench
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: frappe
+          __path__: /frappe-logs/*.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>INFO|WARNING|ERROR|CRITICAL|DEBUG)'
+      - labels:
+          level:
+
+  # ---------------------------------------------------------------------------
+  # Docker container logs (frappe, mariadb, redis)
+  # ---------------------------------------------------------------------------
+  - job_name: docker_containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        target_label: container
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: compose_project
+      # Only collect logs from containers in the frappe project
+      - source_labels: [compose_project]
+        regex: ".+"
+        action: keep

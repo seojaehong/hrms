@@ -1,8 +1,31 @@
-#!bin/bash
+#!/bin/bash
+
+set -eo pipefail
+
+: "${HRMS_APP_SOURCE:=/workspace/hrms-source}"
+
+if [ ! -f "$HRMS_APP_SOURCE/pyproject.toml" ] || [ ! -d "$HRMS_APP_SOURCE/hrms" ]; then
+    echo "HRMS_APP_SOURCE does not point to a mounted HRMS workspace: $HRMS_APP_SOURCE" >&2
+    exit 1
+fi
+
+git config --global --add safe.directory "$HRMS_APP_SOURCE/.git"
+
+sync_hrms_app_from_mounted_source() {
+    if [ ! -d "apps/hrms/.git" ]; then
+        echo "Installed HRMS app checkout is missing or not a git repository" >&2
+        exit 1
+    fi
+
+    git -C apps/hrms fetch --force "$HRMS_APP_SOURCE"
+    git -C apps/hrms reset --hard FETCH_HEAD
+    git -C apps/hrms clean -fd
+}
 
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
-    echo "Bench already exists, skipping init"
+    echo "Bench already exists, syncing HRMS app from mounted source"
     cd frappe-bench
+    sync_hrms_app_from_mounted_source
     bench start
 else
     echo "Creating new bench..."
@@ -25,7 +48,7 @@ sed -i '/redis/d' ./Procfile
 sed -i '/watch/d' ./Procfile
 
 bench get-app erpnext
-bench get-app hrms
+bench get-app "$HRMS_APP_SOURCE"
 
 bench new-site hrms.localhost \
 --force \

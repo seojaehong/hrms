@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import io
+import os
+import pathlib
+import shlex
+import sys
+import tempfile
+import unittest
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+MODULE_PATH = ROOT / "scripts" / "run_korea_regional_smoke.py"
+
+
+def load_module():
+	spec = importlib.util.spec_from_file_location("korea_regional_smoke_harness", MODULE_PATH)
+	module = importlib.util.module_from_spec(spec)
+	assert spec.loader is not None
+	spec.loader.exec_module(module)
+	return module
+
+
+class TestKoreaRegionalSmokeHarness(unittest.TestCase):
+	def setUp(self):
+		self.mod = load_module()
+
+	def test_direct_test_targets_cover_regional_productization_contracts(self):
+		targets = self.mod.korea_direct_test_targets(ROOT)
+
+		expected_targets = {
+			"hrms/tests/test_korea_admin_dashboard.py",
+			"hrms/tests/test_korea_annual_leave.py",
+			"hrms/tests/test_korea_approval_inbox.py",
+			"hrms/tests/test_korea_approval_inbox_api.py",
+			"hrms/tests/test_korea_attendance_closing_api.py",
+			"hrms/tests/test_korea_attendance_summary.py",
+			"hrms/tests/test_korea_closing_center.py",
+			"hrms/tests/test_korea_closing_center_api.py",
+			"hrms/tests/test_korea_compliance_checklist.py",
+			"hrms/tests/test_korea_compliance_diagnosis_api.py",
+			"hrms/tests/test_korea_employment_contract.py",
+			"hrms/tests/test_korea_employment_contract_api.py",
+			"hrms/tests/test_korea_expense_settlement.py",
+			"hrms/tests/test_korea_hrms_profiles.py",
+			"hrms/tests/test_korea_kakao_notification.py",
+			"hrms/tests/test_korea_kakao_notification_api.py",
+			"hrms/tests/test_korea_leave_allocation_adapter.py",
+			"hrms/tests/test_korea_leave_allocation_api.py",
+			"hrms/tests/test_korea_mobile_ess_mss_contracts.py",
+			"hrms/tests/test_korea_mobile_ess_mss_api.py",
+			"hrms/tests/test_korea_payroll_salary_slip_adapter.py",
+			"hrms/tests/test_korea_payroll_entry_adapter.py",
+			"hrms/tests/test_korea_payroll_entry_api.py",
+			"hrms/tests/test_korea_payroll_salary_slip_api.py",
+			"hrms/tests/test_korea_payroll_verification_provider.py",
+			"hrms/tests/test_korea_payslip.py",
+			"hrms/tests/test_korea_statutory_payroll.py",
+		}
+		self.assertTrue(expected_targets.issubset(set(targets)), set(expected_targets).difference(targets))
+		self.assertEqual(targets, sorted(targets))
+
+	def test_dynamic_discovery_includes_new_korea_direct_tests_without_static_registration(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			repo_root = pathlib.Path(tempdir)
+			(repo_root / "hrms" / "tests").mkdir(parents=True)
+			(repo_root / "hrms" / "tests" / "test_korea_new_contract.py").write_text(
+				"#!/usr/bin/env python3\nimport unittest\n",
+				encoding="utf-8",
+			)
+
+			targets = self.mod.korea_direct_test_targets(repo_root)
+
+		self.assertEqual(targets, ["hrms/tests/test_korea_new_contract.py"])
+
+	def test_builds_direct_and_optional_bench_commands_without_requiring_bench(self):
+		direct = self.mod.build_direct_test_commands(ROOT)
+		bench = self.mod.build_optional_bench_command(site="test.localhost")
+
+		self.assertIn([sys.executable, "hrms/tests/test_korea_closing_center.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_leave_allocation_api.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_contracts.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_api.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_payroll_entry_adapter.py"], direct)
+		self.assertIn([sys.executable, "hrms/tests/test_korea_payroll_entry_api.py"], direct)
+		self.assertTrue(all(command[0] == sys.executable for command in direct))
+		self.assertEqual(
+			bench,
+			[
+				"bench",
+				"--site",
+				"test.localhost",
+				"run-tests",
+				"--app",
+				"hrms",
+				"--module",
+				"hrms.tests.test_korea_statutory_payroll",
+			],
+		)
+
+	def test_run_smoke_fails_when_repo_root_has_no_direct_targets(self):
+		missing_root = ROOT / "does-not-exist"
+
+		result = self.mod.run_smoke(repo_root=missing_root, dry_run=True)
+
+		self.assertFalse(result["passed"])
+		self.assertEqual(result["failed_count"], 1)
+		self.assertEqual(result["direct_results"][0]["reason"], "no Korea direct test targets found")
+
+	def test_run_smoke_dry_run_includes_leave_allocation_and_mobile_api_direct_results(self):
+		result = self.mod.run_smoke(repo_root=ROOT, dry_run=True)
+
+		commands = [row["command"] for row in result["direct_results"]]
+		self.assertTrue(result["passed"])
+		self.assertEqual(result["python_executable"], sys.executable)
+		self.assertEqual(result["direct_target_count"], len(commands))
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_leave_allocation_api.py"]), commands)
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_mobile_ess_mss_api.py"]), commands)
+		self.assertIn(shlex.join([sys.executable, "hrms/tests/test_korea_payroll_entry_api.py"]), commands)
+
+	def test_main_can_write_json_report_file_for_ci_artifacts(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			report_path = pathlib.Path(tempdir) / "nested" / "korea-smoke.json"
+
+			with contextlib.redirect_stdout(io.StringIO()):
+				exit_code = self.mod.main(["--repo-root", str(ROOT), "--dry-run", "--report-file", str(report_path)])
+
+			self.assertEqual(exit_code, 0)
+			self.assertTrue(report_path.exists())
+			payload = self.mod.json.loads(report_path.read_text(encoding="utf-8"))
+			self.assertEqual(payload["contract_type"], "korea_regional_smoke_harness_v1")
+			self.assertEqual(payload["python_executable"], sys.executable)
+			self.assertGreater(payload["direct_target_count"], 0)
+
+	def test_run_command_supports_dry_run_for_cron_safe_reporting(self):
+		result = self.mod.run_command(["python3", "--version"], dry_run=True)
+
+		self.assertEqual(result, {"command": "python3 --version", "skipped": True, "returncode": 0})
+
+	def test_run_command_prefers_repo_root_for_direct_file_package_imports(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			root = pathlib.Path(tempdir) / "repo"
+			stale_root = pathlib.Path(tempdir) / "stale"
+			(root / "hrms" / "regional" / "south_korea").mkdir(parents=True)
+			(root / "hrms" / "tests").mkdir(parents=True)
+			(stale_root / "hrms" / "regional" / "south_korea").mkdir(parents=True)
+			for directory in [
+				root / "hrms",
+				root / "hrms" / "regional",
+				root / "hrms" / "regional" / "south_korea",
+				stale_root / "hrms",
+				stale_root / "hrms" / "regional",
+				stale_root / "hrms" / "regional" / "south_korea",
+			]:
+				(directory / "__init__.py").write_text("", encoding="utf-8")
+			(root / "hrms" / "regional" / "south_korea" / "fresh_contract.py").write_text(
+				"VALUE = 'fresh-root'\n",
+				encoding="utf-8",
+			)
+			(root / "hrms" / "tests" / "test_korea_import_root.py").write_text(
+				"from hrms.regional.south_korea.fresh_contract import VALUE\n"
+				"assert VALUE == 'fresh-root'\n",
+				encoding="utf-8",
+			)
+
+			old_pythonpath = os.environ.get("PYTHONPATH")
+			os.environ["PYTHONPATH"] = str(stale_root)
+			try:
+				result = self.mod.run_command(
+					[sys.executable, "hrms/tests/test_korea_import_root.py"],
+					cwd=root,
+				)
+			finally:
+				if old_pythonpath is None:
+					os.environ.pop("PYTHONPATH", None)
+				else:
+					os.environ["PYTHONPATH"] = old_pythonpath
+
+		self.assertEqual(result["returncode"], 0, result)
+
+
+if __name__ == "__main__":
+	unittest.main()

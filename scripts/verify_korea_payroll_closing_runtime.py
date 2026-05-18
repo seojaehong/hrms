@@ -1,0 +1,742 @@
+#!/usr/bin/env python3
+"""Korea payroll closing runtime/bench verification checkpoint.
+
+This script is intentionally read-only at the HRMS/Frappe business-data layer. It
+records whether Docker/Bench runtime appears available and, only when explicitly
+requested, probes the Frappe-facing payroll closing worklist read API. It does
+not save, submit, approve, send, call providers, or create payroll documents.
+The optional ``--report-file`` writes a local JSON artifact for cron/CI evidence.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import shlex
+import shutil
+import subprocess
+from typing import Any
+
+CONTRACT_TYPE = "korea_payroll_closing_runtime_verification_v1"
+RUNTIME_ACTION = "runtime_verification_read_only"
+OWNERSHIP_CONTRACT_TYPE = "korea_payroll_closing_runtime_ownership_v1"
+OWNERSHIP_RUNTIME_ACTION = "runtime_ownership_decision_read_only"
+HANDOFF_CONTRACT_TYPE = "korea_payroll_closing_runtime_handoff_v1"
+MUTATION_BOUNDARY = "read_only_no_save_submit_approve_send_provider"
+AI_ROLE = "assistant_only"
+LOCAL_DOCKER_BENCH_RUNTIME = "local_docker_compose_bench"
+OPERATOR_PROVIDED_BENCH_RUNTIME = "operator_provided_bench"
+ALLOWED_RUNTIME_HANDOFF_KINDS = {LOCAL_DOCKER_BENCH_RUNTIME, OPERATOR_PROVIDED_BENCH_RUNTIME}
+WORKLIST_METHOD = (
+	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api."
+	"list_korea_payroll_closing_worklist_runtime"
+)
+
+
+def build_docker_compose_ps_command(repo_root: pathlib.Path) -> list[str]:
+	"""Build the Docker Compose status command for this workspace."""
+
+	return ["docker", "compose", "-f", str(pathlib.Path(repo_root) / "docker" / "docker-compose.yml"), "ps", "--format", "json"]
+
+
+def build_bench_worklist_probe_command(*, site: str, company: str, workplaces: list[str] | None = None) -> list[str]:
+	"""Build a host bench read-only execute command for the worklist runtime API."""
+
+	return [
+		"bench",
+		"--site",
+		_require_text(site, "site"),
+		"execute",
+		WORKLIST_METHOD,
+		"--kwargs",
+		_build_worklist_kwargs_json(company=company, workplaces=workplaces),
+	]
+
+
+def build_docker_bench_worklist_probe_command(
+	*,
+	repo_root: pathlib.Path,
+	site: str,
+	company: str,
+	workplaces: list[str] | None = None,
+) -> list[str]:
+	"""Build a Docker Compose bench command without requiring host bench."""
+
+	bench_command = shlex.join([
+		"bench",
+		"--site",
+		_require_text(site, "site"),
+		"execute",
+		WORKLIST_METHOD,
+		"--kwargs",
+		_build_worklist_kwargs_json(company=company, workplaces=workplaces),
+	])
+	return [
+		"docker",
+		"compose",
+		"-f",
+		str(pathlib.Path(repo_root) / "docker" / "docker-compose.yml"),
+		"exec",
+		"-T",
+		"frappe",
+		"bash",
+		"-lc",
+		f"cd /home/frappe/frappe-bench && {bench_command}",
+	]
+
+
+def build_docker_runtime_source_probe_command(*, repo_root: pathlib.Path) -> list[str]:
+	"""Build a read-only Docker command that compares mounted and installed HRMS source."""
+
+	shell_payload = shlex.join([
+		"python3",
+		"-c",
+		(
+			"import json, pathlib, subprocess; "
+			"mounted=pathlib.Path('/workspace/hrms-source'); "
+			"app=pathlib.Path('/home/frappe/frappe-bench/apps/hrms'); "
+			"head=lambda path: subprocess.check_output(['git','-c','safe.directory='+str(path),'rev-parse','HEAD'], cwd=str(path), text=True).strip(); "
+			"print(json.dumps({'mounted_source_head': head(mounted), 'runtime_app_head': head(app)}, sort_keys=True))"
+		),
+	])
+	return [
+		"docker",
+		"compose",
+		"-f",
+		str(pathlib.Path(repo_root) / "docker" / "docker-compose.yml"),
+		"exec",
+		"-T",
+		"frappe",
+		"bash",
+		"-lc",
+		shell_payload,
+	]
+
+
+def _build_worklist_kwargs_json(*, company: str, workplaces: list[str] | None = None) -> str:
+	kwargs: dict[str, Any] = {"company": _require_text(company, "company")}
+	if workplaces is not None:
+		if not isinstance(workplaces, list) or not all(isinstance(item, str) and item.strip() for item in workplaces):
+			raise ValueError("workplaces must be a list of non-empty strings when provided")
+		kwargs["workplaces"] = workplaces
+	return json.dumps(kwargs, ensure_ascii=False, sort_keys=True)
+
+
+def verify_runtime_checkpoint(
+	*,
+	repo_root: pathlib.Path,
+	company: str = "Korea Demo Co",
+	workplaces: list[str] | None = None,
+	include_bench: bool = False,
+	site: str | None = None,
+	dry_run: bool = False,
+	runtime_handoff: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+	"""Return a report-safe read-only runtime verification checkpoint."""
+
+	repo_root = pathlib.Path(repo_root).resolve()
+	normalized_handoff = normalize_runtime_handoff(runtime_handoff)
+	if normalized_handoff:
+		include_bench = True
+		site = normalized_handoff["site"]
+		company = normalized_handoff.get("company") or company
+		workplaces = normalized_handoff.get("workplaces") if "workplaces" in normalized_handoff else workplaces
+	docker_required = not normalized_handoff or normalized_handoff["runtime_kind"] == LOCAL_DOCKER_BENCH_RUNTIME
+	docker_result = run_command(
+		build_docker_compose_ps_command(repo_root),
+		cwd=repo_root,
+		dry_run=dry_run,
+		runtime_output_parser=parse_docker_compose_runtime_available,
+	)
+	source_result = run_runtime_source_probe(
+		repo_root=repo_root,
+		docker_result=docker_result,
+		docker_required=docker_required,
+		dry_run=dry_run,
+	)
+	bench_result: dict[str, Any]
+	if include_bench:
+		if not site:
+			raise ValueError("site is required when include_bench is true")
+		use_docker_bench = normalized_handoff is None or normalized_handoff["runtime_kind"] == LOCAL_DOCKER_BENCH_RUNTIME
+		if use_docker_bench:
+			bench_command = build_docker_bench_worklist_probe_command(
+				repo_root=repo_root,
+				site=site,
+				company=company,
+				workplaces=workplaces,
+			)
+		elif shutil.which("bench") is None and not dry_run:
+			bench_result = {
+				"command": "bench",
+				"skipped": True,
+				"reason": "bench executable not found",
+				"executable_available": False,
+				"runtime_available": False,
+				"positive_runtime_rows_verified": False,
+				"returncode": 0,
+			}
+			bench_command = None
+		else:
+			bench_command = build_bench_worklist_probe_command(site=site, company=company, workplaces=workplaces)
+		if bench_command is not None:
+			bench_result = run_command(
+				bench_command,
+				cwd=repo_root,
+				dry_run=dry_run,
+				redact_output=True,
+				redact_command=True,
+				runtime_output_parser=parse_bench_worklist_positive_rows,
+			)
+	else:
+		bench_result = {
+			"command": "bench execute payroll closing worklist runtime read",
+			"skipped": True,
+			"reason": "bench probe not requested",
+			"runtime_available": False,
+			"returncode": 0,
+		}
+
+	bench_check_passed = (not include_bench and bench_result.get("skipped")) or (
+		bench_result.get("returncode") == 0 and not bench_result.get("skipped")
+	)
+	docker_check_passed = not docker_required or (docker_result.get("returncode") == 0 and not docker_result.get("skipped"))
+	source_check_passed = (
+		not docker_required
+		or source_result.get("skipped")
+		or (source_result.get("returncode") == 0 and source_result.get("source_matches_mounted_workspace") is True)
+	)
+	command_checks_passed = docker_check_passed and bench_check_passed and source_check_passed
+	docker_verified = bool(docker_result.get("runtime_available"))
+	bench_verified = bool(bench_result.get("runtime_available"))
+	positive_runtime_rows_verified = bool(bench_result.get("positive_runtime_rows_verified"))
+	source_matches_mounted_workspace = (
+		not docker_required
+		or source_result.get("skipped")
+		or source_result.get("source_matches_mounted_workspace") is True
+	)
+	runtime_environment_available = (docker_verified or not docker_required) and (
+		not include_bench or bench_verified
+	) and source_matches_mounted_workspace
+	runtime_verified = runtime_environment_available and positive_runtime_rows_verified
+	runtime_blockers = []
+	if not runtime_environment_available:
+		runtime_blockers.append("runtime not verified")
+	if not positive_runtime_rows_verified:
+		runtime_blockers.append("positive runtime rows not verified")
+	if docker_required and docker_result.get("returncode") != 0:
+		runtime_blockers.append("docker compose status check failed")
+	elif docker_required and not docker_result.get("skipped") and not docker_result.get("runtime_available"):
+		runtime_blockers.append("docker compose runtime not running")
+	if include_bench and bench_result.get("returncode") != 0:
+		runtime_blockers.append("bench worklist runtime read failed")
+	if include_bench and bench_result.get("skipped") and bench_result.get("reason") == "bench executable not found":
+		runtime_blockers.append("bench executable not found")
+	if source_result.get("source_matches_mounted_workspace") is False:
+		runtime_blockers.append("runtime app source is not aligned with mounted workspace")
+	elif docker_required and docker_verified and not source_result.get("skipped") and source_result.get("source_matches_mounted_workspace") is not True:
+		runtime_blockers.append("runtime app source alignment not verified")
+	fixture_fallback_required = not (runtime_verified and bool(bench_result.get("positive_runtime_rows_verified")))
+	closeout = build_runtime_closeout(
+		docker_result=docker_result,
+		bench_result=bench_result,
+		source_result=source_result,
+		include_bench=include_bench,
+		runtime_verified=runtime_verified,
+		fixture_fallback_required=fixture_fallback_required,
+		docker_required=docker_required,
+	)
+	ownership = decide_runtime_ownership(
+		docker_result=docker_result,
+		bench_result=bench_result,
+		include_bench=include_bench,
+		runtime_verified=runtime_verified,
+		positive_runtime_rows_verified=bool(bench_result.get("positive_runtime_rows_verified")),
+		runtime_handoff=normalized_handoff,
+		docker_required=docker_required,
+	)
+	passed = bool(closeout["gate_6_blockers_resolved"])
+	return {
+		"contract_type": CONTRACT_TYPE,
+		"runtime_action": RUNTIME_ACTION,
+		"requires_runtime_apply": False,
+		"requires_human_approval": True,
+		"ai_role": AI_ROLE,
+		"mutation_boundary": MUTATION_BOUNDARY,
+		"repo_root": str(repo_root),
+		"scope": {
+			"company_provided": bool(company),
+			"workplace_count": len(workplaces or []),
+			"site_provided": bool(site),
+		},
+		"docker_compose": docker_result,
+		"runtime_source": source_result,
+		"bench_probe": bench_result,
+		"command_checks_passed": command_checks_passed,
+		"runtime_verified": runtime_verified,
+		"runtime_blockers": runtime_blockers,
+		"runtime_closeout": closeout,
+		"runtime_ownership": ownership,
+		"runtime_handoff": summarize_runtime_handoff(normalized_handoff),
+		"fixture_fallback_required_until_positive_runtime_rows": fixture_fallback_required,
+		"read_only_evidence_packet_boundary": True,
+		"passed": passed,
+	}
+
+
+def run_command(
+	command: list[str],
+	*,
+	cwd: pathlib.Path,
+	dry_run: bool = False,
+	timeout_seconds: int = 30,
+	redact_output: bool = True,
+	redact_command: bool = False,
+	runtime_output_parser: Any | None = None,
+) -> dict[str, Any]:
+	"""Run a command and return a redacted, report-safe result object."""
+
+	command_text = _redact_command(command) if redact_command else shlex.join(command)
+	if dry_run:
+		return {"command": command_text, "skipped": True, "returncode": 0, "runtime_available": False, "executable_available": True}
+	if shutil.which(command[0]) is None:
+		return {
+			"command": command_text,
+			"skipped": True,
+			"reason": f"{command[0]} executable not found",
+			"returncode": 0,
+			"runtime_available": False,
+			"executable_available": False,
+		}
+	try:
+		completed = subprocess.run(
+			command,
+			cwd=str(cwd),
+			text=True,
+			capture_output=True,
+			check=False,
+			timeout=timeout_seconds,
+		)
+	except FileNotFoundError:
+		return {
+			"command": command_text,
+			"skipped": True,
+			"reason": f"{command[0]} executable not found",
+			"returncode": 0,
+			"runtime_available": False,
+			"executable_available": False,
+		}
+	except subprocess.TimeoutExpired:
+		return {
+			"command": command_text,
+			"returncode": 124,
+			"runtime_available": False,
+			"executable_available": True,
+			"timed_out": True,
+			"timeout_seconds": timeout_seconds,
+		}
+	runtime_available = completed.returncode == 0 and bool(completed.stdout.strip())
+	output_summary: dict[str, Any] = {}
+	if runtime_output_parser is not None and completed.returncode == 0:
+		parsed_runtime = runtime_output_parser(completed.stdout)
+		if isinstance(parsed_runtime, dict):
+			runtime_available = bool(parsed_runtime.pop("runtime_available", runtime_available))
+			output_summary = parsed_runtime
+		else:
+			runtime_available = bool(parsed_runtime)
+	result = {
+		"command": command_text,
+		"returncode": completed.returncode,
+		"runtime_available": runtime_available,
+		"executable_available": True,
+		"stdout_present": bool(completed.stdout.strip()),
+		"stderr_present": bool(completed.stderr.strip()),
+	}
+	result.update(output_summary)
+	if not redact_output:
+		result["stdout_tail"] = _tail(completed.stdout)
+		result["stderr_tail"] = _tail(completed.stderr)
+	return result
+
+
+def run_runtime_source_probe(
+	*,
+	repo_root: pathlib.Path,
+	docker_result: dict[str, Any],
+	docker_required: bool,
+	dry_run: bool,
+) -> dict[str, Any]:
+	"""Run the local Docker source-alignment probe only when local Docker matters."""
+
+	if not docker_required:
+		return {
+			"command": "docker runtime HRMS source alignment probe",
+			"skipped": True,
+			"reason": "local Docker runtime not required for operator-provided handoff",
+			"returncode": 0,
+			"runtime_available": False,
+		}
+	if not docker_result.get("runtime_available"):
+		return {
+			"command": "docker runtime HRMS source alignment probe",
+			"skipped": True,
+			"reason": "docker compose runtime not running",
+			"returncode": 0,
+			"runtime_available": False,
+		}
+	return run_command(
+		build_docker_runtime_source_probe_command(repo_root=repo_root),
+		cwd=repo_root,
+		dry_run=dry_run,
+		redact_output=True,
+		redact_command=True,
+		runtime_output_parser=parse_docker_runtime_source_alignment,
+	)
+
+
+def decide_runtime_ownership(
+	*,
+	docker_result: dict[str, Any],
+	bench_result: dict[str, Any],
+	include_bench: bool,
+	runtime_verified: bool,
+	positive_runtime_rows_verified: bool,
+	runtime_handoff: dict[str, Any] | None = None,
+	docker_required: bool = True,
+) -> dict[str, Any]:
+	"""Decide which runtime can be treated as authoritative without mutation."""
+
+	evidence: list[str] = []
+	next_actions: list[str] = []
+	docker_running = bool(docker_result.get("runtime_available"))
+	bench_available = include_bench and bench_result.get("executable_available") is not False
+	bench_completed = include_bench and not bench_result.get("skipped") and bench_result.get("returncode") == 0
+	if runtime_handoff:
+		evidence.append(f"runtime handoff target accepted: {runtime_handoff['runtime_kind']}")
+	if docker_running:
+		evidence.append("local Docker Compose Frappe service is running")
+	elif docker_required:
+		evidence.append("local Docker Compose Frappe runtime is not running")
+	else:
+		evidence.append("local Docker Compose Frappe runtime is not required for operator-provided handoff")
+	if include_bench:
+		if bench_available:
+			evidence.append("bench executable is available in this cron environment")
+		else:
+			evidence.append("bench executable is not available in this cron environment")
+		if bench_completed:
+			evidence.append("read-only bench worklist probe completed")
+		if positive_runtime_rows_verified:
+			evidence.append("read-only bench worklist probe returned positive scoped rows")
+	else:
+		evidence.append("bench probe was not requested")
+		next_actions.append("run read-only bench worklist probe with --include-bench --site against the candidate runtime")
+
+	if runtime_verified and positive_runtime_rows_verified:
+		authoritative_runtime = runtime_handoff["runtime_kind"] if runtime_handoff else LOCAL_DOCKER_BENCH_RUNTIME
+		decision_status = "verified"
+	else:
+		authoritative_runtime = "operator_provided_runtime_required"
+		decision_status = "blocked"
+		if docker_required and not docker_running:
+			next_actions.append("start or expose the local Docker Compose Frappe runtime")
+		if include_bench and not bench_available:
+			next_actions.append("install or expose bench executable in this cron environment")
+		if include_bench and bench_available and not bench_completed:
+			next_actions.append("inspect the failed read-only bench worklist probe")
+		if not positive_runtime_rows_verified:
+			next_actions.append("provide or expose an authoritative Bench/Frappe runtime")
+
+	return {
+		"contract_type": OWNERSHIP_CONTRACT_TYPE,
+		"runtime_action": OWNERSHIP_RUNTIME_ACTION,
+		"requires_runtime_apply": False,
+		"requires_human_approval": True,
+		"ai_role": AI_ROLE,
+		"mutation_boundary": MUTATION_BOUNDARY,
+		"authoritative_runtime": authoritative_runtime,
+		"decision_status": decision_status,
+		"evidence": evidence,
+		"next_actions": _dedupe(next_actions),
+	}
+
+
+def build_runtime_closeout(
+	*,
+	docker_result: dict[str, Any],
+	bench_result: dict[str, Any],
+	source_result: dict[str, Any],
+	include_bench: bool,
+	runtime_verified: bool,
+	fixture_fallback_required: bool,
+	docker_required: bool = True,
+) -> dict[str, Any]:
+	"""Summarize Gate 6 runtime blockers without exposing HR row payloads."""
+
+	docker_running = bool(docker_result.get("runtime_available"))
+	bench_executable_available = include_bench and bench_result.get("executable_available") is not False
+	bench_probe_completed = include_bench and not bench_result.get("skipped") and bench_result.get("returncode") == 0
+	positive_runtime_rows_verified = bool(bench_result.get("positive_runtime_rows_verified"))
+	next_actions: list[str] = []
+	if docker_required and not docker_running:
+		next_actions.append("start Docker Compose Frappe runtime")
+	if include_bench and not bench_executable_available:
+		next_actions.append("install or expose bench executable")
+	if include_bench and bench_executable_available and not bench_probe_completed:
+		next_actions.append("inspect failed read-only bench worklist probe")
+	if source_result.get("source_matches_mounted_workspace") is False:
+		next_actions.append("refresh Docker Bench HRMS app checkout from mounted workspace")
+	elif docker_required and docker_running and not source_result.get("skipped") and source_result.get("source_matches_mounted_workspace") is not True:
+		next_actions.append("rerun or inspect Docker Bench HRMS source alignment probe")
+	if docker_running and not include_bench:
+		next_actions.append("run bench read-only worklist probe with --include-bench --site")
+	if not positive_runtime_rows_verified:
+		next_actions.append("verify positive Korea Payroll Closing Draft rows through the read-only worklist path")
+	return {
+		"gate_6_blockers_resolved": bool(runtime_verified and positive_runtime_rows_verified),
+		"docker_runtime_running": docker_running,
+		"docker_runtime_required": docker_required,
+		"bench_probe_requested": include_bench,
+		"bench_executable_available": bool(bench_executable_available),
+		"runtime_source_matches_mounted_workspace": source_result.get("source_matches_mounted_workspace"),
+		"positive_runtime_rows_verified": positive_runtime_rows_verified,
+		"fixture_fallback_required": fixture_fallback_required,
+		"next_actions": next_actions,
+	}
+
+
+def normalize_runtime_handoff(runtime_handoff: dict[str, Any] | None) -> dict[str, Any] | None:
+	"""Validate a caller-provided runtime handoff without leaking scoped values."""
+
+	if runtime_handoff is None:
+		return None
+	if not isinstance(runtime_handoff, dict):
+		raise ValueError("runtime_handoff must be a dict")
+	if runtime_handoff.get("contract_type") != HANDOFF_CONTRACT_TYPE:
+		raise ValueError(f"runtime_handoff.contract_type must be {HANDOFF_CONTRACT_TYPE}")
+	runtime_kind = _require_text(runtime_handoff.get("runtime_kind"), "runtime_handoff.runtime_kind")
+	if runtime_kind not in ALLOWED_RUNTIME_HANDOFF_KINDS:
+		raise ValueError("runtime_handoff.runtime_kind must be local_docker_compose_bench or operator_provided_bench")
+	site = _require_text(runtime_handoff.get("site"), "runtime_handoff.site")
+	normalized: dict[str, Any] = {
+		"contract_type": HANDOFF_CONTRACT_TYPE,
+		"runtime_kind": runtime_kind,
+		"site": site,
+	}
+	if "company" in runtime_handoff and runtime_handoff.get("company") is not None:
+		normalized["company"] = _require_text(runtime_handoff.get("company"), "runtime_handoff.company")
+	if "workplaces" in runtime_handoff and runtime_handoff.get("workplaces") is not None:
+		workplaces = runtime_handoff.get("workplaces")
+		if not isinstance(workplaces, list) or not all(isinstance(item, str) and item.strip() for item in workplaces):
+			raise ValueError("runtime_handoff.workplaces must be a list of non-empty strings when provided")
+		normalized["workplaces"] = [item.strip() for item in workplaces]
+	return normalized
+
+
+def summarize_runtime_handoff(runtime_handoff: dict[str, Any] | None) -> dict[str, Any]:
+	"""Return report-safe runtime handoff metadata only."""
+
+	if runtime_handoff is None:
+		return {"provided": False}
+	return {
+		"provided": True,
+		"contract_type": HANDOFF_CONTRACT_TYPE,
+		"runtime_kind": runtime_handoff["runtime_kind"],
+		"site_provided": bool(runtime_handoff.get("site")),
+		"company_provided": bool(runtime_handoff.get("company")),
+		"workplace_count": len(runtime_handoff.get("workplaces") or []),
+		"requires_runtime_apply": False,
+		"requires_human_approval": True,
+		"ai_role": AI_ROLE,
+		"mutation_boundary": MUTATION_BOUNDARY,
+	}
+
+
+def load_runtime_handoff_file(path: str | None) -> dict[str, Any] | None:
+	"""Load a JSON runtime handoff file for CLI-driven cron/operator use."""
+
+	if not path:
+		return None
+	handoff_path = pathlib.Path(path)
+	try:
+		parsed = json.loads(handoff_path.read_text(encoding="utf-8"))
+	except json.JSONDecodeError as exc:
+		raise ValueError("--runtime-handoff-file must contain a JSON object") from exc
+	if not isinstance(parsed, dict):
+		raise ValueError("--runtime-handoff-file must contain a JSON object")
+	return parsed
+
+
+def parse_bench_worklist_positive_rows(stdout: str) -> dict[str, Any]:
+	"""Return safe positive-row evidence from the redacted bench worklist output."""
+
+	positive_runtime_rows_verified = False
+	try:
+		parsed = json.loads(stdout.strip()) if stdout.strip() else None
+	except json.JSONDecodeError:
+		parsed = None
+	if isinstance(parsed, dict):
+		message = parsed.get("message") if isinstance(parsed.get("message"), dict) else parsed
+		items = message.get("items")
+		positive_runtime_rows_verified = (
+			message.get("contract_type") == "korea_payroll_closing_worklist_runtime_api_v1"
+			and isinstance(items, list)
+			and any(isinstance(item, dict) and bool(item) for item in items)
+		)
+	return {
+		"runtime_available": positive_runtime_rows_verified,
+		"positive_runtime_rows_verified": positive_runtime_rows_verified,
+	}
+
+
+def parse_docker_compose_runtime_available(stdout: str) -> dict[str, Any]:
+	"""Return safe Docker Compose runtime availability and service summary."""
+
+	containers = _parse_docker_compose_ps_json(stdout)
+	running_services: list[str] = []
+	runtime_available = False
+	for container in containers:
+		service = str(container.get("Service") or container.get("service") or container.get("Name") or "").strip().lower()
+		state = str(container.get("State") or container.get("state") or "").strip().lower()
+		health = str(container.get("Health") or container.get("health") or "").strip().lower()
+		if state == "running" and service:
+			running_services.append(service)
+		if service == "frappe" and state == "running" and health not in {"unhealthy", "starting"}:
+			runtime_available = True
+	return {
+		"runtime_available": runtime_available,
+		"service_count": len(containers),
+		"running_services": running_services,
+	}
+
+
+def parse_docker_runtime_source_alignment(stdout: str) -> dict[str, Any]:
+	"""Parse source-alignment probe output without returning commit SHAs."""
+
+	try:
+		parsed = json.loads(stdout.strip()) if stdout.strip() else None
+	except json.JSONDecodeError:
+		parsed = None
+	mounted_head = parsed.get("mounted_source_head") if isinstance(parsed, dict) else None
+	runtime_head = parsed.get("runtime_app_head") if isinstance(parsed, dict) else None
+	has_mounted_head = isinstance(mounted_head, str) and bool(mounted_head.strip())
+	has_runtime_head = isinstance(runtime_head, str) and bool(runtime_head.strip())
+	source_matches = mounted_head == runtime_head if has_mounted_head and has_runtime_head else None
+	return {
+		"runtime_available": source_matches is not False,
+		"mounted_source_head_present": has_mounted_head,
+		"runtime_app_head_present": has_runtime_head,
+		"source_matches_mounted_workspace": source_matches,
+	}
+
+
+def _parse_docker_compose_ps_json(stdout: str) -> list[dict[str, Any]]:
+	text = stdout.strip()
+	if not text:
+		return []
+	try:
+		parsed = json.loads(text)
+	except json.JSONDecodeError:
+		parsed = []
+		for line in text.splitlines():
+			line = line.strip()
+			if not line:
+				continue
+			try:
+				item = json.loads(line)
+			except json.JSONDecodeError:
+				return []
+			if isinstance(item, dict):
+				parsed.append(item)
+		return parsed
+	if isinstance(parsed, dict):
+		return [parsed]
+	if isinstance(parsed, list):
+		return [item for item in parsed if isinstance(item, dict)]
+	return []
+
+
+def _dedupe(values: list[str]) -> list[str]:
+	seen: set[str] = set()
+	result: list[str] = []
+	for value in values:
+		if value not in seen:
+			seen.add(value)
+			result.append(value)
+	return result
+
+
+def _redact_command(command: list[str]) -> str:
+	redacted: list[str] = []
+	skip_next = False
+	for item in command:
+		if skip_next:
+			redacted.append("[redacted]")
+			skip_next = False
+			continue
+		if item == "-lc" and command[:2] == ["docker", "compose"]:
+			redacted.append(item)
+			skip_next = True
+			continue
+		redacted.append(item)
+		if item in {"--kwargs", "--site"}:
+			skip_next = True
+	return shlex.join(redacted)
+
+
+def _tail(text: str, *, max_lines: int = 40) -> str:
+	lines = text.splitlines()
+	return "\n".join(lines[-max_lines:])
+
+
+def _require_text(value: Any, fieldname: str) -> str:
+	if not isinstance(value, str) or not value.strip():
+		raise ValueError(f"{fieldname} must be a non-empty string")
+	return value.strip()
+
+
+def _coerce_workplaces(value: str | None) -> list[str] | None:
+	if value is None or value.strip() == "":
+		return None
+	parsed = json.loads(value)
+	if not isinstance(parsed, list) or not all(isinstance(item, str) and item.strip() for item in parsed):
+		raise ValueError("--workplaces must be a JSON list of non-empty strings")
+	return parsed
+
+
+def main(argv: list[str] | None = None) -> int:
+	parser = argparse.ArgumentParser(description="Verify Korea payroll closing runtime read path without mutation.")
+	parser.add_argument("--repo-root", default=str(pathlib.Path(__file__).resolve().parents[1]))
+	parser.add_argument("--company", default="Korea Demo Co")
+	parser.add_argument("--workplaces", help='Optional JSON list, e.g. ["Seoul HQ"]')
+	parser.add_argument("--include-bench", action="store_true")
+	parser.add_argument("--site")
+	parser.add_argument("--dry-run", action="store_true")
+	parser.add_argument("--report-file", help="Optional path to write the JSON verification report.")
+	parser.add_argument(
+		"--runtime-handoff-file",
+		help="Optional JSON handoff contract for an operator-provided or local Bench/Frappe runtime.",
+	)
+	args = parser.parse_args(argv)
+
+	report = verify_runtime_checkpoint(
+		repo_root=pathlib.Path(args.repo_root),
+		company=args.company,
+		workplaces=_coerce_workplaces(args.workplaces),
+		include_bench=args.include_bench,
+		site=args.site,
+		dry_run=args.dry_run,
+		runtime_handoff=load_runtime_handoff_file(args.runtime_handoff_file),
+	)
+	json_report = json.dumps(report, ensure_ascii=False, indent=2)
+	print(json_report)
+	if args.report_file:
+		report_path = pathlib.Path(args.report_file)
+		report_path.parent.mkdir(parents=True, exist_ok=True)
+		report_path.write_text(json_report + "\n", encoding="utf-8")
+	return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+	raise SystemExit(main())

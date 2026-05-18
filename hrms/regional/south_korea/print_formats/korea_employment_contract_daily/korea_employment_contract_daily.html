@@ -1,0 +1,100 @@
+{%- set terms = doc.contract_terms_json | parse_json if doc.contract_terms_json else {} -%}
+{%- set company_info = doc.company_info_json | parse_json if doc.company_info_json else {} -%}
+{%- set employee_info = doc.employee_info_json | parse_json if doc.employee_info_json else {} -%}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family: 'Malgun Gothic', '맑은 고딕', 'NanumGothic', '나눔고딕', sans-serif; font-size: 10pt; line-height: 1.7; color: #111; }
+.contract-wrapper { max-width: 800px; margin: 0 auto; padding: 30px 40px; }
+h2.contract-title { text-align: center; font-size: 16pt; font-weight: bold; margin: 16px 0 32px; letter-spacing: 2px; }
+table.ct { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+table.ct th, table.ct td { border: 1px solid #333; padding: 6px 10px; vertical-align: top; }
+table.ct th { background: #f5f5f5; width: 28%; font-weight: bold; white-space: nowrap; }
+.sec { font-weight: bold; font-size: 11pt; margin: 20px 0 8px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+.sig-area { margin-top: 48px; }
+.sig-row { display: flex; justify-content: space-between; margin-top: 28px; gap: 20px; }
+.sig-block { width: 45%; }
+.sig-block p { margin: 3px 0; }
+.sig-line { border-bottom: 1px solid #333; margin-top: 44px; }
+.statute { font-size: 9pt; color: #555; margin-top: 24px; border-top: 1px dashed #aaa; padding-top: 10px; }
+</style>
+</head>
+<body>
+<div class="contract-wrapper">
+
+<h2 class="contract-title">일용근로계약서</h2>
+
+<p>사업주 <strong>{{ company_info.company_name or doc.company }}</strong>(이하 "사업주"라 함)와 근로자 <strong>{{ employee_info.employee_name or doc.employee_name }}</strong>(이하 "근로자"라 함)는 다음과 같이 일용근로계약을 체결한다.</p>
+
+<div class="sec">제1조 (근로일)</div>
+<table class="ct">
+  <tr><th>근로일</th><td>{{ terms.work_date or "" }}</td></tr>
+  <tr><th>근로 형태</th><td>일용근로 (1일 단위)</td></tr>
+</table>
+
+<div class="sec">제2조 (근무장소 및 업무)</div>
+<table class="ct">
+  <tr><th>근무장소</th><td>{{ terms.workplace or "" }}</td></tr>
+  <tr><th>업무 내용</th><td>{{ terms.job_description or "" }}</td></tr>
+</table>
+
+<div class="sec">제3조 (소정근로시간)</div>
+<table class="ct">
+  <tr><th>소정근로시간</th><td>{{ terms.work_start_time or "" }} ~ {{ terms.work_end_time or "" }}
+    (휴게시간 {{ terms.break_time or "1시간" }})</td></tr>
+</table>
+
+<div class="sec">제4조 (임금)</div>
+<table class="ct">
+  <tr><th>일당 (일급)</th><td>{{ terms.daily_wage or "" }} 원</td></tr>
+  <tr><th>임금 지급일</th><td>{{ terms.wage_payment_date or "" }}</td></tr>
+  <tr><th>지급 방법</th><td>{{ terms.wage_payment_method or "" }}</td></tr>
+</table>
+
+<div class="sec">제5조 (사회보험 적용)</div>
+<table class="ct">
+  <tr><th>고용보험</th><td>{{ terms.employment_insurance or "해당 여부 확인 필요 (일용직 별도 기준 적용)" }}</td></tr>
+  <tr><th>산재보험</th><td>적용 (근로기준법 및 산재보험법에 따름)</td></tr>
+</table>
+
+<div class="sec">제6조 (근로계약서 교부)</div>
+<p>사업주는 근로계약을 체결함과 동시에 본 계약서를 근로자에게 교부한다 (근로기준법 제17조제2항).</p>
+
+<div class="sec">제7조 (기타)</div>
+<p>이 계약에 정함이 없는 사항은 근로기준법령에 의한다.</p>
+{% if terms.other_terms %}<p>{{ terms.other_terms }}</p>{% endif %}
+
+<div class="sig-area">
+  <p style="text-align:center; margin-top:28px;">{{ frappe.utils.formatdate(frappe.utils.today(), "yyyy년 MM월 dd일") }}</p>
+  <div class="sig-row">
+    <div class="sig-block">
+      <p><strong>사업주</strong></p>
+      <p>사업체명: {{ company_info.company_name or doc.company }}</p>
+      <p>대표자: {{ company_info.representative_name or "" }}</p>
+      <p>주소: {{ company_info.address or "" }}</p>
+      <p>사업자등록번호: {{ company_info.business_registration_number or "" }}</p>
+      <div class="sig-line"></div>
+      <p style="text-align:right;">(서명 또는 인)</p>
+    </div>
+    <div class="sig-block">
+      <p><strong>근로자</strong></p>
+      <p>성명: {{ employee_info.employee_name or doc.employee_name or "" }}</p>
+      <p>주소: {{ employee_info.address or "" }}</p>
+      <p>주민등록번호: {{ employee_info.resident_registration_number or "" }}</p>
+      <div class="sig-line"></div>
+      <p style="text-align:right;">(서명 또는 인)</p>
+    </div>
+  </div>
+</div>
+
+<div class="statute">
+<p>※ 근로기준법 제17조에 따라 사업주는 임금, 소정근로시간 등 근로조건을 명시하여야 합니다.</p>
+<p>※ 일용근로자도 산재보험 적용 대상입니다.</p>
+<p>※ 위반 시 500만원 이하의 벌금이 부과될 수 있습니다 (근로기준법 제114조).</p>
+</div>
+
+</div>
+</body>
+</html>

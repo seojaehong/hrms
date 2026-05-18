@@ -82,6 +82,7 @@ website_generators = ["Job Opening"]
 website_route_rules = [
 	{"from_route": "/hrms/<path:app_path>", "to_route": "hrms"},
 	{"from_route": "/hr/<path:app_path>", "to_route": "roster"},
+	{"from_route": "/search", "to_route": "hrms"},  # redirect bare /search to hrms SPA
 ]
 # Jinja
 # ----------
@@ -160,6 +161,13 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+	"Salary Slip": {
+		"before_validate": "hrms.regional.south_korea.payroll_salary_slip_adapter.apply_korea_salary_slip_statutory_hook",
+		"on_submit": "hrms.regional.south_korea.notification_dispatcher.on_salary_slip_submit",
+	},
+	"Leave Application": {
+		"on_update": "hrms.regional.south_korea.notification_dispatcher.on_leave_application_approve",
+	},
 	"User": {
 		"validate": [
 			"erpnext.setup.doctype.employee.employee.validate_employee_role",

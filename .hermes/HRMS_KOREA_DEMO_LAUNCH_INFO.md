@@ -7,7 +7,7 @@
 
 ## Demo login
 - Username: demo.hr.manager@node.pe.kr
-- Password: DemoHRMS!2026
+- Password: [redacted — use FRAPPE_BROWSER_PASSWORD credential handoff only]
 
 ## Seeded records
 - Company: 노란봉투법 데모

@@ -51,6 +51,10 @@ CF_INGRESS_SCRIPT="${SCRIPT_DIR}/cloudflared_ingress_add.py"
 BASE_DOMAIN="${BASE_DOMAIN:-hrms.safeclaw.kr}"
 BENCH_PATH="${BENCH_PATH:-${HOME}/frappe-bench}"
 
+# Docker 래핑 설정 — bench는 컨테이너 내부에만 설치됨
+FRAPPE_CONTAINER="${FRAPPE_CONTAINER:-docker-frappe-1}"
+BENCH_WORKDIR="${BENCH_WORKDIR:-/home/frappe/frappe-bench}"
+
 # ─── 인수 파싱 ───────────────────────────────────────────────────────────────
 if [[ $# -lt 2 ]]; then
     echo "사용법: $0 <tenant_id> <admin_email> [옵션]" >&2
@@ -113,8 +117,8 @@ if [[ "${SKIP_DNS}" == false ]]; then
 fi
 
 if [[ "${DRY_RUN}" == false ]]; then
-    command -v bench >/dev/null 2>&1 \
-        || _die "bench 명령어를 찾을 수 없습니다. BENCH_PATH 또는 PATH를 확인하세요."
+    docker exec "${FRAPPE_CONTAINER}" which bench >/dev/null 2>&1 \
+        || _die "컨테이너 '${FRAPPE_CONTAINER}' 내부에서 bench를 찾을 수 없습니다. FRAPPE_CONTAINER 또는 컨테이너 상태를 확인하세요."
     [[ -n "${MARIADB_ROOT_PASSWORD:-}" ]] \
         || _die "MARIADB_ROOT_PASSWORD 환경변수가 필요합니다."
 fi
@@ -132,7 +136,7 @@ _run()  {
 # ─── 중복 site 확인 ─────────────────────────────────────────────────────────
 _step "1/8  사전 확인"
 if [[ "${DRY_RUN}" == false ]]; then
-    if [[ -d "${BENCH_PATH}/sites/${SITE_NAME}" ]]; then
+    if docker exec "${FRAPPE_CONTAINER}" test -d "${BENCH_WORKDIR}/sites/${SITE_NAME}" 2>/dev/null; then
         _die "site가 이미 존재합니다: ${SITE_NAME}. 기존 site를 삭제하려면 delete_tenant.sh를 사용하세요."
     fi
 fi
@@ -146,7 +150,7 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(LC_ALL=C tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/u
 
 # ─── 1. bench new-site ───────────────────────────────────────────────────────
 _step "2/8  bench new-site"
-_run bench new-site "${SITE_NAME}" \
+_run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench new-site "${SITE_NAME}" \
     --mariadb-root-password "${MARIADB_ROOT_PASSWORD}" \
     --admin-password "${ADMIN_PASSWORD}" \
     --no-mariadb-socket \
@@ -154,14 +158,14 @@ _run bench new-site "${SITE_NAME}" \
 
 # ─── 2. 한국 모듈 install ────────────────────────────────────────────────────
 _step "3/8  한국 모듈 설치 (erpnext, hrms)"
-_run bench --site "${SITE_NAME}" install-app erpnext
-_run bench --site "${SITE_NAME}" install-app hrms
+_run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" install-app erpnext
+_run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" install-app hrms
 
 # ─── 3. 데모 데이터 시드 ─────────────────────────────────────────────────────
 if [[ "${SEED_DEMO}" == true ]]; then
     _step "4/8  데모 데이터 시드"
-    _run bench --site "${SITE_NAME}" execute \
-        hrms.regional.south_korea.demo.seed_demo_data \
+    _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" execute \
+        hrms.regional.south_korea.demo_seed.seed_korea_demo \
         --args '{"company_name": "데모 회사 ('"${TENANT_ID}"')"}'
 else
     echo "(--seed-demo 미설정 — 데모 시드 생략)"
@@ -185,7 +189,7 @@ fi
 
 # ─── 6. Frappe host_name 설정 ────────────────────────────────────────────────
 _step "7/8  Frappe site host_name 설정"
-_run bench --site "${SITE_NAME}" set-config host_name "https://${SITE_NAME}"
+_run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" set-config host_name "https://${SITE_NAME}"
 
 # ─── 7. multi_site.json 레지스트리 업데이트 ──────────────────────────────────
 _step "8/8  레지스트리 업데이트"
@@ -243,7 +247,7 @@ echo "════════════════════════�
 if [[ "${SEND_EMAIL}" == true ]]; then
     echo
     echo "  이메일 발송 중 → ${ADMIN_EMAIL}"
-    _run bench --site "${SITE_NAME}" execute \
+    _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" execute \
         frappe.utils.user.reset_password \
         --args "[\"${ADMIN_EMAIL}\"]" \
         && echo "  [OK] 비밀번호 재설정 이메일 발송 완료" \

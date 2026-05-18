@@ -1,28 +1,36 @@
 """한국 노무 AI 챗봇 단위 테스트.
 
 frappe 의존 없음 — ai_chat.py 순수 Python 로직만 검증.
-실행: python -m unittest hrms.tests.test_korea_ai_chat
+실행 (bench-free): python3 hrms/tests/test_korea_ai_chat.py
+실행 (bench): python -m unittest hrms.tests.test_korea_ai_chat
 """
 from __future__ import annotations
 
+import importlib.util
+import pathlib
+import sys
 import unittest
 
-# ai_chat 모듈은 frappe를 import하지 않습니다.
-from hrms.regional.south_korea.ai_chat import (
-    AI_ROLE,
-    CHAT_RUNTIME_ACTION,
-    CONTRACT_TYPE,
-    DISCLAIMER,
-    MUTATION_BOUNDARY,
-    _AUDIT_LOG,
-    _SESSION_STORE,
-    build_session_context,
-    call_llm_with_context,
-    chat_query,
-    detect_intent,
-    retrieve_relevant_documents,
-    store_chat_audit_log,
-)
+# hrms/__init__.py가 frappe를 import하므로 file-path 직접 로드.
+_AI_CHAT_PATH = pathlib.Path(__file__).resolve().parents[2] / "hrms" / "regional" / "south_korea" / "ai_chat.py"
+_spec = importlib.util.spec_from_file_location("korea_ai_chat", _AI_CHAT_PATH)
+_ai_chat = importlib.util.module_from_spec(_spec)
+sys.modules["korea_ai_chat"] = _ai_chat
+_spec.loader.exec_module(_ai_chat)
+
+AI_ROLE = _ai_chat.AI_ROLE
+CHAT_RUNTIME_ACTION = _ai_chat.CHAT_RUNTIME_ACTION
+CONTRACT_TYPE = _ai_chat.CONTRACT_TYPE
+DISCLAIMER = _ai_chat.DISCLAIMER
+MUTATION_BOUNDARY = _ai_chat.MUTATION_BOUNDARY
+_AUDIT_LOG = _ai_chat._AUDIT_LOG
+_SESSION_STORE = _ai_chat._SESSION_STORE
+build_session_context = _ai_chat.build_session_context
+call_llm_with_context = _ai_chat.call_llm_with_context
+chat_query = _ai_chat.chat_query
+detect_intent = _ai_chat.detect_intent
+retrieve_relevant_documents = _ai_chat.retrieve_relevant_documents
+store_chat_audit_log = _ai_chat.store_chat_audit_log
 
 # ──────────────────────────────────────────────
 # 의도 분류 테스트

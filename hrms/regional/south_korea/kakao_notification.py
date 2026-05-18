@@ -721,3 +721,50 @@ def _key_contains_phone_number(key: str) -> bool:
 	if 12 <= n <= 13 and digits.startswith(intl_prefixes):
 		return True
 	return False
+
+
+# ── PII 마스킹 헬퍼 (audit log / external system 노출 시 사용) ──
+
+def mask_phone_number(phone: str) -> str:
+	"""휴대폰 번호 마스킹: 01012345678 → 010-****-5678."""
+	if not phone:
+		return ""
+	digits = "".join(ch for ch in str(phone) if ch.isdigit())
+	if len(digits) == 11 and digits.startswith("01"):
+		return f"{digits[:3]}-****-{digits[7:]}"
+	if len(digits) == 10 and digits.startswith("01"):
+		return f"{digits[:3]}-***-{digits[6:]}"
+	return "***-****-" + (digits[-4:] if len(digits) >= 4 else "****")
+
+
+def mask_korean_name(name: str) -> str:
+	"""한국 이름 마스킹: 홍길동 → 홍*동, 김민지 → 김*지, 박세재홍 → 박**홍."""
+	if not name:
+		return ""
+	if len(name) == 1:
+		return "*"
+	if len(name) == 2:
+		return name[0] + "*"
+	return name[0] + "*" * (len(name) - 2) + name[-1]
+
+
+def mask_email(email: str) -> str:
+	"""이메일 마스킹: abc@winhr.co.kr → a**@winhr.co.kr."""
+	if not email or "@" not in email:
+		return "***"
+	local, _, domain = email.partition("@")
+	if len(local) <= 1:
+		return "*@" + domain
+	return local[0] + "*" * (len(local) - 1) + "@" + domain
+
+
+def mask_rrn(rrn: str) -> str:
+	"""주민번호 마스킹: 940312-1234567 → 940312-1******."""
+	if not rrn:
+		return ""
+	if "-" in rrn:
+		front, _, back = rrn.partition("-")
+		return f"{front}-{back[0] if back else '*'}{'*' * 6}"
+	if len(rrn) >= 7:
+		return rrn[:7] + "*" * (len(rrn) - 7)
+	return "*" * len(rrn)

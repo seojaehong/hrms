@@ -1464,7 +1464,7 @@ def seed_korea_demo():
         "demo_login": {
             "url": "http://hrms.localhost:8000/app",
             "username": "demo.hr.manager@node.pe.kr",
-            "password": "DemoHRMS!2026",
+            "password": "***",
         },
     }
     print(json.dumps(summary, ensure_ascii=False, default=str, indent=2))

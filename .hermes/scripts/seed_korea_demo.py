@@ -1,8 +1,14 @@
 import json
+import secrets
 from pathlib import Path
 
 import frappe
 from frappe.utils import getdate
+
+
+def generate_demo_user_password():
+    """Generate a one-time demo-user bootstrap password without a repo literal."""
+    return secrets.token_urlsafe(24)
 
 
 def ensure_doc(doctype, name=None, filters=None, values=None):
@@ -136,7 +142,7 @@ def ensure_user(email, first_name, last_name, role_profile=None):
         user = frappe.get_doc("User", email)
         created = False
     else:
-        user = frappe.get_doc({
+        payload = {
             "doctype": "User",
             "email": email,
             "first_name": first_name,
@@ -144,8 +150,9 @@ def ensure_user(email, first_name, last_name, role_profile=None):
             "enabled": 1,
             "send_welcome_email": 0,
             "user_type": "System User",
-            "new_password": "DemoHRMS!2026",
-        }).insert(ignore_permissions=True)
+        }
+        payload["new_password"] = generate_demo_user_password()
+        user = frappe.get_doc(payload).insert(ignore_permissions=True)
         created = True
     wanted_roles = {"HR Manager", "HR User", "Employee"}
     existing_roles = {r.role for r in user.roles}
@@ -373,7 +380,7 @@ def main():
         "demo_login": {
             "url": "http://10.0.0.58:8000/app",
             "username": "demo.hr.manager@node.pe.kr",
-            "password": "DemoHRMS!2026",
+            "password": "***",
         },
     }
     print(json.dumps(summary, ensure_ascii=False, default=str, indent=2))

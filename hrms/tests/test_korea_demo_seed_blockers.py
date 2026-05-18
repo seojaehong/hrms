@@ -187,6 +187,20 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 		for forbidden in ("password", "secret", "score", "risk", "probability", "success_rate", "success rate"):
 			self.assertNotIn(forbidden, serialized)
 
+	def test_legacy_hermes_demo_seed_artifacts_have_no_hardcoded_password_literal(self):
+		repo_root = pathlib.Path(__file__).resolve().parents[2]
+		script = (repo_root / ".hermes" / "scripts" / "seed_korea_demo.py").read_text()
+		launch_info = (repo_root / ".hermes" / "HRMS_KOREA_DEMO_LAUNCH_INFO.md").read_text()
+		module_source = MODULE_PATH.read_text()
+
+		legacy_password_literal = "Demo" + "HRMS!" + "2026"
+
+		self.assertNotIn(legacy_password_literal, script)
+		self.assertNotIn(legacy_password_literal, launch_info)
+		self.assertNotIn(legacy_password_literal, module_source)
+		self.assertNotIn('"new_password":', script)
+		self.assertIn("generate_demo_user_password", script)
+
 	def test_demo_seed_creates_positive_payroll_closing_draft_row_for_runtime_worklist(self):
 		calls = []
 

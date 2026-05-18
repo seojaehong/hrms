@@ -98,6 +98,12 @@ if ! docker exec "$BENCH_CONTAINER" bench --version &>/dev/null; then
     exit 1
 fi
 
+if ! docker exec "$BENCH_CONTAINER" test -d "$BENCH_PATH"; then
+    echo "[ERROR] 컨테이너 내 BENCH_PATH 디렉터리를 찾을 수 없습니다: $BENCH_PATH" >&2
+    echo "        BENCH_PATH 환경변수 또는 컨테이너 마운트 상태를 확인하세요." >&2
+    exit 1
+fi
+
 # ── 임시 디렉터리 생성 + 종료 시 자동 정리 ──────────
 TMP_COPY_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_COPY_DIR"' EXIT

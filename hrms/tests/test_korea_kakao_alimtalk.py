@@ -461,6 +461,161 @@ class TestKakaoAlimtalkSend(unittest.TestCase):
 		creds = self.mod.get_kakao_credentials()
 		self.assertIsNone(creds)
 
+	# ------------------------------------------------------------------
+	# 17. enhanced dry-run — 비용 추정 필드
+	# ------------------------------------------------------------------
+	def test_enhanced_dry_run_includes_cost_estimate(self):
+		"""dry_run=True 응답에 cost_estimate_krw 필드가 포함되어야 한다."""
+		import os  # noqa: PLC0415
+
+		os.environ.pop("SOLAPI_API_KEY", None)
+		os.environ.pop("SOLAPI_API_SECRET", None)
+
+		result = self.mod.send_kakao_alimtalk(
+			pf_id="PF_TEST",
+			template_id="korea_wage_statement",
+			to="01012345678",
+			template_variables={
+				"employee_name": "홍길동",
+				"period": "2026-05",
+				"total_amount": "3,000,000",
+				"link": "https://example.com",
+			},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		self.assertTrue(result["dry_run"])
+		self.assertFalse(result["sent"])
+		self.assertIn("cost_estimate_krw", result)
+		self.assertEqual(result["cost_estimate_krw"], 8.4)
+
+	# ------------------------------------------------------------------
+	# 18. enhanced dry-run — mock_response Solapi 형식 + messageId 추출 가능
+	# ------------------------------------------------------------------
+	def test_enhanced_dry_run_mock_response_parseable_by_extract_message_id(self):
+		"""dry-run mock_response 는 _extract_message_id() 로 messageId 추출 가능해야 한다."""
+		import os  # noqa: PLC0415
+
+		os.environ.pop("SOLAPI_API_KEY", None)
+		os.environ.pop("SOLAPI_API_SECRET", None)
+
+		result = self.mod.send_kakao_alimtalk(
+			pf_id="PF_TEST",
+			template_id="korea_leave_approved",
+			to="01098765432",
+			template_variables={
+				"employee_name": "이순신",
+				"leave_type": "연차",
+				"from_date": "2026-06-01",
+				"to_date": "2026-06-03",
+				"leave_days": "3",
+				"approver_name": "김부장",
+			},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		self.assertIn("mock_response", result)
+		mock_resp = result["mock_response"]
+		# mock_response 가 실제 Solapi 응답 형식과 동일해야 함
+		self.assertIn("messageId", mock_resp)
+		self.assertIn("statusCode", mock_resp)
+		self.assertEqual(mock_resp["statusCode"], "2000")
+		# _extract_message_id() 로 파싱 가능한지 자가 검증
+		extracted = self.mod._extract_message_id(mock_resp)
+		self.assertIsNotNone(extracted)
+		self.assertTrue(extracted.startswith("DRY-RUN-"))
+
+	# ------------------------------------------------------------------
+	# 19. enhanced dry-run — PII 마스킹 (masked_to)
+	# ------------------------------------------------------------------
+	def test_enhanced_dry_run_pii_masking_in_masked_to(self):
+		"""dry-run 응답에 masked_to 필드가 포함되고, 전화번호가 마스킹되어야 한다."""
+		import os  # noqa: PLC0415
+
+		os.environ.pop("SOLAPI_API_KEY", None)
+		os.environ.pop("SOLAPI_API_SECRET", None)
+
+		result = self.mod.send_kakao_alimtalk(
+			pf_id="PF_TEST",
+			template_id="korea_wage_statement",
+			to="01012345678",
+			template_variables={
+				"employee_name": "박민수",
+				"period": "2026-05",
+				"total_amount": "2,500,000",
+				"link": "https://example.com",
+			},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		self.assertIn("masked_to", result)
+		masked = result["masked_to"]
+		# 실제 번호가 노출되지 않아야 함
+		self.assertNotIn("12345678", masked)
+		self.assertIn("****", masked)
+		# 원본 to 필드는 유지 (호출자가 필요할 수 있음)
+		self.assertEqual(result["to"], "01012345678")
+
+	# ------------------------------------------------------------------
+	# 20. enhanced dry-run — 기존 계약 필드 유지 (호환성 회귀)
+	# ------------------------------------------------------------------
+	def test_enhanced_dry_run_preserves_existing_contract_fields(self):
+		"""enhanced dry-run 이 기존 계약 필드를 모두 유지해야 한다 (호환성 회귀)."""
+		import os  # noqa: PLC0415
+
+		os.environ.pop("SOLAPI_API_KEY", None)
+		os.environ.pop("SOLAPI_API_SECRET", None)
+
+		result = self.mod.send_kakao_alimtalk(
+			pf_id="PF_TEST",
+			template_id="korea_wage_statement",
+			to="01099990000",
+			template_variables={
+				"employee_name": "최민준",
+				"period": "2026-05",
+				"total_amount": "4,000,000",
+				"link": "https://example.com",
+			},
+			human_approved=True,
+			dry_run=True,
+		)
+
+		# 기존 계약 필드 — 변경 금지
+		required_legacy_keys = {
+			"contract_type",
+			"runtime_action",
+			"sent",
+			"dry_run",
+			"message_id",
+			"to",
+			"template_id",
+			"human_approval_verified",
+			"reason",
+		}
+		for key in required_legacy_keys:
+			self.assertIn(key, result, f"기존 계약 필드 누락: {key}")
+		self.assertEqual(result["contract_type"], "korea_kakao_alimtalk_send_v1")
+		self.assertEqual(result["runtime_action"], "kakao_alimtalk_send")
+		self.assertFalse(result["sent"])
+		self.assertTrue(result["dry_run"])
+		self.assertIsNone(result["message_id"])
+		self.assertTrue(result["human_approval_verified"])
+
+	# ------------------------------------------------------------------
+	# 21. _build_mock_solapi_response — 호출당 고유 messageId 생성
+	# ------------------------------------------------------------------
+	def test_mock_solapi_response_generates_unique_message_ids(self):
+		"""_build_mock_solapi_response 는 호출할 때마다 다른 messageId 를 생성해야 한다."""
+		resp1 = self.mod._build_mock_solapi_response(template_id="korea_wage_statement")
+		resp2 = self.mod._build_mock_solapi_response(template_id="korea_wage_statement")
+		self.assertNotEqual(resp1["messageId"], resp2["messageId"])
+		# 두 응답 모두 _extract_message_id 로 파싱 가능
+		self.assertIsNotNone(self.mod._extract_message_id(resp1))
+		self.assertIsNotNone(self.mod._extract_message_id(resp2))
+
 
 # ---------------------------------------------------------------------------
 # 디스패처 테스트

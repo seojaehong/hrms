@@ -29,6 +29,10 @@ SOLAPI_SEND_PATH = "/messages/v4/send"
 KAKAO_API_KEY_ENV = "SOLAPI_API_KEY"
 KAKAO_API_SECRET_ENV = "SOLAPI_API_SECRET"
 
+# 알림톡 단가 (2026 기준 부가세 별도, SOLAPI 공식 가격표)
+# 가격 변경 시 이 상수만 업데이트할 것
+KAKAO_ALIMTALK_UNIT_COST_KRW: float = 8.4
+
 TEMPLATE_VAR_PATTERN = re.compile(r"#\{(\w+)\}")
 
 CONTRACT_TYPE = "korea_kakao_alimtalk_send_v1"
@@ -146,8 +150,19 @@ def send_kakao_alimtalk(
 		base_result["dry_run"] = True
 		if base_result["reason"] is None:
 			base_result["reason"] = "dry_run_requested"
+
+		# --- 강화된 dry-run: Solapi 응답 mock + 비용 추정 + PII 마스킹 ---
+		mock_resp = _build_mock_solapi_response(template_id=template_id)
+		base_result["cost_estimate_krw"] = KAKAO_ALIMTALK_UNIT_COST_KRW
+		base_result["mock_response"] = mock_resp
+		base_result["masked_to"] = mask_phone_number(to)
+		base_result["rendered_preview"] = rendered
+		base_result["missing_variables"] = _find_missing_variables(rendered, template_variables)
+
 		_log_info(
-			f"[KakaoAlimtalk] dry-run preview: template={template_id}, rendered_length={len(rendered)}"
+			f"[KakaoAlimtalk] dry-run preview: template={template_id}, "
+			f"rendered_length={len(rendered)}, cost_estimate={KAKAO_ALIMTALK_UNIT_COST_KRW}원, "
+			f"masked_to={mask_phone_number(to)}"
 		)
 		return base_result
 
@@ -237,6 +252,34 @@ def list_alimtalk_templates() -> list[dict[str, Any]]:
 	except Exception as exc:
 		_log_error(f"[KakaoAlimtalk] Failed to load template catalog: {exc}")
 		return []
+
+
+# ---------------------------------------------------------------------------
+# 내부 헬퍼 — dry-run mock
+# ---------------------------------------------------------------------------
+
+
+def _build_mock_solapi_response(*, template_id: str) -> dict[str, Any]:
+	"""dry-run 전용 Solapi v4 응답 mock.
+
+	실제 Solapi /messages/v4/send 성공 응답 형식을 그대로 모방합니다.
+	_extract_message_id() 로 messageId 를 추출할 수 있어야 합니다.
+
+	Solapi v4 실제 성공 응답 참조:
+	  https://docs.solapi.com/api-reference/messages#send-messages
+	"""
+	mock_message_id = f"DRY-RUN-{uuid.uuid4().hex[:8].upper()}"
+	return {
+		"messageId": mock_message_id,
+		"statusCode": "2000",
+		"statusMessage": "정상 (dry-run)",
+		"groupId": f"GRP-DRY-{uuid.uuid4().hex[:8].upper()}",
+		"accountId": "DRY_RUN_ACCOUNT",
+		"customFields": {
+			"dry_run": True,
+			"template_id": template_id,
+		},
+	}
 
 
 # ---------------------------------------------------------------------------

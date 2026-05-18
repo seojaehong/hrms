@@ -2,7 +2,7 @@
 # 한국 HRMS 자동 백업
 #
 # 사용법:
-#   ./scripts/backup_korea_hrms.sh [--upload]
+#   ./scripts/backup_korea_hrms.sh [--upload] [--dry-run]
 #
 # 백업 대상 (bench backup --with-files 사용):
 #   - MariaDB dump (site DB, bench 내장 암호화 키 처리)
@@ -19,9 +19,12 @@
 #         (docs/operations/backup_recovery.md 참조)
 #
 # 필수 환경변수:
-#   BENCH_PATH   bench 디렉터리 경로 (기본: /home/frappe/frappe-bench)
-#   SITE_NAME    Frappe 사이트명    (기본: hrms.localhost)
-#   BACKUP_DIR   로컬 백업 루트     (기본: /home/ubuntu/backups/hrms)
+#   BENCH_CONTAINER  Docker 컨테이너명 (기본: docker-frappe-1)
+#                    Frappe bench가 컨테이너 내부에서 실행됩니다.
+#   BENCH_PATH       bench 디렉터리 경로 — 컨테이너 내부 기준
+#                    (기본: /home/frappe/frappe-bench)
+#   SITE_NAME        Frappe 사이트명 (기본: hrms.localhost)
+#   BACKUP_DIR       로컬 백업 루트  (기본: /home/ubuntu/backups/hrms)
 #
 # --upload 시 추가 환경변수:
 #   BACKUP_S3_BUCKET      S3/B2 버킷명  (예: s3://my-hrms-backups)
@@ -29,22 +32,28 @@
 #   AWS_SECRET_ACCESS_KEY AWS 또는 B2 시크릿 키
 #   AWS_DEFAULT_REGION    AWS 리전 (기본: ap-northeast-2)
 #   BACKUP_S3_ENDPOINT    B2 등 커스텀 엔드포인트 (선택)
+#
+# Phase 7-B-1: Frappe bench는 docker-frappe-1 컨테이너 내부에서 실행됨.
+#   bench backup은 docker exec 로 실행하고, 결과물은 docker cp 로 호스트로 수집.
 
 set -euo pipefail
 LC_ALL=C
 export LC_ALL
 
 # ── 기본값 ─────────────────────────────────────────────
+BENCH_CONTAINER="${BENCH_CONTAINER:-docker-frappe-1}"
 BENCH_PATH="${BENCH_PATH:-/home/frappe/frappe-bench}"
 SITE_NAME="${SITE_NAME:-hrms.localhost}"
 BACKUP_DIR="${BACKUP_DIR:-/home/ubuntu/backups/hrms}"
 LOCAL_RETAIN_DAYS=7
 UPLOAD=false
+DRY_RUN=false
 
 # ── 인자 파싱 ───────────────────────────────────────────
 for arg in "$@"; do
     case "$arg" in
         --upload) UPLOAD=true ;;
+        --dry-run) DRY_RUN=true ;;
         --help|-h)
             grep '^#' "$0" | sed 's/^# \?//'
             exit 0
@@ -56,23 +65,42 @@ for arg in "$@"; do
     esac
 done
 
+# ── dry-run 모드 ────────────────────────────────────────
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[DRY-RUN] 백업 파라미터 확인:"
+    echo "  BENCH_CONTAINER : $BENCH_CONTAINER"
+    echo "  BENCH_PATH      : $BENCH_PATH (컨테이너 내부)"
+    echo "  SITE_NAME       : $SITE_NAME"
+    echo "  BACKUP_DIR      : $BACKUP_DIR"
+    echo "  UPLOAD          : $UPLOAD"
+    echo "[DRY-RUN] 컨테이너 상태:"
+    DRY_STATUS=$(docker inspect --format '{{.State.Status}}' "$BENCH_CONTAINER" 2>/dev/null || echo "not_found")
+    if [ "$DRY_STATUS" = "running" ]; then
+        echo "[DRY-RUN] 컨테이너 $BENCH_CONTAINER 가동 중 — OK"
+    else
+        echo "[DRY-RUN][WARN] 컨테이너 $BENCH_CONTAINER 상태=$DRY_STATUS — 정지 또는 없음 (실제 백업 불가)"
+    fi
+    echo "[DRY-RUN] bench --version:"
+    docker exec "$BENCH_CONTAINER" bench --version 2>&1 || true
+    echo "[DRY-RUN] 완료. 실제 백업을 실행하려면 --dry-run 없이 실행하세요."
+    exit 0
+fi
+
 # ── 사전 검사 ───────────────────────────────────────────
-if [[ ! -d "$BENCH_PATH" ]]; then
-    echo "[ERROR] bench 디렉터리를 찾을 수 없습니다: $BENCH_PATH" >&2
-    echo "        BENCH_PATH 환경변수를 확인하세요." >&2
+if ! docker inspect --format '{{.State.Status}}' "$BENCH_CONTAINER" 2>/dev/null | grep -q "running"; then
+    echo "[ERROR] Frappe 컨테이너가 실행 중이지 않습니다: $BENCH_CONTAINER" >&2
+    echo "        BENCH_CONTAINER 환경변수 또는 컨테이너 상태를 확인하세요." >&2
     exit 1
 fi
 
-if ! command -v bench &>/dev/null && [[ ! -x "$BENCH_PATH/env/bin/bench" ]]; then
-    echo "[ERROR] bench 명령을 찾을 수 없습니다." >&2
+if ! docker exec "$BENCH_CONTAINER" bench --version &>/dev/null; then
+    echo "[ERROR] 컨테이너 내에서 bench 명령을 찾을 수 없습니다." >&2
     exit 1
 fi
 
-# bench 경로 우선 사용
-BENCH_CMD="bench"
-if [[ -x "$BENCH_PATH/env/bin/bench" ]]; then
-    BENCH_CMD="$BENCH_PATH/env/bin/bench"
-fi
+# ── 임시 디렉터리 생성 + 종료 시 자동 정리 ──────────
+TMP_COPY_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_COPY_DIR"' EXIT
 
 # ── 타임스탬프 및 디렉터리 생성 ───────────────────────
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -81,37 +109,39 @@ mkdir -p "$DEST"
 
 echo "[INFO] ======================================================"
 echo "[INFO] 한국 HRMS 백업 시작: $TIMESTAMP"
+echo "[INFO] 컨테이너: $BENCH_CONTAINER"
 echo "[INFO] 사이트: $SITE_NAME"
 echo "[INFO] 저장 위치: $DEST"
 echo "[INFO] ======================================================"
 
-# ── bench backup 실행 ──────────────────────────────────
+# ── bench backup 실행 (컨테이너 내부) ─────────────────
 # bench backup은 sites/{site}/private/backups/ 에 파일을 생성합니다.
 # --with-files: public/private 파일 포함
 # --compress: gzip 압축
-echo "[INFO] bench backup 실행 중..."
-cd "$BENCH_PATH"
-$BENCH_CMD --site "$SITE_NAME" backup --with-files --compress 2>&1 | tee "$DEST/backup.log"
+echo "[INFO] bench backup 실행 중 (docker exec)..."
 
-# ── 생성된 백업 파일 수집 ──────────────────────────────
-BENCH_BACKUP_DIR="$BENCH_PATH/sites/$SITE_NAME/private/backups"
-if [[ ! -d "$BENCH_BACKUP_DIR" ]]; then
-    echo "[ERROR] bench 백업 디렉터리를 찾을 수 없습니다: $BENCH_BACKUP_DIR" >&2
-    exit 1
-fi
+# 컨테이너 내부에 타임스탬프 마커 생성 (backup 시작 시점 기록)
+CONTAINER_MARKER="/tmp/backup_started_marker_$TIMESTAMP"
+docker exec "$BENCH_CONTAINER" touch "$CONTAINER_MARKER"
 
-# 가장 최근에 생성된 백업 파일들을 대상 디렉터리로 복사
-# (최근 5분 이내 생성된 파일)
-find "$BENCH_BACKUP_DIR" -maxdepth 1 -type f \
-    \( -name "*.sql.gz" -o -name "*.tar" -o -name "*.json.gz" \) \
-    -newer "$DEST/backup.log" \
-    -exec cp -v {} "$DEST/" \; 2>/dev/null || true
+docker exec -w "$BENCH_PATH" "$BENCH_CONTAINER" \
+    bench --site "$SITE_NAME" backup --with-files --compress \
+    2>&1 | tee "$DEST/backup.log"
 
-# backup.log 생성 직후라 find 기준 시간이 같을 수 있으므로
-# 30초 이내 파일도 추가로 확인
-find "$BENCH_BACKUP_DIR" -maxdepth 1 -type f \
-    \( -name "*.sql.gz" -o -name "*.tar" -o -name "*.json.gz" \) \
-    -mmin -1 \
+# ── 신규 생성 파일만 개별 docker cp ──────────────────
+CONTAINER_BACKUP_DIR="$BENCH_PATH/sites/$SITE_NAME/private/backups"
+
+echo "[INFO] 컨테이너에서 신규 백업 파일 수집 중 (docker cp)..."
+NEW_FILES=$(docker exec "$BENCH_CONTAINER" find "$CONTAINER_BACKUP_DIR" \
+    -newer "$CONTAINER_MARKER" -type f 2>/dev/null)
+docker exec "$BENCH_CONTAINER" rm -f "$CONTAINER_MARKER"
+
+for f in $NEW_FILES; do
+    docker cp "$BENCH_CONTAINER:$f" "$TMP_COPY_DIR/"
+done
+
+find "$TMP_COPY_DIR" -maxdepth 1 -type f \
+    \( -name "*.sql.gz" -o -name "*.tgz" -o -name "*.tar" -o -name "*.json" \) \
     -exec cp -v {} "$DEST/" \; 2>/dev/null || true
 
 BACKUP_FILE_COUNT=$(find "$DEST" -maxdepth 1 -type f ! -name "backup.log" | wc -l)
@@ -128,10 +158,11 @@ cat > "$DEST/backup_meta.json" <<EOF
 {
   "timestamp": "$TIMESTAMP",
   "site_name": "$SITE_NAME",
+  "bench_container": "$BENCH_CONTAINER",
   "bench_path": "$BENCH_PATH",
   "backup_files": $(find "$DEST" -maxdepth 1 -type f ! -name "backup_meta.json" | sort | python3 -c "import sys,json; print(json.dumps([l.strip() for l in sys.stdin]))"),
   "hostname": "$(hostname -f 2>/dev/null || hostname)",
-  "script_version": "5-B-2"
+  "script_version": "7-B-1"
 }
 EOF
 

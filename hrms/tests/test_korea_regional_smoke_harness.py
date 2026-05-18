@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import os
 import pathlib
 import shlex
 import sys
@@ -137,6 +138,47 @@ class TestKoreaRegionalSmokeHarness(unittest.TestCase):
 		result = self.mod.run_command(["python3", "--version"], dry_run=True)
 
 		self.assertEqual(result, {"command": "python3 --version", "skipped": True, "returncode": 0})
+
+	def test_run_command_prefers_repo_root_for_direct_file_package_imports(self):
+		with tempfile.TemporaryDirectory() as tempdir:
+			root = pathlib.Path(tempdir) / "repo"
+			stale_root = pathlib.Path(tempdir) / "stale"
+			(root / "hrms" / "regional" / "south_korea").mkdir(parents=True)
+			(root / "hrms" / "tests").mkdir(parents=True)
+			(stale_root / "hrms" / "regional" / "south_korea").mkdir(parents=True)
+			for directory in [
+				root / "hrms",
+				root / "hrms" / "regional",
+				root / "hrms" / "regional" / "south_korea",
+				stale_root / "hrms",
+				stale_root / "hrms" / "regional",
+				stale_root / "hrms" / "regional" / "south_korea",
+			]:
+				(directory / "__init__.py").write_text("", encoding="utf-8")
+			(root / "hrms" / "regional" / "south_korea" / "fresh_contract.py").write_text(
+				"VALUE = 'fresh-root'\n",
+				encoding="utf-8",
+			)
+			(root / "hrms" / "tests" / "test_korea_import_root.py").write_text(
+				"from hrms.regional.south_korea.fresh_contract import VALUE\n"
+				"assert VALUE == 'fresh-root'\n",
+				encoding="utf-8",
+			)
+
+			old_pythonpath = os.environ.get("PYTHONPATH")
+			os.environ["PYTHONPATH"] = str(stale_root)
+			try:
+				result = self.mod.run_command(
+					[sys.executable, "hrms/tests/test_korea_import_root.py"],
+					cwd=root,
+				)
+			finally:
+				if old_pythonpath is None:
+					os.environ.pop("PYTHONPATH", None)
+				else:
+					os.environ["PYTHONPATH"] = old_pythonpath
+
+		self.assertEqual(result["returncode"], 0, result)
 
 
 if __name__ == "__main__":

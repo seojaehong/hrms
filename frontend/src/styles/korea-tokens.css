@@ -1,0 +1,30 @@
+/* 한국 HRMS 디자인 token (7월 디자인 sprint에서 교체) */
+:root {
+    /* Colors — 임시 (NODE 디자인 차용 candidate) */
+    --korea-primary: #0066ff;       /* 7월 결정 */
+    --korea-primary-hover: #0052cc;
+    --korea-accent: #ff6b35;        /* 7월 결정 */
+    --korea-success: #00a86b;
+    --korea-warn: #ffa500;
+    --korea-error: #dc3545;
+
+    /* Typography */
+    --korea-font-family: -apple-system, BlinkMacSystemFont, "Pretendard",
+                         "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --korea-font-mono: "JetBrains Mono", "D2Coding", monospace;
+
+    /* Spacing (8pt grid) */
+    --korea-spacing-xs: 4px;
+    --korea-spacing-sm: 8px;
+    --korea-spacing-md: 16px;
+    --korea-spacing-lg: 24px;
+    --korea-spacing-xl: 32px;
+
+    /* Radius */
+    --korea-radius-sm: 4px;
+    --korea-radius-md: 8px;
+    --korea-radius-lg: 12px;
+
+    /* Shadow */
+    --korea-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+}

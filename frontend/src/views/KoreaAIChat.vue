@@ -131,6 +131,7 @@
 						<button
 							@click="sendMessage"
 							:disabled="!inputText.trim() || isLoading"
+							aria-label="메시지 전송"
 							class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors shrink-0"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

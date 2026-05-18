@@ -6,7 +6,7 @@
 				<!-- Header -->
 				<div class="flex items-center gap-3 pt-2">
 					<router-link :to="{ name: 'Home' }">
-						<button class="p-1 rounded-full hover:bg-gray-200">
+						<button class="p-1 rounded-full hover:bg-gray-200" aria-label="뒤로 가기">
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 							</svg>
@@ -104,6 +104,7 @@
 						/>
 						<button
 							@click="removeSelfie"
+							aria-label="셀카 삭제"
 							class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
 						>
 							&times;

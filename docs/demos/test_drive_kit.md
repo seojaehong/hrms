@@ -11,7 +11,7 @@
 |------|-----|
 | URL | `https://hrms.safeclaw.kr/hrms` |
 | 이메일 | `demo.hr.manager@node.pe.kr` |
-| 비밀번호 | `DemoHRMS!2026` |
+| 비밀번호 | `<redacted-demo-password>` |
 | 권한 | HR Manager (전체 조회 가능) |
 
 > 데모 공유 환경입니다. **실제 개인정보·회사 정보를 입력하지 마세요.**

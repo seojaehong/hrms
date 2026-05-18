@@ -35,6 +35,6 @@
 - 슬랙 채널 직접 지원
 
 ## 데모/문의
-- 데모: https://hrms.safeclaw.kr (demo.hr.manager@node.pe.kr / DemoHRMS!2026)
+- 데모: https://hrms.safeclaw.kr (demo.hr.manager@node.pe.kr / <redacted-demo-password>)
 - 이메일: abc@winhr.co.kr
 - 슬랙: (요청 시 발급)

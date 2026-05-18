@@ -2,7 +2,7 @@
 
 > 대상: 잠재 고객·파트너 대상 30분 라이브 데모
 > 데모 URL: `https://hrms.safeclaw.kr/hrms`
-> 계정: `demo.hr.manager@node.pe.kr` / `DemoHRMS!2026`
+> 계정: `demo.hr.manager@node.pe.kr` / `<redacted-demo-password>`
 > 데모 데이터: 직원 10명(HR-EMP-00001~10), 3개월 출근, 마감 Draft 4건
 
 ---
@@ -68,7 +68,7 @@
 
 ```
 1. 이메일 입력: demo.hr.manager@node.pe.kr
-2. 비밀번호 입력: DemoHRMS!2026
+2. 비밀번호 입력: <redacted-demo-password>
 3. [Log In] 클릭
 4. 홈 화면 로딩 확인
 5. 하단 탭바 구성 설명:
@@ -393,7 +393,7 @@
 >
 > 베타 고객 혜택: 정식 출시 전 특별가, 노무사 직접 세팅 지원, 3개월 무료 사용.
 >
-> 지금 이 데모 URL을 직접 써보실 수 있습니다. 계정 정보 다시 한번 — URL은 hrms.safeclaw.kr/hrms, 계정은 demo.hr.manager@node.pe.kr, 비밀번호는 DemoHRMS!2026.
+> 지금 이 데모 URL을 직접 써보실 수 있습니다. 계정 정보 다시 한번 — URL은 hrms.safeclaw.kr/hrms, 계정은 demo.hr.manager@node.pe.kr, 비밀번호는 <redacted-demo-password>.
 >
 > 질문이 있으시면 지금 바로 받겠습니다."
 
@@ -443,6 +443,6 @@
 | 상황 | 대응 |
 |------|------|
 | 데모 서버 응답 없음 | 로컬 스크린샷 슬라이드로 전환. "서버 점검 중" 간단히 설명 후 슬라이드 진행. |
-| 로그인 실패 | 비밀번호 `DemoHRMS!2026` 재확인. 대소문자 구분 주의. |
+| 로그인 실패 | 비밀번호 `<redacted-demo-password>` 재확인. 대소문자 구분 주의. |
 | 특정 화면 데이터 없음 | "데모 데이터가 리셋됐습니다" 설명 후 상위 목록 화면에서 대안 데이터 선택. |
 | 예상치 못한 오류 화면 | "실 운영 환경과 데모 환경 차이입니다" 설명. Frappe Desk > Error Log 표시는 피할 것. |

@@ -34,7 +34,7 @@ bench --site hrms.localhost execute \
 ### 3. 브라우저 설정
 
 - URL: `http://hrms.localhost:8000/app`
-- 로그인: `demo.hr.manager@node.pe.kr` / `DemoHRMS!2026`
+- 로그인: `demo.hr.manager@node.pe.kr` / `<redacted-demo-password>`
 - 해상도: 1920×1080 권장 (미러링 시 폰트 크기 확대)
 - 탭 사전 열기: 직원목록 / 근태대시보드 / 연차현황 / 급여대장 / 폐쇄체크리스트
 

@@ -100,4 +100,4 @@ Starter 플랜 5만원/월이 그래서 이 구간을 위해 만든 가격입니
 
 ---
 
-*문의: abc@winhr.co.kr | 데모: https://hrms.safeclaw.kr (demo.hr.manager@node.pe.kr / DemoHRMS!2026)*
+*문의: abc@winhr.co.kr | 데모: https://hrms.safeclaw.kr (demo.hr.manager@node.pe.kr / <redacted-demo-password>)*

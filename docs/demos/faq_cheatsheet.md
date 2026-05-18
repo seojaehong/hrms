@@ -118,5 +118,5 @@ A. 별도 앱스토어 등록 없이 Chrome/Safari에서 "홈 화면에 추가"�
 A. 네. 아래 정보로 즉시 접속 가능합니다:
 - URL: `https://hrms.safeclaw.kr/hrms`
 - 계정: `demo.hr.manager@node.pe.kr`
-- 비밀번호: `DemoHRMS!2026`
+- 비밀번호: `<redacted-demo-password>`
 - 주의: 데모 공유 환경이므로 실제 개인정보는 입력하지 마세요.

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import shlex
 import shutil
@@ -72,13 +73,32 @@ def run_command(command: list[str], *, dry_run: bool = False, cwd: pathlib.Path 
 	if dry_run:
 		return {"command": command_text, "skipped": True, "returncode": 0}
 
-	completed = subprocess.run(command, cwd=str(cwd) if cwd else None, text=True, capture_output=True, check=False)
+	completed = subprocess.run(
+		command,
+		cwd=str(cwd) if cwd else None,
+		env=_command_env(cwd),
+		text=True,
+		capture_output=True,
+		check=False,
+	)
 	return {
 		"command": command_text,
 		"returncode": completed.returncode,
 		"stdout_tail": _tail(completed.stdout),
 		"stderr_tail": _tail(completed.stderr),
 	}
+
+
+def _command_env(cwd: pathlib.Path | None) -> dict[str, str] | None:
+	"""Return a subprocess env that resolves direct-run HRMS imports from cwd first."""
+
+	if cwd is None:
+		return None
+	env = os.environ.copy()
+	repo_root = str(pathlib.Path(cwd).resolve())
+	pythonpath = env.get("PYTHONPATH")
+	env["PYTHONPATH"] = repo_root if not pythonpath else f"{repo_root}{os.pathsep}{pythonpath}"
+	return env
 
 
 def run_smoke(*, repo_root: pathlib.Path, include_bench: bool = False, site: str | None = None, dry_run: bool = False) -> dict[str, Any]:

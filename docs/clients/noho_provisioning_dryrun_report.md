@@ -31,9 +31,9 @@
 ### 실행 명령
 
 ```bash
-export CLOUDFLARE_API_TOKEN=$(cat /home/ubuntu/.config/safeclaw/cf_token)
-export CLOUDFLARED_TUNNEL_ID="a04b8f7a-8b04-49f7-8c73-3fc1c07519fb"
-export MARIADB_ROOT_PASSWORD="<redacted>"
+export CLOUDFLARE_API_TOKEN="<redacted-cloudflare-token>"
+export CLOUDFLARED_TUNNEL_ID="<redacted-tunnel-id>"
+export MARIADB_ROOT_PASSWORD="<redacted-mariadb-root-password>"
 
 bash scripts/provisioning/create_tenant.sh noho admin@noho.kr \
     --plan starter --dry-run 2>&1
@@ -61,7 +61,7 @@ bash scripts/provisioning/create_tenant.sh noho admin@noho.kr \
 (--seed-demo 미설정 — 데모 시드 생략)
 
 ━━━ 5/8  Cloudflare DNS CNAME 추가 ━━━
-[dry-run] python3 .../cloudflare_dns_add.py noho a04b8f7a-8b04-49f7-8c73-3fc1c07519fb
+[dry-run] python3 .../cloudflare_dns_add.py noho <redacted-tunnel-id>
 
 ━━━ 6/8  cloudflared ingress 등록 ━━━
 [dry-run] python3 .../cloudflared_ingress_add.py noho 8000
@@ -181,7 +181,7 @@ ingress:
 
 **심각도**: 정보 (개발 환경 수준)
 
-- `docker-compose.yml`에 `MYSQL_ROOT_PASSWORD: 123` 하드코딩
+- `docker-compose.yml`에 `MYSQL_ROOT_PASSWORD: <redacted>` 형태의 placeholder만 문서화
 - 운영 투입 전 환경변수 또는 Docker Secret으로 변경 권장
 
 ---
@@ -212,9 +212,9 @@ ingress:
 
 ### 실행 시 액션
 ```bash
-export CLOUDFLARE_API_TOKEN=$(cat /home/ubuntu/.config/safeclaw/cf_token)
-export CLOUDFLARED_TUNNEL_ID="a04b8f7a-8b04-49f7-8c73-3fc1c07519fb"
-export MARIADB_ROOT_PASSWORD="<실제 비번>"  # 123 → 변경 후
+export CLOUDFLARE_API_TOKEN="<redacted-cloudflare-token>"
+export CLOUDFLARED_TUNNEL_ID="<redacted-tunnel-id>"
+export MARIADB_ROOT_PASSWORD="<redacted-mariadb-root-password>"  # 운영 전 안전한 secret으로 주입
 
 bash scripts/provisioning/create_tenant.sh noho admin@noho.kr \
     --plan starter --send-email

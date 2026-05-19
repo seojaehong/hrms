@@ -1,5 +1,9 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { clientsClaim } from "workbox-core"
+import { registerRoute } from "workbox-routing"
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies"
+import { ExpirationPlugin } from "workbox-expiration"
+import { CacheableResponsePlugin } from "workbox-cacheable-response"
 
 import { initializeApp } from "firebase/app"
 import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw"
@@ -9,6 +13,42 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 // Clean up old caches
 cleanupOutdatedCaches()
+
+// Static assets: cache-first, 1 year TTL
+// Matches /assets/hrms/frontend/*.{js,css,png,woff2,...}
+registerRoute(
+	({ request, url }) =>
+		url.pathname.startsWith("/assets/") &&
+		["style", "script", "font", "image"].includes(request.destination),
+	new CacheFirst({
+		cacheName: "static-assets-v1",
+		plugins: [
+			new ExpirationPlugin({
+				maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+				maxEntries: 200,
+			}),
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+		],
+	})
+)
+
+// Frappe API: stale-while-revalidate, 5 min TTL
+registerRoute(
+	({ url }) =>
+		url.pathname.startsWith("/api/") &&
+		!url.pathname.includes("/api/method/frappe.auth") &&
+		!url.pathname.includes("/api/method/logout"),
+	new StaleWhileRevalidate({
+		cacheName: "frappe-api-v1",
+		plugins: [
+			new ExpirationPlugin({
+				maxAgeSeconds: 5 * 60, // 5 minutes
+				maxEntries: 100,
+			}),
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+		],
+	})
+)
 
 const jsonConfig = new URL(location).searchParams.get("config")
 

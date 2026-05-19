@@ -9,7 +9,7 @@
 	</ion-header>
 	<ion-content>
 		<div class="bg-white h-full w-full overflow-auto touch-pinch-zoom">
-			<img v-if="isImageFile" :src="src" class="h-auto image-preview" />
+			<img v-if="isImageFile" :src="src" class="h-auto image-preview" :alt="filename || '첨부 파일 미리보기'" />
 			<iframe v-else :src="src" class="w-full h-full"></iframe>
 		</div>
 	</ion-content>

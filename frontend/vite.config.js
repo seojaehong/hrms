@@ -75,6 +75,8 @@ export default defineConfig({
 			output: {
 				manualChunks: {
 					"frappe-ui": ["frappe-ui"],
+					"ionic-vue": ["@ionic/vue", "@ionic/vue-router"],
+					firebase: ["firebase/app"],
 				},
 			},
 		},

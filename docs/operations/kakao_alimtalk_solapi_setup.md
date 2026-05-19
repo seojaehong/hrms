@@ -140,7 +140,7 @@ bench --site hrms.localhost execute \
   --kwargs '{
     "pf_id": "PF_XXXXXXXXXXXXXXXXXX",
     "template_id": "korea_wage_statement",
-    "to": "01012345678",
+    "to": "010****5678",
     "template_variables": {
       "employee_name": "홍길동",
       "period": "2026-05",

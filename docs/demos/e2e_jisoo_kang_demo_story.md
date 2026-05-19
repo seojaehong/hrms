@@ -102,7 +102,7 @@
 **Queue item 구성 결과** (Phase 2-A skeleton, contract_type: `korea_kakao_send_queue_item_v1`):
 
 ```
-수신자: 01012345678
+수신자: 010****5678
 채널: kakao_alimtalk
 템플릿 코드: WAGE_STATEMENT_READY
 

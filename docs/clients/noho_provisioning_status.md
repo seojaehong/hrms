@@ -45,9 +45,9 @@ BENCH_WORKDIR="${BENCH_WORKDIR:-/home/frappe/frappe-bench}"
 
 **실행 명령:**
 ```bash
-export CLOUDFLARE_API_TOKEN=$(cat /home/ubuntu/.config/safeclaw/cf_token)
-export CLOUDFLARED_TUNNEL_ID="a04b8f7a-8b04-49f7-8c73-3fc1c07519fb"
-export MARIADB_ROOT_PASSWORD="123"
+export CLOUDFLARE_API_TOKEN="<redacted-cloudflare-token>"
+export CLOUDFLARED_TUNNEL_ID="<redacted-tunnel-id>"
+export MARIADB_ROOT_PASSWORD="<redacted-mariadb-root-password>"
 
 bash scripts/provisioning/create_tenant.sh noho-test admin@noho.kr \
     --plan starter --dry-run
@@ -63,7 +63,7 @@ bash scripts/provisioning/create_tenant.sh noho-test admin@noho.kr \
 
 ━━━ 2/8  bench new-site ━━━
 [dry-run] docker exec -w /home/frappe/frappe-bench docker-frappe-1 bench new-site noho-test.hrms.safeclaw.kr \
-  --mariadb-root-password 123 \
+  --mariadb-root-password <redacted> \
   --admin-password <자동생성> \
   --no-mariadb-socket \
   --db-name tenant_noho_test
@@ -117,9 +117,9 @@ Frappe는 Host header 값으로 `sites/<hostname>/` 디렉터리를 찾아 라�
 ## 4. 실제 실행 단계 (재홍님 명시 승인 필요)
 
 ```bash
-export CLOUDFLARE_API_TOKEN=$(cat /home/ubuntu/.config/safeclaw/cf_token)
-export CLOUDFLARED_TUNNEL_ID="a04b8f7a-8b04-49f7-8c73-3fc1c07519fb"
-export MARIADB_ROOT_PASSWORD="123"   # 운영 전 교체 권장
+export CLOUDFLARE_API_TOKEN="<redacted-cloudflare-token>"
+export CLOUDFLARED_TUNNEL_ID="<redacted-tunnel-id>"
+export MARIADB_ROOT_PASSWORD="<redacted-mariadb-root-password>"   # 운영 전 안전한 secret으로 주입
 
 bash scripts/provisioning/create_tenant.sh noho admin@noho.kr \
     --plan starter
@@ -153,7 +153,7 @@ bash scripts/provisioning/create_tenant.sh noho admin@noho.kr \
 | bench 7곳 docker-exec 래핑 | **해소 완료** |
 | 데모 시드 모듈 경로 | **해소 완료** |
 | Host Header 라우팅 검증 | 실제 site 생성 후 curl 확인 필요 (deferred) |
-| MariaDB root 비번 평문 | 운영 투입 전 교체 권장 (개발 환경 수준) |
+| MariaDB root 비번 평문 | 문서 예시는 redacted placeholder로 정리, 실제 실행 시 secret 주입 필요 |
 | Frappe site 실제 생성 | **재홍님 명시 승인 필요** |
 
 ---

@@ -74,7 +74,7 @@ bash scripts/provisioning/create_tenant.sh noho-test admin@noho.kr \
 (--seed-demo 미설정 — 데모 시드 생략)
 
 ━━━ 5/8  Cloudflare DNS CNAME 추가 ━━━
-[dry-run] python3 …/cloudflare_dns_add.py noho-test a04b8f7a-8b04-49f7-8c73-3fc1c07519fb
+[dry-run] python3 …/cloudflare_dns_add.py noho-test <redacted-tunnel-id>
 
 ━━━ 6/8  cloudflared ingress 등록 ━━━
 [dry-run] python3 …/cloudflared_ingress_add.py noho-test 8000

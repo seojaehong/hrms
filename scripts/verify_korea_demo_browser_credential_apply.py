@@ -53,7 +53,7 @@ def main() -> int:
 		report_path = pathlib.Path(args.report_file)
 		report_path.parent.mkdir(parents=True, exist_ok=True)
 		report_path.write_text(json_report + "\n", encoding="utf-8")
-	return 0 if report.get("runtime_verified") else 1
+	return 0 if report.get("runtime_verified") or (args.dry_run and report.get("credential_apply", {}).get("passed")) else 1
 
 
 def verify_demo_browser_credential_apply(

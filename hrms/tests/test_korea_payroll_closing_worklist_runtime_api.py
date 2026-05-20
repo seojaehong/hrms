@@ -49,7 +49,7 @@ def draft_row(**overrides):
 		"ai_role": "assistant_only",
 		"docstatus": 0,
 		"payload": json.dumps({"session": session}, ensure_ascii=False),
-		"audit_preview": json.dumps(session["audit_preview"], ensure_ascii=False),
+		"audit_preview": json.dumps(session.get("audit_preview"), ensure_ascii=False) if "audit_preview" in session else None,
 	}
 	row.update(overrides)
 	return row
@@ -185,6 +185,34 @@ class TestKoreaPayrollClosingWorklistRuntimeApi(unittest.TestCase):
 		)
 		self.assertEqual(fake_frappe.get_list_calls[0]["limit_page_length"], 20)
 		self.assertIn("list_korea_payroll_closing_worklist_runtime", fake_frappe.whitelisted)
+
+	def test_runtime_worklist_hydrates_missing_session_safety_fields_from_draft_row(self):
+		session = source_session()
+		del session["requires_human_approval"]
+		del session["ai_role"]
+		module = load_module(FakeFrappe([draft_row(session=session)]))
+
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+		self.assertEqual(result["summary"]["total_count"], 1)
+		self.assertTrue(result["requires_human_approval"])
+		self.assertEqual(result["ai_role"], "assistant_only")
+		self.assertEqual(result["items"][0]["source_session"], {"contract_type": "korea_payroll_closing_session_v1", "name": "KPCS-2026-05-SEOUL-HQ"})
+
+	def test_runtime_worklist_hydrates_legacy_draft_session_status_to_review_ready(self):
+		session = source_session(status="draft", blockers=[], next_actions=[], readiness_cards=[], audit_preview={"runtime_action": "preview_only", "requires_runtime_apply": False, "blocker_codes": []})
+		del session["blockers"]
+		del session["next_actions"]
+		del session["audit_preview"]
+		module = load_module(FakeFrappe([draft_row(session=session, audit_preview=None)]))
+
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+
+		self.assertEqual(result["summary"]["review_ready_count"], 1)
+		self.assertEqual(result["items"][0]["status"], "review_ready")
+		self.assertEqual(result["items"][0]["primary_action"], {"action": "review_payroll_artifacts", "label": "Review payroll artifacts", "requires_runtime_apply": False})
+		self.assertEqual(result["items"][0]["audit_preview"], {"runtime_action": "preview_only", "requires_runtime_apply": False, "blocker_codes": []})
+		self.assertEqual(result["items"][0]["draft_status"], "draft_pending_human_approval")
 
 	def test_runtime_worklist_queries_only_pending_human_approval_drafts(self):
 		rows = [

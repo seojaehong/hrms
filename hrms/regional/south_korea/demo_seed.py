@@ -1671,16 +1671,23 @@ def build_demo_browser_credential_handoff() -> dict:
 
 def ensure_demo_browser_credential(
     *,
-    password: str,
+    password: str | None = None,
     human_approved: bool = False,
     username: str = _DEMO_BROWSER_USERNAME,
 ) -> dict:
     """데모 브라우저 자격증명 적용 — human_approved=True 게이트 이후에만 실행.
 
     frappe.db.exists()로 사용자 및 활성 직원 연결 여부를 검사합니다.
+    Password is read from ``FRAPPE_BROWSER_PASSWORD`` when not passed explicitly,
+    so operator-approved browser checkpoints do not place secrets in Bench kwargs.
     """
     if not human_approved:
         raise ValueError("human_approved must be True before credential runtime apply")
+
+    if password is None:
+        password = os.environ.get("FRAPPE_BROWSER_PASSWORD")
+    if not isinstance(password, str) or not password.strip():
+        raise ValueError("FRAPPE_BROWSER_PASSWORD is required before credential runtime apply")
 
     if username not in _DEMO_ALLOWED_USERNAMES:
         raise ValueError(
@@ -1701,7 +1708,7 @@ def ensure_demo_browser_credential(
     return {
         "contract_type": "korea_demo_browser_credential_runtime_apply_v1",
         "runtime_action": "demo_credential_runtime_apply",
-        "requires_runtime_apply": True,
+        "requires_runtime_apply": False,
         "requires_human_approval": True,
         "human_approval_verified": True,
         "ai_role": "assistant_only",

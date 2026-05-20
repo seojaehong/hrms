@@ -184,8 +184,19 @@ def _runtime_session_from_draft_row(value: Any) -> dict[str, Any]:
 		("requires_human_approval", True),
 		("ai_role", AI_ROLE),
 	):
-		if session.get(fieldname) != expected:
+		if fieldname in {"requires_human_approval", "ai_role"} and fieldname not in session:
+			session[fieldname] = expected
+		elif session.get(fieldname) != expected:
 			raise ValueError(f"payload.session.{fieldname} must match the stored draft")
+	if "blockers" not in session:
+		session["blockers"] = []
+	if "next_actions" not in session:
+		session["next_actions"] = []
+	if "audit_preview" not in session:
+		session["audit_preview"] = {"runtime_action": "preview_only", "requires_runtime_apply": False, "blocker_codes": []}
+	if session.get("status") == "draft" and row.get("status") == "draft_pending_human_approval":
+		blockers = session.get("blockers", [])
+		session["status"] = "blocked" if isinstance(blockers, list) and blockers else "review_ready"
 	name = session.get("name") or row.get("name")
 	session["name"] = _require_text(name, "payload.session.name")
 	if not isinstance(session.get("readiness_cards", []), list):

@@ -467,6 +467,41 @@ class TestKoreaBrowserCredentialApplyCheckpoint(unittest.TestCase):
 			self.assertEqual(report["scope"]["company_provided"], True)
 			self.assertEqual(report["credential_apply"]["reason"], "FRAPPE_BROWSER_PASSWORD blank")
 
+	def test_cli_dry_run_with_human_approval_exits_zero_without_runtime_proof(self):
+		with tempfile.TemporaryDirectory() as temp_dir:
+			report_path = pathlib.Path(temp_dir) / "report.json"
+			completed = subprocess.run(
+				[
+					sys.executable,
+					str(SCRIPT_PATH),
+					"--repo-root",
+					str(self.repo_root),
+					"--site",
+					"hrms.localhost",
+					"--company",
+					"노란봉투법 데모",
+					"--base-url",
+					"http://127.0.0.1:8000",
+					"--human-approved",
+					"--dry-run",
+					"--report-file",
+					str(report_path),
+				],
+				cwd=self.repo_root,
+				env={**os.environ, "FRAPPE_BROWSER_PASSWORD": "runtime-secret"},
+				text=True,
+				capture_output=True,
+				check=False,
+			)
+
+			self.assertEqual(completed.returncode, 0)
+			report = json.loads(report_path.read_text(encoding="utf-8"))
+			self.assertTrue(report["credential_apply"]["passed"])
+			self.assertTrue(report["credential_apply"]["dry_run"])
+			self.assertFalse(report["runtime_verified"])
+			self.assertNotIn("runtime-secret", completed.stdout)
+			self.assertNotIn("runtime-secret", report_path.read_text(encoding="utf-8"))
+
 	def test_checkpoint_reports_empty_password_env_as_blank_not_missing(self):
 		report = self.mod.verify_demo_browser_credential_apply(
 			repo_root=self.repo_root,

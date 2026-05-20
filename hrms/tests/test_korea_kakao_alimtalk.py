@@ -631,6 +631,7 @@ class TestKakaoNotificationDispatcher(unittest.TestCase):
 			"hrms/regional/south_korea/kakao_notification.py",
 			"test_kakao_notification_dispatcher_dep",
 		)
+		sys.modules["hrms.regional.south_korea.kakao_notification"] = self.notif_mod
 		# dispatcher 로드 (kakao_notification 에 의존)
 		self.dispatcher_mod = _load_module(
 			"hrms/regional/south_korea/notification_dispatcher.py",
@@ -640,7 +641,7 @@ class TestKakaoNotificationDispatcher(unittest.TestCase):
 	def tearDown(self):
 		sys.modules.pop("frappe", None)
 		for key in list(sys.modules.keys()):
-			if "test_kakao_notification" in key or "test_kakao_dispatcher" in key:
+			if key == "hrms.regional.south_korea.kakao_notification" or "test_kakao_notification" in key or "test_kakao_dispatcher" in key:
 				sys.modules.pop(key, None)
 
 	def test_salary_slip_submit_no_phone_skips_gracefully(self):

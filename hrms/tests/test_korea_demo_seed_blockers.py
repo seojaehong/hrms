@@ -189,9 +189,9 @@ class TestKoreaDemoSeedBlockerRealism(unittest.TestCase):
 
 	def test_legacy_hermes_demo_seed_artifacts_have_no_hardcoded_password_literal(self):
 		repo_root = pathlib.Path(__file__).resolve().parents[2]
-		script = (repo_root / ".hermes" / "scripts" / "seed_korea_demo.py").read_text()
-		launch_info = (repo_root / ".hermes" / "HRMS_KOREA_DEMO_LAUNCH_INFO.md").read_text()
-		module_source = MODULE_PATH.read_text()
+		script = (repo_root / ".hermes" / "scripts" / "seed_korea_demo.py").read_text(encoding="utf-8")
+		launch_info = (repo_root / ".hermes" / "HRMS_KOREA_DEMO_LAUNCH_INFO.md").read_text(encoding="utf-8")
+		module_source = MODULE_PATH.read_text(encoding="utf-8")
 
 		legacy_password_literal = "Demo" + "HRMS!" + "2026"
 

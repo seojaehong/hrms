@@ -219,7 +219,7 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertEqual(presets["Industrial Accident Insurance"].get("is_company_contribution_only"), 1)
 
 	def test_demo_seed_includes_employer_only_industrial_accident_salary_component(self):
-		source = DEMO_SEED_PATH.read_text()
+		source = DEMO_SEED_PATH.read_text(encoding="utf-8")
 
 		self.assertIn('"Industrial Accident Insurance"', source)
 		self.assertIn('"korea_component_category": "Employer Statutory Contribution"', source)

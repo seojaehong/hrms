@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import pathlib
 import sys
 import types
 import unittest
@@ -25,9 +26,14 @@ import unittest
 # hrms/__init__.py 가 `import frappe`를 실행하므로 Frappe 없는 환경에서
 # 테스트가 깨지는 것을 방지하기 위해 더미 모듈을 주입한다.
 # daily_worker.py 자체는 frappe를 사용하지 않으므로 기능에 영향 없다.
+# 직접 실행 시 sys.path에 스크립트 디렉터리만 등록되므로 repo 루트도 추가한다.
 # ---------------------------------------------------------------------------
 if "frappe" not in sys.modules:
     sys.modules["frappe"] = types.ModuleType("frappe")
+
+_REPO_ROOT = str(pathlib.Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 from hrms.regional.south_korea.daily_worker import (  # noqa: E402
     DAILY_TAX_EXEMPT_LIMIT,

@@ -692,6 +692,10 @@ class TestSeverancePayApi(unittest.TestCase):
     def setUp(self):
         fake_frappe = _FakeFrappeForApi("frappe")
         sys.modules["frappe"] = fake_frappe
+        # severance_pay_api.py 가 `from hrms...`를 쓰므로 직접 실행 시 repo 루트 필요
+        repo_root = str(ROOT)
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
         spec_api = importlib.util.spec_from_file_location("severance_pay_api", _API_MOD_PATH)
         self._api = importlib.util.module_from_spec(spec_api)
         spec_api.loader.exec_module(self._api)

@@ -563,3 +563,8 @@ class TestIntegrationScenarios:
             report=report, human_approved=True, dry_run=True
         )
         assert result["status"] == "refused"
+
+
+if __name__ == "__main__":
+    import pytest
+    raise SystemExit(pytest.main([__file__, "-q"]))

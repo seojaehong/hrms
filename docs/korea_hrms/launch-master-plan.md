@@ -114,6 +114,12 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
 - **2026-07-05 P1a 완료** (`057e64eba`): 홈 퀵링크 Korea 10영역 노출(급여마감·감사로그·근태·모바일출퇴근·연차·결재·임금명세서·퇴직금·컴플라이언스·**AI HR 담당자**) + 영어 폴백 문구 전량 한글화. frontend Korea 테스트 리눅스 8/8 PASS(Windows 1건 실패는 환경성 확정). 서버 bench build + 재기동 + 빌드 산출물에 한글 문자열 확인 완료.
 - P1 잔여(P1b): 급여마감 쓰기 경로(runtime apply) UI 연결 — preview-only는 의도된 계약(사람 승인 우선)이므로 승인 플로우와 함께 설계 필요. fixture 폴백은 정상 설계로 판정(runtime 연결 시 자동 전환).
 
+## 6-3. 실행 로그 (S1)
+
+- **2026-07-05 S1-1 서빙 전환 완료** (`3fcf97671`+`ed9848682`): bench를 named volume(`docker_bench-home`)으로 이관, **gunicorn 3워커 + short/long 큐 워커 + 스케줄러** 가동, nginx 사이드카(에셋/업로드/socket.io, 도메인→사이트 map). 검증: web/asset/외부 https 전부 200, 동시 30요청 30/30 200. ⚠ 발견: 구 dev 서버는 아무 Host에나 기본 사이트를 서빙했음(과거 host-header 검증은 무효) — 현재는 strict 사이트 라우팅.
+- **noho 사이트명 정합**: `noho.hrms.safeclaw.kr` → **`noho.safeclaw.kr`** rename (TLS 1단계 스킴). create_tenant BASE_DOMAIN 기본값도 `safeclaw.kr`로. 잔여: 사용자 DNS 와일드카드 `*` 전환 (기존 `*.hrms` 레코드는 무용).
+- 구글 로그인: Frappe 내장 Social Login 사용 예정 — 사용자에게 Google OAuth 클라이언트 생성 요청 상태. S1은 리디렉션 URI 테넌트당 1줄 추가(수동), S2에서 중앙 auth 브로커로 전환.
+
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)
 - pytest 패키지 수집 금지 — 파일 직접 실행(또는 단일 파일 pytest만 안전)

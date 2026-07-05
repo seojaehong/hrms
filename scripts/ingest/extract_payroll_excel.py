@@ -1,9 +1,14 @@
 # 기존 급여대장 엑셀 → 시스템 임포트용 JSON 추출 (기존 데이터 임베딩 1/2).
 #
-# 노무법인 표준 급여대장 포맷(노호 5월분으로 실검증 — 32/32 1원 일치)을 파싱한다.
+# 노무법인 표준 급여대장 포맷(노호 5월분으로 실검증)을 파싱한다.
+# 시트 종류(--sheet-type)별로 컬럼 매핑 프로파일을 골라 파싱한다.
+#   - monthly  : 월급제 '급여(직원)' 시트 (기본, 32/32 1원 일치)
+#   - parttime : 시급제 '파트타임' 시트
 # 사용:
-#   python3 scripts/ingest/extract_payroll_excel.py "<급여대장.xlsx>" 2026-05 [시트명] > payroll.json
-# 출력 JSON: {period, employees: [{name, dept, join, email, earnings{}, deductions{},
+#   python3 scripts/ingest/extract_payroll_excel.py "<급여대장.xlsx>" 2026-05 > payroll.json
+#   python3 scripts/ingest/extract_payroll_excel.py "<급여대장.xlsx>" 2026-05 --sheet-type parttime
+#   python3 scripts/ingest/extract_payroll_excel.py "<급여대장.xlsx>" 2026-05 --sheet "다른시트명"
+# 출력 JSON: {period, count, employees: [{name, dept, join, email, earnings{}, deductions{},
 #            expected_gross, expected_ded, expected_net}]}
 # 추출 후 반드시 내부 무결성(earnings 합=세전, 세전-공제=실지급)을 검사하고 불일치면 실패한다.
 #
@@ -16,20 +21,41 @@ import sys
 
 import openpyxl
 
-# 노무법인 표준 헤더 → 컬럼 인덱스 (1-base). 다른 포맷은 이 매핑만 교체.
-EARNING_COLS = {
-    20: "기본급", 21: "고정연장수당", 22: "고정야간수당", 23: "고정휴일수당",
-    24: "고정휴일연장수당", 25: "연차선지급", 26: "식대(비과세)", 27: "보안수당",
-    28: "근로자의날추가지급", 29: "초과근무수당", 30: "전월미지급",
+# 시트 종류별 컬럼 매핑 프로파일 (1-base 인덱스). 다른 포맷은 프로파일만 추가.
+PROFILES = {
+    # 월급제 '급여(직원)' 시트 — 노호 5월 32명 1원 일치.
+    "monthly": {
+        "sheet": "급여(직원)",
+        "cols": {"dept": 2, "name": 3, "join": 8, "email": 14,
+                 "gross": 31, "ded_total": 38, "net": 39},
+        "earnings": {
+            20: "기본급", 21: "고정연장수당", 22: "고정야간수당", 23: "고정휴일수당",
+            24: "고정휴일연장수당", 25: "연차선지급", 26: "식대(비과세)", 27: "보안수당",
+            28: "근로자의날추가지급", 29: "초과근무수당", 30: "전월미지급",
+        },
+        "deductions": {32: "소득세", 33: "지방소득세", 34: "국민연금", 35: "건강보험", 36: "장기요양", 37: "고용보험"},
+    },
+    # 시급제 '파트타임' 시트 — U~X=지급, Y=세전합계, Z~AE=공제, AF=공제합계, AG=차인지급액.
+    "parttime": {
+        "sheet": "파트타임",
+        "cols": {"dept": 2, "name": 3, "join": 8, "email": 14,
+                 "gross": 25, "ded_total": 32, "net": 33},
+        "earnings": {21: "기본급", 22: "주휴수당", 23: "근로자의날추가지급", 24: "기타수당"},
+        "deductions": {26: "소득세", 27: "지방소득세", 28: "국민연금", 29: "건강보험", 30: "장기요양", 31: "고용보험"},
+    },
 }
-DEDUCTION_COLS = {32: "소득세", 33: "지방소득세", 34: "국민연금", 35: "건강보험", 36: "장기요양", 37: "고용보험"}
-COL_DEPT, COL_NAME, COL_JOIN, COL_EMAIL = 2, 3, 8, 14
-COL_GROSS, COL_DED_TOTAL, COL_NET = 31, 38, 39
 
 
-def extract(path: str, period: str, sheet: str = "급여(직원)") -> dict:
+def extract(path: str, period: str, sheet_type: str = "monthly", sheet: str | None = None) -> dict:
+    if sheet_type not in PROFILES:
+        raise SystemExit(f"알 수 없는 --sheet-type: {sheet_type} (가능: {', '.join(PROFILES)})")
+    profile = PROFILES[sheet_type]
+    cols = profile["cols"]
+    earning_cols = profile["earnings"]
+    deduction_cols = profile["deductions"]
+
     wb = openpyxl.load_workbook(path, data_only=True)
-    ws = wb[sheet]
+    ws = wb[sheet or profile["sheet"]]
 
     def num(r: int, c: int) -> int:
         v = ws.cell(r, c).value
@@ -37,22 +63,22 @@ def extract(path: str, period: str, sheet: str = "급여(직원)") -> dict:
 
     employees = []
     for r in range(2, ws.max_row + 1):
-        name = ws.cell(r, COL_NAME).value
+        name = ws.cell(r, cols["name"]).value
         if not name:
             continue
-        earnings = {label: num(r, c) for c, label in EARNING_COLS.items() if num(r, c)}
-        deductions = {label: num(r, c) for c, label in DEDUCTION_COLS.items() if num(r, c)}
+        earnings = {label: num(r, c) for c, label in earning_cols.items() if num(r, c)}
+        deductions = {label: num(r, c) for c, label in deduction_cols.items() if num(r, c)}
         employees.append(
             {
                 "name": str(name).strip(),
-                "dept": str(ws.cell(r, COL_DEPT).value or "").strip(),
-                "join": str(ws.cell(r, COL_JOIN).value)[:10] if ws.cell(r, COL_JOIN).value else "",
-                "email": str(ws.cell(r, COL_EMAIL).value or "").strip(),
+                "dept": str(ws.cell(r, cols["dept"]).value or "").strip(),
+                "join": str(ws.cell(r, cols["join"]).value)[:10] if ws.cell(r, cols["join"]).value else "",
+                "email": str(ws.cell(r, cols["email"]).value or "").strip(),
                 "earnings": earnings,
                 "deductions": deductions,
-                "expected_gross": num(r, COL_GROSS),
-                "expected_ded": num(r, COL_DED_TOTAL),
-                "expected_net": num(r, COL_NET),
+                "expected_gross": num(r, cols["gross"]),
+                "expected_ded": num(r, cols["ded_total"]),
+                "expected_net": num(r, cols["net"]),
             }
         )
 
@@ -68,10 +94,28 @@ def extract(path: str, period: str, sheet: str = "급여(직원)") -> dict:
     return {"period": period, "count": len(employees), "employees": employees}
 
 
+def _parse_args(argv: list[str]) -> dict:
+    positional, sheet_type, sheet = [], "monthly", None
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--sheet-type":
+            i += 1
+            sheet_type = argv[i]
+        elif a == "--sheet":
+            i += 1
+            sheet = argv[i]
+        else:
+            positional.append(a)
+        i += 1
+    if len(positional) < 2:
+        raise SystemExit(__doc__)
+    return {"path": positional[0], "period": positional[1], "sheet_type": sheet_type, "sheet": sheet}
+
+
 if __name__ == "__main__":
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
-    if len(sys.argv) < 3:
-        raise SystemExit(__doc__)
-    data = extract(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "급여(직원)")
+    opts = _parse_args(sys.argv[1:])
+    data = extract(opts["path"], opts["period"], opts["sheet_type"], opts["sheet"])
     print(json.dumps(data, ensure_ascii=False, indent=1))

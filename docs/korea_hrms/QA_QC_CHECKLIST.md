@@ -105,8 +105,27 @@
 
 미포함(후속): 파트타임(시급제 7명)·일용직·사업소득 재현은 시급×시간 로직 검증과 함께 2단계 / 명세서 이메일 자동 발송은 발신 메일 계정(SMTP) 연결 + 사업장 승인 후.
 
+---
+
+## K. 4대보험 신고서 3종 생성 (2026-07-05 추가 — 취득·상실·근로내용확인)
+
+인간 확인 게이트(`human_approved=True`) 없이는 파일을 만들지 않는 fail-closed 자동화. 코어는 framework-free 순수 파이썬 + 얇은 `*_api.py` 래퍼(조건부 frappe import). 실행: `python3 hrms/tests/test_korea_insurance_*.py` (pytest 금지).
+
+| # | 항목 | 검증 방법 | 실측 | 판정 |
+|---|---|---|---|---|
+| K1 | 취득신고서 생성기 (US-002) | 더미 후보 2명 → 생성 후 openpyxl 재열람, 성명·취득일·보수월액 셀 일치 + 빈 후보 ValueError | `test_korea_insurance_forms.py` **7/7 PASS** (취득·상실·근로내용확인 공용) | ✅ |
+| K2 | 상실신고서 생성기 (US-003) | 더미 후보 2명 → 상실일·상실사유코드 셀 일치 단언 | 위 forms **7/7 PASS**에 포함 | ✅ |
+| K3 | 근로내용확인신고서(일용직) 생성기 (US-004) | 명시 work_days + count 역산 2명 → 일자 마킹·카운트 일치, 잔존 PII 행 clear, 빈입력 ValueError | 위 forms **7/7 PASS**에 포함 | ✅ |
+| K4 | 일용직 근무일 추출 코어 (US-005) | 근태 픽스처에서 work_days 정확 집계, 타 월·비근무 status·비일용직 제외 | `test_korea_insurance_filing.py` **11/11 PASS** (기존 8 + 추출 3) | ✅ |
+| K5 | Frappe 연동 API — fail-closed 게이트 (US-006) | `human_approved=False`/`"false"` → blocked(파일 미생성) / True + fake frappe 스텁 → 취득 신고서 생성·셀 검증·rrn_missing 명단 | `test_korea_insurance_filing_api.py` **3/3 PASS** | ✅ |
+| K6 | 급여대장 임베딩 — 파트타임(시급제) (US-007) | 노호 5월 '파트타임' 시트 7명 추출 무결성(earnings합=세전, 세전−공제=실지급) + 월급제 회귀 | 파트타임 **7명 무결성 PASS** (gross 5,956,722 / net 5,597,832), 월급제 회귀 **32명·net 95,940,486 유지** | ✅ |
+
+산출물 xlsx·고객 실데이터·주민번호는 커밋 금지(`.gitignore` `out/insurance/`, `*_신고서_*.xlsx`). 템플릿 3종은 repo 밖 경로 참조만.
+
 ## 판정
 
 **47/47 PASS — 골 도달.** (판정 당일 재실측 12 + 세션 실측 31 + 실데이터 수락 4)
+
+**+ K절 4대보험 신고서 3종 자동화 (2026-07-05 후속): forms 7/7 · filing 11/11 · filing_api 3/3 전건 PASS.**
 
 D-day 개통 절차(런북 5건: DNS·구글·카카오·스토리지 키·직원 CSV)와 후속 스프린트(인증 브로커·VM 증설)는 본 퀄리티 판정의 범위 외이며, 각각 런북과 scale-architecture §2에 실행 준비 상태로 확정되어 있다.

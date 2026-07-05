@@ -158,6 +158,9 @@ NOHO prod에서 실제 여정 검증: 직원 등록(쓰기) → 근태 기록(�
 ### D-1 5차 — AI 채널 4종 소프트웨어 완결 (2026-07-05)
 사용자 결정 "텔레그램·슬랙·디스코드·메일 4종 병행"의 코드 측 완결: 공용 코어(channel_core — 채널이 늘어도 응답 로직 불변) + 텔레그램(가동 중) + 슬랙 Events(v0 서명 검증, `/slack/events`) + 디스코드 Interactions(Ed25519, `/discord/interactions`) + 메일 IMAP/SMTP 커넥터(systemd 유닛 설치). 슬랙·디스코드·메일은 env-gated — 각 플랫폼 앱 키 도착 시 활성화만 남음(소셜 로그인과 동일 패턴). 검증: 공용 코어 계산·Q&A, 슬랙 서명 정상/위조/만료, 메일 파서, 서버 503 게이트, 텔레그램 재기동, 스모크 rc=0.
 
+### D-1 6차 — 4대보험 신고서 3종 생성 자동화 (2026-07-05, ralph 루프)
+`ralph/insurance-filing-embedding` 브랜치에서 US-001~008 자율 구현: 신고서 3종(취득·상실·근로내용확인) 실파일 생성기(`insurance_forms.py`) + 테넌트 DB 일용직 근무일 추출 코어(`insurance_filing.extract_daily_workers`) + Frappe 연동 API(`insurance_filing_api.py`, `human_approved` fail-closed 게이트) + 급여대장 임베딩 파트타임(시급제) 시트 지원. 전자신고용 서식 실측 매핑 후 생성, 산출물·주민번호·고객 데이터는 `.gitignore`로 커밋 차단. 검증: `test_korea_insurance_forms.py` 7/7 · `test_korea_insurance_filing.py` 11/11 · `test_korea_insurance_filing_api.py` 3/3 PASS, 파트타임 7명 무결성 PASS(gross 5,956,722 / net 5,597,832), 월급제 회귀 32명·net 95,940,486 유지. QA 체크리스트 K절에 반영.
+
 ### 최종 판정 (2026-07-05 자정, 확정)
 
 **READY — 내일 출시 가능 상태이며, 만듦새는 12월 1만 사업장 목표 수준이다.**

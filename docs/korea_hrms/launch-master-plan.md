@@ -120,6 +120,15 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
 - **noho 사이트명 정합**: `noho.hrms.safeclaw.kr` → **`noho.safeclaw.kr`** rename (TLS 1단계 스킴). create_tenant BASE_DOMAIN 기본값도 `safeclaw.kr`로. 잔여: 사용자 DNS 와일드카드 `*` 전환 (기존 `*.hrms` 레코드는 무용).
 - 구글 로그인: Frappe 내장 Social Login 사용 예정 — 사용자에게 Google OAuth 클라이언트 생성 요청 상태. S1은 리디렉션 URI 테넌트당 1줄 추가(수동), S2에서 중앙 auth 브로커로 전환.
 
+## 6-4. D-1 실행 로그 (2026-07-05 밤, GOAL: 내일 출시가능)
+
+- **소셜 로그인**: 구글(내장)+카카오(전용 콜백, 이메일 중첩 평탄화) 코어·API·테스트 8건 + create_tenant 자동 설정. NOHO에 코드 반영 완료, Social Login Key는 실키 도착 전까지 disabled.
+- **AI 플레인 v0 서버 가동** (`korea-hrms-mcp.service`, 127.0.0.1:8100, uvicorn 2워커): 도구 9종(계산7 + whoami + get_tenant_records). 토큰 sha256 파일(`~/.korea-hrms-mcp/tokens.json` 0600), NOHO 바인딩 토큰 발급(`noho-agent.token`, 서버에만). **실증: AI가 토큰 스코프로 NOHO 실데이터(회사 노호) 조회 성공.** 브리지는 읽기전용 + DocType/필드 화이트리스트(급여 금액 미노출). 외부 URL `ai.safeclaw.kr` ingress 추가됨(와일드카드 DNS 대기).
+- **NOHO 초기 셋업**: 설치 마법사 완료(한국어/Korea, Republic of/KRW/회사 노호/FY2026) + 2026 공휴일 21건 시드. 직원 CSV·급여구조 3종은 노호 실자료 도착 후(온보딩 SOP §3).
+- **감시**: `hrms_smoke.sh` 5분 크론 — web/noho ping/asset/공개 https/AI 게이트 5종 체크, 실패·회복 텔레그램 알림(기존 alert_webhook 재사용). 실측 rc=0.
+
+**출시 게이트 잔여(전부 사용자 의존)**: ① DNS `*` 와일드카드 수정 ② 구글 OAuth 키 ③ 카카오 REST 키 ④ 백업 오프사이트 자격증명 ⑤ 노호 직원 CSV·급여 자료.
+
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)
 - pytest 패키지 수집 금지 — 파일 직접 실행(또는 단일 파일 pytest만 안전)

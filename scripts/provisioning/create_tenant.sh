@@ -161,6 +161,21 @@ _step "3/8  한국 모듈 설치 (erpnext, hrms)"
 _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" install-app erpnext
 _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" install-app hrms
 
+# ─── 2-1. 소셜 로그인 자동 설정 (env 있으면) ──────────────────────────────────
+# GOOGLE_OAUTH_CLIENT_ID/SECRET, KAKAO_REST_API_KEY/KAKAO_CLIENT_SECRET
+setup_social_login() {
+    local provider="$1" cid="$2" secret="$3"
+    _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SITE_NAME}" execute         hrms.regional.south_korea.social_login_api.setup_social_login         --kwargs "{'provider': '${provider}', 'client_id': '${cid}', 'client_secret': '${secret}'}"
+}
+if [[ -n "${GOOGLE_OAUTH_CLIENT_ID:-}" && -n "${GOOGLE_OAUTH_CLIENT_SECRET:-}" ]]; then
+    echo "  [info] 구글 로그인 설정 (리디렉션 URI를 Google 콘솔에 추가 필요: https://${SITE_NAME}/api/method/frappe.integrations.oauth2_logins.login_via_google)"
+    setup_social_login google "${GOOGLE_OAUTH_CLIENT_ID}" "${GOOGLE_OAUTH_CLIENT_SECRET}"
+fi
+if [[ -n "${KAKAO_REST_API_KEY:-}" && -n "${KAKAO_CLIENT_SECRET:-}" ]]; then
+    echo "  [info] 카카오 로그인 설정 (카카오 개발자 콘솔 Redirect URI: https://${SITE_NAME}/api/method/hrms.regional.south_korea.social_login_api.kakao_callback)"
+    setup_social_login kakao "${KAKAO_REST_API_KEY}" "${KAKAO_CLIENT_SECRET}"
+fi
+
 # ─── 3. 데모 데이터 시드 ─────────────────────────────────────────────────────
 if [[ "${SEED_DEMO}" == true ]]; then
     _step "4/8  데모 데이터 시드"

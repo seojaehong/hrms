@@ -67,6 +67,47 @@ class TestDailyWorkBackfill(unittest.TestCase):
 			mod.mark_daily_work_days(1, 32, 31)
 
 
+class TestExtractDailyWorkers(unittest.TestCase):
+	DAILY_EMPLOYEES = [
+		{"name": "D1", "employee_name": "일용갑", "employment_type": "일용직", "daily_wage": 120000},
+		{"name": "D2", "employee_name": "일용을", "employment_type": "일용근로자", "daily_wage": 100000, "total_wage": 500000},
+		{"name": "M1", "employee_name": "월급정직원", "employment_type": "정규직", "daily_wage": 0},
+	]
+	ATTENDANCE = [
+		# D1: 7월 3·5·10일 = 3일 (Present/Half Day)
+		{"employee": "D1", "attendance_date": "2026-07-03", "status": "Present"},
+		{"employee": "D1", "attendance_date": "2026-07-05", "status": "Half Day"},
+		{"employee": "D1", "attendance_date": "2026-07-10", "status": "Present"},
+		{"employee": "D1", "attendance_date": "2026-07-12", "status": "Absent"},  # 제외(status)
+		{"employee": "D1", "attendance_date": "2026-06-30", "status": "Present"},  # 제외(타 월)
+		# D2: 7월 1·2일 = 2일
+		{"employee": "D2", "attendance_date": "2026-07-01", "status": "Present"},
+		{"employee": "D2", "attendance_date": "2026-07-02", "status": "Present"},
+		# M1: 근태 있어도 일용직 아님 → 제외
+		{"employee": "M1", "attendance_date": "2026-07-04", "status": "Present"},
+	]
+
+	def test_aggregates_only_daily_workers_in_month(self):
+		rows = mod.extract_daily_workers(self.DAILY_EMPLOYEES, self.ATTENDANCE, 2026, 7)
+		self.assertEqual([r["employee_name"] for r in rows], ["일용갑", "일용을"])
+		by_name = {r["employee_name"]: r for r in rows}
+		# 근무일 정확 집계 + 타 월/비근무 status 제외
+		self.assertEqual(by_name["일용갑"]["work_days"], [3, 5, 10])
+		self.assertEqual(by_name["일용을"]["work_days"], [1, 2])
+		# total_wage: 명시 없으면 daily_wage*근무일수, 있으면 그대로
+		self.assertEqual(by_name["일용갑"]["total_wage"], 120000 * 3)
+		self.assertEqual(by_name["일용을"]["total_wage"], 500000)
+
+	def test_non_daily_excluded_even_with_attendance(self):
+		names = [r["employee_name"] for r in mod.extract_daily_workers(self.DAILY_EMPLOYEES, self.ATTENDANCE, 2026, 7)]
+		self.assertNotIn("월급정직원", names)
+
+	def test_no_attendance_worker_dropped(self):
+		# 근태 없는 일용직은 결과에서 제외(빈 근무일 신고 금지)
+		rows = mod.extract_daily_workers(self.DAILY_EMPLOYEES, [], 2026, 7)
+		self.assertEqual(rows, [])
+
+
 class TestContract(unittest.TestCase):
 	def test_contract_requires_human_confirmation(self):
 		c = mod.build_filing_contract(filing_type="acquisition", year=2026, month=7, employees=EMPLOYEES)

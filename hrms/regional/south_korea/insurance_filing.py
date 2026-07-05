@@ -91,6 +91,67 @@ def mark_daily_work_days(work_day_count: int, last_work_day: int, days_in_month:
     return list(range(last_work_day - work_day_count + 1, last_work_day + 1))
 
 
+DAILY_EMPLOYMENT_TYPES = ("일용직", "일용근로자")
+WORKED_ATTENDANCE_STATUS = ("Present", "Half Day")
+
+
+def _is_daily_default(emp: dict) -> bool:
+	return str(emp.get("employment_type") or "") in DAILY_EMPLOYMENT_TYPES
+
+
+def extract_daily_workers(
+	employees: list[dict],
+	attendance_rows: list[dict],
+	year: int,
+	month: int,
+	is_daily=None,
+) -> list[dict]:
+	"""일용직 직원의 해당 월 근태를 근로내용확인신고 workers 입력 형태로 집계.
+
+	- 대상: is_daily(emp) True (기본: employment_type ∈ DAILY_EMPLOYMENT_TYPES).
+	- 근무일: attendance_rows 중 해당 직원·귀속월·status ∈ WORKED_ATTENDANCE_STATUS 의 '일(day)'.
+	- 반환: [{employee, employee_name, work_days:[int...], daily_wage, total_wage}]
+	    (generate_daily_work_report 의 workers 입력으로 그대로 투입 가능)
+
+    순수 함수 — frappe 미의존. attendance_rows: [{employee, attendance_date, status}].
+	"""
+	if not (1 <= month <= 12):
+		raise ValueError(f"invalid month: {month}")
+	decide = is_daily or _is_daily_default
+
+	# 직원별 근무일 집계 (귀속월·근무 status 만)
+	days_by_employee: dict[str, set] = {}
+	for row in attendance_rows:
+		if str(row.get("status") or "") not in WORKED_ATTENDANCE_STATUS:
+			continue
+		day = _to_date(row.get("attendance_date"), "attendance_date")
+		if not _in_month(day, year, month):
+			continue
+		emp_id = row.get("employee", "")
+		days_by_employee.setdefault(emp_id, set()).add(day.day)
+
+	out = []
+	for emp in employees:
+		if not decide(emp):
+			continue
+		emp_id = emp.get("name", "")
+		work_days = sorted(days_by_employee.get(emp_id, set()))
+		if not work_days:
+			continue
+		daily_wage = int(emp.get("daily_wage") or 0)
+		total_wage = int(emp.get("total_wage") or daily_wage * len(work_days))
+		out.append(
+			{
+				"employee": emp_id,
+				"employee_name": emp.get("employee_name") or emp.get("first_name", ""),
+				"work_days": work_days,
+				"daily_wage": daily_wage,
+				"total_wage": total_wage,
+			}
+		)
+	return sorted(out, key=lambda r: r["employee_name"])
+
+
 def build_filing_contract(
     *,
     filing_type: str,

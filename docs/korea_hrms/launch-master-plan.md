@@ -99,7 +99,14 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
 - **2026-07-05 P0 진행**: HRMS 호스트 = **claudebot-2**(140.245.79.0, 오라클) — reference 서버(claude-bot)가 아님. 실사: 모니터링 7컨테이너 6주 가동 / **frappe bench 컨테이너는 소실**(사이트 디렉터리·암호화 키 포함, 데모라 무해) / mariadb-data 볼륨·cloudflared 터널(winhr-intake, hrms.safeclaw.kr→:8000 ingress 기존재)·백업 타이머 생존. 502 원인 = bench 부재.
 - compose 하드닝(restart + DB비번 env 주입) 커밋 → 서버 pull → **bench 스택 재기동, 프레시 bench 빌드 진행 중**. DNS는 API 토큰 없이 `cloudflared tunnel route dns`(cert.pem)로 가능 확인.
 - **2026-07-05 A1 완료** (`e5dd53e05`): stdio MCP 서버 도구 7종 + stdio 라운드트립 검증 + 퇴직금 독립수식 1원 일치 + 테스트 하네스 4건 정비. 연결: `claude mcp add korea-hrms -- python3 <repo>/mcp_server/server.py`
-- 남은 P0: bench 기동 확인 → DB root 비번 로테이션(mysqladmin, 123→생성값, docker/.env 기록) → NOHO 사이트 생성(`create_tenant.sh noho admin@noho.kr --skip-dns --skip-cloudflared` + cloudflared 수동 2단계) → host-header 검증 → 오프사이트 백업 활성화
+- **2026-07-05 P0 완료 (DNS 1건 제외)**:
+  - bench 프레시 빌드 완료 → `hrms.safeclaw.kr` 200 부활 (502 해소)
+  - DB root 비번 로테이션 완료 (`root@localhost`+`root@%` 모두, `docker/.env` 0600 — 서버에만 존재)
+  - **NOHO 테넌트 생성 완료** (`create_tenant.sh` 8/8): site `noho.hrms.safeclaw.kr`, db `tenant_noho`, 레지스트리 status=active. host-header 라우팅 실측 200 + `frappe.ping` pong. 임시 admin 비번은 사용자에게 전달 후 즉시 변경, 프로비저닝 로그는 서버에서 파기함
+  - 터널 ingress에 noho 항목 추가·재시작 완료
+  - ⚠ **잔여 1건 (사용자 대시보드 필요)**: Cloudflare **safeclaw.kr 존**에 CNAME 추가 — 서버 cert.pem이 yellowenvelope.kr 존 전용이라 자동화 불가. name `noho.hrms`(또는 향후 테넌트 자동화를 위해 `*.hrms` 와일드카드 권장) → target `a04b8f7a-8b04-49f7-8c73-3fc1c07519fb.cfargotunnel.com`, Proxied ON
+  - ⚠ 오프사이트 백업(`--upload`)은 S3/B2 자격증명 필요 — 사용자 제공 대기 (로컬 일일 백업 타이머는 가동 중)
+  - ⚠ `config/multi_site.json`이 서버에서 갱신됨(테넌트 정보 포함) — **public repo에 push 금지**, 서버 로컬 변경으로 유지
 
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)

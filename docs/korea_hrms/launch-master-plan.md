@@ -129,6 +129,15 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
 
 **출시 게이트 잔여(전부 사용자 의존)**: ① DNS `*` 와일드카드 수정 ② 구글 OAuth 키 ③ 카카오 REST 키 ④ 백업 오프사이트 자격증명 ⑤ 노호 직원 CSV·급여 자료.
 
+## 6-5. D-1 2차 라운드 (S2 선행 + 운영 결함 소탕)
+
+- **셀프서브 가입 파이프라인 엔드투엔드 실증**: `POST /signup` → 큐 → 크론 워커 → create_tenant 무인 실행. **pilot-demo 테넌트가 접수 2분 37초 만에 자동 생성**되어 ping pong·레지스트리 active 확인 (데모용으로 유지). 터널 `*.safeclaw.kr` 와일드카드 ingress로 테넌트별 인프라 개입 제로화.
+- **사용량 미터링**: 인증 요청별 site/label/path JSONL (`~/.korea-hrms-mcp/usage.jsonl`) — S2 과금·쿼터 기반.
+- **레지스트리 보안**: multi_site.json repo 추적 제외(서버 전용) + example 템플릿.
+- **부하**: noho ping 100요청/동시20 → 100% 200, 평균 32ms/최대 81ms.
+- **백업·복구 결함 4+1건 발굴·수정** (전부 커밋): ① 백업이 데모 사이트만 대상(NOHO 누락) → 전 사이트 ② 드릴이 호스트 bench 호출로 전면 불능 → docker exec 래핑 ③ restore 인터랙티브 비번 프롬프트 ④ 무결성 기준이 신규 테넌트 오탐(직원0) → Company 기준 ⑤ 전 사이트 백업 폴더에서 타 사이트 SQL을 집던 선택 버그. **최종: NOHO 복구 드릴 PASS(86초, Company 1건 무결성 확인)**, 월간 드릴 크론(매월 1일 03:00) 등록.
+- 크론 4종 가동: 일일 백업 / 5분 스모크 / 5분 가입 워커 / 월간 복구 드릴.
+
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)
 - pytest 패키지 수집 금지 — 파일 직접 실행(또는 단일 파일 pytest만 안전)

@@ -22,3 +22,6 @@ hrms/public/roster
 hrms/www/roster.html
 # Local monitoring/runtime secrets
 docker/monitoring/.env
+
+# 테넌트 레지스트리 실데이터는 서버 전용 (public repo 노출 금지 — 확장 불변식 5)
+config/multi_site.json

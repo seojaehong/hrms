@@ -27,6 +27,10 @@ import server as calc_server  # 계산 도구 7종이 등록된 FastMCP 인스�
 
 TOKENS_FILE = os.environ.get("KCHRMS_MCP_TOKENS_FILE", "/etc/korea-hrms-mcp/tokens.json")
 FRAPPE_BASE_URL = os.environ.get("KCHRMS_FRAPPE_URL", "http://localhost:8000")
+# 테넌트별 사용량 미터링(JSONL append) — S2 과금·쿼터의 데이터 기반 (불변식: 무상태, 로그는 파일)
+USAGE_LOG = os.environ.get("KCHRMS_USAGE_LOG", "")
+# 셀프서브 가입 큐 — process_signup_queue.sh 가 소비해 무인 프로비저닝
+SIGNUP_QUEUE = os.environ.get("KCHRMS_SIGNUP_QUEUE", "")
 
 # 브리지 허용 DocType (읽기 전용). PII 최소화: 필드도 화이트리스트.
 BRIDGE_DOCTYPES: dict[str, list[str]] = {
@@ -110,6 +114,99 @@ def whoami() -> dict:
     return {"authenticated": True, "site": ctx["site"], "label": ctx.get("label", "")}
 
 
+def record_usage(entry: dict, path: str) -> None:
+    if not USAGE_LOG:
+        return
+    try:
+        import datetime as _dt
+
+        line = json.dumps(
+            {
+                "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+                "site": entry.get("site"),
+                "label": entry.get("label"),
+                "path": path,
+            },
+            ensure_ascii=False,
+        )
+        with open(USAGE_LOG, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass  # 미터링 실패가 요청을 막으면 안 된다
+
+
+TENANT_ID_RE = __import__("re").compile(r"^[a-z][a-z0-9-]{1,30}$")
+EMAIL_RE = __import__("re").compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def validate_signup(payload: dict) -> dict:
+    """가입 요청 검증(순수). 반환: 큐 엔트리."""
+    tenant_id = str(payload.get("tenant_id", "")).strip().lower()
+    admin_email = str(payload.get("admin_email", "")).strip()
+    company_name = str(payload.get("company_name", "")).strip()
+    if not TENANT_ID_RE.match(tenant_id):
+        raise ValueError("tenant_id는 영문 소문자로 시작, 소문자·숫자·하이픈 2~31자")
+    if tenant_id in {"www", "hrms", "ai", "api", "admin", "noho"}:
+        raise ValueError("사용할 수 없는 tenant_id 입니다")
+    if not EMAIL_RE.match(admin_email):
+        raise ValueError("admin_email 형식이 올바르지 않습니다")
+    if not company_name:
+        raise ValueError("company_name은 필수입니다")
+    return {"tenant_id": tenant_id, "admin_email": admin_email, "company_name": company_name, "status": "pending"}
+
+
+async def _read_body(receive) -> bytes:
+    chunks = []
+    while True:
+        message = await receive()
+        chunks.append(message.get("body", b""))
+        if not message.get("more_body"):
+            return b"".join(chunks)
+
+
+async def _json_response(send, status: int, payload: dict) -> None:
+    body = json.dumps(payload, ensure_ascii=False).encode()
+    await send({"type": "http.response.start", "status": status,
+                "headers": [(b"content-type", b"application/json")]})
+    await send({"type": "http.response.body", "body": body})
+
+
+async def handle_signup(scope, receive, send) -> None:
+    """POST /signup — 셀프서브 가입 접수. 큐에 적재하면 워커가 무인 프로비저닝한다."""
+    if scope["method"] != "POST":
+        await _json_response(send, 405, {"error": "method_not_allowed"})
+        return
+    if not SIGNUP_QUEUE:
+        await _json_response(send, 503, {"error": "signup_disabled"})
+        return
+    try:
+        payload = json.loads((await _read_body(receive)) or b"{}")
+        entry = validate_signup(payload)
+    except (ValueError, json.JSONDecodeError) as error:
+        await _json_response(send, 400, {"error": str(error)})
+        return
+    # 중복 방지: 큐 + 레지스트리에 같은 tenant_id가 있으면 거절
+    queue_path = pathlib.Path(SIGNUP_QUEUE)
+    existing = ""
+    if queue_path.exists():
+        existing = queue_path.read_text(encoding="utf-8")
+    if f'"tenant_id": "{entry["tenant_id"]}"' in existing:
+        await _json_response(send, 409, {"error": "이미 접수된 tenant_id 입니다"})
+        return
+    import datetime as _dt
+
+    entry["requested_at"] = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    queue_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(queue_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    await _json_response(send, 202, {
+        "status": "accepted",
+        "tenant_id": entry["tenant_id"],
+        "site": f'{entry["tenant_id"]}.safeclaw.kr',
+        "message": "프로비저닝이 예약되었습니다. 완료까지 약 20~30분 소요됩니다.",
+    })
+
+
 # ── ASGI: Bearer 인증 미들웨어로 FastMCP streamable HTTP 앱을 감싼다 ──────────
 _inner_app = mcp.streamable_http_app()
 
@@ -117,6 +214,9 @@ _inner_app = mcp.streamable_http_app()
 async def app(scope, receive, send):
     if scope["type"] != "http":
         await _inner_app(scope, receive, send)
+        return
+    if scope.get("path", "") == "/signup":
+        await handle_signup(scope, receive, send)
         return
     headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
     auth = headers.get("authorization", "")
@@ -129,6 +229,7 @@ async def app(scope, receive, send):
                                 (b"www-authenticate", b"Bearer")]})
         await send({"type": "http.response.body", "body": body})
         return
+    record_usage(entry, scope.get("path", ""))
     token_ctx = _auth_context.set(entry)
     try:
         await _inner_app(scope, receive, send)

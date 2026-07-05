@@ -108,6 +108,12 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
   - ⚠ 오프사이트 백업(`--upload`)은 S3/B2 자격증명 필요 — 사용자 제공 대기 (로컬 일일 백업 타이머는 가동 중)
   - ⚠ `config/multi_site.json`이 서버에서 갱신됨(테넌트 정보 포함) — **public repo에 push 금지**, 서버 로컬 변경으로 유지
 
+## 6-2. 실행 로그 (계속)
+
+- **2026-07-05 TLS 발견**: Cloudflare Universal SSL은 1단계 서브도메인만 커버 → `noho.hrms.safeclaw.kr`(2단계)는 핸드셰이크 실패. **테넌트 도메인 스킴을 `{tenant}.safeclaw.kr` 1단계로 변경**. 서버측 완료: 터널 ingress `noho.safeclaw.kr` 추가 + `bench setup add-domain noho.safeclaw.kr` → host-header 200. 잔여: 사용자 대시보드 CNAME `noho` → 터널(Proxy ON). 향후 `create_tenant.sh`의 BASE_DOMAIN도 `safeclaw.kr`로 조정 필요(다음 테넌트 전).
+- **2026-07-05 P1a 완료** (`057e64eba`): 홈 퀵링크 Korea 10영역 노출(급여마감·감사로그·근태·모바일출퇴근·연차·결재·임금명세서·퇴직금·컴플라이언스·**AI HR 담당자**) + 영어 폴백 문구 전량 한글화. frontend Korea 테스트 리눅스 8/8 PASS(Windows 1건 실패는 환경성 확정). 서버 bench build + 재기동 + 빌드 산출물에 한글 문자열 확인 완료.
+- P1 잔여(P1b): 급여마감 쓰기 경로(runtime apply) UI 연결 — preview-only는 의도된 계약(사람 승인 우선)이므로 승인 플로우와 함께 설계 필요. fixture 폴백은 정상 설계로 판정(runtime 연결 시 자동 전환).
+
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)
 - pytest 패키지 수집 금지 — 파일 직접 실행(또는 단일 파일 pytest만 안전)

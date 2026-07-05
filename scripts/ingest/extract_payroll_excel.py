@@ -57,15 +57,21 @@ def extract(path: str, period: str, sheet_type: str = "monthly", sheet: str | No
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb[sheet or profile["sheet"]]
 
+    SUMMARY_NAMES = {"합계", "총계", "소계", "계"}
+
     def num(r: int, c: int) -> int:
         v = ws.cell(r, c).value
-        return int(round(float(v))) if isinstance(v, (int, float)) else 0
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            return 0
+        return int(round(float(v)))
 
     employees = []
     for r in range(2, ws.max_row + 1):
         name = ws.cell(r, cols["name"]).value
         if not name:
             continue
+        if str(name).strip() in SUMMARY_NAMES:
+            continue  # 합계행은 자기일관이라 무결성 검사를 통과하므로 반드시 이름으로 스킵
         earnings = {label: num(r, c) for c, label in earning_cols.items() if num(r, c)}
         deductions = {label: num(r, c) for c, label in deduction_cols.items() if num(r, c)}
         employees.append(
@@ -84,6 +90,9 @@ def extract(path: str, period: str, sheet_type: str = "monthly", sheet: str | No
 
     errors = []
     for e in employees:
+        if not e["earnings"] and e["expected_gross"] == 0 and e["expected_net"] == 0:
+            errors.append(f"{e['name']}: 숫자 셀 없음 — 텍스트 서식 행 의심 (0원 시드 방지)")
+            continue
         if sum(e["earnings"].values()) != e["expected_gross"]:
             errors.append(f"{e['name']}: earnings 합 != 세전")
         if e["expected_gross"] - sum(e["deductions"].values()) != e["expected_net"]:

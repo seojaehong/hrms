@@ -38,7 +38,7 @@ for e in DATA:
     if not emp_id:
         emp = frappe.get_doc({
             "doctype": "Employee", "first_name": emp_name, "company": COMPANY,
-            "date_of_joining": min(e.get("join") or START, START),
+            "date_of_joining": e.get("join") or START,  # 실입사일 그대로 (신고 데이터 소스 — 클램프 금지). 당월 중도입사자의 명세서 일할은 대조 리포트에서 확인
             "date_of_birth": "1990-01-01", "gender": "Male", "status": "Active",
             "personal_email": e.get("email") or None,
         })

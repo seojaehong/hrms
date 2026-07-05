@@ -48,7 +48,7 @@ def main() -> None:
         try:
             updates = tg("getUpdates", offset=offset, timeout=30)
         except Exception as error:  # 네트워크 일시 오류 — 재시도
-            print(f"getUpdates error: {error}", flush=True)
+            print(f"getUpdates error: {type(error).__name__}", flush=True)  # 토큰이 URL에 있어 error 전문 로깅 금지
             time.sleep(5)
             continue
         for update in updates.get("result", []):
@@ -65,7 +65,7 @@ def main() -> None:
             try:
                 tg("sendMessage", chat_id=chat_id, text=reply[:4000])
             except Exception as error:
-                print(f"sendMessage error: {error}", flush=True)
+                print(f"sendMessage error: {type(error).__name__}", flush=True)
 
 
 if __name__ == "__main__":

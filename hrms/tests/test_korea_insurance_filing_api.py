@@ -29,6 +29,8 @@ TEMPLATE_DIR = pathlib.Path(
 	"C:/Users/iceam/OneDrive/_10_고객/_active/급여자동화/templates"
 )
 ACQUISITION_TEMPLATE = TEMPLATE_DIR / "근로자고용취득신고_전자신고용 (3).xlsx"
+LOSS_TEMPLATE = TEMPLATE_DIR / "근로자자격상실신고서 (3).xlsx"
+DAILY_TEMPLATE = TEMPLATE_DIR / "근로내용확인신고_전자신고용.xlsx"
 
 RRN_FIELD = "custom_resident_registration_number"
 
@@ -36,10 +38,12 @@ RRN_FIELD = "custom_resident_registration_number"
 class FakeFrappe:
 	"""get_all 만 제공하는 최소 스텁 (frappe.whitelist no-op 포함)."""
 
-	def __init__(self, employees, has_rrn_field=True):
+	def __init__(self, employees, has_rrn_field=True, ssa_rows=None, attendance=None):
 		self.employees = [copy.deepcopy(e) for e in employees]
 		self.get_all_calls = []
 		self._has_rrn_field = has_rrn_field
+		self.ssa_rows = ssa_rows or []
+		self.attendance = attendance or []
 
 	def whitelist(self):
 		def decorator(fn):
@@ -56,10 +60,14 @@ class FakeFrappe:
 
 		return _Meta()
 
-	def get_all(self, doctype, *, filters=None, fields=None):
+	def get_all(self, doctype, *, filters=None, fields=None, order_by=None):
 		self.get_all_calls.append({"doctype": doctype, "filters": copy.deepcopy(filters), "fields": list(fields or [])})
 		if doctype == "Employee":
 			return [{f: copy.deepcopy(row.get(f)) for f in fields or []} for row in self.employees]
+		if doctype == "Salary Structure Assignment":
+			return copy.deepcopy(self.ssa_rows)
+		if doctype == "Attendance":
+			return copy.deepcopy(self.attendance)
 		return []
 
 
@@ -138,7 +146,13 @@ class TestApprovedAcquisition(unittest.TestCase):
 				"employment_type": "정규직",
 			},
 		]
-		fake = FakeFrappe(employees)
+		fake = FakeFrappe(
+			employees,
+			ssa_rows=[
+				{"employee": "HR-EMP-001", "base": 3200000, "from_date": "2026-07-01"},
+				{"employee": "HR-EMP-002", "base": 2800000, "from_date": "2026-07-01"},
+			],
+		)
 		mod = load_module(fake_frappe=fake)
 		with tempfile.TemporaryDirectory() as tmp:
 			result = mod.generate_insurance_filing(
@@ -155,8 +169,12 @@ class TestApprovedAcquisition(unittest.TestCase):
 			self.assertEqual(result["rrn_missing"], ["박입사"])
 			self.assertTrue(pathlib.Path(result["file_path"]).exists())
 
+			# 보수월액이 SSA base에서 채워졌는지 (리뷰 #1 회귀: 0원 신고 방지)
+			self.assertEqual(result["wage_missing"], [])
+
 			wb = openpyxl.load_workbook(result["file_path"])
 			ws = wb["서식"]
+			self.assertIn(int(ws.cell(3, 7).value or 0), (3200000, 2800000))  # G3 보수
 			# detect_acquisitions 정렬: 취득일 오름차순 → 박입사(07-01), 김취득(07-15)
 			self.assertEqual(ws["B3"].value, "박입사")
 			self.assertEqual(ws["B4"].value, "김취득")
@@ -194,6 +212,53 @@ class TestSiteWithoutRrnField(unittest.TestCase):
 			# 스텁 get_all에 rrn 필드가 요청되지 않았어야 함 (실서버 1054 오류 회귀 방지)
 			emp_calls = [c for c in fake.get_all_calls if c["doctype"] == "Employee"]
 			self.assertTrue(all(RRN_FIELD not in c["fields"] for c in emp_calls))
+
+
+
+
+class TestLossApiPath(unittest.TestCase):
+	"""리뷰 #2 회귀: reason_for_leaving이 상실사유코드로 반영되는지 (API 경로)."""
+
+	def test_loss_reason_from_reason_for_leaving(self):
+		employees = [
+			{"name": "E3", "employee_name": "이만료", "date_of_joining": "2024-01-02",
+			 "relieving_date": "2026-07-20", "employment_type": "계약직",
+			 "reason_for_leaving": "계약만료"},
+		]
+		fake = FakeFrappe(employees, has_rrn_field=False)
+		module = load_module(fake)
+		with tempfile.TemporaryDirectory() as tmp:
+			result = module.generate_insurance_filing(
+				"loss", 2026, 7, str(LOSS_TEMPLATE), human_approved=True, out_dir=tmp,
+			)
+			self.assertEqual(result["status"], "created")
+			wb = openpyxl.load_workbook(result["file_path"])
+			ws = wb["서식"]
+			self.assertEqual(str(ws.cell(2, 16).value), "32")  # P2 상실사유코드 = 계약만료(32)
+			self.assertEqual(str(ws.cell(2, 6).value), "20260721")  # F2 상실일 = 마지막근무일+1
+
+
+class TestAttendanceDocstatusFilter(unittest.TestCase):
+	"""리뷰 #6 회귀: 일용직 근태 조회가 제출(docstatus=1)만 요구하는지."""
+
+	def test_daily_query_filters_submitted_only(self):
+		employees = [
+			{"name": "D1", "employee_name": "일용갑", "date_of_joining": "2026-07-01",
+			 "relieving_date": None, "employment_type": "일용직"},
+		]
+		fake = FakeFrappe(
+			employees, has_rrn_field=False,
+			ssa_rows=[{"employee": "D1", "base": 120000, "from_date": "2026-07-01"}],
+			attendance=[{"employee": "D1", "attendance_date": "2026-07-03", "status": "Present"}],
+		)
+		module = load_module(fake)
+		with tempfile.TemporaryDirectory() as tmp:
+			result = module.generate_insurance_filing(
+				"daily", 2026, 7, str(DAILY_TEMPLATE), human_approved=True, out_dir=tmp,
+			)
+			self.assertEqual(result["status"], "created")
+			att_calls = [c for c in fake.get_all_calls if c["doctype"] == "Attendance"]
+			self.assertTrue(att_calls and all(c["filters"].get("docstatus") == 1 for c in att_calls))
 
 
 if __name__ == "__main__":

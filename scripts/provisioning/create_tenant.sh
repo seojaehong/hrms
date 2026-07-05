@@ -210,33 +210,37 @@ _run docker exec -w "${BENCH_WORKDIR}" "${FRAPPE_CONTAINER}" bench --site "${SIT
 _step "8/8  레지스트리 업데이트"
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 if [[ "${DRY_RUN}" == false ]]; then
-    python3 - <<PYEOF
-import json, pathlib, sys
+    # 보안(리뷰 C1): 셸 변수를 Python 소스에 보간하지 않는다 — 전부 env로 전달하고
+    # os.environ으로 읽는다. (admin_email 등 외부 입력이 코드로 실행되던 RCE 차단)
+    REG_PATH="${MULTI_SITE_JSON}" REG_TENANT_ID="${TENANT_ID}" REG_PLAN="${PLAN}" \
+    REG_SITE="${SITE_NAME}" REG_EMAIL="${ADMIN_EMAIL}" REG_NOW="${NOW}" \
+    python3 - <<'PYEOF'
+import json, os, pathlib
 
-registry_path = pathlib.Path("${MULTI_SITE_JSON}")
+registry_path = pathlib.Path(os.environ["REG_PATH"])
+tenant_id = os.environ["REG_TENANT_ID"]
+now = os.environ["REG_NOW"]
 with registry_path.open("r", encoding="utf-8") as f:
     registry = json.load(f)
 
 tenants = registry.setdefault("tenants", [])
-
-# 기존 항목 중복 확인
-existing = next((t for t in tenants if t["id"] == "${TENANT_ID}"), None)
+existing = next((t for t in tenants if t.get("id") == tenant_id), None)
 if existing:
     existing["status"] = "active"
-    existing["updated_at"] = "${NOW}"
-    print(f"  [info] 기존 테넌트 항목 업데이트: ${TENANT_ID}")
+    existing["updated_at"] = now
+    print(f"  [info] 기존 테넌트 항목 업데이트: {tenant_id}")
 else:
     tenants.append({
-        "id":          "${TENANT_ID}",
-        "name":        "${TENANT_ID}",
-        "plan":        "${PLAN}",
+        "id":          tenant_id,
+        "name":        tenant_id,
+        "plan":        os.environ["REG_PLAN"],
         "status":      "active",
-        "site":        "${SITE_NAME}",
-        "admin_email": "${ADMIN_EMAIL}",
-        "created_at":  "${NOW}",
-        "updated_at":  "${NOW}",
+        "site":        os.environ["REG_SITE"],
+        "admin_email": os.environ["REG_EMAIL"],
+        "created_at":  now,
+        "updated_at":  now,
     })
-    print(f"  [info] 새 테넌트 등록: ${TENANT_ID}")
+    print(f"  [info] 새 테넌트 등록: {tenant_id}")
 
 with registry_path.open("w", encoding="utf-8") as f:
     json.dump(registry, f, ensure_ascii=False, indent=2)

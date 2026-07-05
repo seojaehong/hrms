@@ -160,7 +160,9 @@ def check_and_count_quota(token_hash: str, daily_limit: int) -> bool:
         return False
     data["counts"][token_hash] = count + 1
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data), encoding="utf-8")
+    tmp = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(data), encoding="utf-8")
+    os.replace(tmp, path)  # 원자적 교체 (부분쓰기·경합 완화 — 완전 방지는 아니나 찢긴 JSON 방지)
     return True
 
 
@@ -186,7 +188,7 @@ def record_usage(entry: dict, path: str) -> None:
 
 
 TENANT_ID_RE = __import__("re").compile(r"^[a-z][a-z0-9-]{1,30}$")
-EMAIL_RE = __import__("re").compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_RE = __import__("re").compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
 def validate_signup(payload: dict) -> dict:
@@ -205,11 +207,19 @@ def validate_signup(payload: dict) -> dict:
     return {"tenant_id": tenant_id, "admin_email": admin_email, "company_name": company_name, "status": "pending"}
 
 
+MAX_BODY_BYTES = 256 * 1024  # 비인증 엔드포인트 본문 상한 (DoS 완화)
+
+
 async def _read_body(receive) -> bytes:
     chunks = []
+    total = 0
     while True:
         message = await receive()
-        chunks.append(message.get("body", b""))
+        chunk = message.get("body", b"")
+        total += len(chunk)
+        if total > MAX_BODY_BYTES:
+            raise ValueError("request body too large")
+        chunks.append(chunk)
         if not message.get("more_body"):
             return b"".join(chunks)
 
@@ -230,15 +240,23 @@ async def handle_signup(scope, receive, send) -> None:
         await _json_response(send, 503, {"error": "signup_disabled"})
         return
     try:
-        payload = json.loads((await _read_body(receive)) or b"{}")
+        body = await _read_body(receive)
+        payload = json.loads(body or b"{}")
         entry = validate_signup(payload)
-    except (ValueError, json.JSONDecodeError) as error:
+    except ValueError as error:
         await _json_response(send, 400, {"error": str(error)})
+        return
+    except json.JSONDecodeError:
+        await _json_response(send, 400, {"error": "invalid_json"})
         return
     # 중복 방지: 큐 + 레지스트리에 같은 tenant_id가 있으면 거절
     queue_path = pathlib.Path(SIGNUP_QUEUE)
     existing = ""
     if queue_path.exists():
+        if queue_path.stat().st_size > 256 * 1024:  # 큐 폭주 방어 (H2)
+            await _json_response(send, 429, {"error": "signup_queue_full",
+                                             "message": "잠시 후 다시 시도해 주세요."})
+            return
         existing = queue_path.read_text(encoding="utf-8")
     if f'"tenant_id": "{entry["tenant_id"]}"' in existing:
         await _json_response(send, 409, {"error": "이미 접수된 tenant_id 입니다"})

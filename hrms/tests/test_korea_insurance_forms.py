@@ -230,5 +230,20 @@ class TestDailyWorkReport(unittest.TestCase):
 			self.assertFalse(pathlib.Path(out).exists())
 
 
+
+
+class TestWorkDaysRangeGuard(unittest.TestCase):
+	"""리뷰 #7 회귀: 명시 work_days가 월 범위를 벗어나면 거절 (열 오염 방지)."""
+
+	def test_out_of_range_rejected(self):
+		import tempfile, pathlib as _pl
+		workers = [{"employee_name": "범위밖", "work_days": [35], "daily_wage": 100000}]
+		with tempfile.TemporaryDirectory() as tmp:
+			with self.assertRaises(ValueError):
+				mod.generate_daily_work_report(
+					str(DAILY_TEMPLATE), workers, 2026, 7, str(_pl.Path(tmp) / "x.xlsx"), None,
+				)
+
+
 if __name__ == "__main__":
 	unittest.main()

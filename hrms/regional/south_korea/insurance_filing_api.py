@@ -112,8 +112,13 @@ def generate_insurance_filing(
 			"requires_human_confirmation": True,
 		}
 
+	# --- 권한: 사이트 실행 시 HR 관리자급만 (bench execute는 Administrator) ---
+	if _FRAPPE_AVAILABLE and _frappe is not None and hasattr(_frappe, "only_for"):
+		_frappe.only_for(("System Manager", "HR Manager", "HR User"))
+
 	# --- 대상자 추출 (Employee 브로드 조회 후 코어가 귀속월 필터) ---
 	employees = _get_employees(company, rrn_field)
+	_attach_wages(employees)
 	rrn_by_id = {emp.get("name"): emp.get(rrn_field) for emp in employees}
 
 	out_path = _resolve_out_path(out_dir, period, filing_type)
@@ -131,6 +136,7 @@ def generate_insurance_filing(
 	else:  # daily
 		attendance = _get_attendance(company, year, month)
 		workers = _filing.extract_daily_workers(employees, attendance, year, month)
+		candidates = workers
 		rrn_missing = _attach_rrn(workers, rrn_by_id)
 		_forms.generate_daily_work_report(
 			template_path, workers, year, month, out_path, workplace_info
@@ -144,6 +150,12 @@ def generate_insurance_filing(
 		"file_path": out_path,
 		"candidate_count": count,
 		"rrn_missing": rrn_missing,
+		# 보수 0원 대상자는 담당자 확인 필수 (임금 소스: Salary Structure Assignment.base)
+		"wage_missing": [
+			c.get("employee_name", "")
+			for c in candidates
+			if not (c.get("monthly_wage") or c.get("total_wage"))
+		],
 	}
 
 
@@ -154,7 +166,10 @@ def generate_insurance_filing(
 
 def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 	"""사이트 Employee 조회 (귀속월 필터는 코어가 담당)."""
-	fields = ["name", "employee_name", "date_of_joining", "relieving_date", "employment_type"]
+	fields = [
+		"name", "employee_name", "date_of_joining", "relieving_date",
+		"employment_type", "reason_for_leaving",
+	]
 	# 커스텀 주민번호 필드는 사이트에 실존할 때만 조회한다 (없으면 빈칸 + rrn_missing 처리).
 	if rrn_field and rrn_field not in fields:
 		try:
@@ -167,7 +182,43 @@ def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 	if company:
 		filters["company"] = company
 	rows = _frappe.get_all("Employee", filters=filters, fields=fields)  # type: ignore[union-attr]
-	return [dict(r) for r in rows]
+	employees = [dict(r) for r in rows]
+	for emp in employees:
+		# detect_losses의 상실사유 키로 매핑 (없으면 코어가 기본값+코드로 처리, 명단 확인 게이트에서 검증)
+		if emp.get("reason_for_leaving"):
+			emp["loss_reason"] = str(emp["reason_for_leaving"])
+	return employees
+
+
+def _attach_wages(employees: list[dict]) -> None:
+	"""보수월액 소스: 제출된 Salary Structure Assignment 중 최신 base.
+
+	이 값이 없으면 monthly_wage=0으로 남고 결과의 wage_missing에 표시된다 —
+	0원 보수 신고서가 조용히 나가는 것을 막기 위해 호출부가 명단을 노출한다.
+	일용직 daily_wage도 base를 일급으로 사용한다(일용직 SSA는 일급 기준 운영 전제).
+	"""
+	try:
+		rows = _frappe.get_all(  # type: ignore[union-attr]
+			"Salary Structure Assignment",
+			filters={"docstatus": 1},
+			fields=["employee", "base", "from_date"],
+			order_by="from_date desc",
+		)
+	except Exception:
+		rows = []
+	base_by_employee: dict = {}
+	for row in rows:
+		emp_id = row.get("employee")
+		if emp_id and emp_id not in base_by_employee:
+			base_by_employee[emp_id] = int(round(float(row.get("base") or 0)))
+	for emp in employees:
+		base = base_by_employee.get(emp.get("name"), 0)
+		emp.setdefault("monthly_wage", base)
+		emp.setdefault("daily_wage", base if _is_daily(emp) else 0)
+
+
+def _is_daily(emp: dict) -> bool:
+	return str(emp.get("employment_type") or "") in ("일용직", "일용근로자")
 
 
 def _get_attendance(company: str | None, year: int, month: int) -> list[dict]:
@@ -175,7 +226,10 @@ def _get_attendance(company: str | None, year: int, month: int) -> list[dict]:
 	last_day = calendar.monthrange(year, month)[1]
 	start = f"{year:04d}-{month:02d}-01"
 	end = f"{year:04d}-{month:02d}-{last_day:02d}"
-	filters: dict[str, Any] = {"attendance_date": ["between", [start, end]]}
+	filters: dict[str, Any] = {
+		"attendance_date": ["between", [start, end]],
+		"docstatus": 1,  # 취소(2)·임시저장(0) 근태는 근로일로 집계하지 않는다
+	}
 	if company:
 		filters["company"] = company
 	rows = _frappe.get_all(  # type: ignore[union-attr]

@@ -112,7 +112,7 @@ def main() -> None:
         try:
             poll_once()
         except Exception as error:
-            print(f"poll error: {error}", flush=True)
+            print(f"poll error: {type(error).__name__}", flush=True)
         time.sleep(POLL_SECONDS)
 
 

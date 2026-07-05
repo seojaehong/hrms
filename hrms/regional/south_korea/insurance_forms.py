@@ -114,7 +114,10 @@ def _resolve_work_days(worker: dict, days_in_month: int) -> list[int]:
 	"""근무일 목록 확정. work_days가 있으면 그대로, 없으면 count+last로 역산."""
 	work_days = worker.get("work_days")
 	if work_days:
-		return sorted(int(d) for d in work_days)
+		days = sorted(int(d) for d in work_days)
+		if days and (days[0] < 1 or days[-1] > days_in_month):
+			raise ValueError(f"work_days out of range 1..{days_in_month}: {days}")
+		return days
 	count = worker.get("work_day_count")
 	last = worker.get("last_work_day")
 	if count is None or last is None:

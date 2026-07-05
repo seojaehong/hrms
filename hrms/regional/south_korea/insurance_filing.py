@@ -51,7 +51,7 @@ def detect_acquisitions(employees: list[dict], year: int, month: int) -> list[di
                     "employee": emp.get("name", ""),
                     "employee_name": emp.get("employee_name") or emp.get("first_name", ""),
                     "acquisition_date": join.isoformat(),
-                    "monthly_wage": int(emp.get("monthly_wage") or 0),
+                    "monthly_wage": int(round(float(emp.get("monthly_wage") or 0))),
                 }
             )
     return sorted(out, key=lambda r: (r["acquisition_date"], r["employee_name"]))
@@ -138,8 +138,8 @@ def extract_daily_workers(
 		work_days = sorted(days_by_employee.get(emp_id, set()))
 		if not work_days:
 			continue
-		daily_wage = int(emp.get("daily_wage") or 0)
-		total_wage = int(emp.get("total_wage") or daily_wage * len(work_days))
+		daily_wage = int(round(float(emp.get("daily_wage") or 0)))
+		total_wage = int(round(float(emp.get("total_wage") or daily_wage * len(work_days))))
 		out.append(
 			{
 				"employee": emp_id,

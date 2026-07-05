@@ -53,6 +53,7 @@ def _jsonable(value: Any) -> Any:
 
 mcp = FastMCP(
     "korea-hrms",
+    stateless_http=True,  # AI 플레인 확장 불변식: HTTP 모드 무상태 (http_server.py)
     instructions=(
         "Korea HRMS 노무 계산 도구. 연차·퇴직금·법정공제 등 숫자는 반드시 이 도구의 계산 결과와 "
         "산정 근거를 그대로 인용하고, 자체 산수로 대체하지 말 것."

@@ -1,0 +1,18 @@
+# Korea HRMS AI 플레인 v0 — HTTP MCP 게이트웨이 (scale-architecture Plane 2-①)
+# 설치: sudo cp scripts/systemd/korea-hrms-mcp.service /etc/systemd/system/
+#       sudo systemctl daemon-reload && sudo systemctl enable --now korea-hrms-mcp
+[Unit]
+Description=Korea HRMS AI plane MCP gateway
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/workspaces/seojaehong-hrms-100h/mcp_server
+Environment=KCHRMS_MCP_TOKENS_FILE=/home/ubuntu/.korea-hrms-mcp/tokens.json
+Environment=KCHRMS_FRAPPE_URL=http://localhost:8000
+ExecStart=/home/ubuntu/.korea-hrms-mcp/venv/bin/uvicorn http_server:app --host 127.0.0.1 --port 8100 --workers 2
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

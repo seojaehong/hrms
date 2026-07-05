@@ -1,0 +1,136 @@
+# Korea HRMS AI 플레인 v0 — streamable HTTP MCP 게이트웨이 (scale-architecture §1 Plane 2-①).
+#
+# stdio 서버(server.py)의 계산 도구 7종을 재사용하고, 테넌트 데이터 브리지 도구를 추가한다.
+# 확장 불변식:
+#   - 무상태: 토큰 파일 외 상태 없음. 워커를 몇 개 띄워도 동일.
+#   - 테넌트 격리: Bearer 토큰(sha256 저장) → {site, api_key, api_secret} 바인딩.
+#     브리지 도구는 그 사이트의 Frappe REST로만 접근. 크로스 테넌트 구조적 불가.
+#   - 브리지는 읽기 전용 + DocType 화이트리스트 (쓰기·확정 행위는 사람이 Frappe에서).
+#
+# 실행: KCHRMS_MCP_TOKENS_FILE=/path/tokens.json uvicorn http_server:app --host 127.0.0.1 --port 8100
+# 토큰 발급: python3 mcp_server/issue_token.py <site> <label> (tokens.json에 해시 저장)
+
+from __future__ import annotations
+
+import contextvars
+import hashlib
+import json
+import os
+import pathlib
+import sys
+import urllib.parse
+import urllib.request
+from typing import Any
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import server as calc_server  # 계산 도구 7종이 등록된 FastMCP 인스턴스
+
+TOKENS_FILE = os.environ.get("KCHRMS_MCP_TOKENS_FILE", "/etc/korea-hrms-mcp/tokens.json")
+FRAPPE_BASE_URL = os.environ.get("KCHRMS_FRAPPE_URL", "http://localhost:8000")
+
+# 브리지 허용 DocType (읽기 전용). PII 최소화: 필드도 화이트리스트.
+BRIDGE_DOCTYPES: dict[str, list[str]] = {
+    "Employee": ["name", "employee_name", "company", "date_of_joining", "status", "department", "designation"],
+    "Attendance": ["name", "employee", "attendance_date", "status", "working_hours"],
+    "Leave Application": ["name", "employee", "leave_type", "from_date", "to_date", "status"],
+    "Holiday List": ["name", "from_date", "to_date", "total_holidays"],
+    "Company": ["name", "company_name", "default_currency"],
+}
+
+_auth_context: contextvars.ContextVar[dict | None] = contextvars.ContextVar("kchrms_auth", default=None)
+
+
+def _hash(token: str) -> str:
+    return hashlib.sha256(token.strip().encode("utf-8")).hexdigest()
+
+
+def load_tokens() -> dict[str, Any]:
+    try:
+        return json.loads(pathlib.Path(TOKENS_FILE).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+
+
+def resolve_token(bearer: str | None) -> dict | None:
+    """Bearer → {site, api_key, api_secret, label} 또는 None."""
+    if not bearer:
+        return None
+    entry = load_tokens().get(_hash(bearer))
+    if not entry or entry.get("disabled"):
+        return None
+    return entry
+
+
+def frappe_get_list(site_ctx: dict, doctype: str, filters: dict | None, limit: int) -> list[dict]:
+    if doctype not in BRIDGE_DOCTYPES:
+        raise ValueError(f"doctype not allowed: {doctype} (allowed: {', '.join(BRIDGE_DOCTYPES)})")
+    limit = max(1, min(int(limit), 100))
+    fields = BRIDGE_DOCTYPES[doctype]
+    params = {
+        "fields": json.dumps(fields),
+        "limit_page_length": str(limit),
+    }
+    if filters:
+        params["filters"] = json.dumps(filters)
+    url = f"{FRAPPE_BASE_URL}/api/resource/{urllib.parse.quote(doctype)}?{urllib.parse.urlencode(params)}"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"token {site_ctx['api_key']}:{site_ctx['api_secret']}",
+            "Host": site_ctx["site"],
+            "X-Frappe-Site-Name": site_ctx["site"],
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return json.load(response).get("data", [])
+
+
+mcp = calc_server.mcp  # 계산 도구 7종 재사용
+
+
+@mcp.tool()
+def get_tenant_records(doctype: str, filters: dict | None = None, limit: int = 20) -> dict:
+    """인증된 테넌트(사업장) 사이트의 실데이터 조회 (읽기 전용).
+    doctype: Employee | Attendance | Leave Application | Holiday List | Company.
+    반환 필드는 서버 화이트리스트로 제한된다. 급여 금액 등 민감 수치는 이 도구로 노출하지 않는다."""
+    ctx = _auth_context.get()
+    if not ctx:
+        raise ValueError("no tenant binding for this token")
+    rows = frappe_get_list(ctx, doctype, filters, limit)
+    return {"site": ctx["site"], "doctype": doctype, "count": len(rows), "rows": rows}
+
+
+@mcp.tool()
+def whoami() -> dict:
+    """현재 토큰의 테넌트 바인딩 확인 (사이트·라벨)."""
+    ctx = _auth_context.get()
+    if not ctx:
+        return {"authenticated": False}
+    return {"authenticated": True, "site": ctx["site"], "label": ctx.get("label", "")}
+
+
+# ── ASGI: Bearer 인증 미들웨어로 FastMCP streamable HTTP 앱을 감싼다 ──────────
+_inner_app = mcp.streamable_http_app()
+
+
+async def app(scope, receive, send):
+    if scope["type"] != "http":
+        await _inner_app(scope, receive, send)
+        return
+    headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+    auth = headers.get("authorization", "")
+    bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else None
+    entry = resolve_token(bearer)
+    if entry is None:
+        body = json.dumps({"error": "invalid_token"}).encode()
+        await send({"type": "http.response.start", "status": 401,
+                    "headers": [(b"content-type", b"application/json"),
+                                (b"www-authenticate", b"Bearer")]})
+        await send({"type": "http.response.body", "body": body})
+        return
+    token_ctx = _auth_context.set(entry)
+    try:
+        await _inner_app(scope, receive, send)
+    finally:
+        _auth_context.reset(token_ctx)

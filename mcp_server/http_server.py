@@ -240,6 +240,112 @@ async def handle_signup(scope, receive, send) -> None:
     })
 
 
+# ── 슬랙·디스코드 채널 엔드포인트 (env-gated — 키 없으면 503) ─────────────────
+SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET", "")
+SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
+SLACK_BINDINGS = os.environ.get("KCHRMS_SLACK_BINDINGS", "")
+DISCORD_PUBLIC_KEY = os.environ.get("DISCORD_PUBLIC_KEY", "")
+DISCORD_BINDINGS = os.environ.get("KCHRMS_DISCORD_BINDINGS", "")
+
+
+def _load_channel_bindings(path: str) -> dict:
+    try:
+        return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def verify_slack_signature(body: bytes, timestamp: str, signature: str, secret: str) -> bool:
+    """Slack v0 서명 검증(순수). 5분 이상 지난 타임스탬프 거절."""
+    import hmac
+    import time as _time
+
+    try:
+        if abs(_time.time() - float(timestamp)) > 300:
+            return False
+    except ValueError:
+        return False
+    base = f"v0:{timestamp}:".encode() + body
+    expected = "v0=" + hmac.new(secret.encode(), base, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature or "")
+
+
+def _channel_reply(text: str, binding: dict) -> str:
+    import channel_core  # 지연 import — 계산 코어 로드 비용
+
+    return channel_core.handle_message(text, binding)
+
+
+async def handle_slack(scope, receive, send) -> None:
+    """Slack Events API — url_verification + message 이벤트. 바인딩: 채널ID→테넌트."""
+    if not (SLACK_SIGNING_SECRET and SLACK_BOT_TOKEN and SLACK_BINDINGS):
+        await _json_response(send, 503, {"error": "slack_disabled"})
+        return
+    headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+    body = await _read_body(receive)
+    if not verify_slack_signature(
+        body, headers.get("x-slack-request-timestamp", ""), headers.get("x-slack-signature", ""), SLACK_SIGNING_SECRET
+    ):
+        await _json_response(send, 401, {"error": "bad_signature"})
+        return
+    payload = json.loads(body or b"{}")
+    if payload.get("type") == "url_verification":
+        await _json_response(send, 200, {"challenge": payload.get("challenge", "")})
+        return
+    event = payload.get("event") or {}
+    await _json_response(send, 200, {"ok": True})  # 3초 규칙 — 먼저 ACK
+    if event.get("type") != "message" or event.get("bot_id") or event.get("subtype"):
+        return
+    binding = _load_channel_bindings(SLACK_BINDINGS).get(str(event.get("channel", "")))
+    if not binding:
+        return  # fail-closed
+    reply = _channel_reply(event.get("text", ""), binding)
+    request = urllib.request.Request(
+        "https://slack.com/api/chat.postMessage",
+        data=json.dumps({"channel": event["channel"], "text": reply[:3800]}).encode(),
+        headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}", "Content-Type": "application/json"},
+    )
+    try:
+        urllib.request.urlopen(request, timeout=15)
+    except OSError:
+        pass
+
+
+async def handle_discord(scope, receive, send) -> None:
+    """Discord Interactions — PING/PONG + /hr 슬래시 커맨드. 바인딩: 채널ID→테넌트."""
+    if not (DISCORD_PUBLIC_KEY and DISCORD_BINDINGS):
+        await _json_response(send, 503, {"error": "discord_disabled"})
+        return
+    headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+    body = await _read_body(receive)
+    try:
+        from nacl.exceptions import BadSignatureError
+        from nacl.signing import VerifyKey
+
+        VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY)).verify(
+            (headers.get("x-signature-timestamp", "")).encode() + body,
+            bytes.fromhex(headers.get("x-signature-ed25519", "")),
+        )
+    except (BadSignatureError, ValueError, ImportError):
+        await _json_response(send, 401, {"error": "bad_signature"})
+        return
+    payload = json.loads(body or b"{}")
+    if payload.get("type") == 1:  # PING
+        await _json_response(send, 200, {"type": 1})
+        return
+    if payload.get("type") == 2:  # 슬래시 커맨드
+        binding = _load_channel_bindings(DISCORD_BINDINGS).get(str(payload.get("channel_id", "")))
+        if not binding:
+            await _json_response(send, 200, {"type": 4, "data": {"content": "이 채널은 아직 연결되지 않았습니다.", "flags": 64}})
+            return
+        options = (payload.get("data") or {}).get("options") or []
+        text = str(options[0].get("value", "")) if options else "/help"
+        reply = _channel_reply(text, binding)
+        await _json_response(send, 200, {"type": 4, "data": {"content": reply[:1900]}})
+        return
+    await _json_response(send, 200, {"type": 1})
+
+
 # ── ASGI: Bearer 인증 미들웨어로 FastMCP streamable HTTP 앱을 감싼다 ──────────
 _inner_app = mcp.streamable_http_app()
 
@@ -248,8 +354,15 @@ async def app(scope, receive, send):
     if scope["type"] != "http":
         await _inner_app(scope, receive, send)
         return
-    if scope.get("path", "") == "/signup":
+    path = scope.get("path", "")
+    if path == "/signup":
         await handle_signup(scope, receive, send)
+        return
+    if path == "/slack/events":
+        await handle_slack(scope, receive, send)
+        return
+    if path == "/discord/interactions":
+        await handle_discord(scope, receive, send)
         return
     headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
     auth = headers.get("authorization", "")

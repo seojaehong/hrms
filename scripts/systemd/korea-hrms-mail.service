@@ -1,0 +1,18 @@
+# Korea HRMS AI HR 담당자 — 메일 커넥터 (Plane 2-③). 자격증명 도착 시 enable.
+# 설치: sudo cp scripts/systemd/korea-hrms-mail.service /etc/systemd/system/
+#       (mail.env 작성 후) sudo systemctl enable --now korea-hrms-mail
+[Unit]
+Description=Korea HRMS AI mail connector
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/workspaces/seojaehong-hrms-100h/mcp_server
+EnvironmentFile=/home/ubuntu/.korea-hrms-mcp/mail.env
+Environment=KCHRMS_MAIL_BINDINGS=/home/ubuntu/.korea-hrms-mcp/mail-bindings.json
+ExecStart=/home/ubuntu/.korea-hrms-mcp/venv/bin/python3 mail_connector.py
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -44,6 +44,12 @@
 - public repo에 고객 데이터·시크릿 절대 금지, 테넌트 격리 불변식 유지
 - 신규 기능은 framework-free 코어 + 얇은 래퍼 + 직접실행 테스트 컨벤션
 
+## 보안 잔여 조치 (2026-07-05 리뷰 후속, Phase 1에서 처리)
+- 셀프서브 가입(`/signup`)은 **비활성 유지** — 재활성화 전 조건: create_tenant.sh 전 변수 env화 검증(C1 완료), admin 임시비번/DB비번 로그 노출(H1) 제거, 큐 소비-append 경합(L2) 해결, /signup rate limit
+- H1: 프로비저닝 로그의 admin 임시비번·MariaDB root 비번 평문 → 로그 미출력 또는 즉시 파기(현재 수동 파기), bench new-site 비번은 argv→env(MYSQL_PWD)로
+- M3: get_tenant_records의 filters를 화이트리스트 필드로 제한(현재 반환 필드만 화이트리스트, 필터는 통과 — 같은 테넌트 내 boolean oracle)
+- M4: 채널 핸들러의 동기 I/O를 스레드 오프로드(이벤트 루프 블로킹 완화)
+
 ## 리스크 레지스터
 | 리스크 | 대응 |
 |---|---|

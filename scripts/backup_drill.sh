@@ -97,15 +97,17 @@ if [[ ! -d "$TARGET_BACKUP" ]]; then
     exit 1
 fi
 
-SQL_FILE=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*.sql.gz" | sort | head -1)
+# 전체 사이트 백업 폴더에서 SITE_NAME 것만 고른다 (파일명의 사이트 슬러그는 점→언더스코어)
+SITE_SLUG="${SITE_NAME//./_}"
+SQL_FILE=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*-${SITE_SLUG}-database.sql.gz" | sort | head -1)
 if [[ -z "$SQL_FILE" ]]; then
     echo "[ERROR] SQL 파일을 찾을 수 없습니다: $TARGET_BACKUP" >&2
     exit 1
 fi
 
 # "*-private-files.tar" 을 먼저 제외하여 public files tar 과 혼동하지 않도록 함
-FILES_BACKUP=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*-files.tar" ! -name "*-private-files.tar" | sort | head -1 || true)
-PRIVATE_BACKUP=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*-private-files.tar" | sort | head -1 || true)
+FILES_BACKUP=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*-${SITE_SLUG}-files.t*" ! -name "*-private-files.t*" | sort | head -1 || true)
+PRIVATE_BACKUP=$(find "$TARGET_BACKUP" -maxdepth 1 -name "*-${SITE_SLUG}-private-files.t*" | sort | head -1 || true)
 
 # ── 드릴 시작 ──────────────────────────────────────────
 DRILL_START=$(date +%s)

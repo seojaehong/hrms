@@ -43,7 +43,7 @@ export LC_ALL
 # ── 기본값 ─────────────────────────────────────────────
 BENCH_CONTAINER="${BENCH_CONTAINER:-docker-frappe-1}"
 BENCH_PATH="${BENCH_PATH:-/home/frappe/frappe-bench}"
-SITE_NAME="${SITE_NAME:-hrms.localhost}"
+SITE_NAME="${SITE_NAME:-all}"  # all = 모든 테넌트 사이트 백업 (멀티테넌트 기본)
 BACKUP_DIR="${BACKUP_DIR:-/home/ubuntu/backups/hrms}"
 LOCAL_RETAIN_DAYS=7
 UPLOAD=false

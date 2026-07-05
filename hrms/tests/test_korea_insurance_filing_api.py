@@ -36,15 +36,25 @@ RRN_FIELD = "custom_resident_registration_number"
 class FakeFrappe:
 	"""get_all 만 제공하는 최소 스텁 (frappe.whitelist no-op 포함)."""
 
-	def __init__(self, employees):
+	def __init__(self, employees, has_rrn_field=True):
 		self.employees = [copy.deepcopy(e) for e in employees]
 		self.get_all_calls = []
+		self._has_rrn_field = has_rrn_field
 
 	def whitelist(self):
 		def decorator(fn):
 			return fn
 
 		return decorator
+
+	def get_meta(self, doctype):
+		has = self._has_rrn_field
+
+		class _Meta:
+			def get_field(self, fieldname):
+				return object() if has else None
+
+		return _Meta()
 
 	def get_all(self, doctype, *, filters=None, fields=None):
 		self.get_all_calls.append({"doctype": doctype, "filters": copy.deepcopy(filters), "fields": list(fields or [])})
@@ -158,6 +168,32 @@ class TestApprovedAcquisition(unittest.TestCase):
 			wb.close()
 		# Employee 조회가 실제로 일어났는지 확인
 		self.assertEqual(fake.get_all_calls[0]["doctype"], "Employee")
+
+
+
+
+class TestSiteWithoutRrnField(unittest.TestCase):
+	"""실서버 회귀: Employee에 주민번호 커스텀 필드가 없어도 죽지 않고 빈칸+rrn_missing 처리."""
+
+	def test_created_with_all_rrn_missing(self):
+		employees = [
+			{"name": "E1", "employee_name": "김취득", "date_of_joining": "2026-07-15", "relieving_date": None, "employment_type": "정규직"},
+		]
+		fake = FakeFrappe(employees, has_rrn_field=False)
+		module = load_module(fake)
+		with tempfile.TemporaryDirectory() as tmp:
+			result = module.generate_insurance_filing(
+				"acquisition", 2026, 7,
+				str(ACQUISITION_TEMPLATE),
+				human_approved=True,
+				out_dir=tmp,
+				rrn_field=RRN_FIELD,
+			)
+			self.assertEqual(result["status"], "created")
+			self.assertEqual(result["rrn_missing"], ["김취득"])
+			# 스텁 get_all에 rrn 필드가 요청되지 않았어야 함 (실서버 1054 오류 회귀 방지)
+			emp_calls = [c for c in fake.get_all_calls if c["doctype"] == "Employee"]
+			self.assertTrue(all(RRN_FIELD not in c["fields"] for c in emp_calls))
 
 
 if __name__ == "__main__":

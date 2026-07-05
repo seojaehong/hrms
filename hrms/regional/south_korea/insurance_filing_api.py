@@ -155,8 +155,14 @@ def generate_insurance_filing(
 def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 	"""사이트 Employee 조회 (귀속월 필터는 코어가 담당)."""
 	fields = ["name", "employee_name", "date_of_joining", "relieving_date", "employment_type"]
+	# 커스텀 주민번호 필드는 사이트에 실존할 때만 조회한다 (없으면 빈칸 + rrn_missing 처리).
 	if rrn_field and rrn_field not in fields:
-		fields.append(rrn_field)
+		try:
+			has_field = bool(_frappe.get_meta("Employee").get_field(rrn_field))  # type: ignore[union-attr]
+		except Exception:
+			has_field = False
+		if has_field:
+			fields.append(rrn_field)
 	filters: dict[str, Any] = {}
 	if company:
 		filters["company"] = company

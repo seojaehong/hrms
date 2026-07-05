@@ -2,21 +2,25 @@ version: "3.8" # Updated version
 services:
   mariadb:
     image: mariadb:10.8
+    restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      MYSQL_ROOT_PASSWORD: 123
+      # 프로덕션은 docker/.env 의 MARIADB_ROOT_PASSWORD 로 주입 (기존 볼륨의 비번 변경은 mysqladmin 별도 절차)
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-123}
     volumes:
       - mariadb-data:/var/lib/mysql
 
   redis:
     image: redis:alpine
+    restart: unless-stopped
 
   frappe:
     image: frappe/bench:latest
+    restart: unless-stopped
     command: bash /workspace/init.sh
     environment:
       - SHELL=/bin/bash

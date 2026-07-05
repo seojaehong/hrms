@@ -162,7 +162,7 @@ if [[ "$DRILL_PASS" == "true" ]]; then
 
     # shellcheck disable=SC2086
     # bench restore: DB + files 복원 (BENCH_CMD = bench 바이너리 경로)
-    $BENCH_CMD --site "$TEST_SITE_NAME" restore "$SQL_FILE_IN" \
+    $BENCH_CMD --site "$TEST_SITE_NAME" restore "$SQL_FILE_IN" --mariadb-root-password "${MARIADB_ROOT_PASSWORD:-}" \
         --admin-password admin \
         $RESTORE_EXTRA_OPTS \
         2>&1 | tee -a "$DRILL_LOG" || {

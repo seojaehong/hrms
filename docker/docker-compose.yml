@@ -26,11 +26,26 @@ services:
       - SHELL=/bin/bash
     working_dir: /home/frappe
     volumes:
+      - bench-home:/home/frappe
       - .:/workspace
       - ..:/workspace/hrms-source
+    expose:
+      - "8001"
+      - "9000"
+
+  # S1 프로덕션 프런트: 에셋/업로드 정적 서빙 + gunicorn/socketio 프록시.
+  # cloudflared(호스트) → localhost:8000 → nginx → frappe(gunicorn 8001).
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - frappe
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - bench-home:/bench:ro
     ports:
-      - 8000:8000
-      - 9000:9000
+      - 8000:80
 
 volumes:
   mariadb-data:
+  bench-home:

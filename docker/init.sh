@@ -22,10 +22,23 @@ sync_hrms_app_from_mounted_source() {
     git -C apps/hrms clean -fd
 }
 
+write_production_procfile() {
+    # S1 프로덕션 서빙: dev 서버(bench serve) 대신 gunicorn + 워커 + 스케줄러.
+    # 정적 에셋/업로드는 nginx 사이드카가 서빙 (docker/nginx.conf).
+    cat > ./Procfile <<'PROCEOF'
+web: env/bin/gunicorn -b 0.0.0.0:8001 -w 3 -t 120 --chdir /home/frappe/frappe-bench/sites frappe.app:application --preload
+socketio: node apps/frappe/socketio.js
+schedule: bench schedule
+worker_short: bench worker --queue short,default
+worker_long: bench worker --queue long
+PROCEOF
+}
+
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
     echo "Bench already exists, syncing HRMS app from mounted source"
     cd frappe-bench
     sync_hrms_app_from_mounted_source
+    write_production_procfile
     bench start
 else
     echo "Creating new bench..."
@@ -43,9 +56,7 @@ bench set-redis-cache-host redis://redis:6379
 bench set-redis-queue-host redis://redis:6379
 bench set-redis-socketio-host redis://redis:6379
 
-# Remove redis, watch from Procfile
-sed -i '/redis/d' ./Procfile
-sed -i '/watch/d' ./Procfile
+write_production_procfile
 
 bench get-app erpnext
 bench get-app "$HRMS_APP_SOURCE"
@@ -62,4 +73,5 @@ bench --site hrms.localhost enable-scheduler
 bench --site hrms.localhost clear-cache
 bench use hrms.localhost
 
+write_production_procfile
 bench start

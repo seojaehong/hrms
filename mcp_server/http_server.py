@@ -76,7 +76,9 @@ def frappe_get_list(site_ctx: dict, doctype: str, filters: dict | None, limit: i
     }
     if filters:
         params["filters"] = json.dumps(filters)
-    url = f"{FRAPPE_BASE_URL}/api/resource/{urllib.parse.quote(doctype)}?{urllib.parse.urlencode(params)}"
+    # 샤딩 준비: 토큰 바인딩에 frappe_url이 있으면 그 bench 호스트로 (S3 다중 호스트 = 데이터 변경만)
+    base_url = site_ctx.get("frappe_url") or FRAPPE_BASE_URL
+    url = f"{base_url}/api/resource/{urllib.parse.quote(doctype)}?{urllib.parse.urlencode(params)}"
     request = urllib.request.Request(
         url,
         headers={

@@ -4,6 +4,7 @@
 set -u
 WEBHOOK_URL="${HRMS_ALERT_WEBHOOK:-http://localhost:5001/}"
 STATE_FILE="/tmp/hrms-smoke.state"
+HISTORY_FILE="${HRMS_SMOKE_HISTORY:-/home/ubuntu/.korea-hrms-mcp/smoke-history.log}"
 
 fails=()
 
@@ -30,10 +31,12 @@ if [[ ${#fails[@]} -eq 0 ]]; then
             -d "{\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"HRMSSmoke\",\"severity\":\"info\"},\"annotations\":{\"summary\":\"HRMS smoke 회복 (${now})\"}}]}" > /dev/null
     fi
     echo "OK ${now}" > "$STATE_FILE"
+    echo "OK ${now}" >> "$HISTORY_FILE"
     exit 0
 fi
 
 echo "FAIL ${now} ${fails[*]}" > "$STATE_FILE"
+echo "FAIL ${now}" >> "$HISTORY_FILE"
 summary=$(printf '%s; ' "${fails[@]}")
 curl -s -m 10 -X POST "$WEBHOOK_URL" -H "Content-Type: application/json" \
     -d "{\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"HRMSSmoke\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"HRMS smoke 실패: ${summary}\"}}]}" > /dev/null

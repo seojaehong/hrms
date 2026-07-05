@@ -20,6 +20,8 @@ parser.add_argument("site")
 parser.add_argument("label")
 parser.add_argument("--api-key", default=None)
 parser.add_argument("--api-secret", default=None)
+parser.add_argument("--plan", default=None, help="starter|professional|enterprise — 일일 쿼터 자동 설정")
+parser.add_argument("--frappe-url", default=None, help="사이트가 있는 bench 호스트 (샤딩용, 기본 로컬)")
 args = parser.parse_args()
 
 tokens_file = pathlib.Path(os.environ.get("KCHRMS_MCP_TOKENS_FILE", "/etc/korea-hrms-mcp/tokens.json"))
@@ -32,6 +34,14 @@ entry = {"site": args.site, "label": args.label, "disabled": False}
 if args.api_key and args.api_secret:
     entry["api_key"] = args.api_key
     entry["api_secret"] = args.api_secret
+if args.plan:
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    from plans import plan_daily_limit
+
+    entry["plan"] = args.plan
+    entry["daily_limit"] = plan_daily_limit(args.plan)
+if args.frappe_url:
+    entry["frappe_url"] = args.frappe_url
 tokens[hashlib.sha256(token.encode()).hexdigest()] = entry
 
 tokens_file.parent.mkdir(parents=True, exist_ok=True)

@@ -135,11 +135,18 @@ docker exec -w "$BENCH_PATH" "$BENCH_CONTAINER" \
     2>&1 | tee "$DEST/backup.log"
 
 # ── 신규 생성 파일만 개별 docker cp ──────────────────
-CONTAINER_BACKUP_DIR="$BENCH_PATH/sites/$SITE_NAME/private/backups"
+# SITE_NAME=all 이면 모든 사이트의 private/backups 를 수집한다.
+if [[ "$SITE_NAME" == "all" ]]; then
+    CONTAINER_BACKUP_DIR="$BENCH_PATH/sites"
+    FIND_ARGS=(-path "*/private/backups/*")
+else
+    CONTAINER_BACKUP_DIR="$BENCH_PATH/sites/$SITE_NAME/private/backups"
+    FIND_ARGS=()
+fi
 
 echo "[INFO] 컨테이너에서 신규 백업 파일 수집 중 (docker cp)..."
 NEW_FILES=$(docker exec "$BENCH_CONTAINER" find "$CONTAINER_BACKUP_DIR" \
-    -newer "$CONTAINER_MARKER" -type f 2>/dev/null)
+    "${FIND_ARGS[@]}" -newer "$CONTAINER_MARKER" -type f 2>/dev/null)
 docker exec "$BENCH_CONTAINER" rm -f "$CONTAINER_MARKER"
 
 for f in $NEW_FILES; do

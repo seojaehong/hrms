@@ -8,7 +8,7 @@
 - Frappe HRMS 포크(develop, 커밋 1만+)에 **Korea 모듈을 PR 150건 자체 개발**: `hrms/regional/south_korea/` 58파일 + DocType 4종 + Korea 테스트 58파일.
 - 설계가 이식에 유리함: **순수 파이썬 코어(frappe 미의존) + 얇은 `*_api.py` 래퍼** 2층 분리 (`docs/korea_hrms/implementation_decisions.md`의 의도적 결정). 코어는 bench 없이 동작.
 - 테스트 실행 함정: `pytest`는 수집 단계에서 `hrms/__init__` → frappe import로 전멸. **`python3 hrms/tests/test_korea_*.py` 직접 실행**이 정상 경로 (annual_leave 13/13 OK 실측). 테스트 자체가 `importlib.util.spec_from_file_location`으로 코어를 파일 경로 로드하는 패턴 — MCP 서버도 같은 패턴을 쓴다.
-- **배포 있음(정정)**: NOHO 베타 런칭(5월말, PR #250~#255 — docker bench + ubuntu 호스트 systemd 백업 타이머, Lighthouse 75+, 온보딩 자료 6종). 로컬 리포가 5/20에 멈춰 있었을 뿐이다. → Phase B(HTTP+토큰) 선행조건이 이미 충족일 수 있음. 구현 착수 시 **서버 생존·docker 컨테이너 상태부터 확인**(reference_oracle_server.md 참조). 단 실무 가치의 최단 경로는 여전히 Phase A(stdio, 서버 무관)이다.
+- **배포 상태(사용자 확인, 2026-07-05)**: NOHO 베타는 **실배포되지 않았다.** 준비물은 상당히 완성 — docker bench 구성, create_tenant.sh(docker-exec 래핑 수정까지), systemd 백업 타이머, 온보딩 자료 6종, Lighthouse 75+ — 프로비저닝 직전 단계에서 멈춘 상태다. → Phase B(HTTP+토큰)는 "출시 트랙"의 배포가 실제로 이뤄진 뒤. 실무 가치의 최단 경로는 여전히 Phase A(stdio, 서버 무관)이다. 상위 목표는 `docs/korea_hrms/launch-master-plan.md` 참조.
 
 ## 1. 앞의 두 이식과 뭐가 다른가
 

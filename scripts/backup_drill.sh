@@ -133,6 +133,8 @@ if docker exec "$FRAPPE_CONTAINER" test -d "$BENCH_PATH/sites/$TEST_SITE_NAME"; 
         --root-password "${MARIADB_ROOT_PASSWORD:-}" \
         --no-backup 2>&1 | tee -a "$DRILL_LOG" || true
 fi
+# 잔해(설정 없는 부분 디렉터리)까지 강제 정리 — drop-site가 못 지우는 케이스
+docker exec "$FRAPPE_CONTAINER" rm -rf "$BENCH_PATH/sites/$TEST_SITE_NAME" 2>/dev/null || true
 
 $BENCH_CMD new-site "$TEST_SITE_NAME" \
     --admin-password admin \

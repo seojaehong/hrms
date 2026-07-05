@@ -69,16 +69,15 @@ if [[ "$SITE_NAME" == "$TEST_SITE_NAME" ]]; then
     exit 1
 fi
 
-# ── bench 명령 확인 ────────────────────────────────────
-if [[ ! -d "$BENCH_PATH" ]]; then
-    echo "[ERROR] bench 디렉터리를 찾을 수 없습니다: $BENCH_PATH" >&2
+# ── bench 명령 확인 — bench는 컨테이너 내부에만 존재 (docker exec 래핑) ─────
+FRAPPE_CONTAINER="${FRAPPE_CONTAINER:-docker-frappe-1}"
+MARIADB_CONTAINER="${MARIADB_CONTAINER:-docker-mariadb-1}"
+if ! docker exec "$FRAPPE_CONTAINER" test -d "$BENCH_PATH"; then
+    echo "[ERROR] 컨테이너에서 bench 디렉터리를 찾을 수 없습니다: $FRAPPE_CONTAINER:$BENCH_PATH" >&2
     exit 1
 fi
 
-BENCH_CMD="bench"
-if [[ -x "$BENCH_PATH/env/bin/bench" ]]; then
-    BENCH_CMD="$BENCH_PATH/env/bin/bench"
-fi
+BENCH_CMD="docker exec -w $BENCH_PATH $FRAPPE_CONTAINER bench" 
 
 # ── 백업 디렉터리 결정 ─────────────────────────────────
 if [[ -n "$BACKUP_DIR_ARG" ]]; then
@@ -126,10 +125,9 @@ DRILL_FAILURES=()
 
 # ── STEP 1: 테스트 사이트 생성 ─────────────────────────
 echo "[STEP 1] 테스트 사이트 생성: $TEST_SITE_NAME" | tee -a "$DRILL_LOG"
-cd "$BENCH_PATH"
 
 # 기존 드릴 사이트가 있으면 제거
-if [[ -d "$BENCH_PATH/sites/$TEST_SITE_NAME" ]]; then
+if docker exec "$FRAPPE_CONTAINER" test -d "$BENCH_PATH/sites/$TEST_SITE_NAME"; then
     echo "[INFO] 기존 테스트 사이트 제거 중..." | tee -a "$DRILL_LOG"
     $BENCH_CMD drop-site "$TEST_SITE_NAME" \
         --root-password "${MARIADB_ROOT_PASSWORD:-}" \
@@ -148,17 +146,23 @@ $BENCH_CMD new-site "$TEST_SITE_NAME" \
 # ── STEP 2: 백업 복원 ──────────────────────────────────
 echo "[STEP 2] 백업 복원 중..." | tee -a "$DRILL_LOG"
 if [[ "$DRILL_PASS" == "true" ]]; then
+    # 백업 파일은 호스트에 있으므로 컨테이너 /tmp/drill 로 복사해 컨테이너 경로로 복원
+    docker exec "$FRAPPE_CONTAINER" mkdir -p /tmp/drill
+    docker cp "$SQL_FILE" "$FRAPPE_CONTAINER:/tmp/drill/"
+    SQL_FILE_IN="/tmp/drill/$(basename "$SQL_FILE")"
     RESTORE_EXTRA_OPTS=""
     if [[ -n "$FILES_BACKUP" ]]; then
-        RESTORE_EXTRA_OPTS="$RESTORE_EXTRA_OPTS --with-public-files $FILES_BACKUP"
+        docker cp "$FILES_BACKUP" "$FRAPPE_CONTAINER:/tmp/drill/"
+        RESTORE_EXTRA_OPTS="$RESTORE_EXTRA_OPTS --with-public-files /tmp/drill/$(basename "$FILES_BACKUP")"
     fi
     if [[ -n "$PRIVATE_BACKUP" ]]; then
-        RESTORE_EXTRA_OPTS="$RESTORE_EXTRA_OPTS --with-private-files $PRIVATE_BACKUP"
+        docker cp "$PRIVATE_BACKUP" "$FRAPPE_CONTAINER:/tmp/drill/"
+        RESTORE_EXTRA_OPTS="$RESTORE_EXTRA_OPTS --with-private-files /tmp/drill/$(basename "$PRIVATE_BACKUP")"
     fi
 
     # shellcheck disable=SC2086
     # bench restore: DB + files 복원 (BENCH_CMD = bench 바이너리 경로)
-    $BENCH_CMD --site "$TEST_SITE_NAME" restore "$SQL_FILE" \
+    $BENCH_CMD --site "$TEST_SITE_NAME" restore "$SQL_FILE_IN" \
         --admin-password admin \
         $RESTORE_EXTRA_OPTS \
         2>&1 | tee -a "$DRILL_LOG" || {
@@ -182,8 +186,7 @@ fi
 echo "[STEP 4] 핵심 데이터 검증..." | tee -a "$DRILL_LOG"
 if [[ "$DRILL_PASS" == "true" ]]; then
     # DB명 추출: Frappe site_config.json에서 db_name 읽기
-    SITE_CONFIG="$BENCH_PATH/sites/$TEST_SITE_NAME/site_config.json"
-    DB_NAME=$(python3 -c "import json; d=json.load(open('$SITE_CONFIG')); print(d.get('db_name',''))" 2>/dev/null || true)
+    DB_NAME=$(docker exec "$FRAPPE_CONTAINER" cat "$BENCH_PATH/sites/$TEST_SITE_NAME/site_config.json" 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('db_name',''))" 2>/dev/null || true)
 
     if [[ -z "$DB_NAME" ]]; then
         echo "[WARN] DB명을 확인할 수 없습니다. 데이터 검증을 건너뜁니다." | tee -a "$DRILL_LOG"
@@ -191,7 +194,7 @@ if [[ "$DRILL_PASS" == "true" ]]; then
         echo "[INFO] 검증 DB: $DB_NAME" | tee -a "$DRILL_LOG"
 
         # Employee 레코드 수 확인
-        EMP_COUNT=$(mysql -u root --password="${MARIADB_ROOT_PASSWORD:-}" \
+        EMP_COUNT=$(docker exec "$MARIADB_CONTAINER" mysql -u root --password="${MARIADB_ROOT_PASSWORD:-}" \
             -e "SELECT COUNT(*) FROM \`$DB_NAME\`.\`tabEmployee\`;" \
             --skip-column-names 2>/dev/null || echo "-1")
 
@@ -220,6 +223,7 @@ if [[ "$KEEP_TEST_SITE" == "false" ]]; then
 else
     echo "[INFO] --keep-test-site: 테스트 사이트를 유지합니다: $TEST_SITE_NAME" | tee -a "$DRILL_LOG"
 fi
+docker exec "$FRAPPE_CONTAINER" rm -rf /tmp/drill 2>/dev/null || true
 
 # ── 드릴 결과 리포트 ───────────────────────────────────
 DRILL_END=$(date +%s)

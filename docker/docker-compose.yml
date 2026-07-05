@@ -42,7 +42,7 @@ services:
       - frappe
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - bench-home:/bench:ro
+      - bench-home:/home/frappe:ro
     ports:
       - 8000:80
 

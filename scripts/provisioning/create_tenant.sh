@@ -48,7 +48,7 @@ MULTI_SITE_JSON="${REPO_ROOT}/config/multi_site.json"
 CF_DNS_SCRIPT="${SCRIPT_DIR}/cloudflare_dns_add.py"
 CF_INGRESS_SCRIPT="${SCRIPT_DIR}/cloudflared_ingress_add.py"
 
-BASE_DOMAIN="${BASE_DOMAIN:-hrms.safeclaw.kr}"
+BASE_DOMAIN="${BASE_DOMAIN:-safeclaw.kr}"
 BENCH_PATH="${BENCH_PATH:-${HOME}/frappe-bench}"
 
 # Docker 래핑 설정 — bench는 컨테이너 내부에만 설치됨

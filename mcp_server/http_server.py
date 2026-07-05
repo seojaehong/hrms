@@ -34,7 +34,7 @@ SIGNUP_QUEUE = os.environ.get("KCHRMS_SIGNUP_QUEUE", "")
 
 # 브리지 허용 DocType (읽기 전용). PII 최소화: 필드도 화이트리스트.
 BRIDGE_DOCTYPES: dict[str, list[str]] = {
-    "Employee": ["name", "employee_name", "company", "date_of_joining", "status", "department", "designation"],
+    "Employee": ["name", "employee_name", "company", "date_of_joining", "relieving_date", "status", "department", "designation"],
     "Attendance": ["name", "employee", "attendance_date", "status", "working_hours"],
     "Leave Application": ["name", "employee", "leave_type", "from_date", "to_date", "status"],
     "Holiday List": ["name", "from_date", "to_date", "total_holidays"],
@@ -105,6 +105,23 @@ def get_tenant_records(doctype: str, filters: dict | None = None, limit: int = 2
         raise ValueError("no tenant binding for this token")
     rows = frappe_get_list(ctx, doctype, filters, limit)
     return {"site": ctx["site"], "doctype": doctype, "count": len(rows), "rows": rows}
+
+
+@mcp.tool()
+def prepare_insurance_filing(filing_type: str, year: int, month: int) -> dict:
+    """4대보험 신고 대상자 추출 (acquisition=취득/입사자, loss=상실/퇴사자).
+    인증된 테넌트의 직원 실데이터에서 귀속월 대상자를 뽑아 명단 컨트랙트를 반환한다.
+    반환된 명단은 반드시 담당자 확인 후에만 신고서로 만든다 (자동 제출 금지)."""
+    ctx = _auth_context.get()
+    if not ctx:
+        raise ValueError("no tenant binding for this token")
+    employees = frappe_get_list(ctx, "Employee", None, 100)
+    insurance = calc_server._load_core("insurance_filing")
+    contract = insurance.build_filing_contract(
+        filing_type=filing_type, year=int(year), month=int(month), employees=employees
+    )
+    contract["site"] = ctx["site"]
+    return contract
 
 
 @mcp.tool()

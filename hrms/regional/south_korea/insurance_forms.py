@@ -23,6 +23,13 @@ ACQUISITION_DATA_START_ROW = 3
 ACQUISITION_DATE_COLS = ("H", "P", "V", "AD")
 ACQUISITION_WAGE_COLS = ("G", "O", "U", "AC")
 
+# 상실신고서 '서식' 시트 매핑 (US-001)
+LOSS_SHEET = "서식"
+LOSS_DATA_START_ROW = 2
+# 상실일은 4개 보험(F=국민연금/I=건강/O=고용/T=산재)에 동일 기입
+LOSS_DATE_COLS = ("F", "I", "O", "T")
+LOSS_REASON_COL = "P"  # 고용보험상실사유구분코드
+
 
 def _yyyymmdd(iso_value: Any) -> str:
 	"""ISO date(YYYY-MM-DD) 또는 date → 신고 서식용 'YYYYMMDD' 문자열."""
@@ -67,6 +74,39 @@ def generate_acquisition_report(
 			ws[f"{col}{row}"] = acq_date
 		for col in ACQUISITION_WAGE_COLS:
 			ws[f"{col}{row}"] = wage
+
+	wb.save(out_path)
+	wb.close()
+	return out_path
+
+
+def generate_loss_report(
+	template_path: str,
+	candidates: list[dict],
+	out_path: str,
+	workplace_info: dict | None = None,
+) -> str:
+	"""상실신고서 xlsx 생성.
+
+	candidates: insurance_filing.detect_losses 출력
+	  [{employee, employee_name, loss_date(ISO), loss_reason_code, rrn?}]
+	  상실일 = 마지막근무일 + 1 (detect_losses가 이미 계산).
+	반환: out_path.
+	"""
+	if not candidates:
+		raise ValueError("candidates is empty — 빈 상실신고서를 생성하지 않는다 (fail-closed).")
+
+	wb = openpyxl.load_workbook(template_path)
+	ws = wb[LOSS_SHEET]
+
+	for offset, cand in enumerate(candidates):
+		row = LOSS_DATA_START_ROW + offset
+		ws[f"A{row}"] = cand.get("employee_name", "")
+		ws[f"B{row}"] = str(cand.get("rrn") or "")
+		loss_date = _yyyymmdd(cand.get("loss_date"))
+		for col in LOSS_DATE_COLS:
+			ws[f"{col}{row}"] = loss_date
+		ws[f"{LOSS_REASON_COL}{row}"] = str(cand.get("loss_reason_code") or "")
 
 	wb.save(out_path)
 	wb.close()

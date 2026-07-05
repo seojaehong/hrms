@@ -22,6 +22,7 @@ TEMPLATE_DIR = pathlib.Path(
 	"C:/Users/iceam/OneDrive/_10_고객/_active/급여자동화/templates"
 )
 ACQUISITION_TEMPLATE = TEMPLATE_DIR / "근로자고용취득신고_전자신고용 (3).xlsx"
+LOSS_TEMPLATE = TEMPLATE_DIR / "근로자자격상실신고서 (3).xlsx"
 
 
 def load_module():
@@ -86,6 +87,60 @@ class TestAcquisitionReport(unittest.TestCase):
 			out = str(pathlib.Path(tmp) / "빈신고서.xlsx")
 			with self.assertRaises(ValueError):
 				mod.generate_acquisition_report(str(ACQUISITION_TEMPLATE), [], out)
+			self.assertFalse(pathlib.Path(out).exists())
+
+
+# 더미 상실 후보 2명 — detect_losses 출력 형태(loss_date=마지막근무일+1)
+DUMMY_LOSSES = [
+	{
+		"employee": "E3",
+		"employee_name": "이상실",
+		"loss_date": "2026-07-16",
+		"loss_reason_code": "11",  # 자진퇴사
+		"rrn": "0000009999998",
+	},
+	{
+		"employee": "E4",
+		"employee_name": "최퇴사",
+		"loss_date": "2026-07-01",
+		"loss_reason_code": "23",  # 권고사직
+		# rrn 없음 → 빈칸
+	},
+]
+
+
+@unittest.skipUnless(LOSS_TEMPLATE.exists(), f"템플릿 없음: {LOSS_TEMPLATE}")
+class TestLossReport(unittest.TestCase):
+	def test_generates_file_with_correct_cells(self):
+		with tempfile.TemporaryDirectory() as tmp:
+			out = str(pathlib.Path(tmp) / "상실_신고서.xlsx")
+			returned = mod.generate_loss_report(
+				str(LOSS_TEMPLATE), DUMMY_LOSSES, out
+			)
+			self.assertEqual(returned, out)
+			self.assertTrue(pathlib.Path(out).exists())
+
+			wb = openpyxl.load_workbook(out)
+			ws = wb["서식"]
+			# 데이터 시작 행 2, 후보 2명 → 행 2·3
+			self.assertEqual(ws["A2"].value, "이상실")
+			self.assertEqual(ws["A3"].value, "최퇴사")
+			self.assertEqual(ws["B2"].value, "0000009999998")
+			self.assertIn(ws["B3"].value, (None, ""))  # rrn 없음 → 빈칸
+			# 상실일 4보험(F/I/O/T) 동일
+			for col in ("F", "I", "O", "T"):
+				self.assertEqual(ws[f"{col}2"].value, "20260716")
+				self.assertEqual(ws[f"{col}3"].value, "20260701")
+			# 상실사유코드 P
+			self.assertEqual(ws["P2"].value, "11")
+			self.assertEqual(ws["P3"].value, "23")
+			wb.close()
+
+	def test_empty_candidates_rejected(self):
+		with tempfile.TemporaryDirectory() as tmp:
+			out = str(pathlib.Path(tmp) / "빈상실.xlsx")
+			with self.assertRaises(ValueError):
+				mod.generate_loss_report(str(LOSS_TEMPLATE), [], out)
 			self.assertFalse(pathlib.Path(out).exists())
 
 

@@ -23,6 +23,7 @@ TEMPLATE_DIR = pathlib.Path(
 )
 ACQUISITION_TEMPLATE = TEMPLATE_DIR / "근로자고용취득신고_전자신고용 (3).xlsx"
 LOSS_TEMPLATE = TEMPLATE_DIR / "근로자자격상실신고서 (3).xlsx"
+DAILY_TEMPLATE = TEMPLATE_DIR / "근로내용확인신고_전자신고용.xlsx"
 
 
 def load_module():
@@ -141,6 +142,91 @@ class TestLossReport(unittest.TestCase):
 			out = str(pathlib.Path(tmp) / "빈상실.xlsx")
 			with self.assertRaises(ValueError):
 				mod.generate_loss_report(str(LOSS_TEMPLATE), [], out)
+			self.assertFalse(pathlib.Path(out).exists())
+
+
+# 더미 일용직 2명 — 1명은 work_days 명시, 1명은 count+last로 역산
+from openpyxl.utils import get_column_letter  # noqa: E402
+
+DUMMY_DAILY_WORKERS = [
+	{
+		"employee_name": "정일용",
+		"rrn": "0000009999997",
+		"work_days": [3, 5, 10],
+		"daily_wage": 100000,
+		"job_code": "532",
+	},
+	{
+		"employee_name": "한파트",
+		# work_days 없음 → count+last 역산: 마지막 20일에서 4일 → [17,18,19,20]
+		"work_day_count": 4,
+		"last_work_day": 20,
+		"total_wage": 400000,
+	},
+]
+
+
+@unittest.skipUnless(DAILY_TEMPLATE.exists(), f"템플릿 없음: {DAILY_TEMPLATE}")
+class TestDailyWorkReport(unittest.TestCase):
+	def test_generates_file_with_correct_markings(self):
+		with tempfile.TemporaryDirectory() as tmp:
+			out = str(pathlib.Path(tmp) / "근로내용확인_신고서.xlsx")
+			returned = mod.generate_daily_work_report(
+				str(DAILY_TEMPLATE), DUMMY_DAILY_WORKERS, 2026, 5, out
+			)
+			self.assertEqual(returned, out)
+			self.assertTrue(pathlib.Path(out).exists())
+
+			wb = openpyxl.load_workbook(out)
+			ws = wb["서식"]
+			# 데이터 시작 행 2, 2명 → 행 2·3
+			self.assertEqual(ws["B2"].value, "정일용")
+			self.assertEqual(ws["B3"].value, "한파트")
+			self.assertEqual(ws["C2"].value, "0000009999997")
+			self.assertIn(ws["C3"].value, (None, ""))  # rrn 없음 → 빈칸
+
+			def marked_days(row):
+				days = []
+				for d in range(1, 32):
+					col = get_column_letter(9 + d)
+					if ws[f"{col}{row}"].value == 1:
+						days.append(d)
+				return days
+
+			# 명시 근무일 그대로
+			self.assertEqual(marked_days(2), [3, 5, 10])
+			# count+last 역산
+			self.assertEqual(marked_days(3), [17, 18, 19, 20])
+			# 마킹은 숫자 1(텍스트 아님)
+			self.assertIsInstance(ws["L2"].value, int)
+			# AO/AQ/AS 수식 유지
+			self.assertEqual(ws["AO2"].value, "=AQ2")
+			self.assertEqual(ws["AQ2"].value, "=COUNT(J2:AN2)")
+			self.assertEqual(ws["AS3"].value, "=AR3")
+			# 보수총액: 명시 total 우선 / daily_wage*근무일수 계산
+			self.assertEqual(ws["AR2"].value, 300000)  # 100000 * 3
+			self.assertEqual(ws["AR3"].value, 400000)
+			wb.close()
+
+	def test_residual_pii_rows_cleared(self):
+		# 템플릿 잔존 데이터 행(2~8)이 근로자 1명만 써도 모두 비워져야 한다.
+		with tempfile.TemporaryDirectory() as tmp:
+			out = str(pathlib.Path(tmp) / "pii_clear.xlsx")
+			mod.generate_daily_work_report(
+				str(DAILY_TEMPLATE), [DUMMY_DAILY_WORKERS[0]], 2026, 5, out
+			)
+			wb = openpyxl.load_workbook(out)
+			ws = wb["서식"]
+			for row in range(3, 9):  # 잔존 PII 행
+				self.assertIn(ws[f"B{row}"].value, (None, ""))
+				self.assertIn(ws[f"C{row}"].value, (None, ""))
+			wb.close()
+
+	def test_empty_workers_rejected(self):
+		with tempfile.TemporaryDirectory() as tmp:
+			out = str(pathlib.Path(tmp) / "빈일용.xlsx")
+			with self.assertRaises(ValueError):
+				mod.generate_daily_work_report(str(DAILY_TEMPLATE), [], 2026, 5, out)
 			self.assertFalse(pathlib.Path(out).exists())
 
 

@@ -317,7 +317,7 @@ const weeklyOvertimeExceeded = computed(() =>
 )
 
 const dataSourceBadge = computed(() =>
-	attendanceSource.value === "runtime" ? "실시간" : "픽스처"
+	attendanceSource.value === "runtime" ? "실시간" : "정적 예시"
 )
 const dataSourceBadgeClass = computed(() =>
 	attendanceSource.value === "runtime"

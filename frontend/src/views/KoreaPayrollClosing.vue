@@ -18,7 +18,7 @@
 						</span>
 					</div>
 					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-						<p class="font-semibold">Preview-only {{ selectedSession.preview_source === 'runtime_read_only' ? 'runtime read' : 'static fixture' }}</p>
+						<p class="font-semibold">미리보기 전용 — {{ selectedSession.preview_source === 'runtime_read_only' ? '실데이터 읽기' : '정적 예시' }}</p>
 						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · human approval required · AI={{ selectedSession.ai_role }}</p>
 					</div>
 					<div class="mt-4 grid grid-cols-2 gap-2">
@@ -66,7 +66,7 @@
 					</div>
 				</section>
 				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
-					<p class="font-semibold">Session fixture not found</p>
+					<p class="font-semibold">세션 예시 데이터를 찾을 수 없습니다</p>
 					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the active payroll closing worklist.</p>
 				</section>
 				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
@@ -84,14 +84,14 @@
 						Loading read-only Frappe runtime data…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
-						<p>Runtime read failed; static fixture fallback is active. {{ runtimeError }}</p>
+						<p>실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다. {{ runtimeError }}</p>
 						<p v-if="runtimeWorklistError" class="mt-1">Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}</p>
 					</div>
 					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
 						Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}
 					</div>
 					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
-						No runtime dashboard rows were returned for this company; static fixture fallback remains active for static/no-runtime preview contexts.
+						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
 						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}

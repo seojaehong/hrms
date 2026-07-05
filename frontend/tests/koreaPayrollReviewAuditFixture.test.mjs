@@ -71,12 +71,12 @@ assert.ok(!JSON.stringify(detail).match(/risk[_ -]?score|probability|success[_ -
 assert.throws(() => getKoreaPayrollReviewAuditDetail("UNKNOWN"), /audit log fixture not found/)
 
 const homeSource = await readFile(resolve(root, "src/views/Home.vue"), "utf8")
-assert.match(homeSource, /Korea Payroll Review Audit Logs/)
+assert.match(homeSource, /급여 검토 감사 로그/)
 assert.match(homeSource, /KoreaPayrollReviewAuditLogs/)
 
 const viewSource = await readFile(resolve(root, "src/views/KoreaPayrollReviewAuditLogs.vue"), "utf8")
 assert.match(viewSource, /Human review audit trail/)
-assert.match(viewSource, /preview-only/i)
+assert.match(viewSource, /미리보기 전용/)
 assert.match(viewSource, /item\.route/)
 
 const detailViewSource = await readFile(resolve(root, "src/views/KoreaPayrollReviewAuditLogDetail.vue"), "utf8")

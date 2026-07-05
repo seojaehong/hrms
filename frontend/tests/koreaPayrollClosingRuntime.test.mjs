@@ -190,8 +190,8 @@ const runtimeDashboardOnlyUiState = getKoreaPayrollClosingRuntimeUiState({
 assert.equal(runtimeDashboardOnlyUiState.dataSourceLabel, "Runtime read-only dashboard")
 assert.equal(runtimeDashboardOnlyUiState.showFixtureFallbackCopy, true)
 assert.equal(runtimeDashboardOnlyUiState.showRuntimePositiveCopy, false)
-assert.match(runtimeDashboardOnlyUiState.worklistBanner, /No positive runtime worklist rows/i)
-assert.match(runtimeDashboardOnlyUiState.worklistBanner, /static fixture fallback remains active/i)
+assert.match(runtimeDashboardOnlyUiState.worklistBanner, /실데이터 워크리스트가 비어 있어/)
+assert.match(runtimeDashboardOnlyUiState.worklistBanner, /정적 예시 데이터가 유지됩니다/)
 assert.doesNotMatch(runtimeDashboardOnlyUiState.worklistBanner, /Gate 2/i)
 
 await assert.rejects(
@@ -277,9 +277,9 @@ const viewSource = await readFile(resolve(frontendRoot, "src/views/KoreaPayrollC
 assert.match(viewSource, /loadKoreaAdminDashboardRuntime/)
 assert.match(viewSource, /loadKoreaPayrollClosingRuntimeWorklist/)
 assert.match(viewSource, /runtime_read_only/)
-assert.match(viewSource, /static fixture fallback is active/i)
+assert.match(viewSource, /정적 예시 데이터로 표시 중입니다/)
 assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \}\}/)
-assert.match(viewSource, /No runtime dashboard rows were returned/i)
+assert.match(viewSource, /실데이터 대시보드 행이 없어/)
 assert.match(viewSource, /runtime worklist/i)
 assert.match(viewSource, /runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData/)
 assert.match(viewSource, /runtimeUiState\.worklistBanner/)

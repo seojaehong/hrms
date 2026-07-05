@@ -59,13 +59,53 @@ const quickLinks = [
 	},
 	{
 		icon: markRaw(SalaryIcon),
-		title: __("Korea Payroll Closing"),
+		title: __("급여 마감 센터"),
 		route: "KoreaPayrollClosingDashboard",
 	},
 	{
 		icon: markRaw(SalaryIcon),
-		title: __("Korea Payroll Review Audit Logs"),
+		title: __("급여 검토 감사 로그"),
 		route: "KoreaPayrollReviewAuditLogs",
+	},
+	{
+		icon: markRaw(AttendanceIcon),
+		title: __("근태 대시보드"),
+		route: "KoreaAttendanceDashboard",
+	},
+	{
+		icon: markRaw(AttendanceIcon),
+		title: __("모바일 출퇴근"),
+		route: "KoreaMobileCheckin",
+	},
+	{
+		icon: markRaw(LeaveIcon),
+		title: __("연차 대시보드"),
+		route: "KoreaAnnualLeaveDashboard",
+	},
+	{
+		icon: markRaw(ShiftIcon),
+		title: __("결재 인박스"),
+		route: "KoreaApprovalInbox",
+	},
+	{
+		icon: markRaw(SalaryIcon),
+		title: __("임금명세서"),
+		route: "KoreaWageStatementDashboard",
+	},
+	{
+		icon: markRaw(SalaryIcon),
+		title: __("퇴직금 미리보기"),
+		route: "KoreaSeverancePreview",
+	},
+	{
+		icon: markRaw(ExpenseIcon),
+		title: __("컴플라이언스 진단"),
+		route: "KoreaComplianceDashboard",
+	},
+	{
+		icon: markRaw(EmployeeAdvanceIcon),
+		title: __("AI HR 담당자"),
+		route: "KoreaAIChat",
 	},
 ]
 </script>

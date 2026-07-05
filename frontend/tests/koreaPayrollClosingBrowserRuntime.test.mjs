@@ -99,7 +99,7 @@ assert.throws(
 	/score keys are not allowed/,
 )
 assert.throws(
-	() => assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "Static fixture preview" }),
+	() => assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "정적 예시 데이터 미리보기" }),
 	/browser DOM did not show the runtime-positive read-only state/,
 )
 assert.equal(

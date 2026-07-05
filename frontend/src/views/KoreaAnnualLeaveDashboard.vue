@@ -185,7 +185,7 @@
 						Loading read-only Frappe runtime data…
 					</div>
 					<div v-else-if="previewError" class="mt-3 rounded-xl bg-amber-400/20 p-2 text-xs text-amber-200">
-						Runtime read failed; static fixture fallback is active. {{ previewError }}
+						실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다. {{ previewError }}
 					</div>
 				</section>
 
@@ -272,13 +272,13 @@ const usagePercent = computed(() => {
 const dataSourceLabel = computed(() => {
 	if (loading.value) return "Loading…"
 	if (hasKoreaAnnualLeavePreviewData(previewData.value)) return "Runtime read-only preview"
-	return "Static fixture preview"
+	return "정적 예시 데이터 미리보기"
 })
 
 const dataSourceBadge = computed(() => {
 	if (loading.value) return "loading"
 	if (hasKoreaAnnualLeavePreviewData(previewData.value)) return "runtime_read_only"
-	return "static fixture"
+	return "정적 예시"
 })
 
 const dataSourceBadgeClass = computed(() => {

@@ -186,19 +186,19 @@ export function getKoreaPayrollClosingRuntimeUiState({ runtimeDashboard = null, 
 			? "Runtime read-only worklist"
 			: runtimeHasDashboard
 				? "Runtime read-only dashboard"
-				: "Static fixture preview",
+				: "정적 예시 데이터 미리보기",
 		dataSourceBadge: runtimeLoading
 			? "loading"
 			: runtimeHasWorklistData
 				? "runtime worklist"
 				: runtimeHasDashboard
 					? "runtime_read_only"
-					: "static fixture",
+					: "정적 예시",
 		showFixtureFallbackCopy: !runtimeHasWorklistData,
 		showRuntimePositiveCopy: runtimeHasWorklistData,
 		worklistBanner: runtimeHasWorklistData
 			? `Runtime worklist loaded · runtime_action=${runtimeAction} · requires_runtime_apply=${requiresRuntimeApply} · evidence remains read-only`
-			: "No positive runtime worklist rows were returned; static fixture fallback remains active for static/no-runtime preview contexts.",
+			: "실데이터 워크리스트가 비어 있어 정적 예시 데이터가 유지됩니다.",
 	}
 }
 

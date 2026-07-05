@@ -85,14 +85,21 @@ SafeClaw mcp_tokens 스키마를 Frappe DocType(`Korea MCP Token`, sha256 해시
 2. **UI/UX**: 화면 16개 인벤토리·완성도, 블로커 top5(fixture 렌더 / 백엔드 orphan / 내비 2/16 / 영·한 혼용 / 토큰 미소비), 7월 디자인 결정 문서 위치·미결 체크리스트 10항목 확인.
 3. **출시 갭**: 치명 3(테넌트 0·compose 하드닝·오프사이트 백업), 중요 4(secret 주입·라우팅 미검증·서버 인수인계 문서 공백·카카오 리드타임). 자산: 프로비저닝/백업/모니터링 스크립트·런북 완비. **카카오 제외 시 첫 사이트 실사용까지 집중 3~4영업일.**
 
-## 6. 사용자 결정 대기 항목 (이것만 정해지면 나머지는 실행)
+## 6. 사용자 결정 (2026-07-05 확정)
 
-| # | 결정 | 선택지 |
+| # | 결정 | 확정 내용 |
 |---|---|---|
-| 1 | P0 테넌트 1호 실행 승인 | NOHO로 바로 / 내부 도그푸드 먼저 |
-| 2 | 브랜드 (P2) | A: NODE 차용 / B: 전용 신규(#2563eb+#ff6b35) / C: 혼합 |
-| 3 | v1 헤드라인 7영역 스코프 동의 | §2 그대로 / 조정 |
-| 4 | AI 채널 우선순위 | 텔레그램 먼저 / 메일 먼저 (카카오는 심사 후 자동 편입) |
+| 1 | P0 테넌트 1호 | **NOHO 직행** ✅ |
+| 2 | 브랜드 (P2) | **보류** — SafeClaw 브랜드 병용 vs NODE 차용 2안으로 압축, 고민 중 (기존 3안 중 B 신규안은 탈락) |
+| 3 | v1 헤드라인 7영역 | **동의** ✅ |
+| 4 | AI 채널 | **텔레그램·슬랙·디스코드·메일 4종 병행** ✅ (카카오는 심사 후 편입) |
+
+## 6-1. 실행 로그
+
+- **2026-07-05 P0 진행**: HRMS 호스트 = **claudebot-2**(140.245.79.0, 오라클) — reference 서버(claude-bot)가 아님. 실사: 모니터링 7컨테이너 6주 가동 / **frappe bench 컨테이너는 소실**(사이트 디렉터리·암호화 키 포함, 데모라 무해) / mariadb-data 볼륨·cloudflared 터널(winhr-intake, hrms.safeclaw.kr→:8000 ingress 기존재)·백업 타이머 생존. 502 원인 = bench 부재.
+- compose 하드닝(restart + DB비번 env 주입) 커밋 → 서버 pull → **bench 스택 재기동, 프레시 bench 빌드 진행 중**. DNS는 API 토큰 없이 `cloudflared tunnel route dns`(cert.pem)로 가능 확인.
+- **2026-07-05 A1 완료** (`e5dd53e05`): stdio MCP 서버 도구 7종 + stdio 라운드트립 검증 + 퇴직금 독립수식 1원 일치 + 테스트 하네스 4건 정비. 연결: `claude mcp add korea-hrms -- python3 <repo>/mcp_server/server.py`
+- 남은 P0: bench 기동 확인 → DB root 비번 로테이션(mysqladmin, 123→생성값, docker/.env 기록) → NOHO 사이트 생성(`create_tenant.sh noho admin@noho.kr --skip-dns --skip-cloudflared` + cloudflared 수동 2단계) → host-header 검증 → 오프사이트 백업 활성화
 
 ## 7. 함정 (이 플랜 실행 시)
 - 이 레포는 public — 고객 실데이터·시크릿 커밋 절대 금지 (redaction 사고 이력 PR #252~254)

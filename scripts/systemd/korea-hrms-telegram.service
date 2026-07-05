@@ -1,0 +1,18 @@
+# Korea HRMS AI HR 담당자 — 텔레그램 커넥터 (Plane 2-③)
+# 설치: sudo cp scripts/systemd/korea-hrms-telegram.service /etc/systemd/system/
+#       sudo systemctl daemon-reload && sudo systemctl enable --now korea-hrms-telegram
+[Unit]
+Description=Korea HRMS AI telegram connector
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/workspaces/seojaehong-hrms-100h/mcp_server
+EnvironmentFile=/home/ubuntu/.korea-hrms-mcp/telegram.env
+Environment=KCHRMS_TG_BINDINGS=/home/ubuntu/.korea-hrms-mcp/tg-bindings.json
+ExecStart=/home/ubuntu/.korea-hrms-mcp/venv/bin/python3 telegram_connector.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

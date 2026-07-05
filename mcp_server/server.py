@@ -37,6 +37,7 @@ attendance_summary = _load_core("attendance_summary")
 statutory_payroll = _load_core("statutory_payroll")
 compliance_checklist = _load_core("compliance_checklist")
 severance_pay = _load_core("severance_pay")
+ai_chat = _load_core("ai_chat")
 
 
 def _date(value: str, field: str) -> dt.date:
@@ -168,6 +169,19 @@ def run_compliance_diagnosis(items: list[dict], evidence: dict[str, list[str]] |
     """노동법 컴플라이언스 진단 컨트랙트 생성. 결정적 점검 결과와 조치 항목을 반환하며
     법률 자문·수치 리스크 점수가 아니다(사람 검토 전제)."""
     return _jsonable(compliance_checklist.build_compliance_diagnosis(items, evidence=evidence))
+
+
+@mcp.tool()
+def hr_chat(question: str, user_role: str = "employee", session_id: str = "mcp") -> dict:
+    """노동법·HR 질문에 법령/판례 인용과 함께 답변 (retrieval 기반, LLM 아님 — 카탈로그 조회).
+    답변은 AI 보조이며 확정 판단은 담당자/노무사 검토 필수. user_role: employee | manager | hr."""
+    return _jsonable(
+        ai_chat.chat_query(
+            user_question=question,
+            user_role=user_role,
+            session_id=session_id,
+        )
+    )
 
 
 if __name__ == "__main__":

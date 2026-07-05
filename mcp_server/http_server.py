@@ -114,6 +114,37 @@ def whoami() -> dict:
     return {"authenticated": True, "site": ctx["site"], "label": ctx.get("label", "")}
 
 
+DEFAULT_DAILY_LIMIT = int(os.environ.get("KCHRMS_DEFAULT_DAILY_LIMIT", "500"))
+QUOTA_FILE = os.environ.get("KCHRMS_QUOTA_FILE", "")
+
+
+def check_and_count_quota(token_hash: str, daily_limit: int) -> bool:
+    """토큰별 일일 쿼터 카운트(파일 기반, 날짜 바뀌면 리셋). 초과면 False.
+
+    플랜별 한도는 tokens.json 엔트리의 daily_limit — S2 과금의 강제 지점.
+    """
+    if not QUOTA_FILE:
+        return True
+    import datetime as _dt
+
+    today = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
+    path = pathlib.Path(QUOTA_FILE)
+    data: dict = {"date": today, "counts": {}}
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        if loaded.get("date") == today:
+            data = loaded
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    count = int(data["counts"].get(token_hash, 0))
+    if count >= daily_limit:
+        return False
+    data["counts"][token_hash] = count + 1
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return True
+
+
 def record_usage(entry: dict, path: str) -> None:
     if not USAGE_LOG:
         return
@@ -228,6 +259,10 @@ async def app(scope, receive, send):
                     "headers": [(b"content-type", b"application/json"),
                                 (b"www-authenticate", b"Bearer")]})
         await send({"type": "http.response.body", "body": body})
+        return
+    if not check_and_count_quota(_hash(bearer), int(entry.get("daily_limit", DEFAULT_DAILY_LIMIT))):
+        await _json_response(send, 429, {"error": "daily_quota_exceeded",
+                                         "message": "오늘의 사용 한도를 초과했습니다. 플랜을 확인하세요."})
         return
     record_usage(entry, scope.get("path", ""))
     token_ctx = _auth_context.set(entry)

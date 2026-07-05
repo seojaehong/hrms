@@ -200,15 +200,21 @@ if [[ "$DRILL_PASS" == "true" ]]; then
 
         echo "[INFO] Employee 레코드 수: $EMP_COUNT" | tee -a "$DRILL_LOG"
 
-        if [[ "$EMP_COUNT" == "-1" ]]; then
+        # 복원 무결성 판정은 Company 기준 — 신규 테넌트는 직원 0명이 정상이다.
+        COMPANY_COUNT=$(docker exec "$MARIADB_CONTAINER" mysql -u root --password="${MARIADB_ROOT_PASSWORD:-}" \
+            -e "SELECT COUNT(*) FROM \`$DB_NAME\`.\`tabCompany\`;" \
+            --skip-column-names 2>/dev/null || echo "-1")
+        echo "[INFO] Company 레코드 수: $COMPANY_COUNT" | tee -a "$DRILL_LOG"
+
+        if [[ "$COMPANY_COUNT" == "-1" ]]; then
             echo "[WARN] DB 연결 실패 — MySQL 자격증명을 확인하세요 (MARIADB_ROOT_PASSWORD)." | tee -a "$DRILL_LOG"
             DRILL_FAILURES+=("STEP4: DB 연결 실패 (경고)")
-        elif [[ "$EMP_COUNT" -lt 1 ]]; then
-            echo "[ERROR] Employee 레코드가 없습니다. 복원이 올바르지 않습니다." | tee -a "$DRILL_LOG" >&2
+        elif [[ "$COMPANY_COUNT" -lt 1 ]]; then
+            echo "[ERROR] Company 레코드가 없습니다. 복원이 올바르지 않습니다." | tee -a "$DRILL_LOG" >&2
             DRILL_PASS=false
-            DRILL_FAILURES+=("STEP4: Employee 레코드 없음 (복원 실패)")
+            DRILL_FAILURES+=("STEP4: Company 레코드 없음 (복원 실패)")
         else
-            echo "[OK] Employee 레코드 확인: $EMP_COUNT 건" | tee -a "$DRILL_LOG"
+            echo "[OK] 복원 무결성 확인: Company $COMPANY_COUNT 건, Employee $EMP_COUNT 건" | tee -a "$DRILL_LOG"
         fi
     fi
 fi

@@ -430,7 +430,9 @@ def verify_googlechat_jwt(token: str, project_number: str) -> bool:
             issuer=_GC_ISSUER,
         )
         return True
-    except Exception:  # ImportError·서명불일치·만료·aud/iss 불일치 모두 거절
+    except Exception as error:  # ImportError·서명불일치·만료·aud/iss 불일치 모두 거절
+        # 토큰 원문은 절대 로깅하지 않는다 — 예외 유형·메시지만 (디버깅용)
+        print(f"googlechat jwt reject: {type(error).__name__}: {error}", flush=True)
         return False
 
 

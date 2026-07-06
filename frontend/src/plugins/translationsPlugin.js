@@ -20,9 +20,11 @@ export async function fetchTranslationMessages(win) {
 		try {
 			const response = await win.fetch(url)
 			if (!response.ok) continue
-			const payload = await response.json()
+			let payload = await response.json()
 			// HTTP 200 이어도 frappe 예외 페이로드일 수 있다 — 다음 후보로.
 			if (!payload || typeof payload !== "object" || payload.exc_type) continue
+			// frappe whitelisted 메서드는 {message: {...}} 로 래핑해 반환한다 — 언랩.
+			if (payload.message && typeof payload.message === "object") payload = payload.message
 			return payload
 		} catch (error) {
 			console.error(`Failed to fetch translations via ${method}:`, error)

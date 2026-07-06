@@ -91,6 +91,17 @@ describe("fetchTranslationMessages", () => {
 		assert.equal(messages.Status, "상태")
 	})
 
+	test("frappe whitelisted 응답의 {message:{...}} 래핑을 언랩한다", async () => {
+		const win = makeWin({
+			boot: { lang: "ko" },
+			responses: {
+				"frappe.translate.get_boot_translations": { body: { message: { "Request Attendance": "요청 출근기록" } } },
+			},
+		})
+		const messages = await fetchTranslationMessages(win)
+		assert.equal(messages["Request Attendance"], "요청 출근기록")
+	})
+
 	test("전 후보 실패 시 빈 객체 (UI는 원문 폴백)", async () => {
 		const win = makeWin({ boot: { lang: "ko" }, responses: {} })
 		const messages = await fetchTranslationMessages(win)

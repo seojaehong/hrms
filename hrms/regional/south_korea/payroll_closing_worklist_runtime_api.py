@@ -67,13 +67,19 @@ def _whitelist(fn):
 @_whitelist
 def list_korea_payroll_closing_worklist_runtime(
 	*,
-	company: Any,
+	company: Any = None,
 	workplaces: Any | None = None,
 	limit: Any = DEFAULT_LIMIT,
 ) -> dict[str, Any]:
-	"""Return a scoped operator worklist from persisted payroll closing drafts."""
+	"""Return a scoped operator worklist from persisted payroll closing drafts.
+
+	company 미지정 시 Global Defaults default_company로 폴백한다
+	(PWA가 ?company= 딥링크 없이 진입하는 기본 동선 지원).
+	"""
 
 	_runtime_required()
+	if company is None:
+		company = frappe.db.get_single_value("Global Defaults", "default_company")  # type: ignore[union-attr]
 	company_text = _require_text(company, "company")
 	workplace_payloads = None if workplaces is None else deepcopy(_coerce_list(workplaces, "workplaces"))
 	limit_value = _coerce_limit(limit)

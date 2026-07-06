@@ -41,7 +41,7 @@ export function ensureKoreaPayrollClosingFrappeCallRuntime(win = globalThis.wind
 	return true
 }
 
-export function getKoreaPayrollClosingRuntimeCompany(win = globalThis.window, fallbackCompany = "Korea Demo Franchise Co") {
+export function getKoreaPayrollClosingRuntimeCompany(win = globalThis.window, fallbackCompany = undefined) {
 	const candidateCompanies = [
 		win?.frappe?.boot?.user?.company,
 		win?.frappe?.boot?.user?.defaults?.company,
@@ -63,7 +63,7 @@ export function getKoreaPayrollClosingRuntimeCompany(win = globalThis.window, fa
 
 export async function loadKoreaAdminDashboardRuntime({
 	win = globalThis.window,
-	fallbackCompany = "Korea Demo Franchise Co",
+	fallbackCompany,
 	workplaces,
 } = {}) {
 	ensureKoreaPayrollClosingFrappeCallRuntime(win)
@@ -72,7 +72,8 @@ export async function loadKoreaAdminDashboardRuntime({
 	}
 
 	const company = getKoreaPayrollClosingRuntimeCompany(win, fallbackCompany)
-	const args = { company }
+	const args = {}
+	if (company) args.company = company // 미해결 시 생략 — 서버가 Global Defaults default_company로 폴백
 	if (Array.isArray(workplaces) && workplaces.length) args.workplaces = JSON.stringify(workplaces)
 
 	const response = await win.frappe.call({
@@ -105,7 +106,7 @@ export function assertKoreaAdminDashboardRuntime(data) {
 
 export async function loadKoreaPayrollClosingRuntimeWorklist({
 	win = globalThis.window,
-	fallbackCompany = "Korea Demo Franchise Co",
+	fallbackCompany,
 	workplaces,
 	limit,
 } = {}) {
@@ -115,7 +116,8 @@ export async function loadKoreaPayrollClosingRuntimeWorklist({
 	}
 
 	const company = getKoreaPayrollClosingRuntimeCompany(win, fallbackCompany)
-	const args = { company }
+	const args = {}
+	if (company) args.company = company // 미해결 시 생략 — 서버 Global Defaults 폴백
 	if (Array.isArray(workplaces) && workplaces.length) args.workplaces = JSON.stringify(workplaces)
 	if (limit !== undefined) args.limit = limit
 

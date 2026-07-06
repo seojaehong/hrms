@@ -200,7 +200,8 @@ const runtimeError = ref("")
 const runtimeWorklistError = ref("")
 const requestedCompany = computed(() => {
 	const company = route.query.company
-	return typeof company === "string" && company.trim() ? company.trim() : fixture.company
+	// 쿼리 없으면 빈 값 유지 — 런타임 로더가 company를 생략해 서버 Global Defaults 폴백을 태운다
+	return typeof company === "string" && company.trim() ? company.trim() : ""
 })
 const activeWorklist = computed(() => (hasKoreaPayrollClosingRuntimeWorklistData(runtimeWorklist.value) ? runtimeWorklist.value : fixture))
 const selectedSession = computed(() => buildSessionPreview(findActiveSessionItem(route.params.name)))
@@ -211,7 +212,7 @@ const runtimeUiState = computed(() => getKoreaPayrollClosingRuntimeUiState({
 	runtimeWorklist: runtimeWorklist.value,
 	runtimeLoading: runtimeLoading.value,
 }))
-const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || requestedCompany.value)
+const activeCompany = computed(() => runtimeWorklist.value?.company || runtimeDashboard.value?.company || requestedCompany.value || fixture.company)
 const dataSourceLabel = computed(() => runtimeUiState.value.dataSourceLabel)
 const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {

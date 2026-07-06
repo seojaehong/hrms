@@ -35,10 +35,15 @@ def _whitelist(fn):
 
 
 @_whitelist
-def get_korea_admin_dashboard_runtime(*, company: Any, workplaces: Any | None = None) -> dict[str, Any]:
-	"""Return read-only operator dashboard cards from persisted Korea runtime rows."""
+def get_korea_admin_dashboard_runtime(*, company: Any = None, workplaces: Any | None = None) -> dict[str, Any]:
+	"""Return read-only operator dashboard cards from persisted Korea runtime rows.
+
+	company 미지정 시 Global Defaults default_company로 폴백한다.
+	"""
 
 	_runtime_required()
+	if company is None:
+		company = frappe.db.get_single_value("Global Defaults", "default_company")  # type: ignore[union-attr]
 	company_text = _require_text(company, "company")
 	workplace_payloads = None if workplaces is None else _coerce_workplaces(workplaces)
 	_require_runtime_read_access()

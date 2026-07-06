@@ -328,5 +328,27 @@ class TestKoreaPayrollClosingWorklistRuntimeApi(unittest.TestCase):
 			module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
 
 
+
+class TestDefaultCompanyFallback(unittest.TestCase):
+	def test_company_omitted_falls_back_to_global_defaults(self):
+		"""company 미지정 시 Global Defaults default_company로 조회한다 (PWA 딥링크 없이 진입)."""
+		fake_frappe = FakeFrappe([])
+		import types
+		fake_frappe.db = types.SimpleNamespace(
+			get_single_value=lambda doctype, field: "노호" if (doctype, field) == ("Global Defaults", "default_company") else None
+		)
+		module = load_module(fake_frappe)
+		result = module.list_korea_payroll_closing_worklist_runtime(company=None)
+		self.assertEqual(result["company"], "노호")
+
+	def test_company_omitted_without_default_raises(self):
+		fake_frappe = FakeFrappe([])
+		import types
+		fake_frappe.db = types.SimpleNamespace(get_single_value=lambda doctype, field: None)
+		module = load_module(fake_frappe)
+		with self.assertRaises(ValueError):
+			module.list_korea_payroll_closing_worklist_runtime(company=None)
+
+
 if __name__ == "__main__":
 	unittest.main()

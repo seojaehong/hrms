@@ -69,6 +69,27 @@ assert.equal(
 )
 assert.equal(getKoreaPayrollClosingRuntimeCompany({}, "Fallback Co"), "Fallback Co")
 
+// 폴백 미지정 + boot 후보 없음 → undefined (loader가 company 파라미터를 생략해 서버 Global Defaults 폴백을 태운다)
+assert.equal(getKoreaPayrollClosingRuntimeCompany({}), undefined)
+
+// company 미해결 시 loader는 args에서 company를 생략한다 (서버 기본값 위임)
+{
+	const calls = []
+	const win = {
+		location: { origin: "https://noho.safeclaw.kr" },
+		frappe: {
+			call: async ({ method, args }) => {
+				calls.push({ method, args })
+				return { message: { contract_type: "korea_admin_dashboard_runtime_api_v1", runtime_action: "runtime_read_only", requires_runtime_apply: false, company: "노호", workplaces: [], metrics: {}, dashboard: {} } }
+			},
+		},
+	}
+	const r = await loadKoreaAdminDashboardRuntime({ win })
+	assert.equal(r.data.company, "노호")
+	assert.ok(!("company" in calls[0].args), "company must be omitted when unresolved")
+}
+
+
 const calls = []
 const runtimeWindow = {
 	frappe: {

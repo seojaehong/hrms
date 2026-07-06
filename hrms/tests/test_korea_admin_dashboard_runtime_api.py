@@ -200,5 +200,15 @@ class TestKoreaAdminDashboardRuntimeApi(unittest.TestCase):
 		return False
 
 
+
+class TestAdminDashboardDefaultCompany(unittest.TestCase):
+	def test_company_omitted_falls_back_to_global_defaults(self):
+		fake_frappe = FakeFrappe({})
+		fake_frappe.db.get_single_value = lambda doctype, field: "노호" if (doctype, field) == ("Global Defaults", "default_company") else None
+		module = load_module(fake_frappe)
+		result = module.get_korea_admin_dashboard_runtime(company=None)
+		self.assertEqual(result["company"], "노호")
+
+
 if __name__ == "__main__":
 	unittest.main()

@@ -85,12 +85,12 @@ msgstr "<hr>"
 #. Header text in the Payroll Workspace
 #: hrms/payroll/workspace/payroll/payroll.json
 msgid "<span class=\"h4\"><b>Transactions &amp; Reports</b></span>"
-msgstr ""
+msgstr "<span class=\"h4\"><b>거래 내역 및 보고서</b></span>"
 
 #. Header text in the Shift & Attendance Workspace
 #: hrms/hr/workspace/shift_&_attendance/shift_&_attendance.json
 msgid "<span style=\"font-size: 18px;\"><b>Masters &amp; Reports</b></span>"
-msgstr ""
+msgstr "<span style=\"font-size: 18px;\"><b>기준정보 및 보고서</b></span>"
 
 #: hrms/public/js/utils/index.js:166
 msgid "<table class='table table-bordered'><tr><th>{0}</th><th>{1}</th></tr>"
@@ -3892,6 +3892,11 @@ msgstr "경비 세금 및 비용"
 msgid "Expense Type"
 msgstr "경비 유형"
 
+#: frontend/src/components/BottomTabs.vue:58
+#: frontend/src/components/ExpensesTable.vue:4
+msgid "Expenses"
+msgstr "경비"
+
 #. Label of the expenses_and_advances_tab (Tab Break) field in DocType 'Expense
 #. Claim'
 #: hrms/hr/doctype/expense_claim/expense_claim.json
@@ -4742,6 +4747,10 @@ msgstr "이번 달 공휴일"
 #: hrms/controllers/employee_reminders.py:65
 msgid "Holidays this Week."
 msgstr "이번 주 공휴일"
+
+#: frontend/src/components/BottomTabs.vue:43
+msgid "Home"
+msgstr "홈"
 
 #. Label of the horizontal_break (HTML) field in DocType 'Employee Attendance
 #. Tool'
@@ -6790,6 +6799,9 @@ msgstr "내 청구"
 msgid "My Leaves"
 msgstr "내 휴가"
 
+msgid "My Profile"
+msgstr "내 프로필"
+
 #: frontend/src/components/RequestPanel.vue:36
 msgid "My Requests"
 msgstr "내 요청"
@@ -7152,6 +7164,10 @@ msgstr "예고기간"
 #: hrms/hr/doctype/exit_interview/exit_interview.py:156
 msgid "Notification Template"
 msgstr "알림 템플릿"
+
+#: frontend/src/views/Notifications.vue:17
+msgid "Notifications"
+msgstr "알림"
 
 #. Label of the notify_users_by_email (Check) field in DocType 'Employee
 #. Onboarding'
@@ -8763,11 +8779,11 @@ msgstr "보고 대상"
 
 #: frontend/src/views/Home.vue:32 frontend/src/views/attendance/Dashboard.vue:9
 msgid "Request Attendance"
-msgstr "요청 출근기록"
+msgstr "출근기록 신청"
 
 #: frontend/src/views/Home.vue:42
 msgid "Request Leave"
-msgstr "요청 휴가"
+msgstr "휴가 신청"
 
 #: frontend/src/views/leave/Dashboard.vue:17
 msgid "Request a Leave"
@@ -8776,12 +8792,12 @@ msgstr "휴가 요청"
 #: frontend/src/views/Home.vue:37
 #: frontend/src/views/attendance/Dashboard.vue:35
 msgid "Request a Shift"
-msgstr "교대 요청"
+msgstr "교대근무 신청"
 
 #: frontend/src/components/EmployeeAdvanceBalance.vue:21
 #: frontend/src/views/Home.vue:52
 msgid "Request an Advance"
-msgstr "선급금 요청"
+msgstr "선급금 신청"
 
 #. Label of the requested_by (Link) field in DocType 'Job Requisition'
 #. Label of the section_break_7 (Section Break) field in DocType 'Job
@@ -9018,6 +9034,10 @@ msgstr "행 {0}: 경비청구를 처리하려면 경비 표에 {1}이(가) 필�
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Safety Boundary"
 msgstr "안전 경계"
+
+#: frontend/src/components/BottomTabs.vue:63
+msgid "Salary"
+msgstr "급여"
 
 #. Label of the salary_component (Link) field in DocType 'Overtime Salary
 #. Component'
@@ -11321,7 +11341,7 @@ msgstr "미사용 휴가"
 
 #: frontend/src/components/Holidays.vue:4
 msgid "Upcoming Holidays"
-msgstr "다가오는 휴일들"
+msgstr "다가오는 공휴일"
 
 #: hrms/controllers/employee_reminders.py:69
 msgid "Upcoming Holidays Reminder"

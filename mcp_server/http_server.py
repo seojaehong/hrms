@@ -471,9 +471,36 @@ async def handle_googlechat(scope, receive, send) -> None:
         await _json_response(send, 401, {"error": "bad_signature"})
         return
     payload = json.loads(body or b"{}")
+    greeting = "안녕하세요, AI HR 담당자입니다. 노동법·HR 질문을 그대로 입력하세요. (/help 로 도움말)"
+
+    chat_event = payload.get("chat")
+    if chat_event is not None:
+        # 부가기능형(Workspace add-on) 이벤트 — 응답은 hostAppDataAction 래핑 필수
+        def _addon_reply(text: str) -> dict:
+            return {"hostAppDataAction": {"chatDataAction": {"createMessageAction": {"message": {"text": text[:4000]}}}}}
+
+        if "addedToSpacePayload" in chat_event:
+            space = str(((chat_event.get("addedToSpacePayload") or {}).get("space") or {}).get("name", ""))
+            print(f"googlechat added to space: {space}", flush=True)
+            await _json_response(send, 200, _addon_reply(greeting))
+            return
+        message_payload = chat_event.get("messagePayload") or {}
+        space = str((message_payload.get("space") or {}).get("name", ""))
+        binding = _load_channel_bindings(GOOGLECHAT_BINDINGS).get(space)
+        if not binding:
+            # 온보딩용: 미바인딩 스페이스 식별자를 로그에 남겨 바인딩 등록을 돕는다 (PII 없음)
+            print(f"googlechat unbound space: {space}", flush=True)
+            await _json_response(send, 200, _addon_reply("이 대화는 아직 연결되지 않았습니다."))  # fail-closed
+            return
+        text = (message_payload.get("message") or {}).get("text", "")
+        reply = _channel_reply(text, binding)
+        await _json_response(send, 200, _addon_reply(reply))
+        return
+
+    # 독립 Chat 앱 이벤트 (레거시 스키마)
     event_type = payload.get("type")
     if event_type == "ADDED_TO_SPACE":
-        await _json_response(send, 200, {"text": "안녕하세요, AI HR 담당자입니다. 노동법·HR 질문을 그대로 입력하세요. (/help 로 도움말)"})
+        await _json_response(send, 200, {"text": greeting})
         return
     if event_type != "MESSAGE":
         await _json_response(send, 200, {})
@@ -481,9 +508,7 @@ async def handle_googlechat(scope, receive, send) -> None:
     space = str((payload.get("space") or {}).get("name", ""))  # 예: spaces/AAAA
     binding = _load_channel_bindings(GOOGLECHAT_BINDINGS).get(space)
     if not binding:
-        # 온보딩용: 미바인딩 스페이스 식별자를 로그에 남겨 바인딩 등록을 돕는다 (PII 없음)
-        sender = str(((payload.get("message") or {}).get("sender") or {}).get("displayName", ""))
-        print(f"googlechat unbound space: {space} (sender: {sender})", flush=True)
+        print(f"googlechat unbound space: {space}", flush=True)
         await _json_response(send, 200, {"text": "이 대화는 아직 연결되지 않았습니다."})  # fail-closed
         return
     text = (payload.get("message") or {}).get("text", "")

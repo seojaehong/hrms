@@ -12432,3 +12432,9 @@ msgstr "{0}일"
 #: hrms/hr/doctype/job_requisition/job_requisition.js:22
 msgid "{} {} open for this position."
 msgstr "이 직위에 {} {} 열려 있습니다."
+
+msgid "Login to Korea HRMS"
+msgstr "Korea HRMS 로그인"
+
+msgid "Korea HRMS"
+msgstr "Korea HRMS"

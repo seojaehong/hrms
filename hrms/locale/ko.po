@@ -9293,7 +9293,7 @@ msgstr "{0}부터 {1}까지의 급여명세서가 제출되었습니다"
 #: hrms/payroll/workspace/payroll/payroll.json
 #: hrms/workspace_sidebar/payroll.json
 msgid "Salary Structure"
-msgstr "급여구조"
+msgstr "급여 구조"
 
 #. Name of a DocType
 #. Label of a Link in the Payroll Workspace
@@ -12438,3 +12438,78 @@ msgstr "Korea HRMS 로그인"
 
 msgid "Korea HRMS"
 msgstr "Korea HRMS"
+
+msgid "Status"
+msgstr "상태"
+
+msgid "Draft"
+msgstr "임시저장"
+
+msgid "Submitted"
+msgstr "제출됨"
+
+msgid "Cancelled"
+msgstr "취소됨"
+
+msgid "Department"
+msgstr "부서"
+
+msgid "Designation"
+msgstr "직위"
+
+msgid "Full Name"
+msgstr "이름"
+
+msgid "Created On"
+msgstr "생성일"
+
+msgid "Last Updated On"
+msgstr "최종 수정일"
+
+msgid "Filter"
+msgstr "필터"
+
+msgid "Filters"
+msgstr "필터"
+
+msgid "List View"
+msgstr "목록 보기"
+
+msgid "Default Layout"
+msgstr "기본 레이아웃"
+
+msgid "Reports"
+msgstr "리포트"
+
+msgid "Notification"
+msgstr "알림"
+
+msgid "Getting Started"
+msgstr "시작 안내"
+
+msgid "Search"
+msgstr "검색"
+
+msgid "Company"
+msgstr "회사"
+
+msgid "Posting Date"
+msgstr "게시일"
+
+msgid "Employee Name"
+msgstr "직원 이름"
+
+msgid "Active"
+msgstr "재직"
+
+msgid "Inactive"
+msgstr "비활성"
+
+msgid "Add Employee"
+msgstr "직원 추가"
+
+msgid "Workspaces"
+msgstr "워크스페이스"
+
+msgid "Edit"
+msgstr "편집"

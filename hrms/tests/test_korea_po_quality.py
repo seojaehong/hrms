@@ -93,6 +93,15 @@ class TestKoreaPoTranslationQuality(unittest.TestCase):
         "Salary Slips": "급여명세서",
         "Leave Balance": "휴가 잔여",
         "Upcoming Holidays": "다가오는 공휴일",
+        # 데스크 노출 코어 문자열 (frappe ko 누락분 — 노호 런칭 검증에서 실측)
+        "Status": "상태",
+        "Draft": "임시저장",
+        "Department": "부서",
+        "Full Name": "이름",
+        "Reports": "리포트",
+        "Notification": "알림",
+        "Getting Started": "시작 안내",
+        "Login to Korea HRMS": "Korea HRMS 로그인",
     }
 
     @classmethod

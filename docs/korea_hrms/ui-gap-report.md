@@ -24,7 +24,7 @@
 | 마감 대시보드 데모 폴백 | 노호에 Payroll Entry·마감 Draft가 없어 "Korea Demo Franchise Co" 예시 데이터 표시 (배너로 고지는 됨) | **6월 급여부터 Payroll Entry 경유 실플로우** 태워 실데이터 대시보드 전환. 밤중 실DB 시드는 위험해 보류 |
 | 5월 슬립 32건 전부 Draft(미제출) | docstatus=0 | 노호 확정 후 일괄 Submit 운영 절차 확정 (제출=확정 의미 공유 필요) |
 | 통화 표기 "KRW 95.94 M" | 서구식 축약 | 한국식 "9,594만" 포맷터 커스텀 |
-| Frappe 코어 영문 잔존 | Status/Draft/Department/Reports/Default Layout 등 (frappe 앱 번역 범위) | frappe ko.po 보강분 upstream 기여 or 사이트 Translation 보충 |
+| Frappe 코어 영문 잔존 | ~~Status/Draft/Department 등~~ → **07-07 코어 25종 hrms ko.po로 해소**. 잔여: "Add 직원"·"Filters" 등 조합 문자열 | frappe 코어 템플릿 문자열 — upstream 기여 대상 |
 | AI Q&A 붙여쓴 질문 미매칭 | "수습기간중인직원도주휴수당을줘야하나요"(무공백) → 법령/판례 못 찾음. fail-safe 안내+딥링크는 정상 | retrieval 전처리에 한국어 형태소/공백 정규화 추가. AI v2(call_llm_with_context)에서 근본 해결 |
 
 ### B2. 브랜딩/폴리시 (브랜드 확정 후)
@@ -45,3 +45,10 @@
 - 신고서: 승인게이트 blocked(정상) · 빈대상 fail-closed(정상) · 취득 5월 5명 실생성 OK (rrn_missing 처리 확인)
 - 명세서 PDF: frappe.get_print 30.6KB 정상 생성
 - 채널: 텔레그램(기존 가동) + **구글챗 신규 실가동** (JWT 이중모드·부가기능 스키마·바인딩 2건)
+
+
+## D. 07-07 추가 라운드 (담당자 피드백 반영)
+- 담당자 계정 전환: **문종원 moon@noho.im** (HR Manager, 데스크용 — 직원명단에 없어 PWA 미적용) / 류두선 ryoo@noho.im 보조(PWA 가능)
+- **급여 외 기능 숨김**: 노호 사용자 3계정에 20개 모듈 차단 (영업·구매·재고·제조·CRM·자산·프로젝트·회계 등) — 데스크 사이드바·앱 아이콘 정리됨
+- 데스크 코어 영문 25종 ko 번역 추가 (상태·임시저장·부서·이름·지점·재직 등) — 직원/명세서 목록 사실상 전면 한글화
+- **DESIGN.md 신설** (google-labs-code/design.md 포맷): Korea HRMS 디자인 토큰 + Figma 레퍼런스 채택/기각 근거. P2 디자인 스프린트의 SSOT

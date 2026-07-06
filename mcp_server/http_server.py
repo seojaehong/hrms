@@ -281,6 +281,8 @@ SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_BINDINGS = os.environ.get("KCHRMS_SLACK_BINDINGS", "")
 DISCORD_PUBLIC_KEY = os.environ.get("DISCORD_PUBLIC_KEY", "")
 DISCORD_BINDINGS = os.environ.get("KCHRMS_DISCORD_BINDINGS", "")
+GOOGLECHAT_PROJECT_NUMBER = os.environ.get("GOOGLECHAT_PROJECT_NUMBER", "")
+GOOGLECHAT_BINDINGS = os.environ.get("KCHRMS_GOOGLECHAT_BINDINGS", "")
 
 
 def _load_channel_bindings(path: str) -> dict:
@@ -381,6 +383,87 @@ async def handle_discord(scope, receive, send) -> None:
     await _json_response(send, 200, {"type": 1})
 
 
+# ── 구글챗(Google Chat) 채널 엔드포인트 (env-gated — 키 없으면 503) ──────────
+# 구글챗 HTTP 봇은 요청마다 Authorization: Bearer <JWT>를 보낸다.
+#   issuer  = chat@system.gserviceaccount.com
+#   audience= 프로젝트 번호(GOOGLECHAT_PROJECT_NUMBER)
+#   서명    = RS256, 공개 x509 인증서는 아래 URL(주기적 로테이션)에서 제공.
+# 동기 응답: 200 + {"text": ...} 를 반환하면 봇 메시지로 게시된다.
+_GC_CERTS_URL = (
+    "https://www.googleapis.com/service_accounts/v1/metadata/x509/chat@system.gserviceaccount.com"
+)
+_GC_ISSUER = "chat@system.gserviceaccount.com"
+_gc_cert_cache: dict[str, Any] = {"certs": {}, "fetched_at": 0.0}
+
+
+def _gc_public_certs() -> dict:
+    """구글 x509 인증서 {kid: PEM} 조회. 1시간 캐시(로테이션 대비)."""
+    import time as _time
+
+    now = _time.time()
+    if now - _gc_cert_cache["fetched_at"] > 3600 or not _gc_cert_cache["certs"]:
+        with urllib.request.urlopen(_GC_CERTS_URL, timeout=10) as response:
+            _gc_cert_cache["certs"] = json.load(response)
+            _gc_cert_cache["fetched_at"] = now
+    return _gc_cert_cache["certs"]
+
+
+def verify_googlechat_jwt(token: str, project_number: str) -> bool:
+    """구글챗 JWT 검증(RS256). 라이브러리·인증서 없거나 실패 시 False(fail-closed)."""
+    if not token:
+        return False
+    try:
+        import jwt  # PyJWT
+        from cryptography.x509 import load_pem_x509_certificate
+
+        certs = _gc_public_certs()
+        kid = jwt.get_unverified_header(token).get("kid", "")
+        pem = certs.get(kid)
+        if not pem:
+            return False
+        public_key = load_pem_x509_certificate(pem.encode()).public_key()
+        jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=str(project_number),
+            issuer=_GC_ISSUER,
+        )
+        return True
+    except Exception:  # ImportError·서명불일치·만료·aud/iss 불일치 모두 거절
+        return False
+
+
+async def handle_googlechat(scope, receive, send) -> None:
+    """Google Chat 이벤트 — ADDED_TO_SPACE 인사 + MESSAGE 응답. 바인딩: space.name→테넌트."""
+    if not (GOOGLECHAT_PROJECT_NUMBER and GOOGLECHAT_BINDINGS):
+        await _json_response(send, 503, {"error": "googlechat_disabled"})
+        return
+    headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+    body = await _read_body(receive)
+    auth = headers.get("authorization", "")
+    bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if not verify_googlechat_jwt(bearer, GOOGLECHAT_PROJECT_NUMBER):
+        await _json_response(send, 401, {"error": "bad_signature"})
+        return
+    payload = json.loads(body or b"{}")
+    event_type = payload.get("type")
+    if event_type == "ADDED_TO_SPACE":
+        await _json_response(send, 200, {"text": "안녕하세요, AI HR 담당자입니다. 노동법·HR 질문을 그대로 입력하세요. (/help 로 도움말)"})
+        return
+    if event_type != "MESSAGE":
+        await _json_response(send, 200, {})
+        return
+    space = str((payload.get("space") or {}).get("name", ""))  # 예: spaces/AAAA
+    binding = _load_channel_bindings(GOOGLECHAT_BINDINGS).get(space)
+    if not binding:
+        await _json_response(send, 200, {"text": "이 대화는 아직 연결되지 않았습니다."})  # fail-closed
+        return
+    text = (payload.get("message") or {}).get("text", "")
+    reply = _channel_reply(text, binding)
+    await _json_response(send, 200, {"text": reply[:4000]})
+
+
 # ── ASGI: Bearer 인증 미들웨어로 FastMCP streamable HTTP 앱을 감싼다 ──────────
 _inner_app = mcp.streamable_http_app()
 
@@ -398,6 +481,9 @@ async def app(scope, receive, send):
         return
     if path == "/discord/interactions":
         await handle_discord(scope, receive, send)
+        return
+    if path == "/googlechat/events":
+        await handle_googlechat(scope, receive, send)
         return
     headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
     auth = headers.get("authorization", "")

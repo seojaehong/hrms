@@ -1,4 +1,4 @@
-# Korea HRMS AI HR 담당자 — 메일 커넥터 (Plane 2-③, 4채널 중 메일).
+# Korea HRMS AI HR 담당자 — 메일 커넥터 (Plane 2-③, 5채널 중 메일).
 #
 # IMAP 미확인 메일을 폴링해 발신자 주소 ↔ 테넌트 바인딩으로 라우팅하고,
 # channel_core 답변을 SMTP로 회신한다. 미바인딩 발신자는 무응답(fail-closed).

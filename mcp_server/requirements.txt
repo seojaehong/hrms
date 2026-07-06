@@ -1,3 +1,5 @@
 mcp>=1.2
 uvicorn
 pynacl
+pyjwt
+cryptography

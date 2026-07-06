@@ -38,7 +38,7 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 ## 접속 정보 (노호 전달용)
 - 주소: `https://noho.safeclaw.kr` (모바일 PWA: `/hrms`)
 - 관리자: `admin@noho.kr` / 임시 비번은 별도 전달분 — **최초 로그인 즉시 변경**
-- AI HR 담당자: 텔레그램 (현재 사장님 채팅 바인딩, 노호 담당자 추가는 `~/.korea-hrms-mcp/tg-bindings.json`)
+- AI HR 담당자: 텔레그램 (현재 사장님 채팅 바인딩, 노호 담당자 추가는 `~/.korea-hrms-mcp/tg-bindings.json`). 5채널(텔레그램·메일·슬랙·디스코드·구글챗) 연결·바인딩 정리는 `docs/korea_hrms/ai-hr-channels.md`
 
 ## 지금 이미 돌아가는 것 (아무 것도 안 해도)
 크론 5종(일일 전사이트 백업·5분 스모크→텔레그램 경보·5분 가입 워커·월간 복구 드릴·월간 사용량/SLA 리포트) + systemd 2종(AI 게이트웨이·텔레그램 커넥터).

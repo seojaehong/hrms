@@ -2,7 +2,7 @@
 #
 # 봇 계정 1개가 멀티테넌트를 서빙한다(불변식 3): chat_id ↔ 테넌트 바인딩 파일로
 # 라우팅하고, 바인딩 없는 채팅은 응답하지 않는다(fail-closed).
-# 응답 로직은 channel_core(4채널 공용)에 위임한다.
+# 응답 로직은 channel_core(5채널 공용)에 위임한다.
 #
 # 실행(systemd): TELEGRAM_BOT_TOKEN=... KCHRMS_TG_BINDINGS=~/.korea-hrms-mcp/tg-bindings.json \
 #   python3 mcp_server/telegram_connector.py

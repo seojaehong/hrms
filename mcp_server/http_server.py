@@ -457,6 +457,9 @@ async def handle_googlechat(scope, receive, send) -> None:
     space = str((payload.get("space") or {}).get("name", ""))  # 예: spaces/AAAA
     binding = _load_channel_bindings(GOOGLECHAT_BINDINGS).get(space)
     if not binding:
+        # 온보딩용: 미바인딩 스페이스 식별자를 로그에 남겨 바인딩 등록을 돕는다 (PII 없음)
+        sender = str(((payload.get("message") or {}).get("sender") or {}).get("displayName", ""))
+        print(f"googlechat unbound space: {space} (sender: {sender})", flush=True)
         await _json_response(send, 200, {"text": "이 대화는 아직 연결되지 않았습니다."})  # fail-closed
         return
     text = (payload.get("message") or {}).get("text", "")

@@ -420,6 +420,8 @@ def verify_googlechat_jwt(token: str, project_number: str) -> bool:
         kid = jwt.get_unverified_header(token).get("kid", "")
         pem = certs.get(kid)
         if not pem:
+            claims = jwt.decode(token, options={"verify_signature": False})
+            print(f"googlechat kid-miss: kid={kid[:12]} iss={claims.get('iss')} aud={claims.get('aud')}", flush=True)
             return False
         public_key = load_pem_x509_certificate(pem.encode()).public_key()
         jwt.decode(

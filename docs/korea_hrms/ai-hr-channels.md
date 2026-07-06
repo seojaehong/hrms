@@ -21,7 +21,7 @@
 | 메일 | 독립 systemd 프로세스 | `mail_connector.py` | 발신자 이메일 | `KCHRMS_MAIL_BINDINGS` | IMAP/SMTP 계정 |
 | 슬랙 | `http_server` `/slack/events` | `handle_slack` | 채널 ID | `KCHRMS_SLACK_BINDINGS` | v0 서명(`SLACK_SIGNING_SECRET`) |
 | 디스코드 | `http_server` `/discord/interactions` | `handle_discord` | 채널 ID | `KCHRMS_DISCORD_BINDINGS` | ed25519(`DISCORD_PUBLIC_KEY`) |
-| **구글챗** | `http_server` `/googlechat/events` | `handle_googlechat` | `space.name` (예: `spaces/AAAA`) | `KCHRMS_GOOGLECHAT_BINDINGS` | JWT RS256(`GOOGLECHAT_PROJECT_NUMBER`) |
+| **구글챗** | `http_server` `/googlechat/events` | `handle_googlechat` | `space.name` (예: `spaces/AAAA`) | `KCHRMS_GOOGLECHAT_BINDINGS` | JWT 이중모드(`GOOGLECHAT_PROJECT_NUMBER` + `GOOGLECHAT_AUDIENCE`) |
 
 미설정 채널은 키가 없으면 503(휴면)이라 **고객이 실제 쓰는 채널만 켜면 된다.**
 
@@ -58,16 +58,30 @@
 2. 고객이 쓰는 채널의 바인딩 파일에 `식별자 → {site, label}` 추가.
 3. (파일은 요청마다 로드되므로) 저장 즉시 반영. 봇 재시작 불필요.
 
-## 구글챗 신규 등록 절차 (5번째 채널)
+## 구글챗 등록 절차 (5번째 채널 — 2026-07-06 실가동 검증 완료)
 
-1. Google Cloud Console → 프로젝트의 **Chat API** 사용 설정.
-2. 앱 구성: **Connection settings = App URL(HTTP endpoint)** →
-   `https://<AI 게이트웨이 도메인>/googlechat/events`.
-3. 서버 env(EnvironmentFile)에 주입:
-   - `GOOGLECHAT_PROJECT_NUMBER=<프로젝트 번호(숫자)>`  ← JWT `audience` 검증용
+현재 가동: **winnersbot** (Workspace=노무법인위너스, GCP 프로젝트 번호 962433020697,
+앱 URL `https://ai.safeclaw.kr/googlechat/events`).
+
+1. **Workspace 계정**으로 Google Cloud Console → Chat API 활성 프로젝트에서 앱 구성.
+   (개인 gmail 계정으로는 Chat 앱 구성 불가 — 실측 확인)
+2. Connection settings = **HTTP endpoint URL** → `https://ai.safeclaw.kr/googlechat/events`.
+3. **공개 상태**: "특정 사용자 및 그룹" 체크 + 사용자 등록 — 안 하면 채팅에서 앱 검색 자체가 안 됨.
+4. 서버 env (systemd drop-in `korea-hrms-mcp.service.d/googlechat.conf`):
+   - `GOOGLECHAT_PROJECT_NUMBER=<프로젝트 번호>` — 독립앱 JWT aud + 부가기능 서비스계정 검증
+   - `GOOGLECHAT_AUDIENCE=https://ai.safeclaw.kr/googlechat/events` — **부가기능형 필수** (OIDC aud=앱 URL)
    - `KCHRMS_GOOGLECHAT_BINDINGS=~/.korea-hrms-mcp/googlechat-bindings.json`
-4. `pip install pyjwt cryptography` (requirements.txt에 등재됨) — JWT 서명 검증 라이브러리.
-5. 봇을 스페이스에 초대 → `ADDED_TO_SPACE` 인사 확인 → 스페이스 `name`을 바인딩에 등록.
+5. `pip install pyjwt cryptography` — JWT 서명 검증.
+6. 봇을 스페이스에 초대 → 미바인딩이면 "연결되지 않았습니다" 응답 + 서버 로그에
+   `googlechat unbound space: spaces/XXXX` 기록 → 그 값을 바인딩 파일에 등록 (재시작 불필요).
 
-검증: 서명 실패/라이브러리 부재/aud·iss 불일치는 전부 401 또는 무응답(fail-closed).
+### ⚠️ 부가기능형(Workspace add-on) 챗 앱 주의 (실측으로 확정)
+"이 채팅 앱을 Workspace 부가기능으로 빌드"가 켜진 앱은 **표준 Chat 앱과 프로토콜이 다르다**:
+- 인증: `chat@system` 서명이 아니라 **accounts.google.com OIDC ID 토큰**
+  (aud=앱 URL, email=`service-{프로젝트번호}@gcp-sa-gsuiteaddons.iam.gserviceaccount.com`)
+- 페이로드: `{"chat": {"messagePayload": {...}}}` (표준 `{"type":"MESSAGE",...}` 아님)
+- 응답: `{"hostAppDataAction":{"chatDataAction":{"createMessageAction":{"message":{"text":...}}}}}` 래핑 필수
+`http_server.py`의 `verify_googlechat_jwt`/`handle_googlechat`이 **이중 모드**로 둘 다 처리한다.
+
+검증: 서명 실패/라이브러리 부재/aud·iss 불일치는 전부 401 또는 fail-closed 안내.
 env 미설정이면 `/googlechat/events`는 503.

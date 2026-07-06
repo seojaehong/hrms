@@ -25,6 +25,7 @@
 | 5월 슬립 32건 전부 Draft(미제출) | docstatus=0 | 노호 확정 후 일괄 Submit 운영 절차 확정 (제출=확정 의미 공유 필요) |
 | 통화 표기 "KRW 95.94 M" | 서구식 축약 | 한국식 "9,594만" 포맷터 커스텀 |
 | Frappe 코어 영문 잔존 | Status/Draft/Department/Reports/Default Layout 등 (frappe 앱 번역 범위) | frappe ko.po 보강분 upstream 기여 or 사이트 Translation 보충 |
+| AI Q&A 붙여쓴 질문 미매칭 | "수습기간중인직원도주휴수당을줘야하나요"(무공백) → 법령/판례 못 찾음. fail-safe 안내+딥링크는 정상 | retrieval 전처리에 한국어 형태소/공백 정규화 추가. AI v2(call_llm_with_context)에서 근본 해결 |
 
 ### B2. 브랜딩/폴리시 (브랜드 확정 후)
 | 항목 | 현상 |

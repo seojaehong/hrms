@@ -1,3 +1,36 @@
+// 번역 로딩 — Frappe 버전별 API 이름이 다르다 (노호 런칭 검증에서 발견).
+//   구버전 v15: frappe.translate.get_boot_translations
+//   신버전:     frappe.translate.load_all_translations
+// 한 이름만 부르면 반대 버전에서 조용히 영어 폴백되므로 후보를 순서대로 시도한다.
+export const TRANSLATION_ENDPOINT_CANDIDATES = [
+	"frappe.translate.get_boot_translations",
+	"frappe.translate.load_all_translations",
+]
+
+export async function fetchTranslationMessages(win) {
+	if (win.frappe?.boot?.__messages) {
+		return win.frappe.boot.__messages
+	}
+	const lang = win.frappe?.boot?.lang ?? win.navigator?.language
+	const hash = win.frappe?.boot?.translations_hash || win._version_number || Date.now()
+	for (const method of TRANSLATION_ENDPOINT_CANDIDATES) {
+		const url = new URL(`/api/method/${method}`, win.location.origin)
+		url.searchParams.append("lang", lang)
+		url.searchParams.append("hash", hash) // for cache busting
+		try {
+			const response = await win.fetch(url)
+			if (!response.ok) continue
+			const payload = await response.json()
+			// HTTP 200 이어도 frappe 예외 페이로드일 수 있다 — 다음 후보로.
+			if (!payload || typeof payload !== "object" || payload.exc_type) continue
+			return payload
+		} catch (error) {
+			console.error(`Failed to fetch translations via ${method}:`, error)
+		}
+	}
+	return {}
+}
+
 function makeTranslationFunction() {
 	let messages = {};
 	return {
@@ -9,22 +42,7 @@ function makeTranslationFunction() {
 	}
 
 	async function setup() {
-		if (window.frappe?.boot?.__messages) {
-			messages = window.frappe?.boot?.__messages;
-			return;
-		}
-
-		const url = new URL("/api/method/frappe.translate.load_all_translations", location.origin);
-		url.searchParams.append("lang", window.frappe?.boot?.lang ?? navigator.language);
-		url.searchParams.append("hash", window.frappe?.boot?.translations_hash || window._version_number || Math.random()); // for cache busting
-		// url.searchParams.append("app", "hrms");
-
-		try {
-			const response = await fetch(url);
-			messages = await response.json() || {}
-		} catch (error) {
-			console.error("Failed to fetch translations:", error)
-		}
+		messages = await fetchTranslationMessages(window)
 	}
 
 	function translate(txt, replace, context = null) {

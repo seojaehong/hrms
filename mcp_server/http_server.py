@@ -408,32 +408,52 @@ def _gc_public_certs() -> dict:
     return _gc_cert_cache["certs"]
 
 
+_gc_jwk_client_cache: dict[str, Any] = {}
+
+
+def _gc_jwk_client():
+    """accounts.google.com OIDC JWKS 클라이언트 (PyJWKClient 자체 캐시 사용)."""
+    if "client" not in _gc_jwk_client_cache:
+        import jwt
+
+        _gc_jwk_client_cache["client"] = jwt.PyJWKClient("https://www.googleapis.com/oauth2/v3/certs")
+    return _gc_jwk_client_cache["client"]
+
+
 def verify_googlechat_jwt(token: str, project_number: str) -> bool:
-    """구글챗 JWT 검증(RS256). 라이브러리·인증서 없거나 실패 시 False(fail-closed)."""
+    """구글챗 요청 토큰 검증(RS256, 이중 모드). 실패 시 False(fail-closed).
+
+    ① 독립 Chat 앱: iss=chat@system.gserviceaccount.com, aud=프로젝트 번호.
+    ② Workspace 부가기능형 Chat 앱: accounts.google.com OIDC ID 토큰,
+       aud=엔드포인트 URL(GOOGLECHAT_AUDIENCE), email=서비스계정
+       service-{프로젝트번호}@gcp-sa-gsuiteaddons.iam.gserviceaccount.com.
+    """
     if not token:
         return False
     try:
         import jwt  # PyJWT
         from cryptography.x509 import load_pem_x509_certificate
 
-        certs = _gc_public_certs()
         kid = jwt.get_unverified_header(token).get("kid", "")
+        certs = _gc_public_certs()
         pem = certs.get(kid)
-        if not pem:
-            claims = jwt.decode(token, options={"verify_signature": False})
-            print(f"googlechat kid-miss: kid={kid[:12]} iss={claims.get('iss')} aud={claims.get('aud')}", flush=True)
+        if pem:  # ① 독립 Chat 앱 서명
+            public_key = load_pem_x509_certificate(pem.encode()).public_key()
+            jwt.decode(token, public_key, algorithms=["RS256"], audience=str(project_number), issuer=_GC_ISSUER)
+            return True
+        # ② 부가기능형 — OIDC ID 토큰
+        audience = os.environ.get("GOOGLECHAT_AUDIENCE", "")
+        if not audience:
+            print("googlechat jwt reject: GOOGLECHAT_AUDIENCE unset (add-on token)", flush=True)
             return False
-        public_key = load_pem_x509_certificate(pem.encode()).public_key()
-        jwt.decode(
-            token,
-            public_key,
-            algorithms=["RS256"],
-            audience=str(project_number),
-            issuer=_GC_ISSUER,
+        signing_key = _gc_jwk_client().get_signing_key_from_jwt(token)
+        claims = jwt.decode(
+            token, signing_key.key, algorithms=["RS256"], audience=audience, issuer="https://accounts.google.com"
         )
-        return True
+        expected_email = f"service-{project_number}@gcp-sa-gsuiteaddons.iam.gserviceaccount.com"
+        return claims.get("email_verified") is True and claims.get("email") == expected_email
     except Exception as error:  # ImportError·서명불일치·만료·aud/iss 불일치 모두 거절
-        # 토큰 원문은 절대 로깅하지 않는다 — 예외 유형·메시지만 (디버깅용)
+        # 토큰 원문은 절대 로깅하지 않는다 — 예외 유형·메시지만
         print(f"googlechat jwt reject: {type(error).__name__}: {error}", flush=True)
         return False
 
@@ -447,9 +467,6 @@ async def handle_googlechat(scope, receive, send) -> None:
     body = await _read_body(receive)
     auth = headers.get("authorization", "")
     bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
-    if not bearer:
-        # 디버깅: 헤더 '이름'만 로깅 (값 비로깅 — 토큰·쿠키 보호)
-        print(f"googlechat no-bearer, header names: {sorted(headers.keys())}", flush=True)
     if not verify_googlechat_jwt(bearer, GOOGLECHAT_PROJECT_NUMBER):
         await _json_response(send, 401, {"error": "bad_signature"})
         return
@@ -483,8 +500,6 @@ async def app(scope, receive, send):
         await _inner_app(scope, receive, send)
         return
     path = scope.get("path", "")
-    if "googlechat" in path:
-        print(f"app() saw path={path!r} method={scope.get('method')}", flush=True)
     if path == "/signup":
         await handle_signup(scope, receive, send)
         return

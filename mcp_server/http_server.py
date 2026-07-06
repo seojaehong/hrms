@@ -481,6 +481,8 @@ async def app(scope, receive, send):
         await _inner_app(scope, receive, send)
         return
     path = scope.get("path", "")
+    if "googlechat" in path:
+        print(f"app() saw path={path!r} method={scope.get('method')}", flush=True)
     if path == "/signup":
         await handle_signup(scope, receive, send)
         return

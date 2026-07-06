@@ -445,6 +445,9 @@ async def handle_googlechat(scope, receive, send) -> None:
     body = await _read_body(receive)
     auth = headers.get("authorization", "")
     bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if not bearer:
+        # 디버깅: 헤더 '이름'만 로깅 (값 비로깅 — 토큰·쿠키 보호)
+        print(f"googlechat no-bearer, header names: {sorted(headers.keys())}", flush=True)
     if not verify_googlechat_jwt(bearer, GOOGLECHAT_PROJECT_NUMBER):
         await _json_response(send, 401, {"error": "bad_signature"})
         return

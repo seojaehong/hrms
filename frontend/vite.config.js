@@ -29,8 +29,8 @@ export default defineConfig({
 				// ────────────────────────────────────────────────────────────
 				display: "standalone",
 				orientation: "portrait",
-				name: "노란봉투법 HRMS",
-				short_name: "NBP HRMS",
+				name: "Korea HRMS",
+				short_name: "Korea HRMS",
 				description: "한국 노동법 기반 HR 통합 관리 시스템",
 				start_url: "/hrms",
 				scope: "/hrms",

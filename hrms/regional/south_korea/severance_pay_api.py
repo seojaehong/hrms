@@ -17,6 +17,7 @@ from typing import Any
 
 import frappe
 
+from hrms.regional.south_korea import severance_pay as _severance_core
 from hrms.regional.south_korea.severance_pay import (
     calculate_average_wage,
     calculate_severance_pay,
@@ -128,6 +129,141 @@ def _parse_exclusions(raw: Any, label: str = "exclusions") -> list[tuple[dt.date
 
 
 # ---------------------------------------------------------------------------
+# PWA 사이트 어댑터 (KoreaSeverancePreview 프론트 계약)
+# ---------------------------------------------------------------------------
+
+# 프론트(koreaSeverancePreviewRuntime.js) 요청 계약
+_EMPLOYEE_CONTRACT_KEYS = {"employee", "assumed_retirement_date", "ordinary_wage_override"}
+# frappe RPC 레이어가 varkw 함수에 흘려보낼 수 있는 표준 키 — 계약 판정에서 무시
+_FRAPPE_STD_KEYS = {"cmd", "data", "ignore_permissions"}
+
+
+def build_wage_records_from_salary_slips(slips: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Salary Slip 행 → 코어 wage_records (framework-free 순수 함수).
+
+    각 슬립을 wage_type "base" 1건으로: date=start_date, amount=gross_pay.
+    """
+    records = []
+    for i, slip in enumerate(slips or []):
+        records.append(
+            {
+                "date": _parse_date(slip.get("start_date"), f"slips[{i}].start_date"),
+                "amount": _as_float(slip.get("gross_pay"), f"slips[{i}].gross_pay"),
+                "wage_type": "base",
+            }
+        )
+    return records
+
+
+def map_severance_core_to_preview(
+    *,
+    hire_date: dt.date,
+    assumed_retirement_date: dt.date,
+    avg_result: dict[str, Any],
+    sev_result: dict[str, Any],
+    irp_result: dict[str, Any],
+) -> dict[str, Any]:
+    """코어 응답 → 프론트(KoreaSeverancePreview)가 읽는 키 (framework-free 순수 함수)."""
+    return {
+        "severance_pay": sev_result["severance_pay_amount"],
+        "average_daily_wage": avg_result["average_wage_per_day"],
+        "ordinary_daily_wage": sev_result.get("ordinary_wage_per_day"),
+        "continuous_service_days": sev_result["continuous_service_days"],
+        "date_of_joining": hire_date.isoformat(),
+        "assumed_retirement_date": assumed_retirement_date.isoformat(),
+        "formula_description": sev_result["calculation_formula"],
+        "irp_transfer_amount": irp_result["irp_transfer_amount"],
+        # 코어에는 별도 '이체 한도' 개념이 없어 법정 의무이체 기준액(300만원)을 매핑
+        "irp_transfer_limit": irp_result["irp_mandatory_threshold"],
+    }
+
+
+def _check_employee_scope(employee: str) -> None:
+    """본인(session user 의 Employee) 또는 HR Manager 만 허용. 그 외 PermissionError."""
+    user = getattr(getattr(frappe, "session", None), "user", None)
+    if user == "Administrator":
+        return
+    roles: set[str] = set()
+    get_roles = getattr(frappe, "get_roles", None)
+    if callable(get_roles):
+        roles = set(get_roles(user) if user else get_roles())
+    if "HR Manager" in roles or "System Manager" in roles:
+        return
+    own_employee = frappe.db.get_value("Employee", {"user_id": user}, "name") if user else None
+    if own_employee and own_employee == employee:
+        return
+    exc = getattr(frappe, "PermissionError", PermissionError)
+    raise exc("본인 퇴직금만 미리볼 수 있습니다 (HR Manager 제외)")
+
+
+def _calculate_severance_preview_for_employee(payload: dict[str, Any]) -> dict[str, Any]:
+    """프론트 계약 {employee, assumed_retirement_date, ordinary_wage_override} 처리.
+
+    Employee.date_of_joining + 퇴직 가정일 직전 3개월 Salary Slip(gross_pay)로
+    wage_records 를 구성해 기존 순수 계산 코어에 위임한다.
+    ordinary_wage_override 는 **1일 통상임금** 정의 그대로 전달 (임의 월액 변환 금지).
+    """
+    payload = {k: v for k, v in payload.items() if k not in _FRAPPE_STD_KEYS}
+    _require_keys(payload, {"employee", "assumed_retirement_date"}, "payload")
+    _reject_unknown_keys(payload, _EMPLOYEE_CONTRACT_KEYS, "payload")
+
+    employee = str(payload["employee"]).strip()
+    _check_employee_scope(employee)
+
+    assumed_retirement_date = _parse_date(payload["assumed_retirement_date"], "assumed_retirement_date")
+
+    joining_raw = frappe.db.get_value("Employee", employee, "date_of_joining")
+    if not joining_raw:
+        frappe.throw(f"직원 {employee}의 입사일(date_of_joining)이 없어 계산할 수 없습니다")
+    hire_date = _parse_date(joining_raw, "date_of_joining")
+    if assumed_retirement_date <= hire_date:
+        frappe.throw("가정 퇴직일은 입사일 이후여야 합니다")
+
+    # 퇴직 가정일 직전 3개월 창(start_date 기준) — 코어와 동일한 calendar 역산
+    window_start = _severance_core._three_months_before(assumed_retirement_date)
+    window_end = assumed_retirement_date - dt.timedelta(days=1)
+    slips = frappe.get_all(
+        "Salary Slip",
+        filters={
+            "employee": employee,
+            "docstatus": ["in", [0, 1]],
+            "start_date": ["between", [window_start.isoformat(), window_end.isoformat()]],
+        },
+        fields=["start_date", "gross_pay"],
+        order_by="start_date desc",
+    )
+    if not slips:
+        frappe.throw("급여 이력이 없어 계산할 수 없습니다")
+
+    wage_records = build_wage_records_from_salary_slips([dict(s) for s in slips])
+
+    ordinary_wage_per_day: float | None = None
+    if payload.get("ordinary_wage_override") not in (None, "", 0, "0", "null"):
+        ordinary_wage_per_day = _as_float(payload["ordinary_wage_override"], "ordinary_wage_override")
+
+    avg_result = calculate_average_wage(
+        severance_date=assumed_retirement_date,
+        wage_records=wage_records,
+        hire_date=hire_date,
+    )
+    sev_result = calculate_severance_pay(
+        hire_date=hire_date,
+        severance_date=assumed_retirement_date,
+        average_wage_per_day=avg_result["average_wage_per_day"],
+        ordinary_wage_per_day=ordinary_wage_per_day,
+    )
+    irp_result = estimate_irp_contribution(sev_result["severance_pay_amount"])
+
+    return map_severance_core_to_preview(
+        hire_date=hire_date,
+        assumed_retirement_date=assumed_retirement_date,
+        avg_result=avg_result,
+        sev_result=sev_result,
+        irp_result=irp_result,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Whitelist 엔드포인트
 # ---------------------------------------------------------------------------
 
@@ -162,6 +298,13 @@ def calculate_severance_preview(
         severance_result      dict  calculate_severance_pay 반환값
     """
     payload = _coerce_payload(payload, kwargs)
+
+    # PWA 사이트 어댑터 분기: 프론트는 {employee, assumed_retirement_date,
+    # ordinary_wage_override} 계약으로 호출한다. 기존 payload 계약(hire_date 등)은
+    # 아래 기존 경로 그대로 유지 (비파괴).
+    if isinstance(payload, dict) and "employee" in payload and "hire_date" not in payload:
+        return _calculate_severance_preview_for_employee(payload)
+
     _require_keys(payload, {"hire_date", "severance_date", "wage_records"}, "payload")
     _reject_unknown_keys(
         payload,

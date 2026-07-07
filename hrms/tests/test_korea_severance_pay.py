@@ -782,5 +782,227 @@ class TestSeverancePayApi(unittest.TestCase):
         self.assertEqual(result["severance_result"]["wage_used_reason"], "average")
 
 
+# ---------------------------------------------------------------------------
+# PWA 사이트 어댑터 테스트 — {employee, assumed_retirement_date, ordinary_wage_override}
+# 프론트(koreaSeverancePreviewRuntime.js) 계약. 기존 payload 계약은 위 클래스가 비파괴 검증.
+# ---------------------------------------------------------------------------
+
+
+class _FakeDBForAdapter:
+    def __init__(self, values):
+        self.values = dict(values)
+
+    def get_value(self, doctype, name_or_filters, fieldname):
+        key = (doctype, json_mod.dumps(name_or_filters, sort_keys=True, default=str), fieldname)
+        return self.values.get(key)
+
+
+class _FakeFrappeForAdapter(types.ModuleType):
+    """어댑터 경로에 필요한 frappe 심 (session/roles/db/get_all)."""
+
+    def __init__(self, *, user="ryu@noho.kr", roles=None, db_values=None, slips=None):
+        super().__init__("frappe")
+        self.session = types.SimpleNamespace(user=user)
+        self.roles = list(roles or [])
+        self.db = _FakeDBForAdapter(db_values or {})
+        self.slips = list(slips or [])
+        self.get_all_calls = []
+        self.local = types.SimpleNamespace(form_dict={})
+
+    def whitelist(self, *args, **kwargs):
+        return lambda fn: fn
+
+    def get_roles(self, user=None):
+        return list(self.roles)
+
+    def get_all(self, doctype, filters=None, fields=None, order_by=None):
+        self.get_all_calls.append({"doctype": doctype, "filters": filters, "fields": fields, "order_by": order_by})
+        return list(self.slips)
+
+    def throw(self, message, *args, **kwargs):
+        raise FakeFrappeError(message)
+
+
+import json as json_mod  # noqa: E402
+
+
+def _db_key(doctype, name_or_filters, fieldname):
+    return (doctype, json_mod.dumps(name_or_filters, sort_keys=True, default=str), fieldname)
+
+
+# 노호 류두선(HR-EMP-00004) 실측: date_of_joining=2026-03-09, 월 gross 8,333,333
+_RYU_EMPLOYEE = "HR-EMP-00004"
+_RYU_JOINING = dt.date(2026, 3, 9)
+_RYU_GROSS = 8_333_333.0
+
+
+class TestSeverancePreviewEmployeeAdapter(unittest.TestCase):
+
+    def _load_api(self, fake_frappe):
+        sys.modules["frappe"] = fake_frappe
+        repo_root = str(ROOT)
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        spec_api = importlib.util.spec_from_file_location("severance_pay_api", _API_MOD_PATH)
+        api = importlib.util.module_from_spec(spec_api)
+        spec_api.loader.exec_module(api)
+        return api
+
+    def tearDown(self):
+        sys.modules.pop("frappe", None)
+        sys.modules.pop("severance_pay_api", None)
+
+    def _fake(self, **kwargs):
+        defaults = dict(
+            user="ryu@noho.kr",
+            roles=["Employee"],
+            db_values={
+                _db_key("Employee", {"user_id": "ryu@noho.kr"}, "name"): _RYU_EMPLOYEE,
+                _db_key("Employee", _RYU_EMPLOYEE, "date_of_joining"): _RYU_JOINING,
+            },
+            slips=[
+                {"start_date": dt.date(2027, 5, 1), "gross_pay": _RYU_GROSS},
+                {"start_date": dt.date(2027, 4, 1), "gross_pay": _RYU_GROSS},
+                {"start_date": dt.date(2027, 3, 1), "gross_pay": _RYU_GROSS},
+            ],
+        )
+        defaults.update(kwargs)
+        return _FakeFrappeForAdapter(**defaults)
+
+    def test_employee_contract_happy_path_matches_core_to_the_won(self):
+        fake = self._fake()
+        api = self._load_api(fake)
+        result = api.calculate_severance_preview(
+            employee=_RYU_EMPLOYEE,
+            assumed_retirement_date="2027-06-01",
+            ordinary_wage_override=None,
+        )
+
+        # 산정 기간 2027-03-01~2027-05-31 = 92일, 임금총액 3×8,333,333
+        expected_avg = (3 * _RYU_GROSS) / 92
+        # 계속근로일수: 2026-03-09 → 2027-06-01
+        expected_days = (dt.date(2027, 6, 1) - _RYU_JOINING).days
+        expected_severance = float(int(expected_avg * 30 * expected_days / 365))
+
+        self.assertEqual(result["severance_pay"], expected_severance)
+        self.assertAlmostEqual(result["average_daily_wage"], expected_avg)
+        self.assertIsNone(result["ordinary_daily_wage"])
+        self.assertEqual(result["continuous_service_days"], expected_days)
+        self.assertEqual(result["date_of_joining"], "2026-03-09")
+        self.assertEqual(result["assumed_retirement_date"], "2027-06-01")
+        self.assertIn("30일", result["formula_description"])
+        # 퇴직금 ≥ 300만원 → 전액 IRP 의무이체
+        self.assertEqual(result["irp_transfer_amount"], expected_severance)
+        self.assertEqual(result["irp_transfer_limit"], 3_000_000)
+        # 응답 키 계약 (프론트가 읽는 9개 키 정확히)
+        self.assertEqual(
+            set(result.keys()),
+            {
+                "severance_pay", "average_daily_wage", "ordinary_daily_wage",
+                "continuous_service_days", "date_of_joining", "assumed_retirement_date",
+                "formula_description", "irp_transfer_amount", "irp_transfer_limit",
+            },
+        )
+        # 슬립 조회 창: 직전 3개월 (start_date 기준)
+        call = fake.get_all_calls[0]
+        self.assertEqual(call["doctype"], "Salary Slip")
+        self.assertEqual(
+            call["filters"]["start_date"], ["between", ["2027-03-01", "2027-05-31"]]
+        )
+        self.assertEqual(call["filters"]["docstatus"], ["in", [0, 1]])
+
+    def test_ordinary_wage_override_is_daily_wage_passed_through(self):
+        """override 는 1일 통상임금 그대로 전달 — /209, /30 등 임의 변환 금지."""
+        fake = self._fake()
+        api = self._load_api(fake)
+        daily_override = 400_000  # 평균임금(약 271,739원/일)보다 큼 → ordinary 사용
+        result = api.calculate_severance_preview(
+            employee=_RYU_EMPLOYEE,
+            assumed_retirement_date="2027-06-01",
+            ordinary_wage_override=daily_override,
+        )
+        expected_days = (dt.date(2027, 6, 1) - _RYU_JOINING).days
+        expected_severance = float(int(daily_override * 30 * expected_days / 365))
+        self.assertEqual(result["ordinary_daily_wage"], daily_override)
+        self.assertEqual(result["severance_pay"], expected_severance)
+        self.assertIn("ordinary", result["formula_description"])
+
+    def test_no_salary_slips_throws(self):
+        fake = self._fake(slips=[])
+        api = self._load_api(fake)
+        with self.assertRaisesRegex(FakeFrappeError, "급여 이력이 없어 계산할 수 없습니다"):
+            api.calculate_severance_preview(
+                employee=_RYU_EMPLOYEE, assumed_retirement_date="2027-06-01"
+            )
+
+    def test_missing_date_of_joining_throws(self):
+        fake = self._fake(db_values={
+            _db_key("Employee", {"user_id": "ryu@noho.kr"}, "name"): _RYU_EMPLOYEE,
+        })
+        api = self._load_api(fake)
+        with self.assertRaisesRegex(FakeFrappeError, "date_of_joining"):
+            api.calculate_severance_preview(
+                employee=_RYU_EMPLOYEE, assumed_retirement_date="2027-06-01"
+            )
+
+    def test_retirement_before_joining_throws(self):
+        fake = self._fake()
+        api = self._load_api(fake)
+        with self.assertRaisesRegex(FakeFrappeError, "입사일 이후"):
+            api.calculate_severance_preview(
+                employee=_RYU_EMPLOYEE, assumed_retirement_date="2026-03-09"
+            )
+
+    def test_other_employee_denied_without_hr_manager(self):
+        fake = self._fake()
+        api = self._load_api(fake)
+        with self.assertRaises(PermissionError):
+            api.calculate_severance_preview(
+                employee="HR-EMP-00099", assumed_retirement_date="2027-06-01"
+            )
+        self.assertEqual(fake.get_all_calls, [])
+
+    def test_hr_manager_can_preview_other_employee(self):
+        fake = self._fake(
+            user="hr@noho.kr",
+            roles=["HR Manager"],
+            db_values={_db_key("Employee", _RYU_EMPLOYEE, "date_of_joining"): _RYU_JOINING},
+        )
+        api = self._load_api(fake)
+        result = api.calculate_severance_preview(
+            employee=_RYU_EMPLOYEE, assumed_retirement_date="2027-06-01"
+        )
+        self.assertGreater(result["severance_pay"], 0)
+
+    def test_service_under_one_year_returns_zero_severance(self):
+        fake = self._fake(slips=[{"start_date": dt.date(2026, 5, 1), "gross_pay": _RYU_GROSS}])
+        api = self._load_api(fake)
+        result = api.calculate_severance_preview(
+            employee=_RYU_EMPLOYEE, assumed_retirement_date="2026-06-01"
+        )
+        self.assertEqual(result["severance_pay"], 0.0)
+        self.assertEqual(result["irp_transfer_amount"], 0.0)
+        self.assertIn("미발생", result["formula_description"])
+
+    def test_legacy_payload_contract_still_works_with_adapter_fake(self):
+        """어댑터 추가 후에도 기존 payload 계약은 그대로 동작 (비파괴)."""
+        fake = self._fake()
+        api = self._load_api(fake)
+        result = api.calculate_severance_preview(
+            payload={
+                "hire_date": "2022-01-01",
+                "severance_date": "2023-01-01",
+                "wage_records": [
+                    {"date": "2022-10-25", "amount": 3_000_000, "wage_type": "base"},
+                    {"date": "2022-11-25", "amount": 3_000_000, "wage_type": "base"},
+                    {"date": "2022-12-25", "amount": 3_000_000, "wage_type": "base"},
+                ],
+            }
+        )
+        self.assertIn("average_wage_result", result)
+        self.assertIn("severance_result", result)
+        self.assertEqual(fake.get_all_calls, [])  # 기존 경로는 사이트 조회 없음
+
+
 if __name__ == "__main__":
     unittest.main()

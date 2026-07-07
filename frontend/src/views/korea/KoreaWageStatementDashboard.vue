@@ -75,41 +75,44 @@
 								<span class="text-sm text-gray-600">④ 공제 합계</span>
 								<span class="text-sm font-semibold text-red-600">-{{ formatKRW(statement.total_deduction) }}</span>
 							</div>
-							<!-- 소득세 -->
+							<!-- 공제 요약: 4대보험 합계 · 소득세 · 주민세 (상세는 토글) -->
+							<div class="flex justify-between items-center pl-3 pb-1">
+								<button class="text-xs text-gray-500 flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
+									· 4대보험 <span class="text-gray-400">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
+								</button>
+								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statementInsuranceTotal) }}</span>
+							</div>
+							<template v-if="showInsuranceDetail">
+								<div class="flex justify-between items-center pl-6 pb-0.5">
+									<span class="text-[11px] text-gray-400">국민연금</span>
+									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.national_pension) }}</span>
+								</div>
+								<div class="flex justify-between items-center pl-6 pb-0.5">
+									<span class="text-[11px] text-gray-400">건강보험</span>
+									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.health_insurance) }}</span>
+								</div>
+								<div class="flex justify-between items-center pl-6 pb-0.5">
+									<span class="text-[11px] text-gray-400">장기요양보험</span>
+									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.long_term_care_insurance) }}</span>
+								</div>
+								<div class="flex justify-between items-center pl-6 pb-0.5">
+									<span class="text-[11px] text-gray-400">고용보험</span>
+									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.employment_insurance) }}</span>
+								</div>
+							</template>
 							<div class="flex justify-between items-center pl-3 pb-1">
 								<span class="text-xs text-gray-500">· 소득세</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.income_tax) }}</span>
+								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statement.income_tax) }}</span>
 							</div>
-							<!-- 지방소득세 -->
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<span class="text-xs text-gray-500">· 지방소득세</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.local_income_tax) }}</span>
-							</div>
-							<!-- 국민연금 -->
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<span class="text-xs text-gray-500">· 국민연금</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.national_pension) }}</span>
-							</div>
-							<!-- 건강보험 -->
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<span class="text-xs text-gray-500">· 건강보험</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.health_insurance) }}</span>
-							</div>
-							<!-- 장기요양 -->
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<span class="text-xs text-gray-500">· 장기요양보험</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.long_term_care_insurance) }}</span>
-							</div>
-							<!-- 고용보험 -->
 							<div class="flex justify-between items-center pl-3 pb-2 border-b border-gray-100">
-								<span class="text-xs text-gray-500">· 고용보험</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(statement.employment_insurance) }}</span>
+								<span class="text-xs text-gray-500">· 주민세(지방소득세)</span>
+								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statement.local_income_tax) }}</span>
 							</div>
 
 							<!-- 실수령액 -->
 							<div class="flex justify-between items-center pt-1">
 								<span class="text-base font-bold text-gray-800">⑦ 실수령액</span>
-								<span class="text-base font-bold text-blue-700">{{ formatKRW(statement.net_pay) }}</span>
+								<span class="text-base font-bold text-black k-numeric">{{ formatKRW(statement.net_pay) }}</span>
 							</div>
 						</div>
 
@@ -184,6 +187,14 @@ const yearOptions = computed(() => {
 const statementAllowanceTotal = computed(() => {
 	if (!statement.value?.allowances) return 0
 	return statement.value.allowances.reduce((sum, item) => sum + (item.amount || 0), 0)
+})
+
+// 4대보험 합계 (국민연금+건강+장기요양+고용) — 공제 요약 표시용
+const showInsuranceDetail = ref(false)
+const statementInsuranceTotal = computed(() => {
+	const s = statement.value
+	if (!s) return 0
+	return (s.national_pension || 0) + (s.health_insurance || 0) + (s.long_term_care_insurance || 0) + (s.employment_insurance || 0)
 })
 
 function formatKRW(amount) {

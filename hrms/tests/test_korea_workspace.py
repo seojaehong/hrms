@@ -225,7 +225,7 @@ class TestKoreaWorkspaceShortcuts(unittest.TestCase):
         self.assertGreater(len(self.shortcuts), 0, "No shortcuts defined")
 
     def test_expected_priority_shortcuts(self):
-        actual = {(s["link_to"], s["color"]) for s in self.shortcuts}
+        actual = {(s.get("link_to"), s["color"]) for s in self.shortcuts if s.get("type") != "URL"}
         missing = _EXPECTED_SHORTCUTS - actual
         self.assertEqual(
             missing,
@@ -242,8 +242,10 @@ class TestKoreaWorkspaceShortcuts(unittest.TestCase):
             )
 
     def test_shortcuts_have_required_fields(self):
-        required = {"label", "link_to", "type", "color"}
         for shortcut in self.shortcuts:
+            # URL 숏컷(예: 퇴직금 미리보기 → PWA)은 link_to 대신 url을 갖는다
+            target_field = "url" if shortcut.get("type") == "URL" else "link_to"
+            required = {"label", "type", "color", target_field}
             missing = required - set(shortcut.keys())
             self.assertEqual(
                 missing,

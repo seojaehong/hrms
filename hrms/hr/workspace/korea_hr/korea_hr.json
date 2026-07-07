@@ -1,7 +1,7 @@
 {
  "app": "hrms",
  "charts": [],
- "content": "[{\"id\": \"kHR_hdr001\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 18px;\\\"><b>HR 홈 — 직원 / 휴가 / 급여</b></span>\", \"col\": 12}}, {\"id\": \"kHR_spc001\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"kHR_crd001\", \"type\": \"card\", \"data\": {\"card_name\": \"사업장 / 직원\", \"col\": 4}}, {\"id\": \"kHR_crd002\", \"type\": \"card\", \"data\": {\"card_name\": \"휴가 (연차/월차)\", \"col\": 4}}, {\"id\": \"kHR_crd003\", \"type\": \"card\", \"data\": {\"card_name\": \"근태 / 마감\", \"col\": 4}}, {\"id\": \"kHR_crd004\", \"type\": \"card\", \"data\": {\"card_name\": \"급여\", \"col\": 4}}, {\"id\": \"kHR_crd005\", \"type\": \"card\", \"data\": {\"card_name\": \"감사 / 컴플라이언스\", \"col\": 4}}]",
+ "content": "[{\"id\": \"kHR_hdr001\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>HR 홈 — 급여 / 퇴직금 / 연차 / 근태</b></span>\", \"col\": 12}}, {\"id\": \"kc_grp_0\", \"type\": \"card\", \"data\": {\"card_name\": \"급여\", \"col\": 4}}, {\"id\": \"kc_grp_1\", \"type\": \"card\", \"data\": {\"card_name\": \"연차\", \"col\": 4}}, {\"id\": \"kc_grp_2\", \"type\": \"card\", \"data\": {\"card_name\": \"근태\", \"col\": 4}}, {\"id\": \"kc_grp_3\", \"type\": \"card\", \"data\": {\"card_name\": \"사업장 / 직원\", \"col\": 4}}, {\"id\": \"kc_grp_4\", \"type\": \"card\", \"data\": {\"card_name\": \"감사 / 컴플라이언스\", \"col\": 4}}]",
  "creation": "2026-05-17 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -16,112 +16,10 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "사업장 / 직원",
-   "link_count": 2,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "사업장 프로필",
-   "link_count": 0,
-   "link_to": "Korea Workplace Profile",
-   "link_type": "DocType",
-   "onboard": 1,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "고용 프로필",
-   "link_count": 0,
-   "link_to": "Korea Employment Profile",
-   "link_type": "DocType",
-   "onboard": 1,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "휴가 (연차/월차)",
-   "link_count": 3,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "휴가 배정",
-   "link_count": 0,
-   "link_to": "Leave Allocation",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "휴가 신청",
-   "link_count": 0,
-   "link_to": "Leave Application",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "휴가 정책",
-   "link_count": 0,
-   "link_to": "Leave Policy",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "근태 / 마감",
-   "link_count": 3,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "출근 기록",
-   "link_count": 0,
-   "link_to": "Attendance",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "공휴일 목록",
-   "link_count": 0,
-   "link_to": "Holiday List",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "급여 마감",
-   "link_count": 0,
-   "link_to": "Korea Payroll Closing Draft",
-   "link_type": "DocType",
-   "onboard": 1,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "급여",
-   "link_count": 3,
+   "link_count": 4,
+   "link_to": null,
+   "link_type": null,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -158,8 +56,120 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "급여 마감",
+   "link_count": 0,
+   "link_to": "Korea Payroll Closing Draft",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "연차",
+   "link_count": 3,
+   "link_to": null,
+   "link_type": null,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "휴가 배정",
+   "link_count": 0,
+   "link_to": "Leave Allocation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "휴가 신청",
+   "link_count": 0,
+   "link_to": "Leave Application",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "휴가 정책",
+   "link_count": 0,
+   "link_to": "Leave Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "근태",
+   "link_count": 2,
+   "link_to": null,
+   "link_type": null,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "출근 기록",
+   "link_count": 0,
+   "link_to": "Attendance",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "공휴일 목록",
+   "link_count": 0,
+   "link_to": "Holiday List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "사업장 / 직원",
+   "link_count": 2,
+   "link_to": null,
+   "link_type": null,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "사업장 프로필",
+   "link_count": 0,
+   "link_to": "Korea Workplace Profile",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "고용 프로필",
+   "link_count": 0,
+   "link_to": "Korea Employment Profile",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "감사 / 컴플라이언스",
    "link_count": 1,
+   "link_to": null,
+   "link_type": null,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -191,6 +201,13 @@
    "label": "급여 마감",
    "link_to": "Korea Payroll Closing Draft",
    "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "label": "퇴직금 미리보기",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-severance-preview"
   },
   {
    "color": "Green",

@@ -1,30 +1,88 @@
-/* 한국 HRMS 디자인 token (7월 디자인 sprint에서 교체) */
+/* Korea HRMS 디자인 토큰 — DESIGN-figma.md 기반 빅테크 SaaS 시스템 (2026-07 리팩토링)
+ * 원칙: 모노크롬 코어(잉크/캔버스) + pill CTA + 파스텔 색블록(섹션 내러티브 전용)
+ * 상태 색(성공/위험)은 의미로만 쓴다. 참조: 레포 루트 DESIGN.md */
 :root {
-    /* Colors — 임시 (NODE 디자인 차용 candidate) */
-    --korea-primary: #0066ff;       /* 7월 결정 */
-    --korea-primary-hover: #0052cc;
-    --korea-accent: #ff6b35;        /* 7월 결정 */
-    --korea-success: #00a86b;
-    --korea-warn: #ffa500;
-    --korea-error: #dc3545;
+    /* ── 모노크롬 코어 ── */
+    --k-ink: #000000;
+    --k-canvas: #ffffff;
+    --k-inverse-canvas: #000000;
+    --k-inverse-ink: #ffffff;
+    --k-hairline: #e6e6e6;
+    --k-hairline-soft: #f1f1f1;
+    --k-surface-soft: #f7f7f5;
 
-    /* Typography */
-    --korea-font-family: -apple-system, BlinkMacSystemFont, "Pretendard",
-                         "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    --korea-font-mono: "JetBrains Mono", "D2Coding", monospace;
+    /* ── 파스텔 색블록 (섹션 배경 전용 — 한 뷰포트에 1블록 원칙) ── */
+    --k-block-lime: #dceeb1;
+    --k-block-lilac: #c5b0f4;
+    --k-block-cream: #f4ecd6;
+    --k-block-mint: #c8e6cd;
+    --k-block-pink: #efd4d4;
+    --k-block-coral: #f3c9b6;
+    --k-block-navy: #1f1d3d;
 
-    /* Spacing (8pt grid) */
+    /* ── 시맨틱 (글리프/배지 전용, 서피스 금지) ── */
+    --k-success: #1ea64a;
+    --k-danger: #dc2626;
+    --k-warn: #f0b429;
+    --k-accent-magenta: #ff3d8b;
+
+    /* ── 타입 ── */
+    --k-font: -apple-system, BlinkMacSystemFont, "Pretendard",
+              "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --k-font-mono: "JetBrains Mono", "D2Coding", ui-monospace, monospace;
+
+    /* ── 셰이프 ── */
+    --k-radius-sm: 6px;
+    --k-radius-md: 8px;
+    --k-radius-lg: 24px;
+    --k-radius-pill: 999px;
+
+    /* ── 하위호환 별칭 (기존 사용처) ── */
+    --korea-primary: var(--k-ink);
+    --korea-primary-hover: #262626;
+    --korea-accent: var(--k-accent-magenta);
+    --korea-success: var(--k-success);
+    --korea-warn: var(--k-warn);
+    --korea-error: var(--k-danger);
+    --korea-font-family: var(--k-font);
+    --korea-font-mono: var(--k-font-mono);
     --korea-spacing-xs: 4px;
     --korea-spacing-sm: 8px;
     --korea-spacing-md: 16px;
     --korea-spacing-lg: 24px;
     --korea-spacing-xl: 32px;
-
-    /* Radius */
-    --korea-radius-sm: 4px;
-    --korea-radius-md: 8px;
+    --korea-radius-sm: var(--k-radius-sm);
+    --korea-radius-md: var(--k-radius-md);
     --korea-radius-lg: 12px;
+    --korea-shadow-card: none; /* Figma 시스템: 그림자 대신 헤어라인 */
+}
 
-    /* Shadow */
-    --korea-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* ── 공용 유틸 클래스 ── */
+.k-eyebrow {
+    font-family: var(--k-font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--k-ink);
+    opacity: 0.55;
+}
+.k-block {
+    border-radius: var(--k-radius-lg);
+    padding: 20px;
+}
+.k-block--lime   { background: var(--k-block-lime); }
+.k-block--lilac  { background: var(--k-block-lilac); }
+.k-block--cream  { background: var(--k-block-cream); }
+.k-block--mint   { background: var(--k-block-mint); }
+.k-block--pink   { background: var(--k-block-pink); }
+.k-block--navy   { background: var(--k-block-navy); color: var(--k-inverse-ink); }
+.k-card {
+    background: var(--k-canvas);
+    border: 1px solid var(--k-hairline);
+    border-radius: var(--k-radius-md);
+}
+.k-numeric {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
 }

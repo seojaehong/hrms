@@ -29,3 +29,13 @@ body {
 	-ms-overflow-style: none; /* IE and Edge */
 	scrollbar-width: none; /* Firefox */
 }
+
+/* ── DESIGN-figma 시스템: 전역 베이스 (2026-07 리팩토링) ── */
+body {
+	font-family: var(--k-font);
+	color: #1a1d21;
+}
+/* frappe-ui Button → pill (Figma: 모든 텍스트 CTA는 pill, 사각 버튼 금지) */
+button.inline-flex.items-center.justify-center {
+	border-radius: var(--k-radius-pill);
+}

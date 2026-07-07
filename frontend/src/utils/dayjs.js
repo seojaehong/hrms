@@ -1,4 +1,5 @@
 import dayjs from "dayjs"
+import "dayjs/locale/ko"
 import updateLocale from "dayjs/plugin/updateLocale"
 import localizedFormat from "dayjs/plugin/localizedFormat"
 import relativeTime from "dayjs/plugin/relativeTime"
@@ -12,5 +13,7 @@ dayjs.extend(relativeTime)
 dayjs.extend(isToday)
 dayjs.extend(isYesterday)
 dayjs.extend(isBetween)
+
+dayjs.locale("ko")
 
 export default dayjs

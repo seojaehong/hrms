@@ -74,6 +74,7 @@ _AUDIT_LOG: list[dict] = []
 # ──────────────────────────────────────────────
 _LAW_CATALOG_FILENAME = "korea_labor_law_catalog.json"
 _FAQ_CATALOG_FILENAME = "korea_labor_faq_catalog.json"
+_ADMIN_CATALOG_FILENAME = "korea_admin_interpretation_catalog.json"
 
 _CATALOG_CACHE: list[dict] | None = None
 _INDEX_CACHE: dict | None = None
@@ -83,21 +84,22 @@ def _data_dir() -> str:
     return os.path.join(os.path.dirname(__file__), "data")
 
 
-def _load_catalog_files(law_path: str, faq_path: str) -> list[dict]:
-    """법령 카탈로그(필수) + FAQ 카탈로그(선택)를 로드하여 병합합니다.
+def _load_catalog_files(law_path: str, *optional_paths: str) -> list[dict]:
+    """법령 카탈로그(필수) + 부가 카탈로그(FAQ·행정해석 등, 선택)를 로드하여 병합합니다.
 
-    FAQ 파일이 없거나 읽을 수 없으면 무시하고 법령 카탈로그만 반환합니다.
+    부가 파일이 없거나 읽을 수 없으면 무시하고 나머지만 반환합니다.
     """
     with open(law_path, encoding="utf-8") as f:
         entries: list[dict] = json.load(f)
 
-    try:
-        with open(faq_path, encoding="utf-8") as f:
-            faq_entries = json.load(f)
-        if isinstance(faq_entries, list):
-            entries = entries + faq_entries
-    except (OSError, json.JSONDecodeError):
-        pass  # FAQ 카탈로그는 optional — 없으면 기존 33건 카탈로그만 사용
+    for path in optional_paths:
+        try:
+            with open(path, encoding="utf-8") as f:
+                extra = json.load(f)
+            if isinstance(extra, list):
+                entries = entries + extra
+        except (OSError, json.JSONDecodeError):
+            pass  # 부가 카탈로그는 optional
 
     return entries
 
@@ -111,6 +113,7 @@ def _load_catalog() -> list[dict]:
     _CATALOG_CACHE = _load_catalog_files(
         os.path.join(_data_dir(), _LAW_CATALOG_FILENAME),
         os.path.join(_data_dir(), _FAQ_CATALOG_FILENAME),
+        os.path.join(_data_dir(), _ADMIN_CATALOG_FILENAME),
     )
     return _CATALOG_CACHE
 
@@ -349,15 +352,15 @@ def retrieve_relevant_documents(
     scored.sort(key=lambda x: (-x[0], x[1]))
     top = [idx for _, idx in scored[:top_k]]
 
-    # FAQ가 상위를 채우더라도 법령/판례 근거 1건은 결과에 보장
-    # (FAQ 답변의 "주요 근거" 인용 + 기존 법령 카탈로그 질의 회귀 방지)
-    if top and all(catalog[idx].get("type", "law") == "faq" for idx in top):
-        best_non_faq = next(
-            (idx for _, idx in scored if catalog[idx].get("type", "law") != "faq"),
+    # FAQ/행정해석이 상위를 채우더라도 법령/판례 근거 1건은 결과에 보장
+    # (답변의 "주요 근거" 인용 + 기존 법령 카탈로그 질의 회귀 방지)
+    if top and all(catalog[idx].get("type", "law") not in ("law", "case") for idx in top):
+        best_statutory = next(
+            (idx for _, idx in scored if catalog[idx].get("type", "law") in ("law", "case")),
             None,
         )
-        if best_non_faq is not None:
-            top[-1] = best_non_faq
+        if best_statutory is not None:
+            top[-1] = best_statutory
 
     return [catalog[idx] for idx in top]
 
@@ -530,6 +533,7 @@ CITATION_TYPE_LABELS: dict[str, str] = {
     "case": "판례",
     "internal": "내부",
     "faq": "FAQ",
+    "admin": "행정해석",
 }
 
 _SENTENCE_END_RE = re.compile(r"(?:다|요)\.")

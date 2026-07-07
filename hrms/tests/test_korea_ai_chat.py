@@ -577,5 +577,33 @@ class TestFaqCitationLabel(unittest.TestCase):
         self.assertEqual(result["disclaimer"], DISCLAIMER)
 
 
+
+class TestAdminCatalogMerge(unittest.TestCase):
+    def test_admin_catalog_merged_and_labeled(self):
+        """행정해석 카탈로그 병합 + [행정해석] 라벨 + 카탈로그 총량."""
+        catalog = _ai_chat._load_catalog()
+        types = {e.get("type", "law") for e in catalog}
+        self.assertIn("admin", types)
+        self.assertGreater(len(catalog), 13000)  # 33 + 4771 + 8757
+        self.assertEqual(_ai_chat.CITATION_TYPE_LABELS["admin"], "행정해석")
+
+    def test_statutory_slot_guaranteed_over_admin(self):
+        """FAQ·행정해석이 상위 독점해도 법령 1건 보장."""
+        catalog = [
+            {"law": "행정해석 -", "title": "주휴수당 관련 회신", "type": "admin", "tags": ["주휴수당"], "text": "주휴수당 행정해석입니다다."},
+            {"law": "노동법 FAQ", "title": "주휴수당은 언제 발생하나요?", "type": "faq", "tags": ["주휴수당"], "text": "주휴수당 FAQ 답변입니다다."},
+            {"law": "근기법 55조", "title": "주휴수당", "type": "law", "tags": ["주휴수당"], "text": "사용자는 1주에 평균 1회 이상의 유급휴일을 보장하여야 한다."},
+        ]
+        old_cache, old_index = _ai_chat._CATALOG_CACHE, _ai_chat._INDEX_CACHE
+        try:
+            _ai_chat._CATALOG_CACHE = catalog
+            _ai_chat._INDEX_CACHE = None
+            docs = _ai_chat.retrieve_relevant_documents(query="주휴수당", top_k=2, use_index=False)
+            self.assertTrue(any(d.get("type") == "law" for d in docs))
+        finally:
+            _ai_chat._CATALOG_CACHE = old_cache
+            _ai_chat._INDEX_CACHE = old_index
+
+
 if __name__ == "__main__":
     unittest.main()

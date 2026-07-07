@@ -70,6 +70,42 @@
 							</div>
 						</div>
 
+						<!-- 최근 6개월 실수령 추이 — 인라인 SVG 스파크라인 (history 리소스 재사용) -->
+						<div v-if="netPayTrend" class="k-card p-4" data-testid="net-pay-sparkline">
+							<div class="k-eyebrow mb-2">TREND</div>
+							<div class="text-sm font-bold text-black">최근 6개월 실수령 추이</div>
+							<svg
+								:viewBox="`0 0 ${sparkW + 10} ${sparkH + 10}`"
+								class="mt-2 h-14 w-full text-black"
+								role="img"
+								aria-label="최근 6개월 실수령 추이"
+							>
+								<g transform="translate(5,5)">
+									<polyline
+										:points="netPayTrend.points"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+									<!-- 마지막 점 강조 원 -->
+									<circle
+										:cx="netPayTrend.lastPoint.x"
+										:cy="netPayTrend.lastPoint.y"
+										r="3.5"
+										fill="currentColor"
+										stroke="white"
+										stroke-width="1.5"
+									/>
+								</g>
+							</svg>
+							<div class="mt-1 flex justify-between text-[11px] text-black/40 k-numeric">
+								<span>{{ trendRows[0].pay_year_month }}</span>
+								<span>{{ trendRows[trendRows.length - 1].pay_year_month }} · {{ formatTick(trendRows[trendRows.length - 1].net_pay) }}원</span>
+							</div>
+						</div>
+
 						<!-- 지급 내역 -->
 						<div class="k-card p-4">
 							<div class="k-eyebrow mb-2">EARNINGS</div>
@@ -196,6 +232,7 @@ import { ref, computed, inject, onMounted } from "vue"
 
 import BaseLayout from "@/components/BaseLayout.vue"
 import { useIsAdmin } from "@/composables/useIsAdmin"
+import { buildSparklinePath, formatTick } from "@/utils/koreaCharts"
 import { wageStatementPreview, wageStatementHistory } from "@/data/koreaWageStatementRuntime"
 
 const __ = inject("$translate")
@@ -231,6 +268,31 @@ const statementInsuranceTotal = computed(() => {
 	const s = statement.value
 	if (!s) return 0
 	return (s.national_pension || 0) + (s.health_insurance || 0) + (s.long_term_care_insurance || 0) + (s.employment_insurance || 0)
+})
+
+// ── 최근 6개월 실수령 추이 스파크라인 ─────────────────────────────
+// 데이터 소스: wageStatementHistory (list_korea_wage_statements) 재사용 — 신규 API 없음.
+// history는 최신순([0]=최근) → 최근 6건을 시간순(과거→현재)으로 뒤집어 그린다.
+const sparkW = 272
+const sparkH = 40
+
+const trendRows = computed(() => {
+	const rows = wageStatementHistory.data
+	if (!Array.isArray(rows)) return []
+	return rows
+		.filter((r) => r?.pay_year_month && Number.isFinite(Number(r.net_pay)))
+		.slice(0, 6)
+		.reverse()
+})
+
+// 2점 미만이면 추이가 아니므로 차트 숨김 (빈 차트 렌더 금지)
+const netPayTrend = computed(() => {
+	if (trendRows.value.length < 2) return null
+	return buildSparklinePath(
+		trendRows.value.map((r) => Number(r.net_pay)),
+		sparkW,
+		sparkH
+	)
 })
 
 function formatKRW(amount) {

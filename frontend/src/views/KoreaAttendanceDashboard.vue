@@ -220,7 +220,7 @@
 							class="flex-1 rounded-full bg-black py-2.5 text-sm font-semibold text-white"
 							@click="showApplyDialog = true"
 						>
-							{{ __("마감 적용") }}
+							{{ __("마감 임시저장(Draft)") }}
 						</button>
 					</div>
 				</section>
@@ -232,9 +232,9 @@
 					@click.self="showApplyDialog = false"
 				>
 					<div class="w-full max-w-sm rounded-2xl bg-white p-6">
-						<h3 class="text-base font-bold text-black">{{ __("마감 적용 확인") }}</h3>
+						<h3 class="text-base font-bold text-black">{{ __("마감 임시저장 확인") }}</h3>
 						<p class="mt-2 text-sm text-black/60">
-							{{ closingPeriodLabel }} {{ __("근태 마감을 적용합니다.") }}<br />
+							{{ closingPeriodLabel }} {{ __("근태 마감을 임시저장(Draft)합니다.") }}<br />
 							{{ __("이 작업은 Draft 저장이며 승인·발송은 포함하지 않습니다.") }}
 						</p>
 						<div class="mt-4 rounded-xl bg-red-100 p-3 text-xs font-semibold text-red-700">
@@ -252,7 +252,7 @@
 								:disabled="applyLoading"
 								@click="doApplyClosing"
 							>
-								{{ applyLoading ? __("처리 중…") : __("적용 확인") }}
+								{{ applyLoading ? __("처리 중…") : __("임시저장 확인") }}
 							</button>
 						</div>
 						<p v-if="applyError" class="mt-3 text-xs font-semibold text-red-700">{{ applyError }}</p>

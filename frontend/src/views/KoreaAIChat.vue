@@ -102,15 +102,15 @@
 					</div>
 				</div>
 
-				<!-- Suggested Questions -->
-				<div v-if="messages.length === 0" class="px-4 pb-2">
-					<p class="k-eyebrow mb-2">자주 묻는 질문</p>
-					<div class="flex flex-col gap-2">
+				<!-- Suggested Questions — 가로 스크롤 pill 칩 (소형 폰 입력창 가림 방지) -->
+				<div v-if="messages.length === 0" class="pb-2">
+					<p class="k-eyebrow mb-2 px-4">자주 묻는 질문</p>
+					<div class="flex flex-row gap-2 overflow-x-auto px-4 pb-1">
 						<button
 							v-for="(q, qi) in suggestedQuestions"
 							:key="qi"
 							@click="sendSuggestedQuestion(q)"
-							class="text-left text-sm k-card px-3 py-2.5 text-black hover:bg-[var(--k-surface-soft)] transition-colors"
+							class="shrink-0 whitespace-nowrap text-xs font-medium bg-white border border-black/15 rounded-full px-3 py-1.5 text-black hover:bg-black hover:text-white transition-colors"
 						>
 							{{ q }}
 						</button>

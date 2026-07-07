@@ -19,7 +19,7 @@
 					</div>
 					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
 						<p class="font-semibold">미리보기 전용 — {{ selectedSession.preview_source === 'runtime_read_only' ? '실데이터 읽기' : '정적 예시' }}</p>
-						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · 담당자 승인 필수 · AI={{ selectedSession.ai_role }}</p>
+						<p class="mt-1">조회 전용 · 변경 없음 · 담당자 승인 필수 · AI는 보조 역할</p>
 					</div>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div
@@ -61,7 +61,7 @@
 							</div>
 						</div>
 						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-gray-600">
-							담당자 체크리스트 {{ selectedSession.evidence_packet.review_checklist.length }}건 · 증빙 requires_runtime_apply={{ selectedSession.evidence_packet.requires_runtime_apply }} · AI={{ selectedSession.evidence_packet.ai_role }}
+							담당자 체크리스트 {{ selectedSession.evidence_packet.review_checklist.length }}건 · 증빙은 조회 전용으로 보존됩니다
 						</div>
 					</div>
 					<!-- 완결 동선 CTA — 이 화면은 읽기 전용, 확정은 결재함에서 진행 -->

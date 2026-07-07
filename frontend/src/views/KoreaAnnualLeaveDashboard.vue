@@ -183,7 +183,7 @@
 					<p class="k-eyebrow">READ-ONLY</p>
 					<p class="mt-1 font-semibold text-black">{{ __("조회 전용 화면") }}</p>
 					<p class="mt-1 text-black/60">
-						{{ __("이 화면은 연차 현황을 조회만 합니다 (runtime_action=preview_only). 연차 부여 적용은 관리자가 [신청 적용] 버튼으로 별도 승인해야 하며, AI는 보조 역할만 합니다.") }}
+						{{ __("이 화면은 연차 현황을 조회만 합니다. 연차 부여 적용은 관리자가 [신청 적용] 버튼으로 별도 승인하며, AI는 보조 역할만 합니다.") }}
 					</p>
 				</section>
 
@@ -224,7 +224,7 @@
 								{{ display ? display.employeeName || display.employee : __('직원 미선택') }}
 							</p>
 							<p class="mt-1 text-xs text-black/40">
-								runtime_action=preview_only · requires_runtime_apply={{ display ? display.requiresRuntimeApply : '—' }} · human approval required · AI=assistant_only
+								조회 전용 · 변경 없음 · 적용은 관리자 승인으로만 진행됩니다
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>

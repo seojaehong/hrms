@@ -30,7 +30,7 @@
 						이 화면은 급여 마감 검토 감사 로그의 기록 결과를 보여주는 조회 전용 화면입니다. 급여 제출·결재 변경·카카오 발송·외부 호출·감사행 생성은 이 화면에서 일어나지 않으며, 최종 승인 권한은 사람에게 있고 AI는 보조 역할만 합니다.
 					</p>
 					<p class="mt-2 text-xs">
-						runtime_action={{ fixture.runtime_action }} · preview_source={{ fixture.preview_source }} · requires_runtime_apply={{ fixture.requires_runtime_apply }}
+						조회 전용 감사 기록 · 변경 없음
 					</p>
 				</section>
 

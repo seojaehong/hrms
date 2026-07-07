@@ -135,7 +135,7 @@
 				class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
 				@click.self="cancelComment"
 			>
-				<div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-96 p-6 flex flex-col gap-4">
+				<div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto p-6 flex flex-col gap-4">
 					<h3 class="text-base font-bold text-black">
 						{{ pendingAction === 'reject' ? __('반려 사유') : __('코멘트 (선택)') }}
 					</h3>

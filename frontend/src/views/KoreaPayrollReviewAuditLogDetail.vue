@@ -22,7 +22,7 @@
 						이 화면은 검토 감사 로그를 담당자 확인용으로 보여주는 조회 전용 화면입니다. 급여 승인, Payroll Entry 제출, 카카오 알림 발송, 외부 연동 호출, 감사 행 생성을 수행하지 않습니다.
 					</p>
 					<p class="mt-2 text-xs">
-						runtime_action={{ detail.runtime_action }} · preview_source={{ detail.preview_source }} · requires_runtime_apply={{ detail.requires_runtime_apply }}
+						조회 전용 감사 기록 · 변경 없음
 					</p>
 				</section>
 

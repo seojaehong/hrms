@@ -5,7 +5,7 @@
 				<CheckInPanel />
 
 				<!-- 핵심 4축: 급여 / 퇴직금 / 연차 / 근태 — DESIGN-figma 색블록 섹션 -->
-				<div class="flex flex-col gap-4 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 					<div
 						v-for="section in sections"
 						:key="section.key"

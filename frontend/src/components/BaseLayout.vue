@@ -49,7 +49,7 @@
 		</ion-header>
 
 		<ion-content class="ion-no-padding">
-			<div class="flex flex-col h-screen w-screen sm:w-96">
+			<div class="flex flex-col h-screen w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
 				<slot name="body"></slot>
 			</div>
 		</ion-content>

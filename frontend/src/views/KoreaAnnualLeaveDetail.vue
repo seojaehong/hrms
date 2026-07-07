@@ -33,7 +33,7 @@
 					<p class="k-eyebrow">READ-ONLY</p>
 					<p class="mt-1 font-semibold text-black">{{ __("조회 전용 화면") }}</p>
 					<p class="mt-1 text-black/60">
-						{{ __("연차 상세 조회는 preview_only이며, 모든 변경은 관리자 승인으로만 이뤄집니다. AI=assistant_only.") }}
+						{{ __("연차 상세는 조회 전용이며, 모든 변경은 관리자 승인으로만 이뤄집니다.") }}
 					</p>
 				</section>
 			</div>

@@ -102,6 +102,10 @@ class TestKoreaPoTranslationQuality(unittest.TestCase):
         "Notification": "알림",
         "Getting Started": "시작 안내",
         "Login to Korea HRMS": "Korea HRMS 로그인",
+        # 직원 상세 성별 select 값 (frappe 코어) — 영어 노출 회귀 방지
+        "Gender": "성별",
+        "Male": "남성",
+        "Female": "여성",
     }
 
     @classmethod

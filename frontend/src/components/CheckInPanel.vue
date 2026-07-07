@@ -28,7 +28,7 @@
 		</template>
 
 		<div v-else class="font-medium text-sm text-gray-500 mt-1.5">
-			{{ dayjs().format("ddd, D MMMM, YYYY") }}
+			{{ dayjs().format("YYYY년 M월 D일 (ddd)") }}
 		</div>
 	</div>
 
@@ -45,7 +45,7 @@
 					{{ dayjs(checkinTimestamp).format("hh:mm:ss a") }}
 				</div>
 				<div class="font-medium text-gray-500 text-sm">
-					{{ dayjs().format("D MMM, YYYY") }}
+					{{ dayjs().format("YYYY년 M월 D일") }}
 				</div>
 			</div>
 

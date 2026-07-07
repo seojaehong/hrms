@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 })
 
 const currentTime = computed(() => now.value.format("HH:mm:ss"))
-const currentDate = computed(() => now.value.format("ddd, D MMMM YYYY"))
+const currentDate = computed(() => now.value.format("YYYY년 M월 D일 (ddd)"))
 
 // ---------------------------------------------------------------------------
 // Last check-in / next action (tracked via session storage for simplicity)

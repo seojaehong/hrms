@@ -22,9 +22,15 @@ export const KOREA_LEAVE_RATIO_METHOD =
 export const KOREA_LEAVE_APPLY_METHOD =
 	"hrms.regional.south_korea.leave_allocation_apply_api.apply_korea_leave_allocation_api"
 
+import { KOREA_ATTENDANCE_READ_ONLY_METHODS } from "./koreaAttendanceRuntime.js"
+
+// 폴리필은 페이지 방문 순서에 따라 이 모듈이 먼저 설치할 수 있으므로,
+// 같은 read-only 폴리필을 공유하는 근태 대시보드 메서드도 함께 허용한다.
+// (미허용 시 근태 화면에 "fallback only allows ..." 디버그 문구 노출 사고)
 const KOREA_ANNUAL_LEAVE_ALLOWED_METHODS = new Set([
 	KOREA_LEAVE_PREVIEW_METHOD,
 	KOREA_LEAVE_RATIO_METHOD,
+	...KOREA_ATTENDANCE_READ_ONLY_METHODS,
 ])
 
 // ---------------------------------------------------------------------------

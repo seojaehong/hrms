@@ -21,6 +21,7 @@ import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import {
 	isFrappeRuntimeAvailable,
+	ensureKoreaAttendanceFrappeCallRuntime,
 	fetchKoreaAttendanceSummary,
 	fetchKoreaPremiumPreview,
 	applyKoreaAttendanceClosing,
@@ -32,8 +33,11 @@ import {
 	KOREA_PREMIUM_FIXTURE,
 	KOREA_ATTENDANCE_PREVIEW_METHOD,
 	KOREA_ATTENDANCE_APPLY_METHOD,
+	KOREA_OVERTIME_ESTIMATE_METHOD,
 	KOREA_WEEKLY_AGGREGATE_METHOD,
 } from "../src/data/koreaAttendanceRuntime.js"
+import { ensureKoreaAnnualLeaveFrappeCallRuntime } from "../src/data/koreaAnnualLeaveRuntime.js"
+import { ensureKoreaPayrollClosingFrappeCallRuntime } from "../src/data/koreaPayrollClosingRuntime.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const frontendRoot = resolve(__dirname, "..")
@@ -119,22 +123,97 @@ assert.equal(isFrappeRuntimeAvailable(undefined), false, "undefined window: fals
 	assert.equal(result.data.snapshot.summary_by_employee[0].employee, "EMP-001")
 }
 
-// 2-c. API 호출 실패 → 픽스처 폴백
+// 2-c. API 호출 실패 → 픽스처 폴백 (사용자 노출 문구는 한글 요약, 상세는 console.warn)
 {
 	const win = {
 		frappe: {
 			call: async () => { throw new Error("Network error") },
 		},
 	}
-	const result = await fetchKoreaAttendanceSummary({
-		employee: "EMP-001",
-		periodStart: "2026-05-01",
-		periodEnd: "2026-05-31",
-		win,
-	})
+	const warns = []
+	const originalWarn = console.warn
+	console.warn = (...args) => warns.push(args.map(String).join(" "))
+	let result
+	try {
+		result = await fetchKoreaAttendanceSummary({
+			employee: "EMP-001",
+			periodStart: "2026-05-01",
+			periodEnd: "2026-05-31",
+			win,
+		})
+	} finally {
+		console.warn = originalWarn
+	}
 	assert.equal(result.source, "fixture", "API 실패: source=fixture")
-	assert.match(result.error, /API 호출 실패/)
-	assert.match(result.error, /Network error/)
+	assert.equal(result.error, "실데이터 연결 대기 — 예시 데이터를 표시합니다.", "사용자 노출 오류는 한글 요약")
+	assert.ok(!result.error.includes("Network error"), "기술 상세는 사용자 문구에 노출하지 않음")
+	assert.ok(warns.some((w) => w.includes("Network error")), "기술 상세는 console.warn으로 남김")
+}
+
+// 2-d. 폴백 frappe.call 폴리필 — 근태 read-only 메서드 allowlist
+{
+	// frappe는 있으나 frappe.call이 없는 브라우저 환경 → 폴리필 설치
+	const fetchCalls = []
+	const win = {
+		frappe: {},
+		csrf_token: "token-1",
+		fetch: async (url, options) => {
+			fetchCalls.push({ url, options })
+			return { ok: true, json: async () => ({ message: { ok: true } }) }
+		},
+	}
+	assert.equal(ensureKoreaAttendanceFrappeCallRuntime(win), true, "폴리필 설치됨")
+	assert.equal(typeof win.frappe.call, "function")
+
+	// read-only 메서드 3종은 허용
+	for (const method of [
+		KOREA_ATTENDANCE_PREVIEW_METHOD,
+		KOREA_OVERTIME_ESTIMATE_METHOD,
+		KOREA_WEEKLY_AGGREGATE_METHOD,
+	]) {
+		await win.frappe.call({ method, args: { records: [], policy: { a: 1 } } })
+	}
+	assert.equal(fetchCalls.length, 3, "허용 메서드는 fetch로 전달")
+	assert.match(fetchCalls[0].url, new RegExp(KOREA_ATTENDANCE_PREVIEW_METHOD.replaceAll(".", "\\.")))
+	// 객체 인자는 JSON 직렬화되어야 함 ([object Object] 금지)
+	assert.ok(!String(fetchCalls[0].options.body).includes("object Object"), "객체 인자 JSON 직렬화")
+
+	// mutation(apply) 메서드는 폴리필에서 차단 (fail-closed)
+	await assert.rejects(
+		() => win.frappe.call({ method: KOREA_ATTENDANCE_APPLY_METHOD, args: {} }),
+		/read-only/,
+		"apply 메서드는 read-only 폴리필에서 거부"
+	)
+}
+
+// 2-e. 다른 Korea 런타임이 폴리필을 먼저 설치해도 근태 read-only 메서드는 허용
+//      (실사고: 연차 폴리필 allowlist에 막혀 "fallback only allows Korea annual
+//       leave read-only runtime methods" 디버그 문구가 사용자에게 노출)
+{
+	for (const ensureOther of [
+		ensureKoreaAnnualLeaveFrappeCallRuntime,
+		ensureKoreaPayrollClosingFrappeCallRuntime,
+	]) {
+		const fetchCalls = []
+		const win = {
+			frappe: {},
+			fetch: async (url, options) => {
+				fetchCalls.push({ url, options })
+				return { ok: true, json: async () => ({ message: { ok: true } }) }
+			},
+		}
+		assert.equal(ensureOther(win), true, `${ensureOther.name}: 폴리필 설치`)
+		await win.frappe.call({
+			method: KOREA_ATTENDANCE_PREVIEW_METHOD,
+			args: { workplace: "W", period_start: "2026-05-01", period_end: "2026-05-31", records: [], policy: {} },
+		})
+		await win.frappe.call({ method: KOREA_WEEKLY_AGGREGATE_METHOD, args: { sessions_data: [] } })
+		assert.equal(fetchCalls.length, 2, `${ensureOther.name}: 근태 read-only 메서드 허용`)
+		assert.ok(
+			!fetchCalls.some((c) => String(c.options.body).includes("object Object")),
+			`${ensureOther.name}: 객체 인자 JSON 직렬화`
+		)
+	}
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -416,6 +495,11 @@ assert.equal(isWeeklyOvertimeExceeded(20), true, "20h: 한도 초과")
 	assert.match(viewSource, /draft_only_no_submit_no_approve_no_send/, "뮤테이션 경계 상수")
 	assert.match(viewSource, /Draft/, "Draft 저장 안내")
 	assert.match(viewSource, /픽스처/, "픽스처 폴백 배너")
+
+	// 픽스처/빈 상태 UX (데스크톱 리뷰 잔존 이슈)
+	assert.match(viewSource, /예시 데이터/, "히어로 '예시 데이터' 배지")
+	assert.match(viewSource, /근태 기록이 아직 없습니다/, "근태 0건 빈 상태 문구")
+	assert.ok(!viewSource.includes("fallback only allows"), "개발자 디버그 문구 미노출")
 }
 
 // ──────────────────────────────────────────────────────────────────

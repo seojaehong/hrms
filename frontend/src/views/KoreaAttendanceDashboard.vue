@@ -39,7 +39,7 @@
 				<!-- 픽스처/오류 배너 -->
 				<div v-if="attendanceError || premiumError" class="k-card p-4 text-sm">
 					<div class="flex items-center gap-2">
-						<span class="rounded-full bg-black/10 px-2.5 py-0.5 text-xs font-semibold text-black">{{ __("정적 예시") }}</span>
+						<span class="rounded-full bg-black/10 px-2.5 py-0.5 text-xs font-semibold text-black">{{ __("예시 데이터") }}</span>
 						<p class="font-semibold text-black">{{ __("미리보기 모드 (픽스처)") }}</p>
 					</div>
 					<p v-if="attendanceError" class="mt-2 text-black/60">{{ attendanceError }}</p>
@@ -52,6 +52,12 @@
 					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("이번 달 출근 요약") }}</h2>
 
 					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
+
+					<!-- 실데이터 연결됐지만 근태 기록 0건 — 빈 상태 우선 (대시 나열 금지) -->
+					<div v-else-if="attendanceEmpty" class="mt-3 rounded-xl bg-[#f7f7f5] p-6 text-center" data-testid="attendance-empty-state">
+						<p class="text-sm font-semibold text-black">{{ __("근태 기록이 아직 없습니다") }}</p>
+						<p class="mt-1 text-xs text-black/50">{{ __("출퇴근 기록이 등록되면 이곳에 요약이 표시됩니다.") }}</p>
+					</div>
 
 					<template v-else>
 						<!-- 출근/결근/휴가 구성 바 — 인라인 SVG (뷰에 이미 로드된 empSummary만 사용, 데이터 없으면 숨김) -->
@@ -386,8 +392,15 @@ const weeklyOvertimeExceeded = computed(() =>
 )
 
 const dataSourceBadge = computed(() =>
-	attendanceSource.value === "runtime" ? "실시간" : "정적 예시"
+	attendanceSource.value === "runtime" ? "실시간" : "예시 데이터"
 )
+
+// 실데이터 연결(runtime)인데 근태 기록이 0건 — 빈 상태 우선 표시
+const attendanceEmpty = computed(() => {
+	if (attendanceSource.value !== "runtime") return false
+	const rows = attendanceData.value?.snapshot?.summary_by_employee
+	return !Array.isArray(rows) || rows.length === 0 || !empSummary.value
+})
 const dataSourceBadgeClass = computed(() =>
 	attendanceSource.value === "runtime"
 		? "bg-green-100 text-green-800"

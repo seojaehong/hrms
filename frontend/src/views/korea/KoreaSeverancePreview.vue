@@ -62,7 +62,7 @@
 						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">ESTIMATED SEVERANCE</div>
 							<div class="mt-1 text-sm font-medium text-black/60">퇴직금 (세전)</div>
-							<div class="k-display text-black">
+							<div class="k-display">
 								{{ formatKRW(result.severance_pay) }}
 							</div>
 							<div class="mt-4 grid grid-cols-3 gap-2">

@@ -50,7 +50,7 @@
 						<div class="k-block k-block--lime -mx-1">
 							<div class="k-eyebrow">NET PAY · {{ selectedYear }}.{{ String(selectedMonth).padStart(2, "0") }}</div>
 							<div class="mt-1 text-sm font-medium text-black/60">실수령액</div>
-							<div class="k-display text-black">
+							<div class="k-display">
 								{{ formatKRW(statement.net_pay) }}
 							</div>
 							<!-- 요약 3스탯: 지급 → 공제 → 실수령 흐름 -->

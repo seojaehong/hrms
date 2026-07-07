@@ -3,20 +3,30 @@
  * 상태 색(성공/위험)은 의미로만 쓴다. 참조: 레포 루트 DESIGN.md */
 :root {
     /* ── 모노크롬 코어 ── */
-    --k-ink: #000000;
-    --k-canvas: #ffffff;
+    --k-ink: #171513; /* v2: Vercel 명도 × claude 웜 정렬 */
+    --k-canvas: #f6f5f4; /* v2: Notion 페이퍼 캔버스 */
+    --k-card: #ffffff; /* 카드만 순백 */
     --k-inverse-canvas: #000000;
     --k-inverse-ink: #ffffff;
-    --k-hairline: #e6e6e6;
-    --k-hairline-soft: #f1f1f1;
-    --k-surface-soft: #f7f7f5;
+    --k-hairline: #e8e5e1; /* v2 웜 */
+    --k-hairline-soft: #f0eeeb;
+    --k-surface-soft: #fbfaf9; /* = surface-3 */
+    --k-surface-1: #ffffff;
+    --k-surface-2: #fbfaf9;
+    --k-surface-3: #f3f1ee;
+    --k-ledger-navy: #0d253d; /* Stripe — 금액 잉크 */
+    --k-ink-muted: #615d59;
+    --k-ink-faint: #a39e98;
+    --k-font-serif: "Noto Serif KR", "Nanum Myeongjo", serif; /* 리포트 히어로 전용 */
+    --k-shadow-modal: 0 8px 16px -4px rgba(0,0,0,.04), 0 24px 32px -8px rgba(0,0,0,.06);
+    --k-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px rgba(13,37,61,.5);
 
     /* ── 파스텔 색블록 (섹션 배경 전용 — 한 뷰포트에 1블록 원칙) ── */
-    --k-block-lime: #dceeb1;
-    --k-block-lilac: #c5b0f4;
-    --k-block-cream: #f4ecd6;
-    --k-block-mint: #c8e6cd;
-    --k-block-pink: #efd4d4;
+    --k-block-lime: var(--t-block-1, #dceeb1);
+    --k-block-lilac: var(--t-block-2, #c5b0f4);
+    --k-block-cream: var(--t-block-3, #f4ecd6);
+    --k-block-mint: var(--t-block-4, #c8e6cd);
+    --k-block-pink: var(--t-block-5, #efd4d4);
     --k-block-coral: #f3c9b6;
     --k-block-navy: #1f1d3d;
 
@@ -24,7 +34,7 @@
     --k-success: #1ea64a;
     --k-danger: #dc2626;
     --k-warn: #f0b429;
-    --k-accent-magenta: #ff3d8b;
+    --k-accent-magenta: var(--t-accent, #0d253d); /* v2: 단일 액센트 — 테넌트 오버라이드 슬롯 */
 
     /* ── 타입 ── */
     --k-font: -apple-system, BlinkMacSystemFont, "Pretendard",
@@ -54,7 +64,7 @@
     --korea-radius-sm: var(--k-radius-sm);
     --korea-radius-md: var(--k-radius-md);
     --korea-radius-lg: 12px;
-    --korea-shadow-card: none; /* Figma 시스템: 그림자 대신 헤어라인 */
+    --korea-shadow-card: 0 1px 1px rgba(0,0,0,.02), 0 2px 2px rgba(0,0,0,.04); /* v2: Vercel 스택 섀도 */
 }
 
 /* ── 공용 유틸 클래스 ── */
@@ -92,7 +102,16 @@
     letter-spacing: -0.02em;
     line-height: 1.05;
     font-size: 2.25rem; /* 36px 모바일 */
+    color: var(--k-ledger-navy); /* v2: 금액 디스플레이 = 네이비 잉크 */
 }
+/* 결산선 — 확정 금액 시그니처 (DESIGN.md §Signature) */
+.k-settled {
+    color: var(--k-ledger-navy);
+    font-weight: 700;
+    border-bottom: 1px solid var(--k-ledger-navy);
+    padding-bottom: 1px;
+}
+.k-press:active { transform: scale(0.97); }
 @media (min-width: 768px) {
     .k-display { font-size: 3.5rem; letter-spacing: -0.025em; } /* 56px */
 }
@@ -115,9 +134,10 @@
 .k-block--pink   { background: var(--k-block-pink); }
 .k-block--navy   { background: var(--k-block-navy); color: var(--k-inverse-ink); }
 .k-card {
-    background: var(--k-canvas);
+    background: var(--k-card);
     border: 1px solid var(--k-hairline);
     border-radius: var(--k-radius-md);
+    box-shadow: var(--korea-shadow-card);
 }
 .k-numeric {
     font-variant-numeric: tabular-nums;

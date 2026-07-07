@@ -15,6 +15,11 @@ const routes = [
 		path: "/dashboard/korea-compliance/category/:categoryKey",
 		component: () => import("@/views/korea/KoreaComplianceCategoryDetail.vue"),
 	},
+	{
+		name: "KoreaOnboardingRequest",
+		path: "/dashboard/korea-onboarding-request",
+		component: () => import("@/views/korea/KoreaOnboardingRequest.vue"),
+	},
 ]
 
 export default routes

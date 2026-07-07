@@ -106,6 +106,15 @@ class TestKoreaPoTranslationQuality(unittest.TestCase):
         "Gender": "성별",
         "Male": "남성",
         "Female": "여성",
+        # 데스크톱 리뷰 잔존 영어/오역 (경비 청구 폼 — 2026-07 리뷰 실측)
+        # "Advances"는 frappe 코어 ko가 "발전"으로 오역 → 앱 번역으로 교정
+        "Advances": "선급금",
+        "Totals": "합계",
+        "Reason": "사유",
+        "Currency": "통화",
+        "Select {0}": "{0} 선택",  # FormField placeholder → "Select Currency" 커버
+        "No results found": "결과가 없습니다",
+        "Expense Claim": "경비청구",
     }
 
     @classmethod

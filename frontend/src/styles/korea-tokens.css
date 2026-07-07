@@ -67,6 +67,10 @@
     color: var(--k-ink);
     opacity: 0.55;
 }
+/* 데스크톱: 가이드 eyebrow 18px/ls .54px에 근접 (앱 맥락상 14px 상한) */
+@media (min-width: 768px) {
+    .k-eyebrow { font-size: 13px; letter-spacing: 0.09em; }
+}
 .k-label {
     font-size: 12px;
     font-weight: 500;
@@ -76,6 +80,33 @@
 .k-block {
     border-radius: var(--k-radius-lg);
     padding: 20px;
+}
+/* 데스크톱: 색블록 = 포스터 (가이드: rounded.lg 24px, 섹션 내부 48px, 타이포에 넉넉한 측면 여백) */
+@media (min-width: 768px) {
+    .k-block { border-radius: 24px; padding: 44px 48px; }
+}
+/* 디스플레이 숫자 — 가이드 display 스케일 (tight line-height + 음수 letter-spacing) */
+.k-display {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    font-size: 2.25rem; /* 36px 모바일 */
+}
+@media (min-width: 768px) {
+    .k-display { font-size: 3.5rem; letter-spacing: -0.025em; } /* 56px */
+}
+@media (min-width: 1280px) {
+    .k-display { font-size: 4rem; } /* 64px = display-lg */
+}
+/* 블록 타이틀 — 가이드 headline 26px/540 */
+.k-block-title {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-size: 1.25rem;
+}
+@media (min-width: 768px) {
+    .k-block-title { font-size: 1.625rem; font-weight: 600; } /* 26px/semibold ≈ 540 */
 }
 .k-block--lime   { background: var(--k-block-lime); }
 .k-block--lilac  { background: var(--k-block-lilac); }

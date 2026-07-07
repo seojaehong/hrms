@@ -2,7 +2,7 @@
 	<ion-page>
 		<ion-content :fullscreen="true">
 			<!-- BaseLayout 컨테이너 규칙과 동일한 폭 제한 (데스크톱 풀와이드 방지) -->
-			<div class="flex flex-col min-h-full p-4 gap-5 bg-gray-50 w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
+			<div class="flex flex-col min-h-full p-4 gap-5 bg-gray-50 w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 
 				<!-- Header -->
 				<div class="flex items-center gap-3 pt-2">

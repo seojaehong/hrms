@@ -1,28 +1,39 @@
 <template>
 	<BaseLayout>
 		<template #body>
-			<div class="flex flex-col items-center my-7 p-4 gap-6">
+			<div class="flex flex-col items-center my-7 p-4 gap-6 md:gap-10">
+				<!-- 데스크톱 인사 헤드라인 — 가이드 display 타이포 -->
+				<div class="hidden md:block w-full pt-2">
+					<p class="k-eyebrow">KOREA HRMS</p>
+					<h1 class="mt-1 text-4xl xl:text-5xl font-bold tracking-[-0.02em] leading-[1.05] text-black">
+						{{ __("급여부터 근태까지,") }}<br />{{ __("오늘 할 일이 정리되어 있습니다") }}
+					</h1>
+				</div>
+
 				<CheckInPanel />
 
 				<!-- 핵심 4축: 급여 / 퇴직금 / 연차 / 근태 — DESIGN-figma 색블록 섹션 -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
 					<div
-						v-for="section in sections"
+						v-for="(section, idx) in sections"
 						:key="section.key"
-						class="k-block"
+						class="k-block transition-transform duration-200 md:hover:-translate-y-0.5"
 						:class="`k-block--${section.block}`"
 					>
-						<div class="k-eyebrow mb-0.5">{{ section.eyebrow }}</div>
-						<div class="text-lg font-bold text-black mb-2 tracking-tight">{{ section.title }}</div>
+						<div class="flex items-baseline justify-between">
+							<div class="k-eyebrow mb-0.5">{{ section.eyebrow }}</div>
+							<span class="k-eyebrow opacity-40">{{ String(idx + 1).padStart(2, "0") }}</span>
+						</div>
+						<div class="k-block-title text-black mb-2">{{ section.title }}</div>
 						<div class="flex flex-col">
 							<router-link
 								v-for="link in section.links"
 								:key="link.route"
 								:to="{ name: link.route }"
-								class="flex flex-row items-center justify-between py-2.5 border-t border-black/10"
+								class="group flex flex-row items-center justify-between py-2.5 md:py-3 border-t border-black/10"
 							>
-								<span class="text-sm font-medium text-black">{{ link.title }}</span>
-								<FeatherIcon name="chevron-right" class="h-4 w-4 text-black/40" />
+								<span class="text-sm md:text-base font-medium text-black">{{ link.title }}</span>
+								<FeatherIcon name="chevron-right" class="h-4 w-4 text-black/40 transition-transform group-hover:translate-x-0.5" />
 							</router-link>
 						</div>
 					</div>

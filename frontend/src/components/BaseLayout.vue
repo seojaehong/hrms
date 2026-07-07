@@ -2,7 +2,7 @@
 	<ion-page>
 		<ion-header class="ion-no-border">
 			<div class="w-full bg-white shadow-sm">
-				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
+				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">
 							<!-- 홈이 아닌 화면 공통 뒤로가기 — 히스토리 없으면 홈으로 -->
@@ -58,7 +58,7 @@
 		</ion-header>
 
 		<ion-content class="ion-no-padding">
-			<div class="flex flex-col h-screen w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
+			<div class="flex flex-col h-screen w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 				<slot name="body"></slot>
 			</div>
 		</ion-content>

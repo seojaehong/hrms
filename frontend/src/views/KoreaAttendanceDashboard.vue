@@ -16,7 +16,7 @@
 					<!-- 주인공: 출근일수 -->
 					<div class="mt-3">
 						<p class="text-sm font-medium text-black/60">{{ __("이번 마감 출근") }}</p>
-						<p class="k-numeric text-4xl font-bold tracking-tight leading-tight text-black">
+						<p class="k-display text-black">
 							{{ empSummary?.present_days ?? "—" }}<span class="text-xl font-bold">일</span>
 						</p>
 					</div>

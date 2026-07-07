@@ -14,8 +14,8 @@ const src = await readFile(resolve(root, "src/views/korea/KoreaWageStatementDash
 test("히어로: 실수령액이 lime 블록 상단의 주인공 (디스플레이 타입 + k-numeric)", () => {
 	assert.match(src, /k-block--lime/)
 	assert.match(src, /실수령액/)
-	// 히어로 금액은 3xl 이상 디스플레이 스케일
-	assert.match(src, /text-4xl|text-3xl/)
+	// 히어로 금액은 k-display 디스플레이 스케일 (데스크톱 56~64px, 가이드 display-lg)
+	assert.match(src, /k-display/)
 })
 
 test("요약 스탯: 지급 합계 · 공제 합계 · 실수령 3단 구조", () => {

@@ -2,7 +2,7 @@
 	<ion-page>
 		<ion-content class="ion-padding">
 			<!-- BaseLayout 컨테이너 규칙과 동일한 폭 제한으로 통일 -->
-			<div class="flex flex-col h-full w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
+			<div class="flex flex-col h-full w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 				<!-- Header -->
 				<header
 					class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"

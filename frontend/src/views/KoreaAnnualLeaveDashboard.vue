@@ -19,7 +19,7 @@
 					<div v-if="display" class="mt-3 flex items-center justify-between gap-3">
 						<div>
 							<p class="text-sm font-medium text-black/60">{{ __("잔여 연차") }}</p>
-							<p class="k-numeric text-4xl font-bold tracking-tight leading-tight" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
+							<p class="k-display" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
 								{{ display.remainingDays }}<span class="text-xl font-bold">일</span>
 							</p>
 						</div>

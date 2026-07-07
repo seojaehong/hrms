@@ -2,7 +2,7 @@
 	<ion-page>
 		<ListView
 			doctype="Expense Claim"
-			:pageTitle="('Claim History')"
+			:pageTitle="__('Claim History')"
 			:tabButtons="TAB_BUTTONS"
 			:fields="EXPENSE_CLAIM_FIELDS"
 			groupBy="`tabExpense Claim`.name"
@@ -14,8 +14,9 @@
 <script setup>
 import { IonPage } from "@ionic/vue"
 import ListView from "@/components/ListView.vue"
+import { inject } from "vue"
 
-
+const __ = inject("$translate")
 const TAB_BUTTONS = ["My Claims", "Team Claims"] // __("My Claims"), __("Team Claims")
 const EXPENSE_CLAIM_FIELDS = [
 	"`tabExpense Claim`.name",

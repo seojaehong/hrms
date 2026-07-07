@@ -92,6 +92,7 @@ const sections = [
 		links: [
 			{ title: __("모바일 출퇴근"), route: "KoreaMobileCheckin" },
 			{ title: __("근태 대시보드"), route: "KoreaAttendanceDashboard" },
+			{ title: __("근무시간 제출"), route: "KoreaTimeInput" },
 			{ title: __("출근기록 신청"), route: "AttendanceRequestFormView" },
 		],
 	},

@@ -1,7 +1,7 @@
 {
  "app": "hrms",
  "charts": [],
- "content": "[{\"id\":\"kHR_hdr001\",\"type\":\"header\",\"data\":{\"text\":\"<span style=\\\"font-size: 18px;\\\"><b>\\ud55c\\uad6d HR — \\ud734\\uac00 / \\uadfc\\ud0dc / \\ub9c8\\uac10</b></span>\",\"col\":12}},{\"id\":\"kHR_spc001\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"kHR_crd001\",\"type\":\"card\",\"data\":{\"card_name\":\"\\ud55c\\uad6d \\uc0ac\\uc5c5\\uc7a5 / \\uc9c1\\uc6d0\",\"col\":4}},{\"id\":\"kHR_crd002\",\"type\":\"card\",\"data\":{\"card_name\":\"\\ud55c\\uad6d \\ud734\\uac00 (\\uc5f0\\ucc28/\\uc6d4\\ucc28)\",\"col\":4}},{\"id\":\"kHR_crd003\",\"type\":\"card\",\"data\":{\"card_name\":\"\\ud55c\\uad6d \\uadfc\\ud0dc / \\ub9c8\\uac10\",\"col\":4}},{\"id\":\"kHR_crd004\",\"type\":\"card\",\"data\":{\"card_name\":\"\\ud55c\\uad6d \\ud398\\uc774\\ub864\",\"col\":4}},{\"id\":\"kHR_crd005\",\"type\":\"card\",\"data\":{\"card_name\":\"\\uac10\\uc0ac / \\ucf64\\ud50c\\ub77c\\uc774\\uc5b8\\uc2a4\",\"col\":4}}]",
+ "content": "[{\"id\": \"kHR_hdr001\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 18px;\\\"><b>HR 홈 — 직원 / 휴가 / 급여</b></span>\", \"col\": 12}}, {\"id\": \"kHR_spc001\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"kHR_crd001\", \"type\": \"card\", \"data\": {\"card_name\": \"사업장 / 직원\", \"col\": 4}}, {\"id\": \"kHR_crd002\", \"type\": \"card\", \"data\": {\"card_name\": \"휴가 (연차/월차)\", \"col\": 4}}, {\"id\": \"kHR_crd003\", \"type\": \"card\", \"data\": {\"card_name\": \"근태 / 마감\", \"col\": 4}}, {\"id\": \"kHR_crd004\", \"type\": \"card\", \"data\": {\"card_name\": \"급여\", \"col\": 4}}, {\"id\": \"kHR_crd005\", \"type\": \"card\", \"data\": {\"card_name\": \"감사 / 컴플라이언스\", \"col\": 4}}]",
  "creation": "2026-05-17 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -11,12 +11,12 @@
  "icon": "globe",
  "idx": 0,
  "is_hidden": 0,
- "label": "한국 HR",
+ "label": "HR 홈",
  "links": [
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 사업장 / 직원",
+   "label": "사업장 / 직원",
    "link_count": 2,
    "onboard": 0,
    "type": "Card Break"
@@ -24,7 +24,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 사업장 프로필",
+   "label": "사업장 프로필",
    "link_count": 0,
    "link_to": "Korea Workplace Profile",
    "link_type": "DocType",
@@ -34,7 +34,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 고용 프로필",
+   "label": "고용 프로필",
    "link_count": 0,
    "link_to": "Korea Employment Profile",
    "link_type": "DocType",
@@ -44,7 +44,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 휴가 (연차/월차)",
+   "label": "휴가 (연차/월차)",
    "link_count": 3,
    "onboard": 0,
    "type": "Card Break"
@@ -82,7 +82,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 근태 / 마감",
+   "label": "근태 / 마감",
    "link_count": 3,
    "onboard": 0,
    "type": "Card Break"
@@ -110,7 +110,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 페이롤 마감",
+   "label": "급여 마감",
    "link_count": 0,
    "link_to": "Korea Payroll Closing Draft",
    "link_type": "DocType",
@@ -120,7 +120,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "한국 페이롤",
+   "label": "급여",
    "link_count": 3,
    "onboard": 0,
    "type": "Card Break"
@@ -158,7 +158,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "감사 / 콤플라이언스",
+   "label": "감사 / 컴플라이언스",
    "link_count": 1,
    "onboard": 0,
    "type": "Card Break"
@@ -188,23 +188,23 @@
  "shortcuts": [
   {
    "color": "Blue",
-   "label": "한국 페이롤 마감",
+   "label": "급여 마감",
    "link_to": "Korea Payroll Closing Draft",
    "type": "DocType"
   },
   {
    "color": "Green",
-   "label": "한국 사업장 프로필",
+   "label": "사업장 프로필",
    "link_to": "Korea Workplace Profile",
    "type": "DocType"
   },
   {
    "color": "Purple",
-   "label": "한국 고용 프로필",
+   "label": "고용 프로필",
    "link_to": "Korea Employment Profile",
    "type": "DocType"
   }
  ],
- "title": "Korea HR (한국 HR)",
+ "title": "HR 홈",
  "type": "Workspace"
 }

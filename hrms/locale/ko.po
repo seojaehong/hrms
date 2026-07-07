@@ -5709,7 +5709,7 @@ msgstr "핵심역할"
 #. Name of a DocType
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 msgid "Korea Employment Profile"
-msgstr "한국 고용 프로필"
+msgstr "고용 프로필"
 
 #: frontend/src/views/Home.vue:62
 msgid "Korea Payroll Closing"
@@ -5718,7 +5718,7 @@ msgstr "한국 급여 마감"
 #. Name of a DocType
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.json
 msgid "Korea Payroll Closing Draft"
-msgstr "한국 급여 마감 임시저장"
+msgstr "급여 마감 임시저장"
 
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:207
 #: hrms/hr/doctype/korea_payroll_closing_draft/korea_payroll_closing_draft.py:240
@@ -5736,7 +5736,7 @@ msgstr "한국 급여 마감 초안이 '담당자 승인 대기 초안' 상태�
 #. Name of a DocType
 #: hrms/hr/doctype/korea_payroll_closing_review_audit_log/korea_payroll_closing_review_audit_log.json
 msgid "Korea Payroll Closing Review Audit Log"
-msgstr "한국 급여 마감 검토 감사 로그"
+msgstr "급여 마감 검토 감사 로그"
 
 #: frontend/src/views/Home.vue:67
 msgid "Korea Payroll Review Audit Logs"
@@ -5748,7 +5748,7 @@ msgstr "한국 급여 검토 감사 로그"
 #: hrms/hr/doctype/korea_employment_profile/korea_employment_profile.json
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.json
 msgid "Korea Workplace Profile"
-msgstr "한국 사업장 프로필"
+msgstr "사업장 프로필"
 
 #: hrms/hr/doctype/korea_workplace_profile/korea_workplace_profile.py:23
 msgid "Korea business registration number must use the 000-00-00000 format."
@@ -12513,3 +12513,357 @@ msgstr "워크스페이스"
 
 msgid "Edit"
 msgstr "편집"
+
+msgid "First Name"
+msgstr "이름"
+
+msgid "Middle Name"
+msgstr "중간 이름"
+
+msgid "Last Name"
+msgstr "성"
+
+msgid "Gender"
+msgstr "성별"
+
+msgid "Salutation"
+msgstr "호칭"
+
+msgid "Female"
+msgstr "여성"
+
+msgid "Male"
+msgstr "남성"
+
+msgid "Other"
+msgstr "기타"
+
+msgid "Date of Birth"
+msgstr "생년월일"
+
+msgid "User Details"
+msgstr "사용자 정보"
+
+msgid "Company Info"
+msgstr "회사 정보"
+
+msgid "Overview"
+msgstr "개요"
+
+msgid "Connections"
+msgstr "연결"
+
+msgid "Profile"
+msgstr "프로필"
+
+msgid "Address & Contacts"
+msgstr "주소 및 연락처"
+
+msgid "Save"
+msgstr "저장"
+
+msgid "Saving"
+msgstr "저장 중"
+
+msgid "Comments"
+msgstr "댓글"
+
+msgid "Activity"
+msgstr "활동"
+
+msgid "New Email"
+msgstr "새 이메일"
+
+msgid "New Event"
+msgstr "새 일정"
+
+msgid "Assign"
+msgstr "담당자 지정"
+
+msgid "Assign To"
+msgstr "담당자 지정"
+
+msgid "Attachments"
+msgstr "첨부파일"
+
+msgid "Attach File"
+msgstr "파일 첨부"
+
+msgid "Tags"
+msgstr "태그"
+
+msgid "Share"
+msgstr "공유"
+
+msgid "Last Edited By"
+msgstr "최종 수정자"
+
+msgid "Created By"
+msgstr "작성자"
+
+msgid "Type a reply / comment"
+msgstr "댓글을 입력하세요"
+
+msgid "Print"
+msgstr "인쇄"
+
+msgid "Duplicate"
+msgstr "복제"
+
+msgid "Delete"
+msgstr "삭제"
+
+msgid "Rename"
+msgstr "이름 변경"
+
+msgid "Customize"
+msgstr "사용자 지정"
+
+msgid "Email"
+msgstr "이메일"
+
+msgid "Links"
+msgstr "링크"
+
+msgid "Actions"
+msgstr "작업"
+
+msgid "Menu"
+msgstr "메뉴"
+
+msgid "Undo"
+msgstr "실행 취소"
+
+msgid "New Comment"
+msgstr "새 댓글"
+
+msgid "Add a comment"
+msgstr "댓글 추가"
+
+msgid "Edited"
+msgstr "수정됨"
+
+msgid "Add {0}"
+msgstr "{0} 추가"
+
+msgid "New {0}"
+msgstr "새 {0}"
+
+msgid "Create New"
+msgstr "새로 만들기"
+
+msgid "Sort By"
+msgstr "정렬 기준"
+
+msgid "Sort Ascending"
+msgstr "오름차순"
+
+msgid "Sort Descending"
+msgstr "내림차순"
+
+msgid "Refresh"
+msgstr "새로고침"
+
+msgid "Reload"
+msgstr "새로고침"
+
+msgid "Export"
+msgstr "내보내기"
+
+msgid "Import"
+msgstr "가져오기"
+
+msgid "Settings"
+msgstr "설정"
+
+msgid "Help"
+msgstr "도움말"
+
+msgid "Logout"
+msgstr "로그아웃"
+
+msgid "My Settings"
+msgstr "내 설정"
+
+msgid "Toggle Theme"
+msgstr "테마 전환"
+
+msgid "Toggle Full Width"
+msgstr "전체 너비 전환"
+
+msgid "View Website"
+msgstr "웹사이트 보기"
+
+msgid "Apps"
+msgstr "앱"
+
+msgid "Session Defaults"
+msgstr "세션 기본값"
+
+msgid "Name"
+msgstr "이름"
+
+msgid "Owner"
+msgstr "소유자"
+
+msgid "Assigned To"
+msgstr "담당자"
+
+msgid "Liked By"
+msgstr "좋아요"
+
+msgid "No further records"
+msgstr "더 이상 항목이 없습니다"
+
+msgid "Load More"
+msgstr "더 보기"
+
+msgid "Clear Filters"
+msgstr "필터 초기화"
+
+msgid "Saved Filters"
+msgstr "저장된 필터"
+
+msgid "Edit Filters"
+msgstr "필터 편집"
+
+msgid "Select All"
+msgstr "전체 선택"
+
+msgid "Unselect All"
+msgstr "전체 해제"
+
+msgid "just now"
+msgstr "방금"
+
+msgid "Today"
+msgstr "오늘"
+
+msgid "Yesterday"
+msgstr "어제"
+
+msgid "Tomorrow"
+msgstr "내일"
+
+msgid "yesterday"
+msgstr "어제"
+
+msgid "today"
+msgstr "오늘"
+
+msgid "1 minute ago"
+msgstr "1분 전"
+
+msgid "{0} minutes ago"
+msgstr "{0}분 전"
+
+msgid "1 hour ago"
+msgstr "1시간 전"
+
+msgid "{0} hours ago"
+msgstr "{0}시간 전"
+
+msgid "1 day ago"
+msgstr "1일 전"
+
+msgid "{0} days ago"
+msgstr "{0}일 전"
+
+msgid "1 week ago"
+msgstr "1주 전"
+
+msgid "{0} weeks ago"
+msgstr "{0}주 전"
+
+msgid "1 month ago"
+msgstr "1개월 전"
+
+msgid "{0} months ago"
+msgstr "{0}개월 전"
+
+msgid "1 year ago"
+msgstr "1년 전"
+
+msgid "{0} years ago"
+msgstr "{0}년 전"
+
+msgid "{0} created this"
+msgstr "{0}님이 생성함"
+
+msgid "{0} edited this"
+msgstr "{0}님이 수정함"
+
+msgid "last edited this"
+msgstr "마지막으로 수정함"
+
+msgid "created this"
+msgstr "생성함"
+
+msgid "{0} changed the value of {1} from {2} to {3}"
+msgstr "{0}님이 {1} 값을 {2}에서 {3}(으)로 변경"
+
+msgid "{0} changed value of {1} from {2} to {3}"
+msgstr "{0}님이 {1} 값을 {2}에서 {3}(으)로 변경"
+
+msgid "Enabled"
+msgstr "사용"
+
+msgid "Disabled"
+msgstr "사용 안 함"
+
+msgid "Open"
+msgstr "진행 중"
+
+msgid "Closed"
+msgstr "종료"
+
+msgid "Pending"
+msgstr "대기"
+
+msgid "Rejected"
+msgstr "반려됨"
+
+msgid "Completed"
+msgstr "완료"
+
+msgid "Not Saved"
+msgstr "저장되지 않음"
+
+msgid "Unsaved Changes"
+msgstr "저장되지 않은 변경"
+
+msgid "Success"
+msgstr "성공"
+
+msgid "Error"
+msgstr "오류"
+
+msgid "Warning"
+msgstr "경고"
+
+msgid "Message"
+msgstr "메시지"
+
+msgid "Yes"
+msgstr "예"
+
+msgid "No"
+msgstr "아니요"
+
+msgid "Cancel"
+msgstr "취소"
+
+msgid "Close"
+msgstr "닫기"
+
+msgid "Submit"
+msgstr "제출"
+
+msgid "Amend"
+msgstr "수정 재작성"
+
+msgid "Confirm"
+msgstr "확인"
+
+msgid "Search or type a command ({0})"
+msgstr "검색 ({0})"

@@ -118,7 +118,7 @@ class TestKoreaWorkspaceFile(unittest.TestCase):
         self.assertEqual(self.data["name"], "Korea HR")
 
     def test_label_is_korean(self):
-        self.assertEqual(self.data["label"], "한국 HR")
+        self.assertEqual(self.data["label"], "HR 홈")
 
     def test_module_is_hr(self):
         self.assertEqual(self.data["module"], "HR")

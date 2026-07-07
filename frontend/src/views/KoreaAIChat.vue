@@ -2,23 +2,24 @@
 	<BaseLayout :pageTitle="__('한국 노무 AI 보조')">
 		<template #body>
 			<div class="flex flex-col h-full">
-				<!-- Disclaimer Banner -->
-				<div class="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-xs text-yellow-800 flex items-start gap-2">
-					<span class="mt-0.5 shrink-0">⚠</span>
-					<span>
-						이 챗봇은 AI 보조입니다. 실제 결정은 반드시 담당자 또는 공인노무사의 검토를 거쳐 주세요.
-						법률 자문이 아니며, 개별 사안에 따라 결과가 달라질 수 있습니다.
-					</span>
+				<!-- 히어로 — navy 색블록 (한 뷰포트 1블록) -->
+				<div class="p-4 pb-0">
+					<div class="k-block k-block--navy">
+						<div class="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">AI HR</div>
+						<div class="mt-1 text-xl font-bold tracking-tight text-white">{{ __('AI HR 담당자') }}</div>
+						<p class="mt-2 font-mono text-[10px] uppercase tracking-[0.08em] text-white/50 leading-relaxed">
+							AI 보조 답변 — 법률 자문이 아니며, 실제 결정은 담당자 또는 공인노무사의 검토를 거쳐 주세요.
+						</p>
+					</div>
 				</div>
 
 				<!-- Chat History -->
 				<div ref="chatContainer" class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
 					<!-- Welcome message -->
 					<div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
-						<div class="text-4xl">⚖️</div>
 						<div>
-							<p class="text-lg font-bold text-gray-800">한국 노무 AI 보조</p>
-							<p class="text-sm text-gray-500 mt-1">
+							<p class="text-lg font-bold tracking-tight text-black">{{ __('무엇을 도와드릴까요?') }}</p>
+							<p class="text-sm text-black/50 mt-1">
 								근로기준법, 연차, 급여, 해고 등 HR 관련 질문을 입력하세요.
 							</p>
 						</div>
@@ -26,44 +27,44 @@
 
 					<!-- Message Thread -->
 					<template v-for="msg in messages" :key="msg.id">
-						<!-- User message -->
+						<!-- User message — inverse(black) 말풍선 -->
 						<div v-if="msg.role === 'user'" class="flex justify-end">
-							<div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-[80%] text-sm">
+							<div class="bg-black text-white rounded-3xl rounded-br-md px-4 py-2.5 max-w-[80%] text-sm">
 								{{ msg.content }}
 							</div>
 						</div>
 
-						<!-- Assistant message -->
+						<!-- Assistant message — surface-soft + 헤어라인 -->
 						<div v-else class="flex flex-col gap-2">
 							<div class="flex items-start gap-2">
-								<div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs shrink-0 mt-0.5">
+								<div class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">
 									AI
 								</div>
-								<div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
-									<p class="text-sm text-gray-800 whitespace-pre-wrap">{{ msg.content }}</p>
+								<div class="bg-[var(--k-surface-soft)] border border-[var(--k-hairline)] rounded-3xl rounded-tl-md px-4 py-3 max-w-[85%]">
+									<p class="text-sm text-black whitespace-pre-wrap">{{ msg.content }}</p>
 								</div>
 							</div>
 
 							<!-- Citations -->
 							<div v-if="msg.citations && msg.citations.length > 0" class="ml-9">
-								<div class="text-xs text-gray-500 mb-1 font-medium">근거 인용</div>
+								<div class="k-eyebrow mb-1">근거 인용</div>
 								<div class="flex flex-col gap-1">
 									<div
 										v-for="(cite, ci) in msg.citations"
 										:key="ci"
-										class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2"
+										class="k-card px-3 py-2"
 									>
-										<div class="text-xs font-semibold text-blue-700">
+										<div class="text-xs font-semibold text-black">
 											[{{ citationTypeLabel(cite.type) }}] {{ cite.ref }}
 										</div>
-										<div class="text-xs text-gray-600 mt-0.5 line-clamp-2">{{ cite.snippet }}</div>
+										<div class="text-xs text-black/60 mt-0.5 line-clamp-2">{{ cite.snippet }}</div>
 									</div>
 								</div>
 							</div>
 
 							<!-- Suggested Actions — 사용자 직접 클릭 전용, 자동 실행 X -->
 							<div v-if="msg.suggestedActions && msg.suggestedActions.length > 0" class="ml-9">
-								<div class="text-xs text-gray-500 mb-1 font-medium">관련 링크</div>
+								<div class="k-eyebrow mb-1">관련 링크</div>
 								<div class="flex flex-wrap gap-2">
 									<component
 										v-for="(action, ai) in msg.suggestedActions"
@@ -72,7 +73,7 @@
 										v-bind="isExternalUrl(action.url)
 											? { href: action.url, target: '_blank', rel: 'noopener noreferrer' }
 											: { to: action.url }"
-										class="inline-flex items-center gap-1 text-xs bg-white border border-gray-200 rounded-full px-3 py-1.5 text-gray-700 hover:bg-gray-50 transition-colors"
+										class="inline-flex items-center gap-1 text-xs font-medium bg-white border border-black/15 rounded-full px-3 py-1.5 text-black hover:bg-black hover:text-white transition-colors"
 									>
 										{{ action.label }}
 									</component>
@@ -81,21 +82,21 @@
 
 							<!-- Disclaimer per message -->
 							<div v-if="msg.disclaimer" class="ml-9">
-								<p class="text-xs text-gray-400 italic">{{ msg.disclaimer }}</p>
+								<p class="font-mono text-[10px] uppercase tracking-[0.08em] text-black/40">{{ msg.disclaimer }}</p>
 							</div>
 						</div>
 					</template>
 
 					<!-- Loading indicator -->
 					<div v-if="isLoading" class="flex items-start gap-2">
-						<div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs shrink-0">
+						<div class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center font-mono text-[10px] shrink-0">
 							AI
 						</div>
-						<div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
+						<div class="bg-[var(--k-surface-soft)] border border-[var(--k-hairline)] rounded-3xl rounded-tl-md px-4 py-3">
 							<div class="flex gap-1">
-								<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-								<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-								<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+								<span class="w-2 h-2 bg-black/40 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+								<span class="w-2 h-2 bg-black/40 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+								<span class="w-2 h-2 bg-black/40 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
 							</div>
 						</div>
 					</div>
@@ -103,13 +104,13 @@
 
 				<!-- Suggested Questions -->
 				<div v-if="messages.length === 0" class="px-4 pb-2">
-					<p class="text-xs text-gray-500 mb-2 font-medium">자주 묻는 질문</p>
+					<p class="k-eyebrow mb-2">자주 묻는 질문</p>
 					<div class="flex flex-col gap-2">
 						<button
 							v-for="(q, qi) in suggestedQuestions"
 							:key="qi"
 							@click="sendSuggestedQuestion(q)"
-							class="text-left text-sm bg-gray-50 hover:bg-gray-100 rounded-xl px-3 py-2.5 text-gray-700 transition-colors border border-gray-100"
+							class="text-left text-sm k-card px-3 py-2.5 text-black hover:bg-[var(--k-surface-soft)] transition-colors"
 						>
 							{{ q }}
 						</button>
@@ -117,12 +118,12 @@
 				</div>
 
 				<!-- Input Area -->
-				<div class="px-4 py-3 border-t border-gray-100 bg-white">
+				<div class="px-4 py-3 border-t border-[var(--k-hairline-soft)] bg-white">
 					<div class="flex items-end gap-2">
 						<textarea
 							v-model="inputText"
 							:placeholder="__('근로기준법, 연차, 급여, 해고 등 질문하세요...')"
-							class="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 max-h-32 min-h-[42px]"
+							class="flex-1 resize-none rounded-[21px] border border-[var(--k-hairline)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/60 max-h-32 min-h-[42px]"
 							rows="1"
 							@keydown.enter.exact.prevent="sendMessage"
 							@input="autoResize"
@@ -132,15 +133,15 @@
 							@click="sendMessage"
 							:disabled="!inputText.trim() || isLoading"
 							aria-label="메시지 전송"
-							class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors shrink-0"
+							class="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black/80 transition-colors shrink-0"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m-7 7l7-7 7 7" />
 							</svg>
 						</button>
 					</div>
-					<p class="text-xs text-gray-400 mt-1.5 text-center">
-						AI 보조 도구입니다. 법률 자문이 아닙니다.
+					<p class="mt-1.5 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-black/40">
+						AI 보조 답변 · 법률 자문이 아닙니다
 					</p>
 				</div>
 			</div>

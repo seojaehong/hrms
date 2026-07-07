@@ -1,8 +1,8 @@
 <template>
 	<ion-page>
 		<ion-header class="ion-no-border">
-			<div class="w-full sm:w-96">
-				<div class="flex flex-col bg-white shadow-sm p-4">
+			<div class="w-full bg-white shadow-sm">
+				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">
 							<h2 class="text-xl font-bold text-gray-900">

@@ -67,6 +67,7 @@ class FakeFrappe(types.SimpleNamespace):
         self.whitelist = lambda *a, **kw: (lambda fn: fn)
         self._docs: dict[tuple, FakeDoc] = {}
         self._comments: list[dict] = []
+        self._get_list_calls: list[dict] = []
         self._throw_fn = self._default_throw
         self.log_error = lambda *a, **kw: None
 
@@ -96,6 +97,9 @@ class FakeFrappe(types.SimpleNamespace):
         return doc
 
     def get_list(self, doctype, filters=None, fields=None, order_by=None, limit=None):
+        self._get_list_calls.append(
+            {"doctype": doctype, "filters": filters, "fields": fields}
+        )
         return list(self.db._list_data.get(doctype, []))
 
 
@@ -289,6 +293,162 @@ class TestListPendingApprovals(unittest.TestCase):
         # Leave Application 하나만 반환
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["doctype"], "Leave Application")
+
+
+# ---------------------------------------------------------------------------
+# Korea Payroll Closing Draft 수집 테스트 (버그: "1 확정 대기 ↔ 인박스 0건")
+# ---------------------------------------------------------------------------
+
+_DRAFT_JSON_PATH = (
+    pathlib.Path(__file__).resolve().parents[2]
+    / "hrms"
+    / "hr"
+    / "doctype"
+    / "korea_payroll_closing_draft"
+    / "korea_payroll_closing_draft.json"
+)
+
+
+def _load_draft_doctype_def() -> dict:
+    import json
+
+    return json.loads(_DRAFT_JSON_PATH.read_text(encoding="utf-8"))
+
+
+class TestPayrollClosingDraftInbox(unittest.TestCase):
+    """마감 draft가 결재 인박스 '급여 마감' 항목으로 정확히 수집되는지."""
+
+    ROW = {
+        "name": "KPCD-0001",
+        "company": "노무법인 위너스",
+        "workplace": "노호",
+        "period_start": dt.date(2026, 5, 1),
+        "period_end": dt.date(2026, 5, 31),
+        "status": "draft_pending_human_approval",
+        "creation": dt.datetime(2026, 6, 1, 9, 0, 0),
+    }
+
+    def setUp(self):
+        self.fake = FakeFrappe()
+        self.mod = _load_module(self.fake)
+        self.fake.db._doctype_exists.add("Korea Payroll Closing Draft")
+        self.fake.db._list_data["Korea Payroll Closing Draft"] = [dict(self.ROW)]
+
+    def tearDown(self):
+        sys.modules.pop("frappe", None)
+
+    def test_draft_pending_human_approval_appears_in_inbox(self):
+        result = self.mod.list_pending_approvals(
+            approver="mgr@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+        self.assertEqual(len(result), 1)
+        item = result[0]
+        self.assertEqual(item["doctype"], "Korea Payroll Closing Draft")
+        self.assertIn("페이롤마감", item["title"])
+        self.assertIn("노호", item["title"])
+        self.assertEqual(item["details"]["period_start"], "2026-05-01")
+        self.assertEqual(item["details"]["period_end"], "2026-05-31")
+
+    def test_url_pwa_uses_closing_session_route(self):
+        """PWA에는 closing-draft 상세 라우트가 없으므로 세션 미리보기 라우트 사용."""
+        result = self.mod.list_pending_approvals(
+            approver="mgr@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+        self.assertEqual(
+            result[0]["url_pwa"], "/hrms/korea-payroll-closing-session/KPCD-0001"
+        )
+
+    def test_collector_requests_only_fields_defined_in_doctype(self):
+        """미존재 필드 요청 → get_list 예외 → 조용한 0건 버그의 회귀 방지.
+
+        (과거 employee_name/pay_year_month를 요청해 doctype 필드에 없어 실패)
+        """
+        doctype_def = _load_draft_doctype_def()
+        defined = {f["fieldname"] for f in doctype_def["fields"]}
+        # Frappe 표준 메타 필드
+        defined |= {"name", "creation", "modified", "owner", "docstatus"}
+
+        self.mod.list_pending_approvals(
+            approver="mgr@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+        calls = [
+            c
+            for c in self.fake._get_list_calls
+            if c["doctype"] == "Korea Payroll Closing Draft"
+        ]
+        self.assertTrue(calls, "Korea Payroll Closing Draft get_list 호출 없음")
+        for call in calls:
+            unknown = set(call["fields"]) - defined
+            self.assertEqual(
+                unknown, set(), f"doctype에 없는 필드 요청: {sorted(unknown)}"
+            )
+
+    def test_collector_filters_by_pending_status(self):
+        self.mod.list_pending_approvals(
+            approver="mgr@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+        call = next(
+            c
+            for c in self.fake._get_list_calls
+            if c["doctype"] == "Korea Payroll Closing Draft"
+        )
+        self.assertEqual(call["filters"]["status"], "draft_pending_human_approval")
+        self.assertEqual(call["filters"]["docstatus"], 0)
+
+    def test_approve_sets_status_within_allowed_select_options(self):
+        """승인=문서 제출이 아니라 draft에 승인 기록(status 전이)만 남긴다.
+
+        doctype JSON의 status Select options에 정의된 값으로만 전이해야 함
+        (mutation_boundary=draft_only_no_submit_no_approve_no_send 준수,
+         is_submittable=0 → submit 자체가 없음).
+        """
+        doctype_def = _load_draft_doctype_def()
+        status_field = next(
+            f for f in doctype_def["fields"] if f["fieldname"] == "status"
+        )
+        allowed = set(status_field["options"].split("\n"))
+        self.assertFalse(doctype_def.get("is_submittable"), "draft는 비제출 doctype")
+
+        draft = FakeDoc(
+            doctype="Korea Payroll Closing Draft",
+            name="KPCD-0001",
+            status="draft_pending_human_approval",
+        )
+        self.fake._docs[("Korea Payroll Closing Draft", "KPCD-0001")] = draft
+
+        result = self.mod.approve_item(
+            doctype="Korea Payroll Closing Draft",
+            name="KPCD-0001",
+            approver="mgr@example.com",
+            human_approved=True,
+        )
+        self.assertEqual(result["status"], "draft_human_approved")
+        self.assertIn(draft.status, allowed)
+        self.assertTrue(draft._saved)
+
+    def test_reject_sets_status_within_allowed_select_options(self):
+        doctype_def = _load_draft_doctype_def()
+        status_field = next(
+            f for f in doctype_def["fields"] if f["fieldname"] == "status"
+        )
+        allowed = set(status_field["options"].split("\n"))
+
+        draft = FakeDoc(
+            doctype="Korea Payroll Closing Draft",
+            name="KPCD-0002",
+            status="draft_pending_human_approval",
+        )
+        self.fake._docs[("Korea Payroll Closing Draft", "KPCD-0002")] = draft
+
+        result = self.mod.reject_item(
+            doctype="Korea Payroll Closing Draft",
+            name="KPCD-0002",
+            approver="mgr@example.com",
+            human_approved=True,
+            comment="검토 후 수정 필요",
+        )
+        self.assertEqual(result["status"], "draft_human_rejected")
+        self.assertIn(draft.status, allowed)
 
 
 # ---------------------------------------------------------------------------

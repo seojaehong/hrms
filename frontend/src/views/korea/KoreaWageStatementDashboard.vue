@@ -3,37 +3,40 @@
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 연도/월 필터 -->
-				<div class="bg-white rounded shadow-sm p-4 flex flex-row gap-3 items-end">
+				<div class="k-card p-4 flex flex-row gap-3 items-end">
 					<div class="flex flex-col gap-1 flex-1">
-						<label class="text-xs text-gray-500 font-medium">{{ __('연도') }}</label>
+						<label class="k-eyebrow">{{ __('연도') }}</label>
 						<select
 							v-model="selectedYear"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
 						>
 							<option v-for="y in yearOptions" :key="y" :value="y">{{ y }}년</option>
 						</select>
 					</div>
 					<div class="flex flex-col gap-1 flex-1">
-						<label class="text-xs text-gray-500 font-medium">{{ __('월') }}</label>
+						<label class="k-eyebrow">{{ __('월') }}</label>
 						<select
 							v-model="selectedMonth"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
 						>
 							<option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
 						</select>
 					</div>
 					<button
 						@click="loadStatement"
-						class="px-4 py-2 bg-black text-white text-sm rounded-full font-medium hover:bg-gray-800 active:bg-gray-900 transition-colors"
+						class="px-5 py-2 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black transition-colors"
 					>
 						{{ __('조회') }}
 					</button>
 				</div>
 
 				<!-- 선택한 월 명세서 카드 -->
-				<div class="bg-white rounded shadow-sm p-4 flex flex-col gap-4">
-					<div class="text-base font-bold text-gray-800">
-						{{ selectedYear }}년 {{ selectedMonth }}월 임금명세서
+				<div class="k-card p-4 flex flex-col gap-4">
+					<div>
+						<div class="k-eyebrow">WAGE STATEMENT</div>
+						<div class="mt-0.5 text-base font-bold tracking-tight text-black">
+							{{ selectedYear }}년 {{ selectedMonth }}월 임금명세서
+						</div>
 					</div>
 
 					<div v-if="wageStatementPreview.loading" class="text-center py-8 text-gray-400 text-sm">
@@ -116,19 +119,19 @@
 							</div>
 						</div>
 
-						<!-- 액션 버튼 (admin 전용) -->
+						<!-- 액션 버튼 (admin 전용) — 미구현 기능: disabled + (준비 중) 표기 -->
 						<div v-if="isAdmin" class="flex flex-row gap-2 pt-2">
 							<button
-								class="flex-1 py-2 border border-gray-300 rounded text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-								@click="downloadPdf"
+								disabled
+								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 							>
-								PDF 다운로드
+								PDF 다운로드 (준비 중)
 							</button>
 							<button
-								class="flex-1 py-2 border border-yellow-400 rounded text-sm text-yellow-700 font-medium hover:bg-yellow-50 transition-colors"
-								@click="sendKakao"
+								disabled
+								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 							>
-								카톡 발송
+								카톡 발송 (준비 중)
 							</button>
 						</div>
 					</template>
@@ -138,8 +141,8 @@
 				</div>
 
 				<!-- 지난 12개월 목록 -->
-				<div class="bg-white rounded shadow-sm p-4 flex flex-col gap-3">
-					<div class="text-base font-bold text-gray-800">{{ __('최근 12개월') }}</div>
+				<div class="k-card p-4 flex flex-col gap-3">
+					<div class="text-base font-bold tracking-tight text-black">{{ __('최근 12개월') }}</div>
 					<div v-if="wageStatementHistory.loading" class="text-sm text-gray-400 py-4 text-center">
 						{{ __('불러오는 중...') }}
 					</div>
@@ -167,6 +170,7 @@
 import { ref, computed, inject, onMounted } from "vue"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { useIsAdmin } from "@/composables/useIsAdmin"
 import { wageStatementPreview, wageStatementHistory } from "@/data/koreaWageStatementRuntime"
 
 const __ = inject("$translate")
@@ -177,7 +181,7 @@ const now = dayjs()
 const selectedYear = ref(now.year())
 const selectedMonth = ref(now.month() + 1)
 const statement = ref(null)
-const isAdmin = ref(false) // TODO: 실제 권한 체크 연동
+const isAdmin = useIsAdmin() // HR Manager/System Manager 롤 기준
 
 const yearOptions = computed(() => {
 	const current = now.year()
@@ -222,20 +226,14 @@ function selectHistoryItem(item) {
 	loadStatement()
 }
 
-function downloadPdf() {
-	// TODO: PDF 생성 API 연동
-	alert("PDF 다운로드 기능은 준비 중입니다.")
-}
-
-function sendKakao() {
-	// TODO: 카카오톡 발송 API 연동
-	alert("카카오톡 발송 기능은 준비 중입니다.")
-}
+// PDF 다운로드·카톡 발송: API 미구현 — 버튼 disabled + "(준비 중)" 표기 (핸들러 제거)
 
 onMounted(() => {
 	wageStatementHistory.submit({
 		employee: employee.data?.name,
 		limit: 12,
 	})
+	// 첫 진입 시 당월 명세서 자동 조회 — 빈 첫 화면 제거 (수동 조회 동작은 그대로 유지)
+	loadStatement()
 })
 </script>

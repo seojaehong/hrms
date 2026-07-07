@@ -621,5 +621,49 @@ class TestHelpers(unittest.TestCase):
         self.assertFalse(result)
 
 
+class TestCountPendingForOthers(unittest.TestCase):
+    """count_pending_for_others — 다른 결재자 앞 대기 건수 (read-only)."""
+
+    def setUp(self):
+        self.fake = FakeFrappe()
+        self.mod = _load_module(self.fake)
+
+    def tearDown(self):
+        sys.modules.pop("frappe", None)
+
+    def test_returns_zero_when_no_doctypes_exist(self):
+        result = self.mod.count_pending_for_others(
+            approver="me@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+        self.assertEqual(result["total"], 0)
+        self.assertEqual(result["by_doctype"], {})
+        self.assertEqual(result["approver"], "me@example.com")
+
+    def test_counts_only_items_assigned_to_other_approvers(self):
+        self.fake.db._doctype_exists.add("Korea Payroll Closing Draft")
+        self.fake.db._list_data["Korea Payroll Closing Draft"] = [
+            {"name": "KPCD-1", "approver": "moon@noho.im"},
+            {"name": "KPCD-2", "approver": "me@example.com"},
+            {"name": "KPCD-3", "approver": ""},
+        ]
+        self.fake.db._doctype_exists.add("Leave Application")
+        self.fake.db._list_data["Leave Application"] = [
+            {"name": "LA-1", "leave_approver": "other@example.com"},
+        ]
+
+        result = self.mod.count_pending_for_others(
+            approver="me@example.com", as_of_date=dt.date(2026, 6, 1)
+        )
+
+        # 내 것(KPCD-2)과 미배정("")은 제외, 타인 배정만 카운트
+        self.assertEqual(result["by_doctype"]["Korea Payroll Closing Draft"], 1)
+        self.assertEqual(result["by_doctype"]["Leave Application"], 1)
+        self.assertEqual(result["total"], 2)
+
+    def test_raises_when_approver_is_empty(self):
+        with self.assertRaises(FakeFrappeError):
+            self.mod.count_pending_for_others(approver="", as_of_date=dt.date(2026, 6, 1))
+
+
 if __name__ == "__main__":
     unittest.main()

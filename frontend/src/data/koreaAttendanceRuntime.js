@@ -58,6 +58,19 @@ export const KOREA_OVERTIME_ESTIMATE_METHOD =
 export const KOREA_WEEKLY_AGGREGATE_METHOD =
 	"hrms.regional.south_korea.overtime_premium_api.calculate_weekly_overtime_aggregate"
 
+// 근태 read-only 메서드 allowlist — frappe.call 폴리필(fallback)에서 허용되는 메서드.
+// mutation(apply)은 폴리필에서 차단한다 (fail-closed).
+// 다른 Korea 런타임 폴리필(연차/마감)의 allowlist에도 동일 세트가 포함된다
+// (koreaAnnualLeaveRuntime.js / koreaPayrollClosingRuntime.js).
+export const KOREA_ATTENDANCE_READ_ONLY_METHODS = Object.freeze([
+	KOREA_ATTENDANCE_PREVIEW_METHOD,
+	KOREA_OVERTIME_ESTIMATE_METHOD,
+	KOREA_WEEKLY_AGGREGATE_METHOD,
+])
+
+// 픽스처 폴백 시 사용자에게 노출하는 문구 — 기술 상세는 console.warn으로만.
+export const KOREA_ATTENDANCE_FALLBACK_NOTICE = "실데이터 연결 대기 — 예시 데이터를 표시합니다."
+
 // ──────────────────────────────────────────────────────────────────
 // 픽스처 데이터 (API 없을 때 fallback)
 // ──────────────────────────────────────────────────────────────────
@@ -129,6 +142,39 @@ export function isFrappeRuntimeAvailable(win = globalThis.window) {
 	return Boolean(win?.frappe && typeof win.frappe.call === "function")
 }
 
+/**
+ * frappe.call 폴리필 설치 — window.frappe는 있으나 frappe.call이 없는
+ * PWA 브라우저 환경용. read-only 근태 메서드만 허용한다.
+ * (패턴: koreaAnnualLeaveRuntime.ensureKoreaAnnualLeaveFrappeCallRuntime)
+ */
+export function ensureKoreaAttendanceFrappeCallRuntime(win = globalThis.window) {
+	if (!win?.frappe || typeof win.fetch !== "function") return false
+	if (typeof win.frappe.call === "function") return true
+	win.frappe.call = async ({ method, args = {} } = {}) => {
+		if (typeof method !== "string" || !method.trim()) throw new Error("frappe.call method is required")
+		if (!KOREA_ATTENDANCE_READ_ONLY_METHODS.includes(method)) {
+			throw new Error("frappe.call fallback only allows Korea attendance read-only runtime methods")
+		}
+		const body = new URLSearchParams()
+		for (const [key, value] of Object.entries(args || {})) {
+			if (value !== undefined && value !== null) body.append(key, typeof value === "object" ? JSON.stringify(value) : String(value))
+		}
+		const response = await win.fetch(`/api/method/${method}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+				"X-Frappe-CSRF-Token": win.csrf_token || "",
+			},
+			body,
+			credentials: "same-origin",
+		})
+		const payload = await response.json()
+		if (!response.ok) throw new Error(payload?._server_messages || payload?.exc || `frappe.call failed with HTTP ${response.status}`)
+		return payload
+	}
+	return true
+}
+
 // ──────────────────────────────────────────────────────────────────
 // 3-B-2 공개 API: fetchKoreaAttendanceSummary
 // ──────────────────────────────────────────────────────────────────
@@ -151,6 +197,7 @@ export async function fetchKoreaAttendanceSummary({
 	workplace = "",
 	win = globalThis.window,
 } = {}) {
+	ensureKoreaAttendanceFrappeCallRuntime(win)
 	if (!isFrappeRuntimeAvailable(win)) {
 		return { source: "fixture", data: KOREA_ATTENDANCE_FIXTURE, error: "Frappe 런타임을 사용할 수 없습니다. 픽스처 데이터를 표시합니다." }
 	}
@@ -177,7 +224,9 @@ export async function fetchKoreaAttendanceSummary({
 		return { source: "runtime", data, error: "" }
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
-		return { source: "fixture", data: KOREA_ATTENDANCE_FIXTURE, error: `API 호출 실패 (픽스처 표시): ${message}` }
+		// 기술 상세는 콘솔에만 — 사용자에게는 한글 요약만 노출
+		console.warn(`[koreaAttendanceRuntime] 근태 요약 API 호출 실패 (픽스처 폴백): ${message}`)
+		return { source: "fixture", data: KOREA_ATTENDANCE_FIXTURE, error: KOREA_ATTENDANCE_FALLBACK_NOTICE }
 	}
 }
 
@@ -205,6 +254,7 @@ export async function fetchKoreaPremiumPreview({
 	sessions = [],
 	win = globalThis.window,
 } = {}) {
+	ensureKoreaAttendanceFrappeCallRuntime(win)
 	if (!isFrappeRuntimeAvailable(win)) {
 		const fixture = _buildPremiumFixtureWithRate(hourlyRate)
 		return { source: "fixture", data: fixture, error: "Frappe 런타임을 사용할 수 없습니다. 픽스처 데이터를 표시합니다." }
@@ -229,8 +279,9 @@ export async function fetchKoreaPremiumPreview({
 		return { source: "runtime", data: premiumData, error: "" }
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
+		console.warn(`[koreaAttendanceRuntime] 가산수당 API 호출 실패 (픽스처 폴백): ${message}`)
 		const fixture = _buildPremiumFixtureWithRate(hourlyRate)
-		return { source: "fixture", data: fixture, error: `API 호출 실패 (픽스처 표시): ${message}` }
+		return { source: "fixture", data: fixture, error: KOREA_ATTENDANCE_FALLBACK_NOTICE }
 	}
 }
 

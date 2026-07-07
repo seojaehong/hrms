@@ -71,7 +71,13 @@
 					>
 						결재함에서 확정 진행
 					</router-link>
-					<p class="mt-2 text-center text-xs text-gray-500">이 미리보기에서는 직접 확정하지 않습니다 — 확정·승인은 결재함에서만 이뤄집니다.</p>
+					<!-- 결재자 명시 — 다른 계정의 결재함에는 이 건이 보이지 않는 것이 정상 -->
+					<p class="mt-2 text-center text-xs font-semibold text-gray-700">
+						결재자: {{ selectedSession.approver || "지정 결재자" }}
+					</p>
+					<p class="mt-1 text-center text-xs text-gray-500">
+						이 미리보기에서는 직접 확정하지 않습니다 — 확정·승인은 위 결재자의 결재함에서만 이뤄지며, 다른 계정의 결재함에는 표시되지 않습니다.
+					</p>
 				</section>
 				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
 					<p class="font-semibold">세션 예시 데이터를 찾을 수 없습니다</p>

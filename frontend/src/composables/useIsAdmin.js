@@ -13,10 +13,24 @@ import { userResource } from "@/data/user"
 // reload되며, 데이터 도착 시 computed가 반응적으로 갱신된다.
 const ADMIN_ROLES = ["HR Manager", "System Manager"]
 
+// stale 캐시 복구는 세션당 1회만 (reload 무한 루프 방지)
+let staleRolesReloadTriggered = false
+
 export function useIsAdmin() {
 	// 방어: 아직 로드 전이면 1회 fetch 트리거 (라우터 가드 밖에서 쓰일 때)
 	if (!userResource.data && !userResource.loading) {
 		userResource.fetch?.()
+	} else if (
+		// 방어 2: cache("hrms:user")가 roles 필드 추가 이전의 구버전 페이로드를
+		// 서빙하면 isAdmin이 영구 false → 진단 실행 버튼 미노출 (데스크톱 리뷰 이슈).
+		// roles가 없는 데이터면 서버에서 1회 재조회한다.
+		!staleRolesReloadTriggered &&
+		userResource.data &&
+		!Array.isArray(userResource.data.roles) &&
+		!userResource.loading
+	) {
+		staleRolesReloadTriggered = true
+		userResource.reload?.()
 	}
 	return computed(() => {
 		const roles =

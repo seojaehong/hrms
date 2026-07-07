@@ -11,7 +11,12 @@
 			</span>
 		</div>
 
-		<div class="w-full flex flex-col items-center justify-center gap-4 p-4">
+		<!-- 빈 상태 — 값 있는 행이 하나도 없으면 한 줄 안내 -->
+		<div v-if="!data.length" class="w-full p-6 text-center text-sm text-gray-500">
+			{{ emptyMessage }}
+		</div>
+
+		<div v-else class="w-full flex flex-col items-center justify-center gap-4 p-4">
 			<div
 				v-for="item in data"
 				:key="item.fieldname"
@@ -40,6 +45,10 @@ const props = defineProps({
 	data: {
 		type: Array,
 		required: true,
+	},
+	emptyMessage: {
+		type: String,
+		default: "아직 등록된 정보가 없습니다",
 	},
 })
 </script>

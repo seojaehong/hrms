@@ -4,9 +4,14 @@ export const KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD =
 export const KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD =
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"
 
+import { KOREA_ATTENDANCE_READ_ONLY_METHODS } from "./koreaAttendanceRuntime.js"
+
+// 폴리필은 페이지 방문 순서에 따라 이 모듈이 먼저 설치할 수 있으므로,
+// 같은 read-only 폴리필을 공유하는 근태 대시보드 메서드도 함께 허용한다.
 const KOREA_PAYROLL_CLOSING_READ_ONLY_RUNTIME_METHODS = new Set([
 	KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD,
 	KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD,
+	...KOREA_ATTENDANCE_READ_ONLY_METHODS,
 ])
 
 export function isFrappeRuntimeAvailable(win = globalThis.window) {
@@ -23,7 +28,8 @@ export function ensureKoreaPayrollClosingFrappeCallRuntime(win = globalThis.wind
 		}
 		const body = new URLSearchParams()
 		for (const [key, value] of Object.entries(args || {})) {
-			if (value !== undefined && value !== null) body.append(key, value)
+			// 객체/배열 인자는 JSON 직렬화 ([object Object] 방지 — 근태 read-only 호출 등)
+			if (value !== undefined && value !== null) body.append(key, typeof value === "object" ? JSON.stringify(value) : String(value))
 		}
 		const response = await win.fetch(`/api/method/${method}`, {
 			method: "POST",

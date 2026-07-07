@@ -119,17 +119,8 @@
 			>
 				<ProfileInfoModal
 					:title="selectedItem.title"
-					:data="
-						selectedItem.fields.map((field) => {
-							const [label, fieldtype] = getFieldInfo(field)
-							return {
-								fieldname: field,
-								value: employeeDoc.doc[field],
-								label: label,
-								fieldtype: fieldtype,
-							}
-						})
-					"
+					:data="selectedItemData"
+					:emptyMessage="selectedItem.emptyMessage"
 				/>
 			</ion-modal>
 		</ion-content>
@@ -163,6 +154,7 @@ const profileLinks = [
 	{
 		icon: "user",
 		title: __("Employee Details"),
+		emptyMessage: __("직원 정보가 아직 등록되지 않았습니다"),
 		fields: [
 			"employee_name",
 			"employee_number",
@@ -175,6 +167,7 @@ const profileLinks = [
 	{
 		icon: "file",
 		title: __("Company Information"),
+		emptyMessage: __("회사 정보가 아직 등록되지 않았습니다"),
 		fields: [
 			"company",
 			"department",
@@ -188,6 +181,7 @@ const profileLinks = [
 	{
 		icon: "book",
 		title: __("Contact Information"),
+		emptyMessage: __("연락처 정보가 아직 등록되지 않았습니다"),
 		fields: [
 			"cell_number",
 			"personal_email",
@@ -198,6 +192,7 @@ const profileLinks = [
 	{
 		icon: "dollar-sign",
 		title: __("Salary Information"),
+		emptyMessage: __("급여 정보가 아직 등록되지 않았습니다"),
 		fields: [
 			"ctc",
 			"payroll_cost_center",
@@ -238,7 +233,8 @@ const employeeDoc = createDocumentResource({
 	fields: "*",
 	auto: true,
 	transform: (data) => {
-		data.ctc = formatCurrency(data.ctc, data.salary_currency)
+		// 미등록(null) 급여는 "₩ 0"으로 둔갑시키지 않고 빈 값으로 유지 (행 숨김 대상)
+		data.ctc = data.ctc == null ? data.ctc : formatCurrency(data.ctc, data.salary_currency)
 		return data
 	},
 })
@@ -250,11 +246,34 @@ const employeeDocType = createResource({
 })
 
 const getFieldInfo = (fieldname) => {
-	const field = employeeDocType.data.find(
+	const field = employeeDocType.data?.find(
 		(field) => field.fieldname === fieldname
 	)
 	return [__(field?.label, null, "Employee"), field?.fieldtype]
 }
+
+// 값 없는 행("-" 나열) 숨김 규칙 — null/undefined/빈 문자열은 숨기고 0은 유지
+function hasProfileValue(value) {
+	if (value === undefined || value === null) return false
+	if (typeof value === "string" && !value.trim()) return false
+	return true
+}
+
+// 선택된 섹션의 표시 행 — 값 있는 행만 (전부 없으면 모달이 빈 상태 한 줄 표시)
+const selectedItemData = computed(() => {
+	if (!selectedItem.value || !employeeDoc?.doc) return []
+	return selectedItem.value.fields
+		.map((field) => {
+			const [label, fieldtype] = getFieldInfo(field)
+			return {
+				fieldname: field,
+				value: employeeDoc.doc[field],
+				label: label,
+				fieldtype: fieldtype,
+			}
+		})
+		.filter((row) => hasProfileValue(row.value))
+})
 
 const logout = async () => {
 	try {

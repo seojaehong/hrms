@@ -13047,3 +13047,35 @@ msgstr "수요일"
 
 msgid "submission"
 msgstr "제출"
+
+#. Tab label in frontend/src/views/expense_claim/Form.vue (__(tab.name)).
+#. frappe 코어 ko가 "발전"으로 오역 (advancement 의미로 잘못 번역) — 선급금으로 교정.
+msgid "Advances"
+msgstr "선급금"
+
+#. Tab label in frontend/src/views/expense_claim/Form.vue (__(tab.name)).
+msgid "Totals"
+msgstr "합계"
+
+#. Field label — requestSummaryFields.js / Expense Claim form fields,
+#. rendered via __(field.label) in RequestActionSheet.vue / FormView.vue.
+msgid "Reason"
+msgstr "사유"
+
+#. Field label of DocType 'Expense Claim' (currency), rendered via
+#. __(field.label, null, doctype) in FormView.vue.
+msgid "Currency"
+msgstr "통화"
+
+#. Placeholder in frontend/src/components/FormField.vue —
+#. __('Select {0}', [props.label]) → "Select Currency" 등 커버.
+msgid "Select {0}"
+msgstr "{0} 선택"
+
+#. frappe-ui Autocomplete empty text (경비 청구 통화 선택 등).
+msgid "No results found"
+msgstr "결과가 없습니다"
+
+#. DocType name — 결재함/알림/폼 헤더 등에서 노출.
+msgid "Expense Claim"
+msgstr "경비청구"

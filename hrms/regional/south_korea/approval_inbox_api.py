@@ -90,6 +90,32 @@ def get_pending_approvals(as_of_date: str | None = None) -> list[dict]:
 	return _get_core().list_pending_approvals(approver=approver, as_of_date=date_obj)
 
 
+@_whitelist
+def count_pending_for_others(as_of_date: str | None = None) -> dict:
+	"""다른 결재자에게 배정된 결재 대기 건수 (read-only, HR Manager 한정).
+
+	빈 결재함 화면에서 "다른 결재자에게 배정된 대기 N건" 보조 문구용.
+	mutation 없음 — 카운트 조회 전용.
+	"""
+	if not _FRAPPE_AVAILABLE or _frappe is None:
+		raise RuntimeError("count_pending_for_others requires Frappe runtime")
+	approver = _frappe.session.user
+	if not approver or approver == "Guest":
+		_frappe.throw("로그인이 필요합니다.", _frappe.AuthenticationError)
+	# 타인 결재 현황 노출이므로 HR Manager/System Manager 한정
+	_frappe.only_for(["HR Manager", "System Manager"])
+
+	if as_of_date:
+		try:
+			date_obj = dt.date.fromisoformat(as_of_date)
+		except ValueError:
+			_frappe.throw("as_of_date는 YYYY-MM-DD 형식이어야 합니다.")
+	else:
+		date_obj = dt.date.today()
+
+	return _get_core().count_pending_for_others(approver=approver, as_of_date=date_obj)
+
+
 @_whitelist(methods=["POST"])
 def approve_inbox_item(
 	doctype: str,

@@ -43,6 +43,11 @@
 						</button>
 					</div>
 
+					<!-- 비관리자 안내 — 기준일만 보이는 죽은 화면 방지 -->
+					<p v-if="!isAdmin" class="text-xs text-black/40">
+						{{ __('진단 실행은 관리자(HR Manager) 권한이 필요합니다. 결과 공유는 관리자에게 요청하세요.') }}
+					</p>
+
 					<!-- 마지막 진단 정보 -->
 					<div v-if="lastDiagnosisTime" class="flex flex-col gap-0.5">
 						<div class="text-xs text-black/40">

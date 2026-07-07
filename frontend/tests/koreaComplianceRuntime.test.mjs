@@ -534,3 +534,51 @@ describe("KoreaComplianceCategoryDetail — 라우터 경로 검증", () => {
 		assert.match(detailRoute.path, EXPECTED_ROUTE_PATTERN)
 	})
 })
+
+// ---------------------------------------------------------------------------
+// 데스크톱 리뷰 이슈 2 — 진단 실행 버튼 (Vue 소스 검증)
+// ---------------------------------------------------------------------------
+import { readFile } from "node:fs/promises"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
+const __dirname2 = dirname(fileURLToPath(import.meta.url))
+const frontendRoot2 = resolve(__dirname2, "..")
+
+describe("KoreaComplianceDashboard — 진단 실행 버튼/권한 UX", () => {
+	let viewSource
+	let composableSource
+
+	it("loads sources", async () => {
+		viewSource = await readFile(
+			resolve(frontendRoot2, "src/views/korea/KoreaComplianceDashboard.vue"),
+			"utf8"
+		)
+		composableSource = await readFile(
+			resolve(frontendRoot2, "src/composables/useIsAdmin.js"),
+			"utf8"
+		)
+		assert.ok(viewSource.length > 0)
+	})
+
+	it("진단 실행 블랙 pill 버튼 (admin=useIsAdmin 게이트)", () => {
+		assert.match(viewSource, /전체 진단 실행/, "실행 버튼 라벨")
+		assert.match(viewSource, /useIsAdmin/, "useIsAdmin 컴포저블 사용")
+		assert.match(viewSource, /v-if="isAdmin"/, "isAdmin 게이트")
+		assert.match(viewSource, /bg-black text-white[^"]*rounded-full/, "블랙 pill 스타일")
+	})
+
+	it("로딩/오류 상태 처리", () => {
+		assert.match(viewSource, /complianceDiagnosis\.loading/, "로딩 상태 바인딩")
+		assert.match(viewSource, /complianceDiagnosis\.error/, "오류 상태 바인딩")
+	})
+
+	it("비관리자 안내 문구 — 기준일만 보이는 죽은 화면 방지", () => {
+		assert.match(viewSource, /관리자\(HR Manager\) 권한이 필요합니다/, "비관리자 힌트")
+	})
+
+	it("useIsAdmin — roles 누락 캐시 데이터면 1회 reload로 복구", () => {
+		assert.match(composableSource, /roles/, "roles 확인")
+		assert.match(composableSource, /userResource\.reload/, "stale 캐시 reload 경로 존재")
+	})
+})

@@ -70,23 +70,110 @@ _SESSION_STORE: dict[str, dict] = {}
 _AUDIT_LOG: list[dict] = []
 
 # ──────────────────────────────────────────────
-# 카탈로그 로더
+# 카탈로그 로더 (법령/판례 카탈로그 + FAQ 카탈로그 병합)
 # ──────────────────────────────────────────────
+_LAW_CATALOG_FILENAME = "korea_labor_law_catalog.json"
+_FAQ_CATALOG_FILENAME = "korea_labor_faq_catalog.json"
+
 _CATALOG_CACHE: list[dict] | None = None
+_INDEX_CACHE: dict | None = None
+
+
+def _data_dir() -> str:
+    return os.path.join(os.path.dirname(__file__), "data")
+
+
+def _load_catalog_files(law_path: str, faq_path: str) -> list[dict]:
+    """법령 카탈로그(필수) + FAQ 카탈로그(선택)를 로드하여 병합합니다.
+
+    FAQ 파일이 없거나 읽을 수 없으면 무시하고 법령 카탈로그만 반환합니다.
+    """
+    with open(law_path, encoding="utf-8") as f:
+        entries: list[dict] = json.load(f)
+
+    try:
+        with open(faq_path, encoding="utf-8") as f:
+            faq_entries = json.load(f)
+        if isinstance(faq_entries, list):
+            entries = entries + faq_entries
+    except (OSError, json.JSONDecodeError):
+        pass  # FAQ 카탈로그는 optional — 없으면 기존 33건 카탈로그만 사용
+
+    return entries
 
 
 def _load_catalog() -> list[dict]:
-    """한국 노동법 카탈로그 JSON을 로드하여 캐시합니다."""
+    """한국 노동법 카탈로그 JSON(법령+FAQ 병합)을 로드하여 캐시합니다."""
     global _CATALOG_CACHE
     if _CATALOG_CACHE is not None:
         return _CATALOG_CACHE
 
-    catalog_path = os.path.join(
-        os.path.dirname(__file__), "data", "korea_labor_law_catalog.json"
+    _CATALOG_CACHE = _load_catalog_files(
+        os.path.join(_data_dir(), _LAW_CATALOG_FILENAME),
+        os.path.join(_data_dir(), _FAQ_CATALOG_FILENAME),
     )
-    with open(catalog_path, encoding="utf-8") as f:
-        _CATALOG_CACHE = json.load(f)
     return _CATALOG_CACHE
+
+
+def _char_bigrams(text: str) -> set[str]:
+    """공백/구두점으로 구분된 각 연속 문자열 조각의 문자 2-gram 집합.
+
+    공백 없는 한국어 질문("수습기간중인직원도주휴수당을...")도
+    제목/태그와 부분 일치할 수 있게 하는 보조 매칭 단위.
+    """
+    bigrams: set[str] = set()
+    for chunk in _tokenize(text):
+        for i in range(len(chunk) - 1):
+            bigrams.add(chunk[i : i + 2])
+    return bigrams
+
+
+def _build_index() -> dict:
+    """카탈로그 로드 시 1회 구축하는 역색인 + 엔트리 메타 캐시.
+
+    - postings: 제목/법령명/태그의 문자 2-gram → 엔트리 인덱스 집합
+      (질의 2-gram으로 후보를 축소한 뒤 기존 스코어링만 후보에 적용)
+    - meta: 엔트리별 소문자 제목/본문/태그 + 제목 2-gram (질의당 재계산 방지)
+    - always_candidates: 법령/판례 등 비-FAQ 엔트리는 항상 후보에 포함
+      (기존 33건 카탈로그 질의 결과의 회귀 방지)
+    """
+    catalog = _load_catalog()
+    postings: dict[str, set[int]] = {}
+    meta: list[dict] = []
+    always_candidates: set[int] = set()
+
+    for idx, entry in enumerate(catalog):
+        combined_title = (entry.get("law", "") + " " + entry.get("title", "")).lower()
+        tags_lower = [tag.lower() for tag in entry.get("tags", [])]
+        text_lower = entry.get("text", "").lower()
+        title_bigrams = _char_bigrams(combined_title)
+
+        indexable = combined_title + " " + " ".join(tags_lower)
+        for bigram in _char_bigrams(indexable):
+            postings.setdefault(bigram, set()).add(idx)
+
+        if entry.get("type", "law") != "faq":
+            always_candidates.add(idx)
+
+        meta.append({
+            "combined_title": combined_title,
+            "text_lower": text_lower,
+            "tags_lower": tags_lower,
+            "title_bigrams": title_bigrams,
+        })
+
+    return {
+        "postings": postings,
+        "meta": meta,
+        "always_candidates": always_candidates,
+    }
+
+
+def _ensure_index() -> dict:
+    global _INDEX_CACHE
+    if _INDEX_CACHE is None:
+        _INDEX_CACHE = _build_index()
+    return _INDEX_CACHE
 
 
 # ──────────────────────────────────────────────
@@ -204,37 +291,74 @@ def retrieve_relevant_documents(
     *,
     query: str,
     top_k: int = 5,
+    use_index: bool = True,
 ) -> list[dict]:
-    """관련 법령/판례/내부 문서 retrieval.
+    """관련 법령/판례/FAQ/내부 문서 retrieval.
 
-    v1 stub: 키워드 매칭 (한국 노동법 카탈로그에서).
+    v1 stub: 키워드 + 문자 2-gram 매칭 (한국 노동법 카탈로그 + FAQ 카탈로그).
+    - 제목(title/law) 토큰 매치 가중치 3 (본문 1보다 우선), 태그 1 유지
+    - 공백 없는 질문 대응: 질의-제목 문자 2-gram 교집합 보조 점수
+    - use_index=True(기본): 역색인으로 후보 축소 후 스코어링 (전체 스캔 방지)
     v2: vector embedding similarity 검색으로 교체 예정.
 
     Returns:
         list of catalog entries matching query keywords.
-        Each entry: {"law": str, "title": str, "text": str, "tags": list[str]}
+        Each entry: {"law": str, "title": str, "type": str, "text": str, "tags": list[str]}
     """
     query_lower = query.lower()
     catalog = _load_catalog()
+    index = _ensure_index()
+    meta = index["meta"]
 
-    scored: list[tuple[int, dict]] = []
-    for entry in catalog:
+    tokens = [t for t in _tokenize(query_lower) if t]
+    query_bigrams = _char_bigrams(query_lower)
+
+    if use_index:
+        candidates: set[int] = set(index["always_candidates"])
+        postings = index["postings"]
+        for bigram in query_bigrams:
+            hits = postings.get(bigram)
+            if hits:
+                candidates |= hits
+        candidate_ids = sorted(candidates)
+    else:
+        candidate_ids = range(len(catalog))
+
+    scored: list[tuple[int, int]] = []  # (score, idx)
+    for idx in candidate_ids:
+        m = meta[idx]
         score = 0
-        # title/law 매칭 가중치 2, text 매칭 가중치 1
-        combined_title = (entry.get("law", "") + " " + entry.get("title", "")).lower()
-        for token in _tokenize(query_lower):
-            if token in combined_title:
-                score += 2
-            if token in entry.get("text", "").lower():
+        # title/law 매칭 가중치 3, tags/text 매칭 가중치 1
+        for token in tokens:
+            if token in m["combined_title"]:
+                score += 3
+            if token in m["text_lower"]:
                 score += 1
-            for tag in entry.get("tags", []):
-                if token in tag.lower():
+            for tag in m["tags_lower"]:
+                if token in tag:
                     score += 1
+        # 공백 없는 질문 보조 매칭: 제목과의 문자 2-gram 교집합 (2개 이상일 때만, 상한 10)
+        bigram_overlap = len(query_bigrams & m["title_bigrams"])
+        if bigram_overlap >= 2:
+            score += min(bigram_overlap, 10)
         if score > 0:
-            scored.append((score, entry))
+            scored.append((score, idx))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [entry for _, entry in scored[:top_k]]
+    # 동점 시 카탈로그 원 순서 유지 (법령 카탈로그가 앞에 위치)
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    top = [idx for _, idx in scored[:top_k]]
+
+    # FAQ가 상위를 채우더라도 법령/판례 근거 1건은 결과에 보장
+    # (FAQ 답변의 "주요 근거" 인용 + 기존 법령 카탈로그 질의 회귀 방지)
+    if top and all(catalog[idx].get("type", "law") == "faq" for idx in top):
+        best_non_faq = next(
+            (idx for _, idx in scored if catalog[idx].get("type", "law") != "faq"),
+            None,
+        )
+        if best_non_faq is not None:
+            top[-1] = best_non_faq
+
+    return [catalog[idx] for idx in top]
 
 
 def build_session_context(

@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "autoname": "format:KR-ONB-{YYYY}-{#####}",
+ "creation": "2026-07-07 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "full_name",
+  "rrn",
+  "masked_rrn",
+  "join_date",
+  "reported_monthly_wage",
+  "contract_type",
+  "phone",
+  "note",
+  "processing_section",
+  "status",
+  "requested_by",
+  "processed_by",
+  "processed_at",
+  "employee"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name",
+   "reqd": 1
+  },
+  {
+   "description": "Resident registration number. Stored encrypted; never expose in logs or API responses.",
+   "fieldname": "rrn",
+   "fieldtype": "Password",
+   "label": "RRN",
+   "no_copy": 1,
+   "print_hide": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Masked resident registration number only (9401**-1******); never store a full RRN here.",
+   "fieldname": "masked_rrn",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Masked RRN",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "join_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Join Date",
+   "reqd": 1
+  },
+  {
+   "description": "비과세 제외 4대보험 신고보수(월).",
+   "fieldname": "reported_monthly_wage",
+   "fieldtype": "Currency",
+   "label": "Reported Monthly Wage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "label": "Contract Type",
+   "options": "정규직\n계약직\n파트타임\n일용직",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  },
+  {
+   "fieldname": "processing_section",
+   "fieldtype": "Section Break",
+   "label": "Processing"
+  },
+  {
+   "default": "requested",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "requested\nprocessing\ncompleted\nrejected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed_by",
+   "fieldtype": "Link",
+   "label": "Processed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed_at",
+   "fieldtype": "Datetime",
+   "label": "Processed At",
+   "read_only": 1
+  },
+  {
+   "description": "처리 후 연결된 Employee.",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-07 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Korea Employee Onboarding Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "full_name"
+}

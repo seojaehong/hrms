@@ -12867,3 +12867,171 @@ msgstr "확인"
 
 msgid "Search or type a command ({0})"
 msgstr "검색 ({0})"
+
+msgid "Advance Amount"
+msgstr "선급금액"
+
+msgid "An unexpected error occurred"
+msgstr "예기치 않은 오류가 발생했습니다"
+
+msgid "Apply Filters"
+msgstr "필터 적용"
+
+msgid "Check-In Failed"
+msgstr "출근 기록 실패"
+
+msgid "Check-In Recorded"
+msgstr "출근이 기록되었습니다"
+
+msgid "Check-Out Recorded"
+msgstr "퇴근이 기록되었습니다"
+
+msgid "Checked In"
+msgstr "출근 완료"
+
+msgid "Checked Out"
+msgstr "퇴근 완료"
+
+msgid "Clear All"
+msgstr "전체 지우기"
+
+msgid "Contact Information"
+msgstr "연락처 정보"
+
+msgid "Current Time"
+msgstr "현재 시각"
+
+msgid "Dismiss"
+msgstr "닫기"
+
+msgid "Document {0} successfully!"
+msgstr "문서가 {0}되었습니다!"
+
+msgid "Download PDF"
+msgstr "PDF 다운로드"
+
+msgid "Employee"
+msgstr "직원"
+
+msgid "End Date"
+msgstr "종료일"
+
+msgid "Friday"
+msgstr "금요일"
+
+msgid "From Date"
+msgstr "시작일"
+
+msgid "GPS Location"
+msgstr "GPS 위치"
+
+msgid "GPS location required to proceed"
+msgstr "진행하려면 GPS 위치가 필요합니다"
+
+msgid "Get GPS"
+msgstr "GPS 가져오기"
+
+msgid "Holiday List"
+msgstr "공휴일 목록"
+
+msgid "Korea Mobile Check-In"
+msgstr "모바일 출퇴근"
+
+msgid "Last: {0}"
+msgstr "최근: {0}"
+
+msgid "Location acquired (accuracy: {0}m)"
+msgstr "위치 확인됨 (오차 {0}m)"
+
+msgid "Login"
+msgstr "로그인"
+
+msgid "Mark all as read"
+msgstr "모두 읽음으로 표시"
+
+msgid "Monday"
+msgstr "월요일"
+
+msgid "New"
+msgstr "신규"
+
+msgid "Notices"
+msgstr "안내"
+
+msgid "Paid"
+msgstr "지급됨"
+
+msgid "Paid Amount"
+msgstr "지급액"
+
+msgid "Privacy protected"
+msgstr "개인정보 보호"
+
+msgid "Recorded: {0}"
+msgstr "기록됨: {0}"
+
+msgid "Recording..."
+msgstr "기록 중..."
+
+msgid "Reset Password"
+msgstr "비밀번호 재설정"
+
+msgid "Retry"
+msgstr "다시 시도"
+
+msgid "Returned"
+msgstr "반환됨"
+
+msgid "Sanctioned"
+msgstr "승인됨"
+
+msgid "Saturday"
+msgstr "토요일"
+
+msgid "Selfie (Optional)"
+msgstr "셀피 (선택)"
+
+msgid "Shift"
+msgstr "교대근무"
+
+msgid "Start Date"
+msgstr "시작일"
+
+msgid "Sunday"
+msgstr "일요일"
+
+msgid "Take Selfie"
+msgstr "셀피 촬영"
+
+msgid "Tap 'Get GPS' to locate you"
+msgstr "'GPS 가져오기'를 눌러 위치를 확인하세요"
+
+msgid "Thursday"
+msgstr "목요일"
+
+msgid "To Date"
+msgstr "종료일"
+
+msgid "To Date cannot be before From Date"
+msgstr "종료일은 시작일보다 빠를 수 없습니다"
+
+msgid "Tuesday"
+msgstr "화요일"
+
+msgid "Unpaid"
+msgstr "미지급"
+
+msgid "Verify"
+msgstr "검증"
+
+msgid "View All"
+msgstr "전체 보기"
+
+msgid "View List"
+msgstr "목록 보기"
+
+msgid "Wednesday"
+msgstr "수요일"
+
+msgid "submission"
+msgstr "제출"

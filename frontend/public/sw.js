@@ -1,4 +1,5 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
+import { isPwaNavigation } from "../src/utils/swNavigationScope.js"
 import { clientsClaim } from "workbox-core"
 import { registerRoute } from "workbox-routing"
 import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from "workbox-strategies"
@@ -13,6 +14,11 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 // Clean up old caches
 cleanupOutdatedCaches()
+
+// 오염됐던 구버전 페이지 캐시 명시 삭제 (/app 문서가 담겼던 v1)
+self.addEventListener("activate", (event) => {
+	event.waitUntil(caches.delete("nbp-hrms-pages-v1"))
+})
 
 // ── Offline fallback 페이지 등록 ─────────────────────────────────────────────
 // vite build --base=/assets/hrms/frontend/ 로 배포 시 public/ 파일은
@@ -62,11 +68,12 @@ registerRoute(
 // ── 네비게이션 요청 — Network-First + offline fallback ───────────────────────
 // NetworkFirst 핸들러가 실패 시 offline.html 서빙
 registerRoute(
-	({ request }) => request.mode === "navigate",
+	// /hrms(PWA) 문서 네비게이션만 처리 — /app(데스크) 등 외부 경로 개입 금지 (납치 사고 재발 방지)
+	({ request, url }) => request.mode === "navigate" && isPwaNavigation(url.pathname),
 	async ({ event }) => {
 		try {
 			return await new NetworkFirst({
-				cacheName: "nbp-hrms-pages-v1",
+				cacheName: "nbp-hrms-pages-v2", // v1은 /app 문서로 오염된 적 있어 폐기
 				plugins: [new CacheableResponsePlugin({ statuses: [0, 200] })],
 				networkTimeoutSeconds: 5,
 			}).handle({ event, request: event.request })

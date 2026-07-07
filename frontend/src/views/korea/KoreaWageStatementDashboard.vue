@@ -8,7 +8,7 @@
 						<label class="text-xs text-gray-500 font-medium">{{ __('연도') }}</label>
 						<select
 							v-model="selectedYear"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20"
 						>
 							<option v-for="y in yearOptions" :key="y" :value="y">{{ y }}년</option>
 						</select>
@@ -17,14 +17,14 @@
 						<label class="text-xs text-gray-500 font-medium">{{ __('월') }}</label>
 						<select
 							v-model="selectedMonth"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20"
 						>
 							<option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
 						</select>
 					</div>
 					<button
 						@click="loadStatement"
-						class="px-4 py-2 bg-blue-600 text-white text-sm rounded font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors"
+						class="px-4 py-2 bg-black text-white text-sm rounded-full font-medium hover:bg-gray-800 active:bg-gray-900 transition-colors"
 					>
 						{{ __('조회') }}
 					</button>

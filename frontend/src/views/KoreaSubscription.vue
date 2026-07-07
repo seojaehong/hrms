@@ -73,7 +73,7 @@
 								class="rounded-xl border p-4 transition-shadow hover:shadow-md"
 								:class="
 									activeTier === tier
-										? 'border-blue-500 bg-blue-50'
+										? 'border-black bg-gray-50'
 										: 'border-gray-200 bg-white'
 								"
 							>
@@ -94,7 +94,7 @@
 									</div>
 									<span
 										v-if="activeTier === tier"
-										class="shrink-0 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-medium text-white"
+										class="shrink-0 rounded-full bg-black px-2.5 py-0.5 text-xs font-medium text-white"
 									>
 										{{ __("현재") }}
 									</span>

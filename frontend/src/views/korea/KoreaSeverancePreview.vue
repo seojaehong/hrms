@@ -11,7 +11,7 @@
 						<input
 							type="date"
 							v-model="assumedRetirementDate"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20 w-full"
 						/>
 					</div>
 
@@ -24,14 +24,14 @@
 							type="number"
 							v-model.number="ordinaryWageOverride"
 							:placeholder="__('예: 2500000')"
-							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+							class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20 w-full"
 						/>
 					</div>
 
 					<button
 						@click="calculate"
 						:disabled="severancePreview.loading"
-						class="w-full py-3 bg-blue-600 text-white text-sm rounded font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="w-full py-3 bg-black text-white text-sm rounded-full font-medium hover:bg-gray-800 active:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 					>
 						<span v-if="severancePreview.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('퇴직금 계산') }}</span>
@@ -72,7 +72,7 @@
 							</div>
 							<div class="flex justify-between items-center border-b border-gray-200 pb-3 mt-1">
 								<span class="text-base font-bold text-gray-800">퇴직금 (세전)</span>
-								<span class="text-base font-bold text-blue-700">{{ formatKRW(result.severance_pay) }}</span>
+								<span class="text-base font-bold text-gray-900">{{ formatKRW(result.severance_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-gray-100 pb-2">
 								<span class="text-sm text-gray-600">IRP 의무이체액</span>

@@ -28,7 +28,7 @@
 					<template v-for="msg in messages" :key="msg.id">
 						<!-- User message -->
 						<div v-if="msg.role === 'user'" class="flex justify-end">
-							<div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-[80%] text-sm">
+							<div class="bg-black text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-[80%] text-sm">
 								{{ msg.content }}
 							</div>
 						</div>
@@ -51,9 +51,9 @@
 									<div
 										v-for="(cite, ci) in msg.citations"
 										:key="ci"
-										class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2"
+										class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
 									>
-										<div class="text-xs font-semibold text-blue-700">
+										<div class="text-xs font-semibold text-gray-900">
 											[{{ citationTypeLabel(cite.type) }}] {{ cite.ref }}
 										</div>
 										<div class="text-xs text-gray-600 mt-0.5 line-clamp-2">{{ cite.snippet }}</div>
@@ -132,7 +132,7 @@
 							@click="sendMessage"
 							:disabled="!inputText.trim() || isLoading"
 							aria-label="메시지 전송"
-							class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors shrink-0"
+							class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shrink-0"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m-7 7l7-7 7 7" />

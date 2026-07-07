@@ -39,7 +39,7 @@
 					카테고리 진단 데이터를 찾을 수 없습니다.<br />
 					<router-link
 						:to="{ name: 'KoreaComplianceDashboard' }"
-						class="text-blue-600 underline text-xs mt-1"
+						class="text-gray-900 underline text-xs mt-1"
 					>
 						← 메인 대시보드로 돌아가기
 					</router-link>
@@ -136,7 +136,7 @@
 							/>
 							<label
 								:for="`rec-check-${idx}`"
-								class="text-xs text-blue-700 cursor-pointer leading-relaxed"
+								class="text-xs text-gray-900 cursor-pointer leading-relaxed"
 								:class="{ 'line-through text-gray-400': checkedRecommendations[idx] }"
 							>
 								{{ rec }}
@@ -179,7 +179,7 @@
 								:href="mod.route"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-xs text-blue-600 hover:underline flex items-center gap-1"
+								class="text-xs text-gray-900 hover:underline flex items-center gap-1"
 							>
 								{{ mod.label }} →
 							</a>

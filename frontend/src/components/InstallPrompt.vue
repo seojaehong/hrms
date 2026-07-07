@@ -47,7 +47,7 @@
 						<span>
 							iPhone에서 더 빠르게 접속하려면 홈 화면에 추가하세요.
 						</span>
-						<span class="inline-flex items-center gap-1 font-medium text-blue-700">
+						<span class="inline-flex items-center gap-1 font-medium text-gray-900">
 							<FeatherIcon name="share" class="h-4 w-4" />
 							<span>공유 버튼</span>
 							<span class="text-gray-600 font-normal">탭 후 "홈 화면에 추가"를 선택하세요.</span>

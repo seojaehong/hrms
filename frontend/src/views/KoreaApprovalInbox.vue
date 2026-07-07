@@ -278,8 +278,8 @@ async function confirmAction() {
 const DOCTYPE_STYLES = {
 	"Leave Application": {
 		icon: "calendar",
-		bg: "bg-blue-50",
-		color: "text-blue-600",
+		bg: "bg-gray-100",
+		color: "text-gray-700",
 	},
 	"Expense Claim": {
 		icon: "dollar-sign",

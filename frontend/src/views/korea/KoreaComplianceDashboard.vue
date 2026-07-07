@@ -19,7 +19,7 @@
 						<input
 							type="date"
 							v-model="asOfDate"
-							class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/20"
 						/>
 					</div>
 
@@ -29,7 +29,7 @@
 							v-if="isAdmin"
 							@click="confirmRunDiagnosis"
 							:disabled="complianceDiagnosis.loading"
-							class="flex-1 py-3 bg-blue-600 text-white text-sm rounded font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							class="flex-1 py-3 bg-black text-white text-sm rounded-full font-medium hover:bg-gray-800 active:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							<span v-if="complianceDiagnosis.loading">{{ __('진단 중...') }}</span>
 							<span v-else>{{ __('전체 진단 실행') }}</span>
@@ -122,7 +122,7 @@
 						<div class="pl-7 pt-1">
 							<router-link
 								:to="{ name: 'KoreaComplianceCategoryDetail', params: { categoryKey: cat.key }, query: { diagnosisId: currentDiagnosisId } }"
-								class="text-xs text-blue-600 font-medium hover:underline"
+								class="text-xs text-gray-900 font-medium hover:underline"
 							>
 								상세 보기 →
 							</router-link>
@@ -163,7 +163,7 @@
 					<button
 						@click="confirmGenerateActionPlan"
 						:disabled="complianceActionPlan.loading"
-						class="w-full py-3 border border-blue-400 rounded text-sm text-blue-700 font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="w-full py-3 border border-black rounded-full text-sm text-black font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 					>
 						<span v-if="complianceActionPlan.loading">액션 플랜 생성 중...</span>
 						<span v-else>{{ __('개선 액션 플랜 생성') }}</span>
@@ -189,7 +189,7 @@
 							</span>
 						</div>
 						<div class="text-xs text-gray-600">{{ action.issue }}</div>
-						<div class="text-xs text-blue-700 mt-1">{{ action.recommended_action }}</div>
+						<div class="text-xs text-gray-900 mt-1">{{ action.recommended_action }}</div>
 						<div class="text-xs text-gray-400 mt-1">
 							담당: {{ action.assignee_role }} | 예상 {{ action.estimated_effort_hours }}h | 기한 {{ action.deadline }}
 						</div>
@@ -235,7 +235,7 @@
 						</button>
 						<button
 							@click="runDiagnosis"
-							class="flex-1 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+							class="flex-1 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
 						>
 							실행
 						</button>
@@ -264,7 +264,7 @@
 						</button>
 						<button
 							@click="generateActionPlan"
-							class="flex-1 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+							class="flex-1 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
 						>
 							생성
 						</button>

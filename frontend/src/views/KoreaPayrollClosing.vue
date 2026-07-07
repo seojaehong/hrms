@@ -42,13 +42,13 @@
 						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
 						<p class="mt-1 text-xs text-gray-300">Blockers: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : 'none' }}</p>
 					</div>
-					<div class="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+					<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
 						<div class="flex items-start justify-between gap-3">
 							<div>
-								<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Evidence packet</p>
-								<p class="mt-1 text-sm font-bold text-blue-950">{{ selectedSession.evidence_packet.contract_type }}</p>
+								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Evidence packet</p>
+								<p class="mt-1 text-sm font-bold text-gray-900">{{ selectedSession.evidence_packet.contract_type }}</p>
 							</div>
-							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">preview only</span>
+							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-gray-700">preview only</span>
 						</div>
 						<div class="mt-3 grid grid-cols-1 gap-2">
 							<div
@@ -93,7 +93,7 @@
 					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
 						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
-					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
+					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/15 p-3 text-sm text-white">
 						실데이터 대시보드 연결됨 (읽기 전용)
 						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
@@ -217,7 +217,7 @@ const dataSourceLabel = computed(() => runtimeUiState.value.dataSourceLabel)
 const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {
 	if (runtimeHasWorklistData.value) return "bg-green-100 text-green-800"
-	if (runtimeDashboard.value) return "bg-blue-100 text-blue-800"
+	if (runtimeDashboard.value) return "bg-gray-100 text-gray-800"
 	if (runtimeLoading.value) return "bg-white/20 text-white"
 	return "bg-amber-100 text-amber-900"
 })

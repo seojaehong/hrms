@@ -44,8 +44,8 @@
 				</section>
 
 				<!-- Card 2: 부여 현황 -->
-				<section v-if="display" class="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
-					<p class="text-xs font-semibold uppercase tracking-wide text-blue-700">부여 현황</p>
+				<section v-if="display" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+					<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">부여 현황</p>
 					<div class="mt-3 flex flex-col gap-2">
 						<div v-if="display.serviceYears < 1 && display.monthlyAccrual > 0" class="flex items-center justify-between rounded-xl bg-gray-50 p-3">
 							<span class="text-sm text-gray-700">월차 <span class="text-xs text-gray-400">(1년 미만 월 단위)</span></span>
@@ -59,9 +59,9 @@
 							<span class="text-sm text-green-800">장기근속 가산 포함 <span class="text-xs text-green-600">(3년 이상, 2년마다 +1일 최대 25일)</span></span>
 							<span class="font-bold text-green-900">합산 반영</span>
 						</div>
-						<div class="flex items-center justify-between rounded-xl bg-blue-50 p-3">
-							<span class="text-sm font-semibold text-blue-800">총 부여</span>
-							<span class="text-lg font-bold text-blue-900">{{ display.totalEntitlement }}일</span>
+						<div class="flex items-center justify-between rounded-xl bg-gray-900 p-3">
+							<span class="text-sm font-semibold text-white">총 부여</span>
+							<span class="text-lg font-bold text-white">{{ display.totalEntitlement }}일</span>
 						</div>
 					</div>
 					<div class="mt-3 text-xs text-gray-400">
@@ -143,7 +143,7 @@
 				<section v-if="isAdmin && display" class="flex flex-col gap-3">
 					<button
 						type="button"
-						class="w-full rounded-2xl border border-blue-200 bg-blue-50 py-3 text-sm font-semibold text-blue-800"
+						class="w-full rounded-full bg-black py-3 text-sm font-semibold text-white disabled:opacity-40"
 						@click="handlePreviewRefresh"
 						:disabled="loading"
 					>

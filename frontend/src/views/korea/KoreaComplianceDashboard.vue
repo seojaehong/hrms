@@ -279,6 +279,7 @@
 import { ref, computed, inject, onMounted } from "vue"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { useIsAdmin } from "@/composables/useIsAdmin"
 import {
 	complianceDiagnosis,
 	complianceActionPlan,
@@ -300,7 +301,7 @@ const lastDiagnosisTime = ref(null)
 const currentDiagnosisId = ref(null)
 
 const asOfDate = ref(new Date().toISOString().slice(0, 10))
-const isAdmin = ref(false) // TODO: 실제 Frappe role 체크 연동
+const isAdmin = useIsAdmin() // HR Manager/System Manager 롤 기준
 
 const showDiagnosisConfirm = ref(false)
 const showActionPlanConfirm = ref(false)
@@ -438,9 +439,5 @@ function severityLabel(severity) {
 onMounted(() => {
 	// 세션 캐시에서 복원
 	refreshFromCache()
-	// TODO: Frappe role 체크 — frappe.user_roles.includes("HR Manager") 등
-	// 보안 기본값: false. 실제 role 연동 전까지는 admin 기능 비활성화.
-	// isAdmin.value = frappe?.user_roles?.includes("HR Manager") ?? false
-	isAdmin.value = false
 })
 </script>

@@ -236,6 +236,7 @@ import { ref, computed, inject, onMounted } from "vue"
 import { useRoute } from "vue-router"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { useIsAdmin } from "@/composables/useIsAdmin"
 import {
 	getCategoryDetail,
 	maskEmployeeName,
@@ -254,7 +255,7 @@ const categoryKey = computed(() => route.params.categoryKey)
 const categoryDetail = ref(null)
 const loading = ref(false)
 const maskPii = ref(false)
-const isAdmin = ref(false) // TODO: Frappe role 연동
+const isAdmin = useIsAdmin() // HR Manager/System Manager 롤 기준
 const checkedRecommendations = ref({})
 
 const showResolveConfirm = ref(false)
@@ -324,10 +325,6 @@ function markResolved() {
 // Lifecycle
 // ---------------------------------------------------------------------------
 onMounted(() => {
-	// TODO: Frappe role 체크 — frappe.user_roles.includes("HR Manager") 등
-	// 보안 기본값: false. 실제 role 연동 전까지는 admin 기능(해결 표시) 비활성화.
-	// isAdmin.value = frappe?.user_roles?.includes("HR Manager") ?? false
-	isAdmin.value = false
 	loadFromSession()
 })
 </script>

@@ -60,7 +60,6 @@ const sections = [
 		eyebrow: "PAYROLL",
 		title: __("급여"),
 		links: [
-			{ title: __("급여명세서 보기"), route: "SalarySlipsDashboard" },
 			{ title: __("임금명세서"), route: "KoreaWageStatementDashboard" },
 			{ title: __("급여 마감 센터"), route: "KoreaPayrollClosingDashboard" },
 			{ title: __("급여 검토 감사 로그"), route: "KoreaPayrollReviewAuditLogs" },

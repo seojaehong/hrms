@@ -37,31 +37,32 @@ const __ = inject("$translate")
 
 const route = useRoute()
 
+// 하단탭 canonical — 근태/연차/급여는 Korea 화면으로 통일 (P0-6, P0-3)
 const tabItems = [
 	{
 		icon: HomeIcon,
-		title: __("Home"),
+		title: __("홈"),
 		route: "/home",
 	},
 	{
 		icon: AttendanceIcon,
-		title: __("Attendance"),
-		route: "/dashboard/attendance",
+		title: __("근태"),
+		route: "/dashboard/korea-attendance",
 	},
 	{
 		icon: LeaveIcon,
-		title: __("Leaves"),
-		route: "/dashboard/leaves",
+		title: __("연차"),
+		route: "/dashboard/korea-annual-leave",
 	},
 	{
 		icon: ExpenseIcon,
-		title: __("Expenses"),
+		title: __("비용"),
 		route: "/dashboard/expense-claims",
 	},
 	{
 		icon: SalaryIcon,
-		title: __("Salary"),
-		route: "/dashboard/salary-slips",
+		title: __("급여"),
+		route: "/dashboard/korea-wage-statement",
 	},
 ]
 </script>

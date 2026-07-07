@@ -119,19 +119,19 @@
 							</div>
 						</div>
 
-						<!-- 액션 버튼 (admin 전용) -->
+						<!-- 액션 버튼 (admin 전용) — 미구현 기능: disabled + (준비 중) 표기 -->
 						<div v-if="isAdmin" class="flex flex-row gap-2 pt-2">
 							<button
-								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
-								@click="downloadPdf"
+								disabled
+								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 							>
-								PDF 다운로드
+								PDF 다운로드 (준비 중)
 							</button>
 							<button
-								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
-								@click="sendKakao"
+								disabled
+								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 							>
-								카톡 발송
+								카톡 발송 (준비 중)
 							</button>
 						</div>
 					</template>
@@ -170,6 +170,7 @@
 import { ref, computed, inject, onMounted } from "vue"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { useIsAdmin } from "@/composables/useIsAdmin"
 import { wageStatementPreview, wageStatementHistory } from "@/data/koreaWageStatementRuntime"
 
 const __ = inject("$translate")
@@ -180,7 +181,7 @@ const now = dayjs()
 const selectedYear = ref(now.year())
 const selectedMonth = ref(now.month() + 1)
 const statement = ref(null)
-const isAdmin = ref(false) // TODO: 실제 권한 체크 연동
+const isAdmin = useIsAdmin() // HR Manager/System Manager 롤 기준
 
 const yearOptions = computed(() => {
 	const current = now.year()
@@ -225,20 +226,14 @@ function selectHistoryItem(item) {
 	loadStatement()
 }
 
-function downloadPdf() {
-	// TODO: PDF 생성 API 연동
-	alert("PDF 다운로드 기능은 준비 중입니다.")
-}
-
-function sendKakao() {
-	// TODO: 카카오톡 발송 API 연동
-	alert("카카오톡 발송 기능은 준비 중입니다.")
-}
+// PDF 다운로드·카톡 발송: API 미구현 — 버튼 disabled + "(준비 중)" 표기 (핸들러 제거)
 
 onMounted(() => {
 	wageStatementHistory.submit({
 		employee: employee.data?.name,
 		limit: 12,
 	})
+	// 첫 진입 시 당월 명세서 자동 조회 — 빈 첫 화면 제거 (수동 조회 동작은 그대로 유지)
+	loadStatement()
 })
 </script>

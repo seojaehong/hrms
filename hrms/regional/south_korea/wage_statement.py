@@ -9,12 +9,32 @@ PDF 생성 자체는 Frappe Print Format 레이어에서 처리하며,
 
 from __future__ import annotations
 
+import calendar
 import hashlib
 import json
 import pathlib
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
+
+# ---------------------------------------------------------------------------
+# Frappe 조건부 import — framework-free 테스트 환경에서 안전하게 로드
+# (insurance_filing_api.py 컨벤션)
+# ---------------------------------------------------------------------------
+try:
+    import frappe as _frappe  # noqa: PLC0415
+
+    _FRAPPE_AVAILABLE = True
+except ModuleNotFoundError:
+    _frappe = None  # type: ignore[assignment]
+    _FRAPPE_AVAILABLE = False
+
+
+def _whitelist(fn):
+    """@frappe.whitelist() 데코레이터 — Frappe 없으면 no-op."""
+    if _FRAPPE_AVAILABLE and _frappe is not None:
+        return _frappe.whitelist()(fn)
+    return fn
 
 # HTML 템플릿 경로 (이 모듈과 같은 패키지 내)
 _PRINT_FORMAT_HTML_PATH = (
@@ -394,7 +414,268 @@ def _checksum(payload: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+# ──────────────────────────────────────────────────────────────
+# PWA 임금명세서 어댑터 — 프론트(KoreaWageStatementDashboard) 계약
+#
+#   list_korea_wage_statements        최근 N개월 [{pay_year_month, net_pay}]
+#   build_korea_wage_statement_preview  해당 월 명세서 프리뷰 (법정 항목 그리드)
+#
+# 순수 매핑(map_salary_slip_to_wage_statement 등)은 framework-free —
+# frappe 없이 직접 실행하는 테스트에서 실측 데이터로 검증한다.
+# ──────────────────────────────────────────────────────────────
+
+# 공제 컴포넌트명 → 프론트 응답 키 매핑 (포함 매칭, 순서 중요:
+# "지방소득세"가 "소득세"를 포함하므로 지방소득세를 먼저 판정)
+_DEDUCTION_KEY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("local_income_tax", ("지방소득세", "주민세")),
+    ("income_tax", ("소득세",)),
+    ("national_pension", ("국민연금",)),
+    ("long_term_care_insurance", ("장기요양",)),
+    ("health_insurance", ("건강보험",)),
+    ("employment_insurance", ("고용보험",)),
+)
+
+_DEDUCTION_KEYS: tuple[str, ...] = tuple(key for key, _pats in _DEDUCTION_KEY_RULES)
+
+
+def _component_name(row: dict[str, Any]) -> str:
+    """급여 컴포넌트 행에서 컴포넌트명 추출 (salary_component 우선, label 폴백)."""
+    for key in ("salary_component", "label"):
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _amount_int_krw(value: Any) -> int:
+    """금액을 1원 단위 정수로 강제 (float 오차 방지: round 후 int)."""
+    if value in (None, ""):
+        return 0
+    return int(round(float(value)))
+
+
+def _classify_deduction(component_name: str) -> str | None:
+    """공제 컴포넌트명 → 응답 키. 매칭 없으면 None."""
+    for key, patterns in _DEDUCTION_KEY_RULES:
+        if any(pattern in component_name for pattern in patterns):
+            return key
+    return None
+
+
+def map_salary_slip_to_wage_statement(slip: dict[str, Any]) -> dict[str, Any]:
+    """Salary Slip dict → 임금명세서 프리뷰 응답 (framework-free 순수 함수).
+
+    입력 slip 계약:
+        earnings / deductions: [{"salary_component": str, "amount": num}, ...]
+        total_deduction, net_pay: 슬립 필드 그대로
+
+    응답 키 (프론트 KoreaWageStatementDashboard 가 읽는 키 — 정확히 유지):
+        base_salary               "기본급" 컴포넌트 금액 (없으면 첫 earning)
+        allowances                기본급·비과세 제외 earnings
+                                  [{"code", "label", "amount"}]
+        non_taxable_total         컴포넌트명에 "비과세" 포함 earnings 합
+        income_tax / local_income_tax / national_pension /
+        health_insurance / long_term_care_insurance / employment_insurance
+        total_deduction, net_pay  슬립 필드 그대로 (정수 강제)
+    """
+    if not isinstance(slip, dict):
+        raise ValueError("slip must be a dict")
+
+    earnings_raw = slip.get("earnings") or []
+    if not isinstance(earnings_raw, list):
+        raise ValueError("slip.earnings must be a list")
+    deductions_raw = slip.get("deductions") or []
+    if not isinstance(deductions_raw, list):
+        raise ValueError("slip.deductions must be a list")
+
+    earnings = [
+        {"name": _component_name(row), "amount": _amount_int_krw(row.get("amount"))}
+        for row in earnings_raw
+        if isinstance(row, dict)
+    ]
+
+    # 기본급: 정확히 "기본급" 컴포넌트 우선, 없으면 첫 earning
+    base_row = next((e for e in earnings if e["name"] == "기본급"), None)
+    if base_row is None and earnings:
+        base_row = earnings[0]
+
+    non_taxable_total = 0
+    allowances: list[dict[str, Any]] = []
+    for row in earnings:
+        if row is base_row:
+            continue
+        if "비과세" in row["name"]:
+            non_taxable_total += row["amount"]
+            continue
+        allowances.append({"code": row["name"], "label": row["name"], "amount": row["amount"]})
+
+    result: dict[str, Any] = {
+        "base_salary": base_row["amount"] if base_row else 0,
+        "allowances": allowances,
+        "non_taxable_total": non_taxable_total,
+        "total_deduction": _amount_int_krw(slip.get("total_deduction")),
+        "net_pay": _amount_int_krw(slip.get("net_pay")),
+    }
+    for key in _DEDUCTION_KEYS:
+        result[key] = 0
+    for row in deductions_raw:
+        if not isinstance(row, dict):
+            continue
+        key = _classify_deduction(_component_name(row))
+        if key is not None:
+            result[key] += _amount_int_krw(row.get("amount"))
+    return result
+
+
+def build_wage_statement_history(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Salary Slip 목록 행 → [{"pay_year_month": "YYYY-MM", "net_pay": int}].
+
+    start_date 는 date/datetime/ISO 문자열 모두 수용 (frappe get_all 반환 다양성).
+    framework-free 순수 함수.
+    """
+    history: list[dict[str, Any]] = []
+    for row in rows or []:
+        raw = row.get("start_date")
+        if isinstance(raw, datetime):
+            raw = raw.date()
+        if isinstance(raw, date):
+            pay_year_month = f"{raw.year:04d}-{raw.month:02d}"
+        elif isinstance(raw, str) and len(raw) >= 7:
+            pay_year_month = raw[:7]
+        else:
+            continue  # start_date 없는 행은 목록에서 제외 (프론트 키가 pay_year_month)
+        history.append({"pay_year_month": pay_year_month, "net_pay": _amount_int_krw(row.get("net_pay"))})
+    return history
+
+
+# ---------------------------------------------------------------------------
+# Frappe 글루 (사이트 조회 + 권한) — 위 순수 함수에 위임
+# ---------------------------------------------------------------------------
+
+
+def _require_frappe():
+    if not (_FRAPPE_AVAILABLE and _frappe is not None):
+        raise RuntimeError("frappe runtime is required for this endpoint")
+    return _frappe
+
+
+def _check_employee_scope(employee: str) -> None:
+    """본인(session user 의 Employee) 또는 HR Manager 만 허용. 그 외 PermissionError."""
+    fr = _require_frappe()
+    user = getattr(getattr(fr, "session", None), "user", None)
+    if user == "Administrator":
+        return
+    roles: set[str] = set()
+    get_roles = getattr(fr, "get_roles", None)
+    if callable(get_roles):
+        roles = set(get_roles(user) if user else get_roles())
+    if "HR Manager" in roles or "System Manager" in roles:
+        return
+    own_employee = fr.db.get_value("Employee", {"user_id": user}, "name") if user else None
+    if own_employee and own_employee == employee:
+        return
+    exc = getattr(fr, "PermissionError", PermissionError)
+    raise exc("본인 임금명세서만 조회할 수 있습니다 (HR Manager 제외)")
+
+
+def _require_employee_arg(employee: Any) -> str:
+    if not isinstance(employee, str) or not employee.strip():
+        raise ValueError("employee is required")
+    return employee.strip()
+
+
+def _row_value(row: Any, key: str) -> Any:
+    """frappe get_doc 자식행(객체)·dict 양쪽 지원 접근자."""
+    if isinstance(row, dict):
+        return row.get(key)
+    return getattr(row, key, None)
+
+
+@_whitelist
+def list_korea_wage_statements(employee: str, limit: int | str = 12) -> list[dict[str, Any]]:
+    """해당 직원의 Salary Slip(docstatus 0/1) 을 start_date 내림차순 limit 개.
+
+    응답: [{"pay_year_month": "2026-05", "net_pay": 6481553}, ...]
+    권한: 본인 또는 HR Manager.
+    """
+    fr = _require_frappe()
+    employee = _require_employee_arg(employee)
+    try:
+        limit_int = int(limit)
+    except (TypeError, ValueError):
+        raise ValueError("limit must be an integer") from None
+    limit_int = max(1, min(limit_int, 120))
+
+    _check_employee_scope(employee)
+
+    rows = fr.get_all(
+        "Salary Slip",
+        filters={"employee": employee, "docstatus": ["in", [0, 1]]},
+        fields=["start_date", "net_pay"],
+        order_by="start_date desc",
+        limit=limit_int,
+    )
+    return build_wage_statement_history([dict(r) for r in rows])
+
+
+@_whitelist
+def build_korea_wage_statement_preview(
+    employee: str, year: int | str, month: int | str
+) -> dict[str, Any]:
+    """해당 월(start_date 기준) Salary Slip 1건 → 임금명세서 프리뷰.
+
+    없으면 frappe.throw("해당 월의 명세서가 없습니다") — 프론트는 resource.error 로 처리.
+    권한: 본인 또는 HR Manager.
+    """
+    fr = _require_frappe()
+    employee = _require_employee_arg(employee)
+    try:
+        year_int = int(year)
+        month_int = int(month)
+    except (TypeError, ValueError):
+        raise ValueError("year/month must be integers") from None
+    if not (1 <= month_int <= 12):
+        raise ValueError(f"invalid month: {month_int}")
+
+    _check_employee_scope(employee)
+
+    month_start = date(year_int, month_int, 1)
+    month_end = date(year_int, month_int, calendar.monthrange(year_int, month_int)[1])
+    slips = fr.get_all(
+        "Salary Slip",
+        filters={
+            "employee": employee,
+            "docstatus": ["in", [0, 1]],
+            "start_date": ["between", [month_start.isoformat(), month_end.isoformat()]],
+        },
+        fields=["name"],
+        order_by="docstatus desc, modified desc",
+        limit=1,
+    )
+    if not slips:
+        fr.throw("해당 월의 명세서가 없습니다")
+
+    doc = fr.get_doc("Salary Slip", _row_value(slips[0], "name"))
+    slip_dict = {
+        "earnings": [
+            {"salary_component": _row_value(row, "salary_component"), "amount": _row_value(row, "amount")}
+            for row in (_row_value(doc, "earnings") or [])
+        ],
+        "deductions": [
+            {"salary_component": _row_value(row, "salary_component"), "amount": _row_value(row, "amount")}
+            for row in (_row_value(doc, "deductions") or [])
+        ],
+        "total_deduction": _row_value(doc, "total_deduction"),
+        "net_pay": _row_value(doc, "net_pay"),
+    }
+    return map_salary_slip_to_wage_statement(slip_dict)
+
+
 __all__ = [
     "build_korea_wage_statement_pdf_payload",
     "render_korea_wage_statement_html",
+    "map_salary_slip_to_wage_statement",
+    "build_wage_statement_history",
+    "list_korea_wage_statements",
+    "build_korea_wage_statement_preview",
 ]

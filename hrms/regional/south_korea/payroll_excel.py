@@ -117,3 +117,76 @@ def extract_payroll(source: Any, period: str, sheet_type: str = "monthly", sheet
     if errors:
         raise ValueError("무결성 실패 (엑셀이 권위 — 매핑을 점검하라):\n" + "\n".join(errors))
     return {"period": period, "count": len(rows), "employees": rows}
+
+
+# 고정(비-동적) 컬럼 헤더 — 워크북 빌더/다운로드가 공유한다.
+FIXED_HEADERS = ("직원명", "부서", "입사일")
+GROSS_HEADER = "세전합계"
+NET_HEADER = "실지급"
+
+
+def _slip_amount(value: Any) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return 0
+    return int(round(float(value)))
+
+
+def build_payroll_workbook(slips: list[dict], period: str | None = None) -> bytes:
+    """급여 슬립 dict 목록을 노호 급여대장 유사 xlsx(bytes)로 빌드 — framework-free.
+
+    각 slip dict:
+      {name, dept, join, earnings{label:amount}, deductions{label:amount},
+       gross(=세전합계, 없으면 earnings 합), net(=실지급, 없으면 gross-공제합)}
+
+    컬럼: 직원명·부서·입사일 · [earnings 라벨...] · 세전합계 · [deductions 라벨...] · 실지급.
+    earnings/deductions 라벨은 전 슬립의 합집합(등장순 유지). 마지막에 '합계' 행 —
+    각 숫자 컬럼의 열합을 채운다(행별 합과 1원 단위로 일치). 빈 목록이면 ValueError.
+    """
+    if not slips:
+        raise ValueError("build_payroll_workbook: 급여 슬립이 비어 있습니다 (다운로드할 대상 없음).")
+
+    # earnings/deductions 라벨 합집합 — 처음 등장한 순서를 유지(dict는 삽입순).
+    earning_labels: list[str] = []
+    deduction_labels: list[str] = []
+    for s in slips:
+        for label in (s.get("earnings") or {}):
+            if label not in earning_labels:
+                earning_labels.append(label)
+        for label in (s.get("deductions") or {}):
+            if label not in deduction_labels:
+                deduction_labels.append(label)
+
+    headers = [*FIXED_HEADERS, *earning_labels, GROSS_HEADER, *deduction_labels, NET_HEADER]
+    # 숫자 컬럼(0-base 인덱스): earnings·세전·deductions·실지급 (고정 3컬럼 이후 전부)
+    numeric_start = len(FIXED_HEADERS)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = period or "급여대장"
+    ws.append(headers)
+
+    totals = [0] * len(headers)
+    for s in slips:
+        earnings = s.get("earnings") or {}
+        deductions = s.get("deductions") or {}
+        gross = _slip_amount(s.get("gross")) if s.get("gross") is not None else sum(_slip_amount(v) for v in earnings.values())
+        net = _slip_amount(s.get("net")) if s.get("net") is not None else gross - sum(_slip_amount(v) for v in deductions.values())
+        row: list[Any] = [
+            str(s.get("name") or ""),
+            str(s.get("dept") or ""),
+            str(s.get("join") or ""),
+        ]
+        row += [_slip_amount(earnings.get(label)) for label in earning_labels]
+        row.append(gross)
+        row += [_slip_amount(deductions.get(label)) for label in deduction_labels]
+        row.append(net)
+        ws.append(row)
+        for c in range(numeric_start, len(row)):
+            totals[c] += row[c]
+
+    total_row: list[Any] = ["합계", "", ""] + totals[numeric_start:]
+    ws.append(total_row)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()

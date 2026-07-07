@@ -9,7 +9,7 @@
 				<span>{{ __("Last {0} was at {1}", [__(lastLogType), formatTimestamp(lastLog.time)]) }}</span>
 				<span class="whitespace-pre"> &middot; </span>
 				<router-link :to="{ name: 'EmployeeCheckinListView' }" v-slot="{ navigate }">
-					<span @click="navigate" class="underline">View List</span>
+					<span @click="navigate" class="underline">{{ __("View List") }}</span>
 				</router-link>
 			</div>
 			<Button
@@ -28,7 +28,7 @@
 		</template>
 
 		<div v-else class="font-medium text-sm text-gray-500 mt-1.5">
-			{{ dayjs().format("ddd, D MMMM, YYYY") }}
+			{{ dayjs().format("YYYY년 M월 D일 (ddd)") }}
 		</div>
 	</div>
 
@@ -45,7 +45,7 @@
 					{{ dayjs(checkinTimestamp).format("hh:mm:ss a") }}
 				</div>
 				<div class="font-medium text-gray-500 text-sm">
-					{{ dayjs().format("D MMM, YYYY") }}
+					{{ dayjs().format("YYYY년 M월 D일") }}
 				</div>
 			</div>
 
@@ -131,7 +131,7 @@ function handleLocationSuccess(position) {
 }
 
 function handleLocationError(error) {
-	locationStatus.value = "Unable to retrieve your location"
+	locationStatus.value = __("Unable to retrieve your location")
 	if (error) locationStatus.value += `: ERROR(${error.code}): ${error.message}`
 }
 

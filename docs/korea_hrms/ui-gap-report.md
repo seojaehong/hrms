@@ -59,3 +59,11 @@
 - frappe 코어 폼/타임라인 118종 ko 보충 (First Name·Comments·Activity·상대시간) — frappe 공식 ko.po가 빈 msgstr인 것 실측
 - **'한국' 접두어 제거**: 한국 사업장 프로필→사업장 프로필, 한국 페이롤→급여, 한국 HR→HR 홈 (워크스페이스+독타입명, 테스트 갱신)
 - 잔여 minor: 날짜 "Tue, 7 July 2026" (dayjs ko locale 미적용), 데스크 조합 문자열 일부
+
+## F. 07-07 디자인 마감 (ralph 루프)
+- **US-P1 파랑 잔재 스윕**: frontend/src 의 `blue-[4-9]00` 계열 클래스를 DESIGN-figma 모노크롬/시맨틱으로 전량 교체 — grep 잔존 **0건**. 주요 CTA `bg-black text-white rounded-full`, focus ring `focus:ring-black/20`, 상태없는 배지 `bg-gray-100`, 성공/위험은 green/red 시맨틱 유지. 13개 뷰(InstallPrompt·AI챗·연차·결재인박스·모바일출퇴근·마감·구독·알림·오프라인·컴플라이언스·퇴직금·임금명세서) 대상.
+- **US-P2 로그인 리디자인**: Login.vue 를 화이트 배경 → 중앙 `k-block k-block--lilac` 안 `k-card` 구조로. 상단 `.k-eyebrow "KOREA HRMS"` + 볼드 타이틀, 로그인 버튼 블랙 `!rounded-full` pill. submit/에러 로직 무변경(마크업/클래스만).
+- **US-P3 날짜 한국식**: 영문식 `ddd, D MMMM YYYY` / `D MMM, YYYY` 표기를 `YYYY년 M월 D일 (ddd)` 로 통일. KoreaMobileCheckin·CheckInPanel·AttendanceCalendar 3종. `grep MMMM` 잔존 0건.
+- **US-P4 한국식 금액 유틸 + 데스크 훅**: `frontend/src/utils/koreanCurrency.js` `formatKoreanCurrencyShort` 순수함수(1만미만 원·1만~1억 만원절사·1억+ 억원 소수1자리) + `koreanCurrency.test.mjs` **7 케이스 GREEN**. `hrms/public/js/korea_desk_format.js`(frappe 전역 가드 IIFE, `shorten_number` 오버라이드) 신설 + `hooks.py` app_include_js 등재.
+- **US-P5 온보딩 PDF 갱신**: noho_onboarding.html '관리자 화면' 표를 현행 6메뉴(급여/퇴직금/연차/근태/사업장·직원/감사·컴플라이언스)로 갱신, '한국 ' 접두어 제거. headless Chrome 으로 노호_KoreaHRMS_시작안내_20260707.pdf 재생성(138KB).
+- **검증**: `scripts/run_korea_regional_smoke.py` → `passed: true`, `failed_count: 0` · koreanCurrency 테스트 7/7 · `blue-[4-9]00` 잔존 0.

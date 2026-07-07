@@ -80,11 +80,11 @@
 						<button
 							v-if="gpsStatus !== 'loading'"
 							@click="fetchGps"
-							class="text-xs text-blue-600 underline flex-shrink-0"
+							class="text-xs text-gray-900 underline flex-shrink-0"
 						>
 							{{ gpsStatus === 'idle' ? __("Get GPS") : __("Retry") }}
 						</button>
-						<div v-else class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-1"></div>
+						<div v-else class="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-1"></div>
 					</div>
 				</div>
 
@@ -114,7 +114,7 @@
 					<button
 						v-if="!selfiePreviewUrl"
 						@click="takeSelfie"
-						class="w-full py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+						class="w-full py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 })
 
 const currentTime = computed(() => now.value.format("HH:mm:ss"))
-const currentDate = computed(() => now.value.format("ddd, D MMMM YYYY"))
+const currentDate = computed(() => now.value.format("YYYY년 M월 D일 (ddd)"))
 
 // ---------------------------------------------------------------------------
 // Last check-in / next action (tracked via session storage for simplicity)

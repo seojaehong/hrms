@@ -11,7 +11,7 @@
 					@click="firstOfMonth = firstOfMonth.subtract(1, 'M')"
 				/>
 				<span class="text-lg text-gray-800 font-bold">
-					{{ firstOfMonth.format("MMMM") }} {{ firstOfMonth.format("YYYY") }}
+					{{ firstOfMonth.format("YYYY년 M월") }}
 				</span>
 				<Button
 					icon="chevron-right"

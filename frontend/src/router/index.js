@@ -79,6 +79,12 @@ const routes = [
 				component: () => import("@/views/KoreaAnnualLeaveDetail.vue"),
 			},
 			{
+				// 하단탭 canonical 급여 화면 — 탭 레이아웃 유지를 위해 TabbedView 하위에 배치 (경로 동일)
+				path: "/dashboard/korea-wage-statement",
+				name: "KoreaWageStatementDashboard",
+				component: () => import("@/views/korea/KoreaWageStatementDashboard.vue"),
+			},
+			{
 				path: "/dashboard/korea-attendance",
 				name: "KoreaAttendanceDashboard",
 				component: () => import("@/views/KoreaAttendanceDashboard.vue"),

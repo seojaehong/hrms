@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Korea HRMS 온보딩 — 노호</title>
+<style>
+  @page { size: A4; margin: 14mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Malgun Gothic", "Noto Sans KR", sans-serif; color: #1a1d21; font-size: 10.5pt; line-height: 1.55; }
+  .head { border-bottom: 3px solid #0066ff; padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .head h1 { font-size: 19pt; letter-spacing: -0.5px; }
+  .head h1 span { color: #0066ff; }
+  .head .meta { font-size: 9pt; color: #6b7280; text-align: right; }
+  h2 { font-size: 12.5pt; margin: 16px 0 7px; color: #0b3ea8; letter-spacing: -0.3px; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 8px; }
+  th, td { border: 1px solid #d7dce3; padding: 5.5px 9px; text-align: left; vertical-align: top; }
+  th { background: #f0f4fa; font-size: 9.5pt; white-space: nowrap; }
+  td { font-size: 10pt; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 9.5pt; }
+  .note { background: #fff8e6; border-left: 4px solid #f0b429; padding: 8px 12px; font-size: 9.5pt; margin: 8px 0; border-radius: 0 6px 6px 0; }
+  .cards { display: flex; gap: 8px; margin: 6px 0 4px; }
+  .card { flex: 1; border: 1px solid #d7dce3; border-radius: 8px; padding: 9px 11px; }
+  .card b { display: block; font-size: 9pt; color: #6b7280; margin-bottom: 2px; font-weight: 600; }
+  .card .v { font-size: 13pt; font-weight: 700; color: #0b3ea8; }
+  ul { margin: 2px 0 6px 18px; }
+  li { margin: 2px 0; }
+  .foot { margin-top: 14px; border-top: 1px solid #d7dce3; padding-top: 8px; font-size: 9pt; color: #6b7280; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1><span>Korea HRMS</span> 시작 안내 — 노호</h1>
+    <div class="meta">노무법인 위너스 · 2026-07-07<br>급여·인사·4대보험 통합 시스템 1차 오픈</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><b>등록 직원</b><div class="v">32명</div></div>
+    <div class="card"><b>5월 급여 검증</b><div class="v">32/32 · 1원 일치</div></div>
+    <div class="card"><b>자동 백업</b><div class="v">매일</div></div>
+    <div class="card"><b>AI HR 담당자</b><div class="v">구글챗 연동</div></div>
+  </div>
+
+  <h2>1. 접속 정보</h2>
+  <table>
+    <tr><th>용도</th><th>주소</th><th>설명</th></tr>
+    <tr><td><b>관리자 화면</b></td><td><code>https://noho.safeclaw.kr/app/korea-hr</code></td><td>직원·휴가·급여·신고 전체 관리 (PC 권장)</td></tr>
+    <tr><td><b>모바일 앱(PWA)</b></td><td><code>https://noho.safeclaw.kr/hrms</code></td><td>출퇴근·휴가신청·명세서 조회. 브라우저에서 "홈 화면에 추가"하면 앱처럼 사용</td></tr>
+    <tr><td>담당자 계정</td><td><code>moon@noho.im</code> (문종원님)</td><td>관리자 화면용. 비밀번호는 별도(보안) 전달, 첫 로그인 후 변경 권장</td></tr>
+    <tr><td>보조 계정</td><td><code>ryoo@noho.im</code> (류두선님)</td><td>모바일 앱(PWA) 포함 사용 가능 (직원 연결 완료)</td></tr>
+  </table>
+  <div class="note">직원용 개별 계정(셀프서비스: 본인 명세서·휴가신청)은 2차 오픈에서 안내드립니다. 현재는 담당자용입니다.</div>
+
+  <h2>2. 관리자 화면(HR 홈)에서 할 수 있는 것</h2>
+  <table>
+    <tr><th>메뉴</th><th>기능</th></tr>
+    <tr><td>급여</td><td>급여명세서 32건(5월분 등록완료)·급여 구조·급여 처리·급여 마감</td></tr>
+    <tr><td>퇴직금</td><td>퇴직금 미리보기 (모바일 앱)</td></tr>
+    <tr><td>연차</td><td>휴가 배정·신청·정책 (근로기준법 제60조 산정)</td></tr>
+    <tr><td>근태</td><td>출근 기록·공휴일 목록</td></tr>
+    <tr><td>사업장/직원</td><td>사업장 프로필(5인 이상 여부·관할지청)·고용 프로필(4대보험·입퇴사 정보)</td></tr>
+    <tr><td>감사/컴플라이언스</td><td>마감 검토 감사 로그 (내부통제·감사 대비)</td></tr>
+  </table>
+
+  <h2>3. 구글챗 AI HR 담당자 (winnersbot)</h2>
+  <ul>
+    <li>기존 <b>노무법인위너스_노호</b> 스페이스에 봇(winnersbot)이 추가되면 바로 사용 가능합니다.</li>
+    <li>노동법·HR 질문을 <b>그냥 한국어로</b> 물어보세요. 예: <code>연차는 며칠 발생하나요?</code></li>
+    <li>계산 명령: <code>/연차 입사일 기준일</code> · <code>/퇴직금 입사일 퇴직일 일평균임금</code></li>
+    <li>답변은 AI 보조이며, 확정 판단은 위너스 담당 노무사가 검토합니다.</li>
+  </ul>
+
+  <h2>4. 데이터 현황과 다음 단계</h2>
+  <table>
+    <tr><th>항목</th><th>상태</th></tr>
+    <tr><td>2026년 5월 급여</td><td>원본 급여대장과 <b>1원 단위 일치</b> 확인 후 등록 완료 (총 실지급 95,940,486원)</td></tr>
+    <tr><td>4대보험 신고서</td><td>취득·상실·일용직 신고서 자동 생성 준비 완료 (담당자 승인 후에만 생성되는 안전구조)</td></tr>
+    <tr><td>6월 급여</td><td>시스템 내 마감 워크플로우로 진행 예정 — 위너스가 안내드립니다</td></tr>
+  </table>
+
+  <div class="foot">
+    문의: 노무법인 위너스 (서재홍 노무사) · 구글챗 노호 스페이스 또는 abc@winhr.co.kr<br>
+    본 시스템의 모든 급여 계산·신고서는 담당 노무사의 최종 검토를 거쳐 확정됩니다.
+  </div>
+</body>
+</html>

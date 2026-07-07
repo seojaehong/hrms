@@ -1,8 +1,8 @@
 <template>
 	<div class="flex flex-col items-center justify-center min-h-screen p-6 gap-6 text-center bg-gray-50">
 		<!-- 오프라인 아이콘 -->
-		<div class="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
-			<FeatherIcon name="wifi-off" class="w-9 h-9 text-blue-600" />
+		<div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+			<FeatherIcon name="wifi-off" class="w-9 h-9 text-gray-900" />
 		</div>
 
 		<!-- 상태 배지 -->
@@ -32,9 +32,9 @@
 					v-for="link in cachedLinks"
 					:key="link.route"
 					:to="{ name: link.route }"
-					class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors"
+					class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
 				>
-					<FeatherIcon :name="link.icon" class="w-4.5 h-4.5 text-blue-600 flex-shrink-0" />
+					<FeatherIcon :name="link.icon" class="w-4.5 h-4.5 text-gray-700 flex-shrink-0" />
 					<span class="text-sm font-medium text-gray-800">{{ link.label }}</span>
 				</router-link>
 			</div>

@@ -59,7 +59,7 @@
 								:class="[
 									'flex flex-row items-start p-4 justify-between border-b before:mt-3',
 									`before:content-[''] before:mr-2 before:shrink-0 before:w-1.5 before:h-1.5 before:rounded-full`,
-									item.read ? 'bg-white-500' : 'before:bg-blue-500',
+									item.read ? 'bg-white-500' : 'before:bg-black',
 								]"
 								v-for="item in notifications.data"
 								:key="item.name"

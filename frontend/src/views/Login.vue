@@ -2,55 +2,60 @@
 	<ion-page>
 		<ion-content class="ion-padding">
 			<div class="flex h-screen w-screen flex-col justify-center bg-white">
-				<div class="flex flex-col mx-auto gap-3 items-center">
-					<FrappeHRLogo class="h-8 w-8" />
-					<div class="text-3xl font-semibold text-gray-900 text-center">
-						{{ __("Login to Korea HRMS") }}
-					</div>
-				</div>
+				<div class="mx-auto w-full px-6 sm:w-[26rem]">
+					<div class="k-block k-block--lilac">
+						<div class="k-card p-8">
+							<div class="flex flex-col gap-3 items-center mb-8">
+								<FrappeHRLogo class="h-8 w-8" />
+								<div class="k-eyebrow">KOREA HRMS</div>
+								<div class="text-2xl font-semibold text-gray-900 text-center">
+									{{ __("Login to Korea HRMS") }}
+								</div>
+							</div>
 
-				<div class="mx-auto mt-10 w-full px-8 sm:w-96">
-					<form v-if="!user_pass_login_disabled.data" class="flex flex-col space-y-4" @submit.prevent="submit">
-						<Input
-							:label="__('Email')"
-							:placeholder="__('johndoe@mail.com')"
-							v-model="email"
-							type="text"
-							autocomplete="username"
-						/>
-						<Input
-							:label="__('Password')"
-							type="password"
-							placeholder="••••••"
-							v-model="password"
-							autocomplete="current-password"
-						/>
-						<ErrorMessage :message="errorMessage" />
-						<Button
-							:loading="session.login.loading"
-							variant="solid"
-							class="disabled:bg-gray-700 disabled:text-white !mt-6"
-						>
-							{{ __("Login") }}
-						</Button>
-					</form>
+							<form v-if="!user_pass_login_disabled.data" class="flex flex-col space-y-4" @submit.prevent="submit">
+								<Input
+									:label="__('Email')"
+									:placeholder="__('johndoe@mail.com')"
+									v-model="email"
+									type="text"
+									autocomplete="username"
+								/>
+								<Input
+									:label="__('Password')"
+									type="password"
+									placeholder="••••••"
+									v-model="password"
+									autocomplete="current-password"
+								/>
+								<ErrorMessage :message="errorMessage" />
+								<Button
+									:loading="session.login.loading"
+									variant="solid"
+									class="!mt-6 w-full !h-10 !rounded-full !bg-black !text-white hover:!bg-gray-800 active:!bg-gray-900 disabled:!bg-gray-700 disabled:!text-white"
+								>
+									{{ __("Login") }}
+								</Button>
+							</form>
 
-					<template v-if="authProviders.data?.length">
-						<div v-if="!user_pass_login_disabled.data" class="text-center text-sm text-gray-600 my-4">or</div>
-						<div class="space-y-4">
-							<a
-								v-for="provider in authProviders.data"
-								:key="provider.name"
-								class="flex items-center justify-center gap-2 transition-colors focus:outline-none text-gray-800 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring focus-visible:ring-gray-400 h-7 text-base p-2 rounded"
-								:href="provider.auth_url"
-							>
-								<img class="h-4 w-4" :src="provider.icon" :alt="provider.provider_name" />
-								<span>Login with {{ provider.provider_name }}</span>
-							</a>
+							<template v-if="authProviders.data?.length">
+								<div v-if="!user_pass_login_disabled.data" class="text-center text-sm text-gray-600 my-4">or</div>
+								<div class="space-y-4">
+									<a
+										v-for="provider in authProviders.data"
+										:key="provider.name"
+										class="flex items-center justify-center gap-2 transition-colors focus:outline-none text-gray-800 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring focus-visible:ring-gray-400 h-9 text-base p-2 rounded-full"
+										:href="provider.auth_url"
+									>
+										<img class="h-4 w-4" :src="provider.icon" :alt="provider.provider_name" />
+										<span>Login with {{ provider.provider_name }}</span>
+									</a>
+								</div>
+							</template>
+
+							<div v-else-if="user_pass_login_disabled.data" class="text-center text-gray-600 py-8">{{ __("No login methods are available. Please contact your administrator.") }}</div>
 						</div>
-					</template>
-
-					<div v-else-if="user_pass_login_disabled.data" class="text-center text-gray-600 py-8">{{ __("No login methods are available. Please contact your administrator.") }}</div>
+					</div>
 				</div>
 			</div>
 

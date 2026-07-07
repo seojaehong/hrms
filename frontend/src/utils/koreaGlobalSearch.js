@@ -53,6 +53,31 @@ export function renderSnippet(snippet) {
 }
 
 // ---------------------------------------------------------------------------
+// 결과 카드 라벨 포맷
+// ---------------------------------------------------------------------------
+
+/**
+ * 검색 결과 라벨에서 null 값 흔적을 제거합니다.
+ * 직함/부서 등이 null 이면 "류두선 () — None" 처럼 빈 괄호와
+ * "None" 문자열이 노출되므로 해당 조각 자체를 생략합니다.
+ *
+ * @param {string|null|undefined} label
+ * @returns {string}
+ */
+export function formatResultLabel(label) {
+	if (!label) return ""
+	let out = String(label)
+	// 빈 괄호 또는 null 흔적만 담긴 괄호 제거: "() ", "(None)"
+	out = out.replace(/\s*\(\s*(?:None|null|undefined)?\s*\)/g, "")
+	// " — " 구분 조각별로 null 흔적 토큰을 지우고, 내용 없는 조각은 생략
+	const parts = out
+		.split(" — ")
+		.map((p) => p.replace(/\b(?:None|null|undefined)\b/g, "").trim())
+		.filter((p) => /[0-9A-Za-z가-힣]/.test(p))
+	return parts.join(" — ").trim()
+}
+
+// ---------------------------------------------------------------------------
 // PWA 경로 변환
 // ---------------------------------------------------------------------------
 

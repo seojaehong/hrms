@@ -422,6 +422,54 @@ class TestGlobalSearchCore(unittest.TestCase):
         self.assertLessEqual(len(emp_results), 5)
 
 
+class TestRenderTemplateLabel(unittest.TestCase):
+    """결과 카드 라벨 렌더링 — null/빈값 조각 생략 ("류두선 () — None" 버그)."""
+
+    TEMPLATE = "{employee_name} ({email}) — {department}"
+
+    def test_null_values_omit_fragments(self):
+        doc = {"employee_name": "류두선", "email": None, "department": None}
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "류두선")
+
+    def test_empty_string_values_omit_fragments(self):
+        doc = {"employee_name": "류두선", "email": "", "department": ""}
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "류두선")
+
+    def test_normal_values_render_full_label(self):
+        doc = {
+            "employee_name": "김철수",
+            "email": "kim@example.com",
+            "department": "개발팀",
+        }
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "김철수 (kim@example.com) — 개발팀")
+
+    def test_format_result_card_label_has_no_none(self):
+        """global_search 종단에서도 None 문자열이 라벨에 노출되지 않는다."""
+        rows = [
+            {
+                "name": "EMP-0003",
+                "employee_name": "류두선",
+                "email": None,
+                "designation": None,
+                "department": None,
+                "employee": "EMP-0003",
+            }
+        ]
+        result = M.global_search(
+            query="류두선",
+            user_role="HR Manager",
+            doctypes=["Employee"],
+            data_loader=make_loader({"Employee": rows}),
+        )
+        card = result["results_by_doctype"]["Employee"][0]
+        self.assertNotIn("None", card["label"])
+        self.assertNotIn("()", card["label"])
+        self.assertEqual(card["label"], "류두선")
+
+
 class TestSnippetEdgeCases(unittest.TestCase):
     def test_query_at_start(self):
         doc = {"field": "철수와 영희"}

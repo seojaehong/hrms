@@ -42,6 +42,7 @@ const {
 	debounce,
 	renderSnippet,
 	toRouterPath,
+	formatResultLabel,
 	getRecentSearches,
 	addRecentSearch,
 	clearRecentSearches,
@@ -101,6 +102,31 @@ describe("renderSnippet", () => {
 	test("마커 없는 snippet 그대로 이스케이프만", () => {
 		const result = renderSnippet("일반 텍스트")
 		assert.equal(result, "일반 텍스트")
+	})
+})
+
+// ---------------------------------------------------------------------------
+// formatResultLabel 테스트 — null/빈값 조각 생략 계약
+// ---------------------------------------------------------------------------
+
+describe("formatResultLabel", () => {
+	test("null/undefined/빈 문자열 → 빈 문자열", () => {
+		assert.equal(formatResultLabel(null), "")
+		assert.equal(formatResultLabel(undefined), "")
+		assert.equal(formatResultLabel(""), "")
+	})
+
+	test("빈 괄호·None 조각 제거: '류두선 () — None' → '류두선'", () => {
+		assert.equal(formatResultLabel("류두선 () — None"), "류두선")
+		assert.equal(formatResultLabel("류두선 (None) — "), "류두선")
+		assert.equal(formatResultLabel("김철수 — None ~ None"), "김철수")
+	})
+
+	test("정상 라벨은 그대로 유지", () => {
+		assert.equal(
+			formatResultLabel("김철수 (kim@example.com) — 개발팀"),
+			"김철수 (kim@example.com) — 개발팀",
+		)
 	})
 })
 

@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any, Callable
 
@@ -348,11 +349,28 @@ def _format_result(*, doc: dict, meta: dict, query: str) -> dict:
 
 
 def _render_template(template: str, doc: dict) -> str:
-    """'{field}' 형식 템플릿을 doc 값으로 치환. 누락 필드는 빈 문자열."""
+    """'{field}' 형식 템플릿을 doc 값으로 치환.
+
+    - 누락 필드/None 값은 빈 문자열로 치환 ("None" 노출 방지)
+    - 치환 후 빈 괄호 "()", 값 없는 " — " 조각 등 빈 장식을 제거
+      (예: "류두선 () — None" → "류두선")
+    """
     try:
-        return template.format_map(_DefaultDict(doc))
+        clean_doc = {k: ("" if v is None else v) for k, v in doc.items()}
+        rendered = template.format_map(_DefaultDict(clean_doc))
+        return _strip_empty_decorations(rendered)
     except Exception:
         return template
+
+
+def _strip_empty_decorations(label: str) -> str:
+    """빈 괄호와 내용 없는 구분자 조각을 제거한다."""
+    # 빈 괄호 제거 (앞 공백 포함): "류두선 ()" → "류두선"
+    label = re.sub(r"\s*\(\s*\)", "", label)
+    # " — " 구분 조각 중 실제 내용(문자/숫자)이 없는 조각 제거
+    parts = [p.strip() for p in label.split(" — ")]
+    parts = [p for p in parts if re.search(r"[0-9A-Za-z가-힣]", p)]
+    return " — ".join(parts).strip()
 
 
 class _DefaultDict(dict):

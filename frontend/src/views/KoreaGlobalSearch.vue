@@ -71,7 +71,7 @@
 									@click="onResultClick(item)"
 								>
 									<span class="text-sm font-medium text-gray-900 leading-5">
-										{{ item.label }}
+										{{ formatResultLabel(item.label) || item.name }}
 									</span>
 									<span
 										v-if="item.snippet"
@@ -153,6 +153,7 @@ import {
 	getSelectedDoctypes,
 	groupResults,
 	toRouterPath,
+	formatResultLabel,
 } from "@/utils/koreaGlobalSearch"
 
 const __ = inject("$translate")

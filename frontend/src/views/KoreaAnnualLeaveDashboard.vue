@@ -45,10 +45,16 @@
 					<p class="mt-2 text-black/60">{{ previewError }}</p>
 				</section>
 
-				<!-- 직원 미지정 -->
-				<section v-if="!employeeId && !loading" class="k-card p-4">
-					<p class="font-semibold text-black">{{ __("직원 정보가 필요합니다") }}</p>
-					<p class="mt-1 text-sm text-black/60">{{ __("주소의 파라미터 또는 쿼리로 직원 ID를 지정해 주세요.") }}</p>
+				<!-- 직원 미지정 (로그인 직원 폴백도 불가한 경우) -->
+				<section v-if="!employeeId && !loading" class="k-card p-6 text-center">
+					<p class="text-base font-bold text-black">{{ __("연차 정보를 불러올 수 없습니다") }}</p>
+					<p class="mt-1 text-sm text-black/60">{{ __("담당자에게 문의하세요.") }}</p>
+					<router-link
+						:to="{ name: 'Home' }"
+						class="mt-4 inline-flex justify-center rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white"
+					>
+						{{ __("홈으로 가기") }}
+					</router-link>
 				</section>
 
 				<!-- 기본 정보 -->
@@ -251,6 +257,8 @@ import {
 
 const route = useRoute()
 const __ = inject("$translate")
+// 로그인 사용자의 직원 리소스 (App 전역 provide) — 라우트에 직원 지정이 없을 때 폴백
+const employeeResource = inject("$employee", null)
 
 // ---------------------------------------------------------------------------
 // State
@@ -269,7 +277,10 @@ const humanApproved = ref(false)
 // ---------------------------------------------------------------------------
 const employeeId = computed(() => {
 	const id = route.params.employeeId || route.query.employee
-	return typeof id === "string" && id.trim() ? id.trim() : ""
+	if (typeof id === "string" && id.trim()) return id.trim()
+	// 폴백: 로그인 사용자의 직원 ID (기존 $employee 리소스 재사용 — 추가 API 호출 없음)
+	const ownId = employeeResource?.data?.name
+	return typeof ownId === "string" && ownId.trim() ? ownId.trim() : ""
 })
 
 const isAdmin = computed(() => {

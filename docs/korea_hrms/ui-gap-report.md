@@ -52,3 +52,10 @@
 - **급여 외 기능 숨김**: 노호 사용자 3계정에 20개 모듈 차단 (영업·구매·재고·제조·CRM·자산·프로젝트·회계 등) — 데스크 사이드바·앱 아이콘 정리됨
 - 데스크 코어 영문 25종 ko 번역 추가 (상태·임시저장·부서·이름·지점·재직 등) — 직원/명세서 목록 사실상 전면 한글화
 - **DESIGN.md 신설** (google-labs-code/design.md 포맷): Korea HRMS 디자인 토큰 + Figma 레퍼런스 채택/기각 근거. P2 디자인 스프린트의 SSOT
+
+## E. 07-07 3차 라운드 (전달 직전 정리)
+- **[치명] SW 데스크 납치 수정**: sw.js가 모든 navigate를 가로채 /app이 PWA 화면으로 납치되던 사고 → /hrms 스코프 가드(isPwaNavigation, TDD) + 오염 캐시(pages-v1) 폐기
+- **PWA 프론트 미번역 0건**: i18n 스윕 스크립트(.superpowers/sdd/sweep_i18n.py)로 __() 191개 전수 대조 → 56건 보충 (모바일 출퇴근·요일·상태 등)
+- frappe 코어 폼/타임라인 118종 ko 보충 (First Name·Comments·Activity·상대시간) — frappe 공식 ko.po가 빈 msgstr인 것 실측
+- **'한국' 접두어 제거**: 한국 사업장 프로필→사업장 프로필, 한국 페이롤→급여, 한국 HR→HR 홈 (워크스페이스+독타입명, 테스트 갱신)
+- 잔여 minor: 날짜 "Tue, 7 July 2026" (dayjs ko locale 미적용), 데스크 조합 문자열 일부

@@ -102,7 +102,7 @@ export function assertKoreaPayrollClosingBrowserWalkthrough(result) {
 	if (!hasKoreaPayrollClosingRuntimeWorklistData(result.worklist)) {
 		throw new Error("Korea payroll closing browser walkthrough requires positive runtime worklist rows")
 	}
-	if (!String(result.domText || "").match(/Runtime worklist loaded/i) || !String(result.domText || "").match(/evidence remains read-only/i)) {
+	if (!String(result.domText || "").match(/실데이터 마감 목록 연결됨/) || !String(result.domText || "").match(/증적 보존/)) {
 		throw new Error("browser DOM did not show the runtime-positive read-only state")
 	}
 	if (!String(result.domText || "").match(/assistant_only/i) && !String(result.domText || "").match(/AI=assistant_only/i) && !String(result.domText || "").match(/AI is assistant-only/i)) {

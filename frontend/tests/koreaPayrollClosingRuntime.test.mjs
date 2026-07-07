@@ -199,8 +199,8 @@ assert.equal(runtimePositiveUiState.dataSourceLabel, "Runtime read-only worklist
 assert.equal(runtimePositiveUiState.dataSourceBadge, "runtime worklist")
 assert.equal(runtimePositiveUiState.showFixtureFallbackCopy, false)
 assert.equal(runtimePositiveUiState.showRuntimePositiveCopy, true)
-assert.match(runtimePositiveUiState.worklistBanner, /Runtime worklist loaded/i)
-assert.match(runtimePositiveUiState.worklistBanner, /evidence remains read-only/i)
+assert.match(runtimePositiveUiState.worklistBanner, /실데이터 마감 목록 연결됨/)
+assert.match(runtimePositiveUiState.worklistBanner, /증적 보존/)
 assert.doesNotMatch(runtimePositiveUiState.worklistBanner, /Gate 2/i)
 assert.doesNotMatch(runtimePositiveUiState.worklistBanner, /fixture worklist remains visible/i)
 

@@ -199,7 +199,7 @@ export function getKoreaPayrollClosingRuntimeUiState({ runtimeDashboard = null, 
 		showFixtureFallbackCopy: !runtimeHasWorklistData,
 		showRuntimePositiveCopy: runtimeHasWorklistData,
 		worklistBanner: runtimeHasWorklistData
-			? `Runtime worklist loaded · runtime_action=${runtimeAction} · requires_runtime_apply=${requiresRuntimeApply} · evidence remains read-only`
+			? `실데이터 마감 목록 연결됨 · 읽기 전용(runtime_action=${runtimeAction}) · 변경 없음(requires_runtime_apply=${requiresRuntimeApply}) · 증적 보존`
 			: "실데이터 워크리스트가 비어 있어 정적 예시 데이터가 유지됩니다.",
 	}
 }

@@ -54,7 +54,7 @@ const browserResult = {
 		ai_role: "assistant_only",
 		items: [{ name: "KPCS-1", runtime_action: "runtime_read_only", requires_runtime_apply: false, requires_human_approval: true, ai_role: "assistant_only" }],
 	},
-	domText: "Runtime worklist loaded · runtime_action=runtime_read_only · requires_runtime_apply=false · evidence remains read-only · AI=assistant_only · human approval required",
+	domText: "실데이터 마감 목록 연결됨 · 읽기 전용(runtime_action=runtime_read_only) · 변경 없음(requires_runtime_apply=false) · 증적 보존 · AI=assistant_only · human approval required",
 	calledMethods: [
 		"hrms.regional.south_korea.admin_dashboard_runtime_api.get_korea_admin_dashboard_runtime",
 		"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime",
@@ -103,7 +103,7 @@ assert.throws(
 	/browser DOM did not show the runtime-positive read-only state/,
 )
 assert.equal(
-	assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "Runtime worklist loaded · evidence remains read-only · AI is assistant-only" }).runtime_verified,
+	assertKoreaPayrollClosingBrowserWalkthrough({ ...browserResult, domText: "실데이터 마감 목록 연결됨 · 증적 보존 · AI is assistant-only" }).runtime_verified,
 	true,
 )
 

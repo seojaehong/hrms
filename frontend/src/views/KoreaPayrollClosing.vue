@@ -14,7 +14,7 @@
 							class="rounded-full px-3 py-1 text-xs font-semibold"
 							:class="selectedSession.status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
 						>
-							{{ selectedSession.status === 'blocked' ? 'Blocked' : 'Review ready' }}
+							{{ selectedSession.status === 'blocked' ? '차단' : '확정 대기' }}
 						</span>
 					</div>
 					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
@@ -69,32 +69,32 @@
 					<p class="font-semibold">세션 예시 데이터를 찾을 수 없습니다</p>
 					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the active payroll closing worklist.</p>
 				</section>
-				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
+				<section class="k-block k-block--navy text-white">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">{{ dataSourceLabel }}</p>
 							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
 							<p class="mt-2 text-sm text-gray-300">
-								{{ activeCompany }} · {{ summaryCards.total_employees ?? 'runtime' }} employees · updated {{ activeWorklist.updated_at || 'runtime read' }}
+								{{ activeCompany }} · {{ summaryCards.total_employees ?? '실시간' }}명 · {{ activeWorklist.updated_at || '실시간 조회' }}
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
 					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
-						Loading read-only Frappe runtime data…
+						실데이터를 불러오는 중…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
 						<p>실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다. {{ runtimeError }}</p>
-						<p v-if="runtimeWorklistError" class="mt-1">Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}</p>
+						<p v-if="runtimeWorklistError" class="mt-1">마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}</p>
 					</div>
 					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
-						Runtime worklist read failed; fixture worklist fallback is active. {{ runtimeWorklistError }}
+						마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}
 					</div>
 					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
 						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
 					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-blue-400/20 p-3 text-sm text-blue-100">
-						Runtime read-only dashboard loaded · runtime_action={{ runtimeDashboard.runtime_action }} · requires_runtime_apply={{ runtimeDashboard.requires_runtime_apply }}
+						실데이터 대시보드 연결됨 (읽기 전용)
 						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
 					<div v-if="runtimeUiState.showRuntimePositiveCopy" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
@@ -103,23 +103,23 @@
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
 							<p class="text-2xl font-bold">{{ summaryCards.total_count }}</p>
-							<p class="text-xs text-gray-300">Workplaces</p>
+							<p class="text-xs text-gray-300">사업장</p>
 						</div>
 						<div class="rounded-xl bg-red-400/20 p-3">
 							<p class="text-2xl font-bold text-red-100">{{ summaryCards.blocked_count }}</p>
-							<p class="text-xs text-red-100">Blocked</p>
+							<p class="text-xs text-red-100">차단</p>
 						</div>
 						<div class="rounded-xl bg-green-400/20 p-3">
 							<p class="text-2xl font-bold text-green-100">{{ summaryCards.review_ready_count }}</p>
-							<p class="text-xs text-green-100">Ready</p>
+							<p class="text-xs text-green-100">확정 대기</p>
 						</div>
 					</div>
 				</section>
 
 				<section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-					<p class="font-semibold">Preview boundary</p>
+					<p class="font-semibold">읽기 전용 안내</p>
 					<p class="mt-1">
-						This screen uses the runtime read-only worklist when validated, then falls back to static demo fixtures shaped like the payroll closing worklist preview API. It does not save, approve, send Kakao messages, or mutate Payroll Entry records. Human approval remains required and AI is assistant-only.
+						이 화면은 조회 전용입니다 — 저장·승인·카카오 발송·급여 데이터 변경을 하지 않습니다. 모든 확정은 담당자 승인으로만 이뤄지며 AI는 보조 역할만 합니다. 실데이터 검증 실패 시 예시 데이터로 표시됩니다.
 					</p>
 				</section>
 
@@ -134,13 +134,13 @@
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.role }}</p>
 								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.workplace }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? 'runtime' }} employees</p>
+								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? '실시간' }}명</p>
 							</div>
 							<span
 								class="rounded-full px-3 py-1 text-xs font-semibold"
 								:class="item.status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
 							>
-								{{ item.status === 'blocked' ? 'Blocked' : 'Review ready' }}
+								{{ item.status === 'blocked' ? '차단' : '확정 대기' }}
 							</span>
 						</div>
 
@@ -157,16 +157,16 @@
 						</div>
 
 						<div class="mt-4 rounded-xl bg-gray-50 p-3">
-							<p class="text-xs font-semibold text-gray-500">Next action</p>
+							<p class="text-xs font-semibold text-gray-500">다음 작업</p>
 							<div class="mt-1 flex items-center justify-between gap-3">
 								<p class="text-sm font-semibold text-gray-900">{{ item.primary_action.label }}</p>
 								<p class="text-xs text-gray-500">{{ item.payroll_entry }}</p>
 							</div>
 							<router-link
 								:to="`/${item.route}`"
-								class="mt-3 inline-flex w-full justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+								class="mt-3 inline-flex w-full justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white"
 							>
-								Open session preview
+								세션 미리보기 열기
 							</router-link>
 						</div>
 					</article>

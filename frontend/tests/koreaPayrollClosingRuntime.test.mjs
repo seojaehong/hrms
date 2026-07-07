@@ -299,16 +299,16 @@ assert.match(viewSource, /loadKoreaAdminDashboardRuntime/)
 assert.match(viewSource, /loadKoreaPayrollClosingRuntimeWorklist/)
 assert.match(viewSource, /runtime_read_only/)
 assert.match(viewSource, /정적 예시 데이터로 표시 중입니다/)
-assert.match(viewSource, /runtime_action=\{\{ runtimeDashboard\.runtime_action \}\}/)
+assert.match(viewSource, /실데이터 대시보드 연결됨/) // 한글 UI 카피 (구 runtime_action 노출 문구 대체)
 assert.match(viewSource, /실데이터 대시보드 행이 없어/)
-assert.match(viewSource, /runtime worklist/i)
+assert.match(viewSource, /runtimeWorklist/) // 코드 심볼 기준 (UI 카피 한글화)
 assert.match(viewSource, /runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData/)
 assert.match(viewSource, /runtimeUiState\.worklistBanner/)
 assert.doesNotMatch(viewSource, /Gate 2 runtime worklist bridge/i)
 assert.match(viewSource, /runtimeWorklistError/)
-assert.match(viewSource, /Runtime worklist read failed; fixture worklist fallback is active/i)
+assert.match(viewSource, /마감 목록 실조회 실패/) // 한글 UI 카피
 assert.match(viewSource, /runtimeWorklistError\.value = worklistResult\.reason/)
-assert.match(viewSource, /summaryCards\.total_employees \?\? 'runtime'/)
-assert.match(viewSource, /item\.employee_count \?\? 'runtime'/)
+assert.match(viewSource, /summaryCards\.total_employees \?\? '실시간'/) // 한글 UI 카피
+assert.match(viewSource, /item\.employee_count \?\? '실시간'/) // 한글 UI 카피
 assert.match(viewSource, /findActiveSessionItem\(route\.params\.name\)/)
-assert.match(viewSource, /Loading read-only Frappe runtime data/i)
+assert.match(viewSource, /실데이터를 불러오는 중/) // 한글 UI 카피

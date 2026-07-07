@@ -15,18 +15,25 @@
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
+					<!-- 주인공: 잔여 연차 -->
+					<div v-if="display" class="mt-3">
+						<p class="text-sm font-medium text-black/60">{{ __("잔여 연차") }}</p>
+						<p class="k-numeric text-4xl font-bold tracking-tight leading-tight" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
+							{{ display.remainingDays }}<span class="text-xl font-bold">일</span>
+						</p>
+					</div>
 					<div v-if="display" class="mt-4 grid grid-cols-3 gap-2">
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold text-black">{{ display.totalEntitlement }}</p>
+							<p class="k-numeric text-xl font-bold text-black">{{ display.totalEntitlement }}</p>
 							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("총 부여(일)") }}</p>
 						</div>
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold text-black">{{ display.usedDays }}</p>
+							<p class="k-numeric text-xl font-bold text-black">{{ display.usedDays }}</p>
 							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("사용(일)") }}</p>
 						</div>
-						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">{{ display.remainingDays }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("잔여(일)") }}</p>
+						<div class="rounded-xl bg-black p-3 text-center">
+							<p class="k-numeric text-xl font-bold text-white">{{ display.remainingDays }}</p>
+							<p class="mt-0.5 text-xs font-medium text-white/60">{{ __("잔여(일)") }}</p>
 						</div>
 					</div>
 				</section>

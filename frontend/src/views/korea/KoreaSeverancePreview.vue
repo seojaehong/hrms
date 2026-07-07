@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 히어로 — cream 색블록 -->
-				<div class="k-block k-block--cream">
+				<div class="pt-1">
 					<div class="k-eyebrow">SEVERANCE</div>
 					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('퇴직금 미리보기') }}</div>
 					<p class="mt-2 text-sm text-black/60">
@@ -58,11 +58,26 @@
 						{{ __('계산에 실패했습니다. 다시 시도해 주세요.') }}
 					</div>
 					<template v-else-if="result">
-						<!-- 퇴직금 스탯 타일 -->
-						<div class="rounded-lg bg-[var(--k-surface-soft)] border border-[var(--k-hairline-soft)] p-4">
-							<div class="k-label">퇴직금 (세전)</div>
-							<div class="mt-1 text-3xl font-bold tracking-tight text-black k-numeric">
+						<!-- 주인공: 예상 퇴직금 (cream 블록) -->
+						<div class="k-block k-block--cream -mx-1">
+							<div class="k-eyebrow">ESTIMATED SEVERANCE</div>
+							<div class="mt-1 text-sm font-medium text-black/60">퇴직금 (세전)</div>
+							<div class="text-4xl font-bold tracking-tight leading-tight text-black k-numeric">
 								{{ formatKRW(result.severance_pay) }}
+							</div>
+							<div class="mt-4 grid grid-cols-3 gap-2">
+								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
+									<p class="k-numeric text-sm font-bold text-black">{{ result.continuous_service_days != null ? result.continuous_service_days + "일" : "-" }}</p>
+									<p class="text-[11px] text-black/55">계속근로</p>
+								</div>
+								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
+									<p class="k-numeric text-sm font-bold text-black">{{ formatKRW(result.average_daily_wage) }}</p>
+									<p class="text-[11px] text-black/55">1일 평균임금</p>
+								</div>
+								<div class="rounded-lg bg-black px-3 py-2 text-center">
+									<p class="k-numeric text-sm font-bold text-white">{{ formatKRW(result.severance_pay) }}</p>
+									<p class="text-[11px] text-white/60">퇴직금</p>
+								</div>
 							</div>
 						</div>
 

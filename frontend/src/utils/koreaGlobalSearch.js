@@ -53,6 +53,28 @@ export function renderSnippet(snippet) {
 }
 
 // ---------------------------------------------------------------------------
+// PWA 경로 변환
+// ---------------------------------------------------------------------------
+
+/**
+ * 백엔드 pwa_url("/hrms/..." 절대 경로)을 vue-router 내부 경로로 변환합니다.
+ * router base 가 이미 "/hrms" 이므로 prefix 를 제거해야
+ * "/hrms/hrms/..." 경로 중복(빈 화면)이 발생하지 않습니다.
+ *
+ * @param {string|null|undefined} pwaUrl
+ * @returns {string|null} router 내부 경로 (없으면 null)
+ */
+export function toRouterPath(pwaUrl) {
+	if (!pwaUrl || typeof pwaUrl !== "string") return null
+	let path = pwaUrl
+	if (path === "/hrms" || path.startsWith("/hrms/")) {
+		path = path.slice("/hrms".length)
+	}
+	if (!path.startsWith("/")) path = `/${path}`
+	return path === "/" ? null : path
+}
+
+// ---------------------------------------------------------------------------
 // 최근 검색어 (localStorage)
 // ---------------------------------------------------------------------------
 

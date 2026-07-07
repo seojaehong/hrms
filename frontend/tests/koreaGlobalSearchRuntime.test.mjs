@@ -41,6 +41,7 @@ const mod = await import("../src/utils/koreaGlobalSearch.js")
 const {
 	debounce,
 	renderSnippet,
+	toRouterPath,
 	getRecentSearches,
 	addRecentSearch,
 	clearRecentSearches,
@@ -100,6 +101,32 @@ describe("renderSnippet", () => {
 	test("마커 없는 snippet 그대로 이스케이프만", () => {
 		const result = renderSnippet("일반 텍스트")
 		assert.equal(result, "일반 텍스트")
+	})
+})
+
+// ---------------------------------------------------------------------------
+// toRouterPath 테스트 — router base(/hrms) 중복 제거 계약
+// ---------------------------------------------------------------------------
+
+describe("toRouterPath", () => {
+	test("/hrms prefix 를 제거해 router 내부 경로 반환 (경로 중복 방지)", () => {
+		assert.equal(toRouterPath("/hrms/salary-slips/SS-0001"), "/salary-slips/SS-0001")
+		assert.equal(
+			toRouterPath("/hrms/korea-payroll-closing-session/KPCD-0001"),
+			"/korea-payroll-closing-session/KPCD-0001",
+		)
+	})
+
+	test("prefix 없는 경로는 그대로 (선행 슬래시 보장)", () => {
+		assert.equal(toRouterPath("/leave-applications/LA-0001"), "/leave-applications/LA-0001")
+		assert.equal(toRouterPath("leave-applications/LA-0001"), "/leave-applications/LA-0001")
+	})
+
+	test("null/undefined/빈값/루트는 null 반환 (데스크 폴백)", () => {
+		assert.equal(toRouterPath(null), null)
+		assert.equal(toRouterPath(undefined), null)
+		assert.equal(toRouterPath(""), null)
+		assert.equal(toRouterPath("/hrms"), null)
 	})
 })
 

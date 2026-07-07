@@ -16,6 +16,13 @@ from typing import Any, Callable
 
 # ---------------------------------------------------------------------------
 # 검색 가능한 Doctype 메타 정보
+#
+# pwa_url_template 규칙:
+#   - PWA(router base=/hrms)에 실제 라우트가 존재하는 doctype 만 값을 가진다.
+#     (frontend/src/router 기준: /salary-slips/:id, /leave-applications/:id,
+#      /korea-payroll-closing-session/:name)
+#   - PWA 라우트가 없는 doctype 은 None → 프론트가 데스크 url(/app/...)을
+#     새 탭으로 연다. "/hrms/hrms/..." 경로 중복 → 빈 화면 버그 방지.
 # ---------------------------------------------------------------------------
 
 SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
@@ -24,7 +31,8 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["employee_name", "email", "designation", "department"],
         "result_template": "{employee_name} ({email}) — {department}",
         "url_template": "/app/employee/{name}",
-        "pwa_url_template": "/hrms/employee/{name}",
+        # 직원 상세 PWA 라우트 없음 → 데스크 폴백
+        "pwa_url_template": None,
         # 권한: 직원은 자신의 name 으로만 조회 가능
         "owner_field": "name",
     },
@@ -33,7 +41,8 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["employee", "attendance_date", "status"],
         "result_template": "{employee} — {attendance_date} ({status})",
         "url_template": "/app/attendance/{name}",
-        "pwa_url_template": "/hrms/attendance/{name}",
+        # Attendance 상세 PWA 라우트 없음 → 데스크 폴백
+        "pwa_url_template": None,
         "owner_field": "employee",
     },
     "Salary Slip": {
@@ -49,7 +58,7 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["employee", "employee_name", "leave_type", "from_date", "to_date"],
         "result_template": "{employee_name} — {leave_type} ({from_date} ~ {to_date})",
         "url_template": "/app/leave-application/{name}",
-        "pwa_url_template": "/hrms/leaves/{name}",
+        "pwa_url_template": "/hrms/leave-applications/{name}",
         "owner_field": "employee",
     },
     "Employment Contract": {
@@ -57,7 +66,8 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["employee", "employee_name", "contract_type"],
         "result_template": "{employee_name} — {contract_type}",
         "url_template": "/app/employment-contract/{name}",
-        "pwa_url_template": "/hrms/contract/{name}",
+        # 계약서 상세 PWA 라우트 없음 → 데스크 폴백
+        "pwa_url_template": None,
         "owner_field": "employee",
     },
     "Korea Payroll Closing Draft": {
@@ -65,7 +75,7 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["company", "pay_year_month", "status"],
         "result_template": "{company} — {pay_year_month} ({status})",
         "url_template": "/app/korea-payroll-closing-draft/{name}",
-        "pwa_url_template": "/hrms/korea-payroll-closing-draft/{name}",
+        "pwa_url_template": "/hrms/korea-payroll-closing-session/{name}",
         # 마감 문서는 HR/관리자만 — 직원은 접근 불가
         "owner_field": None,
         "hr_only": True,
@@ -75,7 +85,8 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["company", "business_registration_number", "worksite_name"],
         "result_template": "{worksite_name} ({business_registration_number})",
         "url_template": "/app/korea-workplace-profile/{name}",
-        "pwa_url_template": "/hrms/korea-workplace-profile/{name}",
+        # 사업장 프로필 PWA 라우트 없음 → 데스크 폴백
+        "pwa_url_template": None,
         "owner_field": None,
         "hr_only": True,
     },
@@ -84,7 +95,8 @@ SEARCHABLE_DOCTYPES: dict[str, dict[str, Any]] = {
         "search_fields": ["employee", "employee_name", "employment_type"],
         "result_template": "{employee_name} — {employment_type}",
         "url_template": "/app/korea-employment-profile/{name}",
-        "pwa_url_template": "/hrms/korea-employment-profile/{name}",
+        # 고용 프로필 PWA 라우트 없음 → 데스크 폴백
+        "pwa_url_template": None,
         "owner_field": "employee",
     },
 }
@@ -322,12 +334,14 @@ def _format_result(*, doc: dict, meta: dict, query: str) -> dict:
     name = doc.get("name", "")
     label = _render_template(meta["result_template"], doc)
     snippet = build_search_snippet(doc=doc, query=query)
+    pwa_template = meta.get("pwa_url_template")
 
     return {
         "name": name,
         "label": label,
         "url": meta["url_template"].format(name=name),
-        "pwa_url": meta["pwa_url_template"].format(name=name),
+        # PWA 라우트가 없는 doctype 은 None → 프론트가 데스크 url 폴백
+        "pwa_url": pwa_template.format(name=name) if pwa_template else None,
         "snippet": snippet,
         "doctype": meta["label"],
     }

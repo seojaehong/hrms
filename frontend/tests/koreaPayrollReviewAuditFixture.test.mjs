@@ -80,6 +80,6 @@ assert.match(viewSource, /미리보기 전용/)
 assert.match(viewSource, /item\.route/)
 
 const detailViewSource = await readFile(resolve(root, "src/views/KoreaPayrollReviewAuditLogDetail.vue"), "utf8")
-assert.match(detailViewSource, /Audit log detail/)
+assert.match(detailViewSource, /감사 로그 상세/) // 한글 UI 카피 (구 "Audit log detail")
 assert.match(detailViewSource, /source_runtime_apply/i)
-assert.match(detailViewSource, /No submit · no send · no provider call/)
+assert.match(detailViewSource, /제출 없음 · 발송 없음 · 외부 연동 호출 없음/) // 한글 UI 카피 (구 "No submit · no send · no provider call")

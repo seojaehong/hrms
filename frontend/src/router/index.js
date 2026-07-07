@@ -99,6 +99,9 @@ const routes = [
 				name: "KoreaAIChat",
 				component: () => import("@/views/KoreaAIChat.vue"),
 			},
+			// Korea 대시보드류 — 하단탭 레이아웃 유지를 위해 TabbedView 하위 (경로 동일)
+			...koreaApprovalInboxRoutes,
+			...koreaRoutes,
 		],
 	},
 	{
@@ -141,8 +144,6 @@ const routes = [
 	...claimRoutes,
 	...employeeAdvanceRoutes,
 	...salarySlipRoutes,
-	...koreaApprovalInboxRoutes,
-	...koreaRoutes,
 	...koreaSubscriptionRoutes,
 ]
 

@@ -16,7 +16,7 @@
 					<div class="text-base font-bold tracking-tight text-black">{{ __('가정 조건 입력') }}</div>
 
 					<div class="flex flex-col gap-1">
-						<label class="k-eyebrow">{{ __('가정 퇴직일') }}</label>
+						<label class="k-label">{{ __('가정 퇴직일') }}</label>
 						<input
 							type="date"
 							v-model="assumedRetirementDate"
@@ -60,7 +60,7 @@
 					<template v-else-if="result">
 						<!-- 퇴직금 스탯 타일 -->
 						<div class="rounded-lg bg-[var(--k-surface-soft)] border border-[var(--k-hairline-soft)] p-4">
-							<div class="k-eyebrow">퇴직금 (세전)</div>
+							<div class="k-label">퇴직금 (세전)</div>
 							<div class="mt-1 text-3xl font-bold tracking-tight text-black k-numeric">
 								{{ formatKRW(result.severance_pay) }}
 							</div>
@@ -99,7 +99,7 @@
 
 						<!-- 계산식 설명 -->
 						<div v-if="result.formula_description" class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/60 leading-relaxed">
-							<div class="k-eyebrow mb-1">계산식</div>
+							<div class="k-label mb-1">계산식</div>
 							{{ result.formula_description }}
 						</div>
 					</template>
@@ -151,8 +151,9 @@ async function calculate() {
 	}
 }
 
-onMounted(() => {
-	// 페이지 진입 시 오늘 날짜로 자동 계산
+onMounted(async () => {
+	// $employee 리소스 로딩 대기(경쟁 조건 방지) 후 오늘 날짜로 자동 계산
+	try { await employee?.promise } catch { /* 미로그인 폴백 */ }
 	calculate()
 })
 </script>

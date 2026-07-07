@@ -15,7 +15,7 @@
 				<div class="k-card p-4 flex flex-col gap-3">
 					<!-- 진단 기준일 선택 -->
 					<div class="flex flex-col gap-1">
-						<label class="k-eyebrow">{{ __('진단 기준일') }}</label>
+						<label class="k-label">{{ __('진단 기준일') }}</label>
 						<input
 							type="date"
 							v-model="asOfDate"
@@ -78,7 +78,7 @@
 
 				<!-- 5 카테고리 카드 -->
 				<div v-if="diagnosisResult" class="flex flex-col gap-3">
-					<div class="k-eyebrow px-1">{{ __('카테고리별 결과') }}</div>
+					<div class="k-label px-1">{{ __('카테고리별 결과') }}</div>
 
 					<div
 						v-for="cat in categoryCards"

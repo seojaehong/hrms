@@ -67,6 +67,12 @@
     color: var(--k-ink);
     opacity: 0.55;
 }
+.k-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    letter-spacing: -0.01em;
+}
 .k-block {
     border-radius: var(--k-radius-lg);
     padding: 20px;

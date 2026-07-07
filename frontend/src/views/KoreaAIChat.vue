@@ -1,5 +1,5 @@
 <template>
-	<BaseLayout :pageTitle="__('한국 노무 AI 보조')">
+	<BaseLayout :pageTitle="__('AI HR 담당자')">
 		<template #body>
 			<div class="flex flex-col h-full">
 				<!-- 히어로 — navy 색블록 (한 뷰포트 1블록) -->
@@ -47,7 +47,7 @@
 
 							<!-- Citations -->
 							<div v-if="msg.citations && msg.citations.length > 0" class="ml-9">
-								<div class="k-eyebrow mb-1">근거 인용</div>
+								<div class="k-label mb-1">근거 인용</div>
 								<div class="flex flex-col gap-1">
 									<div
 										v-for="(cite, ci) in msg.citations"
@@ -64,7 +64,7 @@
 
 							<!-- Suggested Actions — 사용자 직접 클릭 전용, 자동 실행 X -->
 							<div v-if="msg.suggestedActions && msg.suggestedActions.length > 0" class="ml-9">
-								<div class="k-eyebrow mb-1">관련 링크</div>
+								<div class="k-label mb-1">관련 링크</div>
 								<div class="flex flex-wrap gap-2">
 									<component
 										v-for="(action, ai) in msg.suggestedActions"
@@ -104,7 +104,7 @@
 
 				<!-- Suggested Questions — 가로 스크롤 pill 칩 (소형 폰 입력창 가림 방지) -->
 				<div v-if="messages.length === 0" class="pb-2">
-					<p class="k-eyebrow mb-2 px-4">자주 묻는 질문</p>
+					<p class="k-label mb-2 px-4">자주 묻는 질문</p>
 					<div class="flex flex-row gap-2 overflow-x-auto px-4 pb-1">
 						<button
 							v-for="(q, qi) in suggestedQuestions"

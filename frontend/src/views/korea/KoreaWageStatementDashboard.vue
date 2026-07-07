@@ -5,7 +5,7 @@
 				<!-- 연도/월 필터 -->
 				<div class="k-card p-4 flex flex-row gap-3 items-end">
 					<div class="flex flex-col gap-1 flex-1">
-						<label class="k-eyebrow">{{ __('연도') }}</label>
+						<label class="k-label">{{ __('연도') }}</label>
 						<select
 							v-model="selectedYear"
 							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
@@ -14,7 +14,7 @@
 						</select>
 					</div>
 					<div class="flex flex-col gap-1 flex-1">
-						<label class="k-eyebrow">{{ __('월') }}</label>
+						<label class="k-label">{{ __('월') }}</label>
 						<select
 							v-model="selectedMonth"
 							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
@@ -43,7 +43,7 @@
 						{{ __('불러오는 중...') }}
 					</div>
 					<div v-else-if="wageStatementPreview.error" class="text-center py-8 text-red-500 text-sm">
-						{{ __('데이터를 불러오지 못했습니다.') }}
+						{{ __('해당 월의 명세서가 없습니다. 다른 달을 선택해 조회하세요.') }}
 					</div>
 					<template v-else-if="statement">
 						<!-- 법정 항목 그리드 -->
@@ -228,12 +228,19 @@ function selectHistoryItem(item) {
 
 // PDF 다운로드·카톡 발송: API 미구현 — 버튼 disabled + "(준비 중)" 표기 (핸들러 제거)
 
-onMounted(() => {
-	wageStatementHistory.submit({
+onMounted(async () => {
+	// $employee 리소스 로딩 대기 (경쟁 조건 방지)
+	try { await employee?.promise } catch { /* 폴백 */ }
+	await wageStatementHistory.submit({
 		employee: employee.data?.name,
 		limit: 12,
 	})
-	// 첫 진입 시 당월 명세서 자동 조회 — 빈 첫 화면 제거 (수동 조회 동작은 그대로 유지)
+	// 첫 진입: 명세서가 있는 가장 최근 달로 자동 조회 (없으면 당월)
+	const latest = wageStatementHistory.data?.[0]?.pay_year_month
+	if (typeof latest === "string" && /^\d{4}-\d{2}$/.test(latest)) {
+		selectedYear.value = Number(latest.slice(0, 4))
+		selectedMonth.value = Number(latest.slice(5, 7))
+	}
 	loadStatement()
 })
 </script>

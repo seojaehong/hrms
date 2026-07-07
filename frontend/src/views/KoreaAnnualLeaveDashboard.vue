@@ -344,7 +344,11 @@ const dataSourceBadgeClass = computed(() => {
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
-onMounted(loadPreviewData)
+onMounted(async () => {
+	// $employee 리소스 로딩 대기 (경쟁 조건 방지) 후 조회
+	try { await employeeResource?.promise } catch { /* 미로그인 등 — 픽스처 폴백 */ }
+	await loadPreviewData()
+})
 
 async function loadPreviewData() {
 	if (!employeeId.value) return
@@ -418,8 +422,16 @@ function resolveEmployeeFromFrappe(employeeId) {
 			company: bootEmployee.company,
 		}
 	}
-	// Fallback: return minimal shape if date_of_joining is not available
-	// The caller should prefetch employee data via frappe.db.get_value in production
+	// 폴백: 전역 $employee 리소스 (로그인 직원 본인)
+	const own = employeeResource?.data
+	if (own && own.name === employeeId && own.date_of_joining) {
+		return {
+			name: own.name,
+			date_of_joining: own.date_of_joining,
+			employee_name: own.employee_name,
+			company: own.company,
+		}
+	}
 	return null
 }
 

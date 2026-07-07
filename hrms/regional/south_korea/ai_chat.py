@@ -240,6 +240,7 @@ def chat_query(
         citations=citations,
         context_doctype=context_doctype,
         user_role=user_role,
+        docs=docs,
     )
 
     suggested_actions = _build_suggested_actions(
@@ -523,14 +524,48 @@ def _tokenize(text: str) -> list[str]:
     return re.split(r"[\s,\.?!;:\"'()]+", text)
 
 
+# citation type → 한국어 라벨
+CITATION_TYPE_LABELS: dict[str, str] = {
+    "law": "법령",
+    "case": "판례",
+    "internal": "내부",
+    "faq": "FAQ",
+}
+
+_SENTENCE_END_RE = re.compile(r"(?:다|요)\.")
+
+
+def _clip_to_sentence(text: str, max_len: int = 400) -> str:
+    """max_len 이내에서 마지막 문장 경계("다."/"요.")까지 클립.
+
+    문장 중간 절단 방지: 경계가 없으면 마지막 공백, 그것도 없으면 hard cut.
+    """
+    if len(text) <= max_len:
+        return text
+
+    window = text[:max_len]
+    last_end = 0
+    for match in _SENTENCE_END_RE.finditer(window):
+        last_end = match.end()
+    if last_end:
+        return window[:last_end]
+
+    last_space = window.rfind(" ")
+    if last_space > 0:
+        return window[:last_space]
+    return window
+
+
 def _docs_to_citations(docs: list[dict]) -> list[dict]:
-    """카탈로그 엔트리 → citation 형식 변환."""
+    """카탈로그 엔트리 → citation 형식 변환 (문장 경계 클립, 최대 400자)."""
     citations: list[dict] = []
     for doc in docs:
         ref = f"{doc.get('law', '')} — {doc.get('title', '')}"
-        snippet = doc.get("text", "")[:200]
+        snippet = _clip_to_sentence(doc.get("text", ""), max_len=400)
+        cite_type = doc.get("type", "law")
         citations.append({
-            "type": doc.get("type", "law"),
+            "type": cite_type,
+            "label": CITATION_TYPE_LABELS.get(cite_type, "참고"),
             "ref": ref.strip(" —"),
             "snippet": snippet,
         })
@@ -544,10 +579,14 @@ def _build_answer(
     citations: list[dict],
     context_doctype: str | None,
     user_role: str,
+    docs: list[dict] | None = None,
 ) -> str:
     """v1 답변 생성 (템플릿 기반, LLM X).
 
-    인용 법령을 근거로 한 사실 안내문. 점수/확률 표현 없음.
+    인용 법령/FAQ를 근거로 한 사실 안내문. 점수/확률 표현 없음.
+    - 본문(primary)은 최상위 매치 문서의 전문(이미 700자 이내) — 중간 절단 금지
+    - 최상위 매치가 FAQ이면 답변 본문 = FAQ 답변 전문,
+      "주요 근거"는 법령/판례 인용이 있을 때만 표기
     """
     if not citations:
         return (
@@ -555,8 +594,10 @@ def _build_answer(
             "보다 구체적인 키워드로 다시 질문하시거나, 담당 노무사에게 문의해 주세요."
         )
 
-    primary = citations[0]
-    ref_list = " / ".join(c["ref"] for c in citations[:3])
+    docs = docs or []
+    primary_doc = docs[0] if docs else None
+    # 본문은 전문 사용 (citation snippet은 400자 클립본)
+    primary_body = primary_doc.get("text", "") if primary_doc else citations[0]["snippet"]
 
     intent_label_map = {
         "leave": "휴가·휴직",
@@ -568,11 +609,33 @@ def _build_answer(
     }
     label = intent_label_map.get(intent, "HR 일반")
 
-    answer = (
-        f"[{label}] 관련 안내입니다.\n\n"
-        f"{primary['snippet']}\n\n"
-        f"주요 근거: {ref_list}."
-    )
+    primary_is_faq = bool(primary_doc) and primary_doc.get("type") == "faq"
+
+    if primary_is_faq:
+        # FAQ가 최상위 매치 → 답변 본문 = FAQ answer 전문.
+        # "주요 근거"는 법령/판례 인용이 있을 때만.
+        law_refs = [
+            f"[{c.get('label', CITATION_TYPE_LABELS.get(c['type'], '참고'))}] {c['ref']}"
+            for c in citations
+            if c["type"] in ("law", "case")
+        ]
+        answer = (
+            f"[{label}] 관련 안내입니다.\n\n"
+            f"[FAQ] {primary_doc.get('title', '')}\n\n"
+            f"{primary_body}"
+        )
+        if law_refs:
+            answer += f"\n\n주요 근거: {' / '.join(law_refs[:3])}."
+    else:
+        ref_list = " / ".join(
+            f"[{c.get('label', CITATION_TYPE_LABELS.get(c['type'], '참고'))}] {c['ref']}"
+            for c in citations[:3]
+        )
+        answer = (
+            f"[{label}] 관련 안내입니다.\n\n"
+            f"{primary_body}\n\n"
+            f"주요 근거: {ref_list}."
+        )
 
     if context_doctype:
         answer += f"\n\n현재 문서({context_doctype}) 관련 세부 사항은 아래 '관련 링크'를 참고하거나 담당자에게 확인하세요."

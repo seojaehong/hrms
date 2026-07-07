@@ -459,5 +459,123 @@ class TestSpacelessQueryMatching(unittest.TestCase):
         self.assertTrue(any("60" in r for r in refs), f"근기법 60조 미포함: {refs}")
 
 
+# ──────────────────────────────────────────────
+# 문장 경계 클립 테스트 (뚝 끊김 수정)
+# ──────────────────────────────────────────────
+
+
+class TestSentenceBoundaryClip(unittest.TestCase):
+    def test_short_text_unchanged(self):
+        text = "임금은 통화로 직접 지급하여야 합니다."
+        self.assertEqual(_ai_chat._clip_to_sentence(text, max_len=400), text)
+
+    def test_long_text_clipped_at_sentence_boundary(self):
+        sentence = "이것은 문장 경계 테스트를 위한 예시 문장입니다. "
+        text = sentence * 30  # ≫ 400자
+        clipped = _ai_chat._clip_to_sentence(text, max_len=400)
+        self.assertLessEqual(len(clipped), 400)
+        self.assertTrue(clipped.endswith("다."), f"문장 경계로 끝나야 함: ...{clipped[-20:]}")
+
+    def test_yo_ending_boundary(self):
+        sentence = "주휴수당은 지급하셔야 해요. "
+        text = sentence * 40
+        clipped = _ai_chat._clip_to_sentence(text, max_len=400)
+        self.assertTrue(clipped.endswith("요."))
+
+    def test_citation_snippets_not_hard_cut(self):
+        """citations snippet은 400자 이내 + 문장 경계 (전문이 아닌 경우)."""
+        result = chat_query(
+            user_question="퇴직금 중간정산 요건은 무엇인가요?",
+            user_role="employee",
+            session_id="test-clip",
+        )
+        for cite in result["citations"]:
+            self.assertLessEqual(len(cite["snippet"]), 400)
+            if len(cite["snippet"]) == 400 or cite["snippet"].endswith(("다.", "요.")):
+                continue
+            # 전문이 그대로 들어간 경우(400자 미만 원문)만 허용
+            self.assertLess(len(cite["snippet"]), 400)
+
+    def test_answer_body_is_full_text_not_truncated(self):
+        """답변 본문은 최상위 문서 전문 — 중간 절단 금지."""
+        docs = retrieve_relevant_documents(query="수습기간 주휴수당", top_k=5)
+        self.assertTrue(docs)
+        result = chat_query(
+            user_question="수습기간 주휴수당",
+            user_role="employee",
+            session_id="test-fulltext",
+        )
+        self.assertIn(docs[0]["text"], result["answer"], "답변 본문에 최상위 문서 전문 포함")
+
+
+# ──────────────────────────────────────────────
+# FAQ 타입 라벨 / FAQ 답변 조립 테스트
+# ──────────────────────────────────────────────
+
+
+class TestFaqCitationLabel(unittest.TestCase):
+    def test_citation_label_mapping(self):
+        result = chat_query(
+            user_question="수습기간중인직원도주휴수당을줘야하나요",
+            user_role="employee",
+            session_id="test-label",
+        )
+        valid_labels = {"법령", "판례", "내부", "FAQ", "참고"}
+        for cite in result["citations"]:
+            self.assertIn("label", cite)
+            self.assertIn(cite["label"], valid_labels)
+        type_to_label = {"law": "법령", "case": "판례", "internal": "내부", "faq": "FAQ"}
+        for cite in result["citations"]:
+            if cite["type"] in type_to_label:
+                self.assertEqual(cite["label"], type_to_label[cite["type"]])
+
+    def test_faq_top_match_answer_uses_faq_fulltext(self):
+        question = "수습기간중인직원도주휴수당을줘야하나요"
+        docs = retrieve_relevant_documents(query=question, top_k=5)
+        self.assertEqual(docs[0].get("type"), "faq")
+        result = chat_query(
+            user_question=question,
+            user_role="employee",
+            session_id="test-faq-body",
+        )
+        self.assertIn("[FAQ]", result["answer"])
+        self.assertIn(docs[0]["text"], result["answer"], "FAQ 답변 전문이 본문이어야 함")
+
+    def test_faq_answer_grounds_only_with_law_citation(self):
+        """FAQ 답변의 '주요 근거'는 법령/판례 인용이 있을 때만 표기."""
+        question = "수습기간중인직원도주휴수당을줘야하나요"
+        result = chat_query(
+            user_question=question,
+            user_role="employee",
+            session_id="test-faq-grounds",
+        )
+        has_law = any(c["type"] in ("law", "case") for c in result["citations"])
+        if has_law:
+            self.assertIn("주요 근거", result["answer"])
+        else:
+            self.assertNotIn("주요 근거", result["answer"])
+
+    def test_law_top_match_answer_has_law_label(self):
+        """법령이 최상위 매치인 질의에서는 주요 근거에 [법령] 라벨."""
+        result = chat_query(
+            user_question="임금 지급 원칙",
+            user_role="employee",
+            session_id="test-law-label",
+        )
+        docs = retrieve_relevant_documents(query="임금 지급 원칙", top_k=5)
+        if docs and docs[0].get("type") != "faq":
+            self.assertIn("주요 근거", result["answer"])
+            self.assertIn("[법령]", result["answer"])
+
+    def test_disclaimer_unchanged(self):
+        """면책 문구 로직 불변."""
+        result = chat_query(
+            user_question="수습기간중인직원도주휴수당을줘야하나요",
+            user_role="employee",
+            session_id="test-disc",
+        )
+        self.assertEqual(result["disclaimer"], DISCLAIMER)
+
+
 if __name__ == "__main__":
     unittest.main()

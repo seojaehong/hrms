@@ -26,13 +26,13 @@
 
 					<div class="flex flex-col gap-1">
 						<label class="k-eyebrow">
-							{{ __('통상임금 (원)') }}
+							{{ __('1일 통상임금 (원)') }}
 							<span class="normal-case tracking-normal opacity-70">— 비워두면 자동 계산</span>
 						</label>
 						<input
 							type="number"
 							v-model.number="ordinaryWageOverride"
-							:placeholder="__('예: 2500000')"
+							:placeholder="__('예: 120000')"
 							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 						/>
 					</div>

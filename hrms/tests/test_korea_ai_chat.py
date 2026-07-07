@@ -365,5 +365,217 @@ class TestModuleConstants(unittest.TestCase):
         self.assertIn("v1", CONTRACT_TYPE)
 
 
+# ──────────────────────────────────────────────
+# 코퍼스 병합 로딩 테스트 (법령 33건 + FAQ 4,771건)
+# ──────────────────────────────────────────────
+
+
+class TestCatalogMergeLoading(unittest.TestCase):
+    def test_merged_catalog_includes_faq_corpus(self):
+        catalog = _ai_chat._load_catalog()
+        self.assertGreater(len(catalog), 1000, "FAQ 코퍼스 병합 후 1,000건 이상이어야 함")
+
+    def test_merged_catalog_has_both_types(self):
+        types = {e.get("type") for e in _ai_chat._load_catalog()}
+        self.assertIn("law", types)
+        self.assertIn("faq", types)
+
+    def test_legacy_law_entries_preserved(self):
+        laws = [e.get("law", "") for e in _ai_chat._load_catalog() if e.get("type") != "faq"]
+        self.assertTrue(any("60" in law for law in laws), "근기법 60조 유지되어야 함")
+
+    def test_missing_faq_file_is_ignored(self):
+        """FAQ 파일이 없으면 법령 카탈로그만 로드 (방어)."""
+        import os
+
+        law_path = os.path.join(_ai_chat._data_dir(), _ai_chat._LAW_CATALOG_FILENAME)
+        entries = _ai_chat._load_catalog_files(law_path, os.path.join(_ai_chat._data_dir(), "__does_not_exist__.json"))
+        self.assertEqual(len(entries), 33)
+        self.assertTrue(all(e.get("type") != "faq" for e in entries))
+
+
+# ──────────────────────────────────────────────
+# 역색인 동등성 테스트 (전체 스캔 vs 역색인 후보 축소)
+# ──────────────────────────────────────────────
+
+
+class TestInvertedIndexEquivalence(unittest.TestCase):
+    QUERIES = [
+        "연차 유급휴가 15일",
+        "퇴직금 계산",
+        "최저임금 위반",
+        "주52시간 연장근로 한도",
+        "부당해고 구제신청",
+        "육아휴직 급여",
+        "통상임금 산정",
+        "직장내괴롭힘 신고",
+        "수습기간중인직원도주휴수당을줘야하나요",
+    ]
+
+    def test_index_results_match_full_scan(self):
+        for query in self.QUERIES:
+            indexed = retrieve_relevant_documents(query=query, top_k=5, use_index=True)
+            full = retrieve_relevant_documents(query=query, top_k=5, use_index=False)
+            self.assertEqual(
+                [(d.get("law"), d.get("title")) for d in indexed],
+                [(d.get("law"), d.get("title")) for d in full],
+                f"역색인 결과가 전체 스캔과 다름 (query={query!r})",
+            )
+
+    def test_index_is_cached(self):
+        retrieve_relevant_documents(query="연차", top_k=3)
+        first = _ai_chat._INDEX_CACHE
+        retrieve_relevant_documents(query="퇴직금", top_k=3)
+        self.assertIs(_ai_chat._INDEX_CACHE, first, "역색인은 1회 구축 후 재사용")
+
+
+# ──────────────────────────────────────────────
+# 공백 없는 질문 매칭 테스트 (문자 2-gram 보조)
+# ──────────────────────────────────────────────
+
+
+class TestSpacelessQueryMatching(unittest.TestCase):
+    SPACELESS = "수습기간중인직원도주휴수당을줘야하나요"
+
+    def test_spaceless_query_hits_juhyu_faq(self):
+        docs = retrieve_relevant_documents(query=self.SPACELESS, top_k=5)
+        self.assertTrue(docs, "공백 없는 질문도 문서 매칭되어야 함")
+        combined = " ".join(d.get("law", "") + " " + d.get("title", "") for d in docs)
+        self.assertIn("주휴", combined, f"주휴 관련 FAQ가 히트해야 함: {combined}")
+
+    def test_spaceless_query_chat_has_citations(self):
+        result = chat_query(
+            user_question=self.SPACELESS,
+            user_role="employee",
+            session_id="test-spaceless",
+        )
+        self.assertTrue(result["citations"])
+        self.assertNotIn("찾지 못했습니다", result["answer"])
+
+    def test_spaced_queries_still_match(self):
+        """기존(공백 있는) 질의 회귀 없음."""
+        docs = retrieve_relevant_documents(query="연차 유급휴가 15일", top_k=5)
+        refs = [d.get("law", "") for d in docs]
+        self.assertTrue(any("60" in r for r in refs), f"근기법 60조 미포함: {refs}")
+
+
+# ──────────────────────────────────────────────
+# 문장 경계 클립 테스트 (뚝 끊김 수정)
+# ──────────────────────────────────────────────
+
+
+class TestSentenceBoundaryClip(unittest.TestCase):
+    def test_short_text_unchanged(self):
+        text = "임금은 통화로 직접 지급하여야 합니다."
+        self.assertEqual(_ai_chat._clip_to_sentence(text, max_len=400), text)
+
+    def test_long_text_clipped_at_sentence_boundary(self):
+        sentence = "이것은 문장 경계 테스트를 위한 예시 문장입니다. "
+        text = sentence * 30  # ≫ 400자
+        clipped = _ai_chat._clip_to_sentence(text, max_len=400)
+        self.assertLessEqual(len(clipped), 400)
+        self.assertTrue(clipped.endswith("다."), f"문장 경계로 끝나야 함: ...{clipped[-20:]}")
+
+    def test_yo_ending_boundary(self):
+        sentence = "주휴수당은 지급하셔야 해요. "
+        text = sentence * 40
+        clipped = _ai_chat._clip_to_sentence(text, max_len=400)
+        self.assertTrue(clipped.endswith("요."))
+
+    def test_citation_snippets_not_hard_cut(self):
+        """citations snippet은 400자 이내 + 문장 경계 (전문이 아닌 경우)."""
+        result = chat_query(
+            user_question="퇴직금 중간정산 요건은 무엇인가요?",
+            user_role="employee",
+            session_id="test-clip",
+        )
+        for cite in result["citations"]:
+            self.assertLessEqual(len(cite["snippet"]), 400)
+            if len(cite["snippet"]) == 400 or cite["snippet"].endswith(("다.", "요.")):
+                continue
+            # 전문이 그대로 들어간 경우(400자 미만 원문)만 허용
+            self.assertLess(len(cite["snippet"]), 400)
+
+    def test_answer_body_is_full_text_not_truncated(self):
+        """답변 본문은 최상위 문서 전문 — 중간 절단 금지."""
+        docs = retrieve_relevant_documents(query="수습기간 주휴수당", top_k=5)
+        self.assertTrue(docs)
+        result = chat_query(
+            user_question="수습기간 주휴수당",
+            user_role="employee",
+            session_id="test-fulltext",
+        )
+        self.assertIn(docs[0]["text"], result["answer"], "답변 본문에 최상위 문서 전문 포함")
+
+
+# ──────────────────────────────────────────────
+# FAQ 타입 라벨 / FAQ 답변 조립 테스트
+# ──────────────────────────────────────────────
+
+
+class TestFaqCitationLabel(unittest.TestCase):
+    def test_citation_label_mapping(self):
+        result = chat_query(
+            user_question="수습기간중인직원도주휴수당을줘야하나요",
+            user_role="employee",
+            session_id="test-label",
+        )
+        valid_labels = {"법령", "판례", "내부", "FAQ", "참고"}
+        for cite in result["citations"]:
+            self.assertIn("label", cite)
+            self.assertIn(cite["label"], valid_labels)
+        type_to_label = {"law": "법령", "case": "판례", "internal": "내부", "faq": "FAQ"}
+        for cite in result["citations"]:
+            if cite["type"] in type_to_label:
+                self.assertEqual(cite["label"], type_to_label[cite["type"]])
+
+    def test_faq_top_match_answer_uses_faq_fulltext(self):
+        question = "수습기간중인직원도주휴수당을줘야하나요"
+        docs = retrieve_relevant_documents(query=question, top_k=5)
+        self.assertEqual(docs[0].get("type"), "faq")
+        result = chat_query(
+            user_question=question,
+            user_role="employee",
+            session_id="test-faq-body",
+        )
+        self.assertIn("[FAQ]", result["answer"])
+        self.assertIn(docs[0]["text"], result["answer"], "FAQ 답변 전문이 본문이어야 함")
+
+    def test_faq_answer_grounds_only_with_law_citation(self):
+        """FAQ 답변의 '주요 근거'는 법령/판례 인용이 있을 때만 표기."""
+        question = "수습기간중인직원도주휴수당을줘야하나요"
+        result = chat_query(
+            user_question=question,
+            user_role="employee",
+            session_id="test-faq-grounds",
+        )
+        has_law = any(c["type"] in ("law", "case") for c in result["citations"])
+        if has_law:
+            self.assertIn("주요 근거", result["answer"])
+        else:
+            self.assertNotIn("주요 근거", result["answer"])
+
+    def test_law_top_match_answer_has_law_label(self):
+        """법령이 최상위 매치인 질의에서는 주요 근거에 [법령] 라벨."""
+        result = chat_query(
+            user_question="임금 지급 원칙",
+            user_role="employee",
+            session_id="test-law-label",
+        )
+        docs = retrieve_relevant_documents(query="임금 지급 원칙", top_k=5)
+        if docs and docs[0].get("type") != "faq":
+            self.assertIn("주요 근거", result["answer"])
+            self.assertIn("[법령]", result["answer"])
+
+    def test_disclaimer_unchanged(self):
+        """면책 문구 로직 불변."""
+        result = chat_query(
+            user_question="수습기간중인직원도주휴수당을줘야하나요",
+            user_role="employee",
+            session_id="test-disc",
+        )
+        self.assertEqual(result["disclaimer"], DISCLAIMER)
+
+
 if __name__ == "__main__":
     unittest.main()

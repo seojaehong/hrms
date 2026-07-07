@@ -101,6 +101,11 @@ const sections = [
 
 const moreLinks = [
 	{
+		icon: markRaw(AttendanceIcon),
+		title: __("요청 보드"),
+		route: "KoreaServiceRequests",
+	},
+	{
 		icon: markRaw(EmployeeAdvanceIcon),
 		title: __("입사자 등록 요청"),
 		route: "KoreaOnboardingRequest",

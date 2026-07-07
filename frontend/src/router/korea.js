@@ -30,6 +30,11 @@ const routes = [
 		path: "/dashboard/korea-payroll-excel",
 		component: () => import("@/views/korea/KoreaPayrollExcel.vue"),
 	},
+	{
+		name: "KoreaServiceRequests",
+		path: "/dashboard/korea-service-requests",
+		component: () => import("@/views/korea/KoreaServiceRequests.vue"),
+	},
 ]
 
 export default routes

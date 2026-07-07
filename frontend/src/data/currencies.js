@@ -22,12 +22,11 @@ export function getCurrencySymbol(currency) {
 	return currencySymbols?.data?.[currency]
 }
 
+// frappe.client.get_single_value(System Settings)는 일반 직원 권한에서
+// 페이지 이동마다 PermissionError를 남김 → 권한 불필요 whitelisted API 사용
 export const currencyPrecision = createResource({
-	url: "frappe.client.get_single_value",
-	params: {
-		doctype: "System Settings",
-		field: "currency_precision"
-	},
+	url: "hrms.api.get_system_locale_settings",
+	transform: (data) => data?.currency_precision ?? 2,
 	auto: true,
 	initialData: 2
 });

@@ -190,3 +190,90 @@ def build_payroll_workbook(slips: list[dict], period: str | None = None) -> byte
     buffer = io.BytesIO()
     wb.save(buffer)
     return buffer.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# 업로드 diff — 기존 슬립과 들어온 급여대장 행의 차이 요약 (US-X3)
+# ---------------------------------------------------------------------------
+
+
+def _row_key(row: dict) -> str:
+    """직원 매칭 키 — 이름(공백 제거). 동명이인은 사이트 운영상 없음."""
+    return str(row.get("name") or "").strip()
+
+
+def _amount_of(row: dict, *keys: str) -> int:
+    """row 에서 첫 번째로 존재하는 금액 키를 원 단위 int 로 반환 (없으면 0).
+
+    파싱 행은 expected_gross/expected_net, 슬립 행은 gross/net 을 쓰므로 둘 다 지원.
+    """
+    for k in keys:
+        v = row.get(k)
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            continue
+        return int(round(float(v)))
+    return 0
+
+
+def diff_payroll_rows(existing: list[dict], incoming: list[dict]) -> dict:
+    """기존 슬립(existing)과 업로드된 급여대장 행(incoming)의 차이를 요약 — framework-free.
+
+    이름을 키로 매칭한다. 각 행의 금액은 gross/net 또는 expected_gross/expected_net 을 읽는다.
+    반환:
+      {
+        "new":     [{name, gross, net}...],           # incoming 에만 존재
+        "changed": [{name, gross_delta, net_delta,    # 양쪽에 있으나 금액 다름 (1원도 검출)
+                     from_net, to_net}...],
+        "same":    [name...],                          # 금액 동일
+        "missing": [{name, gross, net}...],           # existing 에만 존재 (업로드에서 빠짐)
+        "counts":  {new, changed, same, missing},
+      }
+    저장·부수효과 없음. 개인 금액은 로그하지 말 것(호출부 책임).
+    """
+    existing_by = {_row_key(r): r for r in existing if _row_key(r)}
+    incoming_by = {_row_key(r): r for r in incoming if _row_key(r)}
+
+    new: list[dict] = []
+    changed: list[dict] = []
+    same: list[str] = []
+    for key, inc in incoming_by.items():
+        inc_gross = _amount_of(inc, "gross", "expected_gross")
+        inc_net = _amount_of(inc, "net", "expected_net")
+        if key not in existing_by:
+            new.append({"name": key, "gross": inc_gross, "net": inc_net})
+            continue
+        ex = existing_by[key]
+        gross_delta = inc_gross - _amount_of(ex, "gross", "expected_gross")
+        net_delta = inc_net - _amount_of(ex, "net", "expected_net")
+        if gross_delta or net_delta:
+            changed.append({
+                "name": key,
+                "gross_delta": gross_delta,
+                "net_delta": net_delta,
+                "from_net": _amount_of(ex, "net", "expected_net"),
+                "to_net": inc_net,
+            })
+        else:
+            same.append(key)
+
+    missing: list[dict] = []
+    for key, ex in existing_by.items():
+        if key not in incoming_by:
+            missing.append({
+                "name": key,
+                "gross": _amount_of(ex, "gross", "expected_gross"),
+                "net": _amount_of(ex, "net", "expected_net"),
+            })
+
+    return {
+        "new": new,
+        "changed": changed,
+        "same": same,
+        "missing": missing,
+        "counts": {
+            "new": len(new),
+            "changed": len(changed),
+            "same": len(same),
+            "missing": len(missing),
+        },
+    }

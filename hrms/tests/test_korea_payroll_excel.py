@@ -188,5 +188,51 @@ class TestBuildWorkbook(unittest.TestCase):
             mod.build_payroll_workbook([], "2026-05")
 
 
+class TestDiffPayrollRows(unittest.TestCase):
+    """diff_payroll_rows — 기존 슬립 vs 업로드 행: 신규/변경/동일/누락, 1원 delta 검출."""
+
+    def test_new_changed_same_missing(self):
+        # 기존 슬립(슬립 형태: gross/net) 3명
+        existing = [
+            {"name": "동일", "gross": 3000000, "net": 2900000},
+            {"name": "변경", "gross": 2600000, "net": 2530000},
+            {"name": "누락", "gross": 1000000, "net": 1000000},
+        ]
+        # 업로드 행(파싱 형태: expected_gross/expected_net): 동일=그대로, 변경=1원 증가, 신규=추가, 누락=빠짐
+        incoming = [
+            {"name": "동일", "expected_gross": 3000000, "expected_net": 2900000},
+            {"name": "변경", "expected_gross": 2600000, "expected_net": 2530001},  # 실지급 +1원
+            {"name": "신규", "expected_gross": 1500000, "expected_net": 1460000},
+        ]
+        diff = mod.diff_payroll_rows(existing, incoming)
+
+        self.assertEqual(diff["counts"], {"new": 1, "changed": 1, "same": 1, "missing": 1})
+        self.assertEqual([r["name"] for r in diff["new"]], ["신규"])
+        self.assertEqual(diff["same"], ["동일"])
+        self.assertEqual([r["name"] for r in diff["missing"]], ["누락"])
+        changed = diff["changed"][0]
+        self.assertEqual(changed["name"], "변경")
+        self.assertEqual(changed["net_delta"], 1)  # 1원 delta 검출
+        self.assertEqual(changed["gross_delta"], 0)
+        self.assertEqual(changed["from_net"], 2530000)
+        self.assertEqual(changed["to_net"], 2530001)
+
+    def test_empty_existing_all_new(self):
+        incoming = [{"name": "A", "expected_gross": 100, "expected_net": 90}]
+        diff = mod.diff_payroll_rows([], incoming)
+        self.assertEqual(diff["counts"]["new"], 1)
+        self.assertEqual(diff["counts"]["missing"], 0)
+
+    def test_diff_accepts_parse_output(self):
+        # 실제 parse_payroll_workbook 출력을 그대로 diff 입력으로 쓸 수 있는지
+        rows = mod.parse_payroll_workbook(build_workbook([
+            {"name": "김월급", "earnings": {"기본급": 3000000}, "deductions": {"소득세": 100000},
+             "gross": 3000000, "ded_total": 100000, "net": 2900000},
+        ]), "monthly")
+        diff = mod.diff_payroll_rows([], rows)
+        self.assertEqual(diff["counts"]["new"], 1)
+        self.assertEqual(diff["new"][0]["net"], 2900000)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

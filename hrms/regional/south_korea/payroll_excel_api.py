@@ -57,6 +57,7 @@ parse_payroll_workbook = _excel.parse_payroll_workbook
 validate_payroll_rows = _excel.validate_payroll_rows
 extract_payroll = _excel.extract_payroll
 build_payroll_workbook = _excel.build_payroll_workbook
+diff_payroll_rows = _excel.diff_payroll_rows
 
 # 다운로드 조회 시 급여 관리자급만 (bench execute는 Administrator)
 _PAYROLL_ROLES = ("System Manager", "HR Manager", "HR User")
@@ -112,8 +113,63 @@ def download_payroll_workbook(period: str, company: str | None = None) -> dict[s
 
 
 # ---------------------------------------------------------------------------
+# 공개 API — US-X3 급여 엑셀 업로드 검증 (파싱→무결성→미리보기, 저장 없음)
+# ---------------------------------------------------------------------------
+
+
+@_whitelist
+def validate_payroll_upload(file_url: str, period: str, sheet_type: str = "monthly") -> dict[str, Any]:
+    """업로드된 급여대장 File 을 파싱·무결성 검사하고 기존 슬립과의 diff 를 반환 — 저장 없음.
+
+    Args:
+        file_url: 업로드된 File 의 file_url (frappe File doctype 경유).
+        period: 귀속월 'YYYY-MM' — 기존 슬립 조회 대상.
+        sheet_type: PROFILES 키 (기본 'monthly').
+
+    Returns:
+        성공: {'status':'ok', 'period', 'company', 'count', 'diff'}.
+        파싱 실패: {'status':'parse_error', 'period', 'errors':[...]}.
+        무결성 실패: {'status':'invalid', 'period', 'count', 'errors':[행번호 포함...]}.
+
+    개인 급여액은 diff/응답에 담기지만 로그에는 남기지 않는다.
+    """
+    start = _period_start(period)  # 순수 형식 검증 — frappe 이전에 먼저 잡는다
+    if not _FRAPPE_AVAILABLE or _frappe is None:
+        raise RuntimeError("validate_payroll_upload는 frappe 런타임에서만 실행됩니다.")
+
+    _frappe.only_for(_PAYROLL_ROLES)
+
+    content = _read_file_bytes(file_url)
+    try:
+        rows = parse_payroll_workbook(content, sheet_type)
+    except (ValueError, KeyError) as exc:
+        return {"status": "parse_error", "period": period, "errors": [str(exc)]}
+
+    errors = validate_payroll_rows(rows)
+    if errors:
+        return {"status": "invalid", "period": period, "count": len(rows), "errors": errors}
+
+    company = _frappe.db.get_single_value("Global Defaults", "default_company")
+    existing = _collect_slips(company, start) if company else []
+    diff = diff_payroll_rows(existing, rows)
+    return {
+        "status": "ok",
+        "period": period,
+        "company": company,
+        "count": len(rows),
+        "diff": diff,
+    }
+
+
+# ---------------------------------------------------------------------------
 # 내부 헬퍼
 # ---------------------------------------------------------------------------
+
+
+def _read_file_bytes(file_url: str) -> bytes:
+    """file_url 로 File 문서를 찾아 내용을 bytes 로 읽는다 (frappe File.get_content)."""
+    file_doc = _frappe.get_doc("File", {"file_url": file_url})
+    return file_doc.get_content()
 
 
 def _period_start(period: str) -> str:

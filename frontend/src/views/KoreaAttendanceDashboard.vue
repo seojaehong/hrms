@@ -54,6 +54,39 @@
 					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
 
 					<template v-else>
+						<!-- 출근/결근/휴가 구성 바 — 인라인 SVG (뷰에 이미 로드된 empSummary만 사용, 데이터 없으면 숨김) -->
+						<div v-if="compositionBar" class="mt-3" data-testid="attendance-composition-bar">
+							<svg
+								viewBox="0 0 280 12"
+								class="h-3 w-full overflow-hidden rounded-full text-black"
+								role="img"
+								aria-label="출근·결근·휴가 구성"
+								preserveAspectRatio="none"
+							>
+								<rect
+									v-for="(seg, i) in compositionBar"
+									:key="i"
+									:x="seg.x"
+									y="0"
+									:width="seg.width"
+									height="12"
+									fill="currentColor"
+									:fill-opacity="compositionOpacities[i]"
+								/>
+							</svg>
+							<div class="mt-1.5 flex gap-4 text-[11px] text-black/50">
+								<span class="flex items-center gap-1">
+									<span class="h-2 w-2 rounded-full bg-black"></span>{{ __("출근") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[0] }}</span>
+								</span>
+								<span class="flex items-center gap-1">
+									<span class="h-2 w-2 rounded-full bg-black/35"></span>{{ __("결근") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[1] }}</span>
+								</span>
+								<span class="flex items-center gap-1">
+									<span class="h-2 w-2 rounded-full bg-black/15"></span>{{ __("휴가") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[2] }}</span>
+								</span>
+							</div>
+						</div>
+
 						<div class="mt-3 grid grid-cols-2 gap-2">
 							<div class="rounded-xl bg-[#f7f7f5] p-3">
 								<p class="text-xs text-black/50">{{ __("출근일") }}</p>
@@ -275,6 +308,7 @@
 <script setup>
 import { ref, computed, inject, onMounted } from "vue"
 import BaseLayout from "@/components/BaseLayout.vue"
+import { buildStackedBar } from "@/utils/koreaCharts"
 import {
 	fetchKoreaAttendanceSummary,
 	fetchKoreaPremiumPreview,
@@ -329,6 +363,23 @@ const nightHours = computed(() =>
 const holidayHours = computed(() =>
 	empSummary.value?.total_holiday_hours?.toFixed(1) ?? "—"
 )
+
+// ── 출근/결근/휴가 구성 바 (이미 로드된 empSummary만 사용 — 신규 API 없음) ──
+const compositionValues = computed(() => {
+	const s = empSummary.value
+	if (!s) return null
+	const vals = [s.present_days, s.absent_days, s.leave_days].map((v) => Number(v))
+	// 하나라도 숫자가 아니면 데이터 불충분 → 차트 숨김
+	if (vals.some((v) => !Number.isFinite(v))) return null
+	return vals
+})
+
+// buildStackedBar는 합계 0이면 null → 빈 차트 렌더 금지
+const compositionBar = computed(() =>
+	compositionValues.value ? buildStackedBar(compositionValues.value, 280) : null
+)
+// 모노크롬 구성: 출근=black, 결근=black/35, 휴가=black/15 (붉은색은 경고 전용)
+const compositionOpacities = [1, 0.35, 0.15]
 
 const weeklyOvertimeExceeded = computed(() =>
 	isWeeklyOvertimeExceeded(empSummary.value?.total_overtime_hours ?? 0)

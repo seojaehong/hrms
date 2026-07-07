@@ -3,10 +3,10 @@
 		<template #body>
 			<div class="flex flex-col gap-4 overflow-y-auto bg-gray-50 p-4 pb-24">
 				<section v-if="selectedSession" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-gray-600">← Back to closing queue</router-link>
+					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-gray-600">← 마감 목록으로</router-link>
 					<div class="mt-4 flex items-start justify-between gap-3">
 						<div>
-							<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Session preview</p>
+							<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">세션 미리보기</p>
 							<h1 class="mt-1 text-2xl font-bold text-gray-900">{{ selectedSession.workplace }}</h1>
 							<p class="mt-1 text-sm text-gray-500">{{ selectedSession.name }} · {{ selectedSession.period_start }} → {{ selectedSession.period_end }}</p>
 						</div>
@@ -19,7 +19,7 @@
 					</div>
 					<div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
 						<p class="font-semibold">미리보기 전용 — {{ selectedSession.preview_source === 'runtime_read_only' ? '실데이터 읽기' : '정적 예시' }}</p>
-						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · human approval required · AI={{ selectedSession.ai_role }}</p>
+						<p class="mt-1">runtime_action={{ selectedSession.runtime_action }} · requires_runtime_apply={{ selectedSession.requires_runtime_apply }} · 담당자 승인 필수 · AI={{ selectedSession.ai_role }}</p>
 					</div>
 					<div class="mt-4 grid grid-cols-2 gap-2">
 						<div
@@ -33,22 +33,22 @@
 						</div>
 					</div>
 					<div class="mt-4 rounded-xl bg-gray-50 p-3">
-						<p class="text-xs font-semibold text-gray-500">Primary next action</p>
+						<p class="text-xs font-semibold text-gray-500">다음 작업</p>
 						<p class="mt-1 text-base font-bold text-gray-900">{{ selectedSession.primary_action.label }}</p>
-						<p class="mt-1 text-xs text-gray-500">{{ selectedSession.payroll_entry }} · no save/approve/send mutation in static preview</p>
+						<p class="mt-1 text-xs text-gray-500">{{ selectedSession.payroll_entry }} · 미리보기에서는 저장·승인·발송이 일어나지 않습니다</p>
 					</div>
 					<div class="mt-4 rounded-xl bg-gray-900 p-3 text-white">
-						<p class="text-xs font-semibold uppercase tracking-wide text-gray-300">Audit preview</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-gray-300">감사 미리보기</p>
 						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
-						<p class="mt-1 text-xs text-gray-300">Blockers: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : 'none' }}</p>
+						<p class="mt-1 text-xs text-gray-300">차단 사유: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : '없음' }}</p>
 					</div>
 					<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
 						<div class="flex items-start justify-between gap-3">
 							<div>
-								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Evidence packet</p>
+								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">증빙 패킷</p>
 								<p class="mt-1 text-sm font-bold text-gray-900">{{ selectedSession.evidence_packet.contract_type }}</p>
 							</div>
-							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-gray-700">preview only</span>
+							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-gray-700">미리보기 전용</span>
 						</div>
 						<div class="mt-3 grid grid-cols-1 gap-2">
 							<div
@@ -61,13 +61,21 @@
 							</div>
 						</div>
 						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-gray-600">
-							Human checklist: {{ selectedSession.evidence_packet.review_checklist.length }} item(s) · evidence requires_runtime_apply={{ selectedSession.evidence_packet.requires_runtime_apply }} · AI={{ selectedSession.evidence_packet.ai_role }}
+							담당자 체크리스트 {{ selectedSession.evidence_packet.review_checklist.length }}건 · 증빙 requires_runtime_apply={{ selectedSession.evidence_packet.requires_runtime_apply }} · AI={{ selectedSession.evidence_packet.ai_role }}
 						</div>
 					</div>
+					<!-- 완결 동선 CTA — 이 화면은 읽기 전용, 확정은 결재함에서 진행 -->
+					<router-link
+						to="/dashboard/korea-approval-inbox"
+						class="mt-4 inline-flex w-full justify-center rounded-full bg-black px-4 py-2.5 text-sm font-semibold text-white"
+					>
+						결재함에서 확정 진행
+					</router-link>
+					<p class="mt-2 text-center text-xs text-gray-500">이 미리보기에서는 직접 확정하지 않습니다 — 확정·승인은 결재함에서만 이뤄집니다.</p>
 				</section>
 				<section v-else-if="route.params.name" class="rounded-2xl border border-red-100 bg-red-50 p-4 text-red-800">
 					<p class="font-semibold">세션 예시 데이터를 찾을 수 없습니다</p>
-					<p class="mt-1 text-sm">{{ route.params.name }} is not included in the active payroll closing worklist.</p>
+					<p class="mt-1 text-sm">{{ route.params.name }} 은(는) 현재 급여 마감 목록에 포함되어 있지 않습니다.</p>
 				</section>
 				<section class="k-block k-block--navy text-white">
 					<div class="flex items-start justify-between gap-3">
@@ -279,7 +287,7 @@ function buildSessionPreview(item) {
 		...item,
 		role: item.role || item.draft_status || "Runtime Payroll Operator",
 		blocker_codes: Array.isArray(item.blocker_codes) ? [...item.blocker_codes] : [],
-		primary_action: { ...(item.primary_action || { action: "review_payroll_artifacts", label: "Review payroll artifacts", requires_runtime_apply: false }) },
+		primary_action: { ...(item.primary_action || { action: "review_payroll_artifacts", label: "급여 산출물 검토", requires_runtime_apply: false }) },
 		readiness_cards: Array.isArray(item.readiness_cards) ? item.readiness_cards.map((card) => ({ ...card })) : [],
 		contract_type: "korea_payroll_closing_session_runtime_preview_v1",
 		session_contract_type: item.source_session?.contract_type || "korea_payroll_closing_session_v1",
@@ -315,11 +323,11 @@ function buildRuntimeEvidencePacket(session) {
 		purpose: "payroll closing human review runtime read preview",
 		blocker_codes: [...session.blocker_codes],
 		evidence_items: [
-			{ key: "attendance", label: "Attendance readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "attendance")) },
-			{ key: "payroll_artifacts", label: "Payroll and statutory artifacts", summary: { payroll_entry: session.payroll_entry, employee_count: session.employee_count } },
-			{ key: "approval", label: "Approval readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "approval")) },
-			{ key: "notification", label: "Payslip/Kakao notification readiness", summary: copyCard(session.readiness_cards.find((card) => card.key === "notification")) },
-			{ key: "audit_preview", label: "Audit preview boundary", summary: { ...session.audit_preview, blocker_codes: [...session.audit_preview.blocker_codes] } },
+			{ key: "attendance", label: "근태 준비상태", summary: copyCard(session.readiness_cards.find((card) => card.key === "attendance")) },
+			{ key: "payroll_artifacts", label: "급여·법정 산출물", summary: { payroll_entry: session.payroll_entry, employee_count: session.employee_count } },
+			{ key: "approval", label: "승인 준비상태", summary: copyCard(session.readiness_cards.find((card) => card.key === "approval")) },
+			{ key: "notification", label: "급여명세/카카오 알림 준비상태", summary: copyCard(session.readiness_cards.find((card) => card.key === "notification")) },
+			{ key: "audit_preview", label: "감사 미리보기 경계", summary: { ...session.audit_preview, blocker_codes: [...session.audit_preview.blocker_codes] } },
 		],
 		review_checklist: session.blocker_codes.length
 			? session.blocker_codes.map((code) => ({ status: "needs_human_review", blocker_code: code, requires_runtime_apply: false }))

@@ -1786,6 +1786,14 @@ msgstr "퇴근"
 msgid "Check-out Date"
 msgstr "퇴근일"
 
+#: frontend/src/components/CheckInPanel.vue:114
+msgid "check-in"
+msgstr "출근"
+
+#: frontend/src/components/CheckInPanel.vue:114
+msgid "check-out"
+msgstr "퇴근"
+
 #. Label of the checkin_radius (Int) field in DocType 'Shift Location'
 #: hrms/hr/doctype/shift_location/shift_location.json
 msgid "Checkin Radius"
@@ -1806,6 +1814,10 @@ msgstr "이 항목들을 소급분으로 생성할 날짜를 선택하세요."
 #: hrms/payroll/doctype/employee_benefit_claim/employee_benefit_claim.json
 msgid "Claim Benefit For"
 msgstr "급여 청구 대상"
+
+#: frontend/src/views/expense_claim/List.vue:5
+msgid "Claim History"
+msgstr "청구 내역"
 
 #: frontend/src/views/Home.vue:47
 #: frontend/src/views/expense_claim/Dashboard.vue:17

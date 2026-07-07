@@ -1,9 +1,5 @@
+// KoreaWageStatementDashboard 라우트는 하단탭 canonical 통일을 위해 router/index.js의 TabbedView 하위로 이동 (경로 동일)
 const routes = [
-	{
-		name: "KoreaWageStatementDashboard",
-		path: "/dashboard/korea-wage-statement",
-		component: () => import("@/views/korea/KoreaWageStatementDashboard.vue"),
-	},
 	{
 		name: "KoreaSeverancePreview",
 		path: "/dashboard/korea-severance-preview",

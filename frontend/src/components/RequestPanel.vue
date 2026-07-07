@@ -30,10 +30,14 @@ import ShiftRequestItem from "@/components/ShiftRequestItem.vue"
 
 import { useListUpdate } from "@/composables/realtime"
 
+const __ = inject("$translate")
 const activeTab = ref("My Requests")
 const socket = inject("$socket")
 
-const TAB_BUTTONS = ["My Requests", "Team Requests"] // __("My Requests"), __("Team Requests")
+const TAB_BUTTONS = [
+	{ key: "My Requests", label: __("내 신청") },
+	{ key: "Team Requests", label: __("팀 신청") },
+]
 
 const myRequests = computed(() =>
 	updateRequestDetails(myLeaves, myClaims, myShiftRequests, myAttendanceRequests)

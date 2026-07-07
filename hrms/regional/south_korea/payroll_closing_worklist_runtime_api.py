@@ -121,6 +121,9 @@ def list_korea_payroll_closing_worklist_runtime(
 				"runtime_source_doctype": DOCTYPE,
 				"draft_name": extra["draft_name"],
 				"draft_status": extra["draft_status"],
+				# 지정 결재자 read-only 노출 — "결재함 0건" 혼란 방지 UX
+				# (마감 draft는 approval_state.approver 한 명에게만 배정된다)
+				"approver": _approver_from_session(session),
 				"employee_count": _employee_count_from_session(session),
 				"readiness_cards": _safe_readiness_cards(session.get("readiness_cards", [])),
 				"audit_preview": _safe_audit_preview(session.get("audit_preview", {})),
@@ -214,6 +217,17 @@ def _runtime_session_from_draft_row(value: Any) -> dict[str, Any]:
 		"draft_status": _require_text(row.get("status"), "status"),
 		"session": session,
 	}
+
+
+def _approver_from_session(session: dict[str, Any]) -> str | None:
+	"""세션 payload의 approval_state.approver를 read-only로 추출 (없으면 None)."""
+	approval_state = session.get("approval_state")
+	if not isinstance(approval_state, dict):
+		return None
+	approver = approval_state.get("approver")
+	if not isinstance(approver, str) or not approver.strip():
+		return None
+	return approver.strip()
 
 
 def _employee_count_from_session(session: dict[str, Any]) -> int | None:

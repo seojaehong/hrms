@@ -131,6 +131,59 @@ def reject_item(
     )
 
 
+def count_pending_for_others(*, approver: str, as_of_date: dt.date) -> dict:
+    """다른 결재자에게 배정된 결재 대기 건수 (read-only, mutation 없음).
+
+    "마감 센터 확정 대기 1건 ↔ 내 결재함 0건" 혼란 UX 보조:
+    내 결재함이 비어 있어도 조직 전체에 대기 건이 있으면 그 수를 알려준다.
+    미배정(approver 빈 값) 항목은 카운트하지 않는다.
+    """
+    if not approver:
+        frappe.throw("approver는 필수입니다.")
+
+    # doctype → (대기 상태 filters, 결재자 필드)
+    pending_specs = {
+        _DOCTYPE_LEAVE: ({"status": "Open", "docstatus": 0}, "leave_approver"),
+        _DOCTYPE_EXPENSE: ({"approval_status": "Draft", "docstatus": 0}, "expense_approver"),
+        _DOCTYPE_PAYROLL: ({"status": "draft_pending_human_approval", "docstatus": 0}, "approver"),
+        _DOCTYPE_CONTRACT: ({"status": "Approval Pending", "docstatus": 0}, "approver"),
+    }
+
+    by_doctype: dict[str, int] = {}
+    total = 0
+    for doctype, (filters, approver_field) in pending_specs.items():
+        if not _doctype_exists(doctype):
+            continue
+        try:
+            rows = frappe.get_list(
+                doctype,
+                filters=filters,
+                fields=["name", approver_field],
+                limit=1000,
+            )
+        except Exception:
+            # 개별 소스 실패는 전체를 막지 않음 (list_pending_approvals와 동일 방침)
+            if getattr(frappe, "log_error", None):
+                frappe.log_error(f"approval_inbox: count_pending_for_others {doctype} 조회 실패")
+            continue
+        count = sum(
+            1
+            for row in rows
+            if (row.get(approver_field) or "").strip() and row.get(approver_field) != approver
+        )
+        if count:
+            by_doctype[doctype] = count
+            total += count
+
+    return {
+        "contract_type": "korea_approval_inbox_pending_others_v1",
+        "runtime_action": "runtime_read_only",
+        "approver": approver,
+        "total": total,
+        "by_doctype": by_doctype,
+    }
+
+
 # ---------------------------------------------------------------------------
 # 수집 함수
 # ---------------------------------------------------------------------------

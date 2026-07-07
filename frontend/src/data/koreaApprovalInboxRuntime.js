@@ -33,6 +33,38 @@ export async function fetchPendingApprovals(asOfDate = null) {
 }
 
 // ---------------------------------------------------------------------------
+// 타 결재자 대기 카운트 (read-only, HR Manager 한정)
+// ---------------------------------------------------------------------------
+
+/**
+ * 다른 결재자에게 배정된 결재 대기 건수를 가져옵니다.
+ * 빈 결재함의 "다른 결재자에게 배정된 대기 N건" 보조 문구용.
+ * 실패(권한 없음/서버 미지원 등) 시 null을 반환해 빈 상태 UX를 막지 않습니다.
+ *
+ * @param {string|null} asOfDate - YYYY-MM-DD, 기본값: 오늘
+ * @returns {Promise<{total: number, by_doctype: Object}|null>}
+ */
+export async function fetchPendingCountForOthers(asOfDate = null) {
+	const params = {}
+	if (asOfDate) params.as_of_date = asOfDate
+
+	const resource = createResource({
+		url: "hrms.regional.south_korea.approval_inbox_api.count_pending_for_others",
+		params,
+		auto: false,
+	})
+	try {
+		await resource.fetch()
+	} catch (_) {
+		return null
+	}
+	if (resource.error || !resource.data || typeof resource.data.total !== "number") {
+		return null
+	}
+	return resource.data
+}
+
+// ---------------------------------------------------------------------------
 // 승인
 // ---------------------------------------------------------------------------
 

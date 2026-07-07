@@ -63,11 +63,17 @@
 					</button>
 				</div>
 
-				<!-- 빈 상태 -->
+				<!-- 빈 상태 — 결재는 지정 결재자에게만 배정되므로 0건이 정상일 수 있음 -->
 				<div v-else-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-20 gap-3 px-4">
 					<FeatherIcon name="check-circle" class="h-12 w-12 text-green-700" />
-					<p class="text-base font-bold text-black">{{ __("결재 대기 항목이 없습니다") }}</p>
-					<p class="text-sm text-black/50">{{ __("모든 요청을 처리했어요") }}</p>
+					<p class="text-base font-bold text-black">{{ __("내게 배정된 결재가 없습니다") }}</p>
+					<p class="text-sm text-black/50">{{ __("결재는 지정된 결재자에게만 표시됩니다") }}</p>
+					<p
+						v-if="isAdmin && othersPendingCount > 0"
+						class="rounded-full bg-black/5 px-4 py-1.5 text-xs font-semibold text-black/70"
+					>
+						{{ __("다른 결재자에게 배정된 대기 {0}건", [othersPendingCount]) }}
+					</p>
 				</div>
 
 				<!-- 항목 목록 -->
@@ -171,8 +177,10 @@ import { ref, computed, onMounted, inject } from "vue"
 import { FeatherIcon } from "frappe-ui"
 
 import BaseLayout from "@/components/BaseLayout.vue"
+import { useIsAdmin } from "@/composables/useIsAdmin"
 import {
 	fetchPendingApprovals,
+	fetchPendingCountForOthers,
 	approveItem,
 	rejectItem,
 } from "@/data/koreaApprovalInboxRuntime.js"
@@ -186,6 +194,10 @@ const items = ref([])
 const loading = ref(false)
 const error = ref("")
 const activeFilter = ref("all")
+
+// HR Manager 한정: 빈 결재함일 때 "다른 결재자에게 배정된 대기 N건" 보조 문구
+const isAdmin = useIsAdmin()
+const othersPendingCount = ref(0)
 
 const mutatingName = ref(null)
 const mutatingAction = ref(null)
@@ -228,6 +240,13 @@ async function loadItems() {
 		error.value = e?.message || "결재 목록을 불러오지 못했습니다."
 	} finally {
 		loading.value = false
+	}
+	// 빈 결재함이면 (HR Manager 한정) 타 결재자 대기 건수 조회 — 실패 시 조용히 생략
+	if (!error.value && items.value.length === 0 && isAdmin.value) {
+		const counts = await fetchPendingCountForOthers()
+		othersPendingCount.value = counts?.total ?? 0
+	} else {
+		othersPendingCount.value = 0
 	}
 }
 

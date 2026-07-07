@@ -116,6 +116,11 @@ class TestKoreaApprovalInboxApi(unittest.TestCase):
 						overdue_after_days=value,
 					)
 
+
+	def test_count_pending_for_others_requires_frappe_runtime(self):
+		with self.assertRaisesRegex(RuntimeError, "requires Frappe runtime"):
+			self.mod.count_pending_for_others()
+
 	def test_wrong_actor_and_closed_items_stay_blocked_in_api_wrapper(self):
 		with self.assertRaisesRegex(ValueError, "actor is not the assigned approver"):
 			self.mod.preview_korea_approval_action(

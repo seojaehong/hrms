@@ -350,5 +350,31 @@ class TestDefaultCompanyFallback(unittest.TestCase):
 			module.list_korea_payroll_closing_worklist_runtime(company=None)
 
 
+class TestWorklistRuntimeApproverExposure(unittest.TestCase):
+	"""마감 draft의 결재자(approval_state.approver) read-only 노출 — 결재함 0건 혼란 UX."""
+
+	def test_item_exposes_approver_from_session_approval_state(self):
+		session = source_session(
+			approval_state={
+				"company": "Korea Demo Co",
+				"workplace": "Seoul HQ",
+				"approver": "moon@noho.im",
+			}
+		)
+		module = load_module(FakeFrappe([draft_row(session=session)]))
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+		self.assertEqual(result["items"][0]["approver"], "moon@noho.im")
+
+	def test_item_approver_none_when_absent_or_blank(self):
+		module = load_module(FakeFrappe([draft_row()]))
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+		self.assertIsNone(result["items"][0]["approver"])
+
+		session = source_session(approval_state={"approver": "   "})
+		module = load_module(FakeFrappe([draft_row(session=session)]))
+		result = module.list_korea_payroll_closing_worklist_runtime(company="Korea Demo Co")
+		self.assertIsNone(result["items"][0]["approver"])
+
+
 if __name__ == "__main__":
 	unittest.main()

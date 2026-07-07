@@ -11,6 +11,11 @@ const routes = [
 		component: () => import("@/views/korea/KoreaComplianceDashboard.vue"),
 	},
 	{
+		name: "KoreaTimeInput",
+		path: "/dashboard/korea-time-input",
+		component: () => import("@/views/korea/KoreaTimeInput.vue"),
+	},
+	{
 		name: "KoreaComplianceCategoryDetail",
 		path: "/dashboard/korea-compliance/category/:categoryKey",
 		component: () => import("@/views/korea/KoreaComplianceCategoryDetail.vue"),

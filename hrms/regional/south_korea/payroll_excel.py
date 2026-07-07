@@ -277,3 +277,28 @@ def diff_payroll_rows(existing: list[dict], incoming: list[dict]) -> dict:
             "missing": len(missing),
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# 업로드 확정 요약 — 슬립 upsert 결과 집계 (US-X4)
+# ---------------------------------------------------------------------------
+
+
+def summarize_payroll_apply(results: list[dict]) -> dict:
+    """슬립 upsert 결과 행 목록을 건수·총지급 합으로 요약 — framework-free.
+
+    각 result: {name, action: 'created'|'updated'|'skipped', gross}.
+      - created: 신규 슬립 생성
+      - updated: 기존 슬립 금액 갱신 (이번 이터레이션 미구현 — 향후 구조 개정 경로)
+      - skipped: 기존 슬립 존재 → 미변경
+    반환 {created, updated, skipped, count, total_gross}. total_gross 는 result.gross 의 합
+    (호출부가 created 행에만 금액을 실어 보내면 = 반영된 총지급). 개인 금액은 로그 금지.
+    """
+    counts = {"created": 0, "updated": 0, "skipped": 0}
+    total_gross = 0
+    for r in results:
+        action = r.get("action")
+        if action in counts:
+            counts[action] += 1
+        total_gross += _slip_amount(r.get("gross"))
+    return {**counts, "count": len(results), "total_gross": total_gross}

@@ -5,6 +5,15 @@
 				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[60rem] mx-auto">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">
+							<!-- 홈이 아닌 화면 공통 뒤로가기 — 히스토리 없으면 홈으로 -->
+							<button
+								v-if="showBack"
+								class="flex items-center justify-center h-8 w-8 rounded-full text-gray-600 hover:bg-gray-100 transition"
+								:aria-label="__('뒤로가기')"
+								@click="goBack"
+							>
+								<FeatherIcon name="chevron-left" class="h-6 w-6" />
+							</button>
 							<h2 class="text-xl font-bold text-gray-900">
 								{{ props.pageTitle || __("Korea HRMS") }}
 							</h2>
@@ -63,12 +72,13 @@ import { FeatherIcon, Avatar } from "frappe-ui"
 import { unreadNotificationsCount } from "@/data/notifications"
 import SearchIcon from "@/components/icons/SearchIcon.vue"
 
-import { inject, onMounted, onBeforeUnmount } from "vue"
-import { useRouter } from "vue-router"
+import { computed, inject, onMounted, onBeforeUnmount } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
 const user = inject("$user")
 const __ = inject("$translate")
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
 	pageTitle: {
@@ -77,6 +87,18 @@ const props = defineProps({
 		default: "",
 	},
 })
+
+// 홈이 아닌 모든 화면에 뒤로가기 노출
+const showBack = computed(() => route.name !== "Home" && route.path !== "/home")
+
+function goBack() {
+	// 브라우저 히스토리가 있으면 뒤로, 없으면(딥링크 진입) 홈으로
+	if (window.history.state && window.history.state.back) {
+		router.back()
+	} else {
+		router.push({ name: "Home" })
+	}
+}
 
 // Cmd/Ctrl+K → /search 라우트로 이동
 function handleGlobalKeydown(e) {

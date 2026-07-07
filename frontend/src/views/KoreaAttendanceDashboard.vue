@@ -13,18 +13,25 @@
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
+					<!-- 주인공: 출근일수 -->
+					<div class="mt-3">
+						<p class="text-sm font-medium text-black/60">{{ __("이번 마감 출근") }}</p>
+						<p class="k-numeric text-4xl font-bold tracking-tight leading-tight text-black">
+							{{ empSummary?.present_days ?? "—" }}<span class="text-xl font-bold">일</span>
+						</p>
+					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2">
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold text-black">{{ empSummary?.present_days ?? "—" }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("출근(일)") }}</p>
+							<p class="k-numeric text-xl font-bold text-black">{{ closingDays }}</p>
+							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("마감기준일") }}</p>
 						</div>
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">{{ attendanceRatioFormatted }}</p>
+							<p class="k-numeric text-xl font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">{{ attendanceRatioFormatted }}</p>
 							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("출근률") }}</p>
 						</div>
-						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-2xl font-bold text-black">{{ closingDays }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("마감기준일") }}</p>
+						<div class="rounded-xl bg-black p-3 text-center">
+							<p class="k-numeric text-xl font-bold text-white">{{ empSummary?.present_days ?? "—" }}</p>
+							<p class="mt-0.5 text-xs font-medium text-white/60">{{ __("출근(일)") }}</p>
 						</div>
 					</div>
 				</section>

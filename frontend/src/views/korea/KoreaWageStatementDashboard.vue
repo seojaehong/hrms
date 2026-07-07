@@ -46,78 +46,103 @@
 						{{ __('해당 월의 명세서가 없습니다. 다른 달을 선택해 조회하세요.') }}
 					</div>
 					<template v-else-if="statement">
-						<!-- 법정 항목 그리드 -->
-						<div class="flex flex-col gap-2">
-							<!-- 기본급 -->
-							<div class="flex justify-between items-center border-b border-gray-100 pb-2">
-								<span class="text-sm text-gray-600">① 기본급</span>
-								<span class="text-sm font-semibold text-gray-800">{{ formatKRW(statement.base_salary) }}</span>
+						<!-- 히어로: 실수령액이 주인공 -->
+						<div class="k-block k-block--lime -mx-1">
+							<div class="k-eyebrow">NET PAY · {{ selectedYear }}.{{ String(selectedMonth).padStart(2, "0") }}</div>
+							<div class="mt-1 text-sm font-medium text-black/60">실수령액</div>
+							<div class="text-4xl font-bold tracking-tight text-black k-numeric leading-tight">
+								{{ formatKRW(statement.net_pay) }}
 							</div>
-							<!-- 각종 수당 -->
-							<div class="flex justify-between items-center border-b border-gray-100 pb-2">
-								<span class="text-sm text-gray-600">② 각종 수당 합계</span>
-								<span class="text-sm font-semibold text-gray-800">{{ formatKRW(statementAllowanceTotal) }}</span>
-							</div>
-							<!-- 수당 명세 -->
-							<div
-								v-for="item in statement.allowances"
-								:key="item.code"
-								class="flex justify-between items-center pl-3 pb-1"
-							>
-								<span class="text-xs text-gray-500">· {{ item.label }}</span>
-								<span class="text-xs text-gray-700">{{ formatKRW(item.amount) }}</span>
-							</div>
-
-							<!-- 비과세 -->
-							<div class="flex justify-between items-center border-b border-gray-100 pb-2">
-								<span class="text-sm text-gray-600">③ 비과세 합계</span>
-								<span class="text-sm font-semibold text-gray-800">{{ formatKRW(statement.non_taxable_total) }}</span>
-							</div>
-							<!-- 공제 -->
-							<div class="flex justify-between items-center border-b border-gray-100 pb-2">
-								<span class="text-sm text-gray-600">④ 공제 합계</span>
-								<span class="text-sm font-semibold text-red-600">-{{ formatKRW(statement.total_deduction) }}</span>
-							</div>
-							<!-- 공제 요약: 4대보험 합계 · 소득세 · 주민세 (상세는 토글) -->
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<button class="text-xs text-gray-500 flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
-									· 4대보험 <span class="text-gray-400">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
-								</button>
-								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statementInsuranceTotal) }}</span>
-							</div>
-							<template v-if="showInsuranceDetail">
-								<div class="flex justify-between items-center pl-6 pb-0.5">
-									<span class="text-[11px] text-gray-400">국민연금</span>
-									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.national_pension) }}</span>
+							<!-- 요약 3스탯: 지급 → 공제 → 실수령 흐름 -->
+							<div class="mt-4 grid grid-cols-3 gap-2">
+								<div class="rounded-lg bg-white/55 px-3 py-2">
+									<p class="text-[11px] text-black/55">지급 합계</p>
+									<p class="text-sm font-bold text-black k-numeric">{{ formatKRW(statementGrossTotal) }}</p>
 								</div>
-								<div class="flex justify-between items-center pl-6 pb-0.5">
-									<span class="text-[11px] text-gray-400">건강보험</span>
-									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.health_insurance) }}</span>
+								<div class="rounded-lg bg-white/55 px-3 py-2">
+									<p class="text-[11px] text-black/55">공제 합계</p>
+									<p class="text-sm font-bold text-black k-numeric">−{{ formatKRW(statement.total_deduction) }}</p>
 								</div>
-								<div class="flex justify-between items-center pl-6 pb-0.5">
-									<span class="text-[11px] text-gray-400">장기요양보험</span>
-									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.long_term_care_insurance) }}</span>
+								<div class="rounded-lg bg-black px-3 py-2">
+									<p class="text-[11px] text-white/60">실수령</p>
+									<p class="text-sm font-bold text-white k-numeric">{{ formatKRW(statement.net_pay) }}</p>
 								</div>
-								<div class="flex justify-between items-center pl-6 pb-0.5">
-									<span class="text-[11px] text-gray-400">고용보험</span>
-									<span class="text-[11px] text-gray-500 k-numeric">{{ formatKRW(statement.employment_insurance) }}</span>
-								</div>
-							</template>
-							<div class="flex justify-between items-center pl-3 pb-1">
-								<span class="text-xs text-gray-500">· 소득세</span>
-								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statement.income_tax) }}</span>
-							</div>
-							<div class="flex justify-between items-center pl-3 pb-2 border-b border-gray-100">
-								<span class="text-xs text-gray-500">· 주민세(지방소득세)</span>
-								<span class="text-xs text-gray-700 k-numeric">{{ formatKRW(statement.local_income_tax) }}</span>
-							</div>
-
-							<!-- 실수령액 -->
-							<div class="flex justify-between items-center pt-1">
-								<span class="text-base font-bold text-gray-800">⑦ 실수령액</span>
-								<span class="text-base font-bold text-black k-numeric">{{ formatKRW(statement.net_pay) }}</span>
 							</div>
 						</div>
+
+						<!-- 지급 내역 -->
+						<div class="k-card p-4">
+							<div class="k-eyebrow mb-2">EARNINGS</div>
+							<div class="text-sm font-bold text-black mb-2">지급 내역</div>
+							<div class="flex flex-col">
+								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
+									<span class="text-sm text-gray-600">기본급</span>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.base_salary) }}</span>
+								</div>
+								<div
+									v-for="item in statement.allowances"
+									:key="item.code"
+									class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]"
+								>
+									<span class="text-sm text-gray-600">{{ item.label }}</span>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(item.amount) }}</span>
+								</div>
+								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
+									<span class="text-sm text-gray-600">비과세 합계</span>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.non_taxable_total) }}</span>
+								</div>
+								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
+									<span class="text-sm font-bold text-black">지급 합계</span>
+									<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(statementGrossTotal) }}</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- 공제 내역 -->
+						<div class="k-card p-4">
+							<div class="k-eyebrow mb-2">DEDUCTIONS</div>
+							<div class="text-sm font-bold text-black mb-2">공제 내역</div>
+							<div class="flex flex-col">
+								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
+									<button class="text-sm text-gray-600 flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
+										4대보험 <span class="text-gray-400 text-xs">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
+									</button>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statementInsuranceTotal) }}</span>
+								</div>
+								<template v-if="showInsuranceDetail">
+									<div class="flex justify-between items-center py-1 pl-4">
+										<span class="text-xs text-gray-500">국민연금</span>
+										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.national_pension) }}</span>
+									</div>
+									<div class="flex justify-between items-center py-1 pl-4">
+										<span class="text-xs text-gray-500">건강보험</span>
+										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.health_insurance) }}</span>
+									</div>
+									<div class="flex justify-between items-center py-1 pl-4">
+										<span class="text-xs text-gray-500">장기요양보험</span>
+										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.long_term_care_insurance) }}</span>
+									</div>
+									<div class="flex justify-between items-center py-1 pl-4">
+										<span class="text-xs text-gray-500">고용보험</span>
+										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.employment_insurance) }}</span>
+									</div>
+								</template>
+								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
+									<span class="text-sm text-gray-600">소득세</span>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.income_tax) }}</span>
+								</div>
+								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
+									<span class="text-sm text-gray-600">주민세(지방소득세)</span>
+									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.local_income_tax) }}</span>
+								</div>
+								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
+									<span class="text-sm font-bold text-black">공제 합계</span>
+									<span class="text-sm font-bold text-black k-numeric">−{{ formatKRW(statement.total_deduction) }}</span>
+								</div>
+							</div>
+						</div>
+
+						<p class="k-label text-center">근로기준법 제48조제2항에 따른 임금명세서입니다 · 구성항목·계산방법·공제내역 명시</p>
 
 						<!-- 액션 버튼 (admin 전용) — 미구현 기능: disabled + (준비 중) 표기 -->
 						<div v-if="isAdmin" class="flex flex-row gap-2 pt-2">
@@ -195,6 +220,13 @@ const statementAllowanceTotal = computed(() => {
 
 // 4대보험 합계 (국민연금+건강+장기요양+고용) — 공제 요약 표시용
 const showInsuranceDetail = ref(false)
+// 지급 합계 (기본급 + 수당 + 비과세) — 히어로 요약용
+const statementGrossTotal = computed(() => {
+	const s = statement.value
+	if (!s) return 0
+	return (s.base_salary || 0) + statementAllowanceTotal.value + (s.non_taxable_total || 0)
+})
+
 const statementInsuranceTotal = computed(() => {
 	const s = statement.value
 	if (!s) return 0

@@ -1,26 +1,43 @@
 <template>
 	<BaseLayout :pageTitle="__('결재 인박스')">
 		<template #body>
-			<div class="flex flex-col h-full">
+			<div class="flex flex-col h-full bg-white">
+				<!-- 히어로 — 결재함(cream) 색블록 -->
+				<div class="p-4 pb-0">
+					<section class="k-block k-block--cream">
+						<div class="flex items-start justify-between gap-3">
+							<div>
+								<p class="k-eyebrow">APPROVALS</p>
+								<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("결재 인박스") }}</h1>
+								<p class="mt-1 text-sm font-medium text-black/60">{{ __("승인·반려가 필요한 요청을 한곳에서 처리합니다") }}</p>
+							</div>
+							<div class="rounded-xl bg-white/70 px-4 py-3 text-center">
+								<p class="k-numeric text-2xl font-bold text-black">{{ items.length }}</p>
+								<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("대기") }}</p>
+							</div>
+						</div>
+					</section>
+				</div>
+
 				<!-- 필터 탭 -->
-				<div class="flex overflow-x-auto gap-2 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
+				<div class="flex overflow-x-auto gap-2 px-4 py-3 bg-white sticky top-0 z-10">
 					<button
 						v-for="tab in filterTabs"
 						:key="tab.key"
 						@click="activeFilter = tab.key"
 						:class="[
-							'flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+							'flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors',
 							activeFilter === tab.key
-								? 'bg-gray-900 text-white'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+								? 'bg-black text-white'
+								: 'bg-white text-black border border-[#e6e6e6] hover:bg-[#f7f7f5]',
 						]"
 					>
 						{{ tab.label }}
 						<span
 							v-if="filterCount(tab.key) > 0"
 							:class="[
-								'ml-1 text-xs rounded-full px-1.5',
-								activeFilter === tab.key ? 'bg-white text-gray-900' : 'bg-gray-300 text-gray-700',
+								'ml-1 text-xs rounded-full px-1.5 k-numeric',
+								activeFilter === tab.key ? 'bg-white text-black' : 'bg-black/10 text-black',
 							]"
 						>
 							{{ filterCount(tab.key) }}
@@ -30,22 +47,27 @@
 
 				<!-- 로딩 상태 -->
 				<div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
-					<div class="w-8 h-8 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin"></div>
-					<p class="text-sm text-gray-500">불러오는 중…</p>
+					<div class="w-8 h-8 border-2 border-[#e6e6e6] border-t-black rounded-full animate-spin"></div>
+					<p class="text-sm text-black/50">{{ __("불러오는 중…") }}</p>
 				</div>
 
 				<!-- 에러 상태 -->
 				<div v-else-if="error" class="flex flex-col items-center justify-center py-20 gap-3 px-4">
-					<FeatherIcon name="alert-circle" class="h-10 w-10 text-red-400" />
-					<p class="text-sm text-red-600 text-center">{{ error }}</p>
-					<Button variant="subtle" size="sm" @click="loadItems">다시 시도</Button>
+					<FeatherIcon name="alert-circle" class="h-10 w-10 text-red-700" />
+					<p class="text-sm text-red-700 text-center">{{ error }}</p>
+					<button
+						class="rounded-full border border-[#e6e6e6] bg-white px-5 py-2 text-sm font-semibold text-black"
+						@click="loadItems"
+					>
+						{{ __("다시 시도") }}
+					</button>
 				</div>
 
 				<!-- 빈 상태 -->
 				<div v-else-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-20 gap-3 px-4">
-					<FeatherIcon name="check-circle" class="h-12 w-12 text-green-400" />
-					<p class="text-base font-medium text-gray-700">결재 대기 항목 없음</p>
-					<p class="text-sm text-gray-500">잘하고 있어요</p>
+					<FeatherIcon name="check-circle" class="h-12 w-12 text-green-700" />
+					<p class="text-base font-bold text-black">{{ __("결재 대기 항목이 없습니다") }}</p>
+					<p class="text-sm text-black/50">{{ __("모든 요청을 처리했어요") }}</p>
 				</div>
 
 				<!-- 항목 목록 -->
@@ -53,59 +75,54 @@
 					<div
 						v-for="item in filteredItems"
 						:key="item.name"
-						class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+						class="k-card overflow-hidden"
 					>
 						<!-- 카드 헤더 -->
 						<div class="flex items-start gap-3 p-4">
-							<div
-								:class="[
-									'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg',
-									doctypeStyle(item.doctype).bg,
-								]"
-							>
+							<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f7f7f5] flex items-center justify-center">
 								<FeatherIcon
 									:name="doctypeStyle(item.doctype).icon"
-									:class="['h-5 w-5', doctypeStyle(item.doctype).color]"
+									class="h-5 w-5 text-black"
 								/>
 							</div>
 							<div class="flex-1 min-w-0">
-								<p class="text-sm font-semibold text-gray-900 truncate">{{ item.title }}</p>
-								<p class="text-xs text-gray-500 mt-0.5">
+								<p class="text-sm font-semibold text-black truncate">{{ item.title }}</p>
+								<p class="text-xs text-black/50 mt-0.5">
 									{{ item.applicant_name }} · {{ formatDate(item.requested_at) }}
 								</p>
-								<p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ detailSummary(item) }}</p>
+								<p class="k-numeric text-xs text-black/60 mt-1 line-clamp-2">{{ detailSummary(item) }}</p>
 							</div>
 						</div>
 
 						<!-- 액션 버튼 -->
-						<div class="flex border-t border-gray-100">
+						<div class="flex border-t border-[#f1f1f1]">
 							<a
 								:href="item.url_app"
 								target="_blank"
 								rel="noopener"
-								class="flex-1 py-2.5 text-center text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+								class="flex-1 py-2.5 text-center text-sm text-black/60 hover:bg-[#f7f7f5] transition-colors"
 							>
-								상세 보기
+								{{ __("상세 보기") }}
 							</a>
 							<button
-								class="flex-1 py-2.5 text-center text-sm font-medium text-green-700 hover:bg-green-50 transition-colors border-l border-gray-100"
+								class="flex-1 py-2.5 text-center text-sm font-semibold text-green-800 hover:bg-green-100 transition-colors border-l border-[#f1f1f1]"
 								:disabled="mutatingName === item.name"
 								@click="handleApprove(item)"
 							>
 								<span v-if="mutatingName === item.name && mutatingAction === 'approve'">
-									처리 중…
+									{{ __("처리 중…") }}
 								</span>
-								<span v-else>승인</span>
+								<span v-else>{{ __("승인") }}</span>
 							</button>
 							<button
-								class="flex-1 py-2.5 text-center text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border-l border-gray-100"
+								class="flex-1 py-2.5 text-center text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors border-l border-[#f1f1f1]"
 								:disabled="mutatingName === item.name"
 								@click="handleReject(item)"
 							>
 								<span v-if="mutatingName === item.name && mutatingAction === 'reject'">
-									처리 중…
+									{{ __("처리 중…") }}
 								</span>
-								<span v-else>반려</span>
+								<span v-else>{{ __("반려") }}</span>
 							</button>
 						</div>
 					</div>
@@ -118,26 +135,30 @@
 				class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
 				@click.self="cancelComment"
 			>
-				<div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-96 p-6 flex flex-col gap-4 shadow-xl">
-					<h3 class="text-base font-semibold text-gray-900">
-						{{ pendingAction === 'reject' ? '반려 사유' : '코멘트 (선택)' }}
+				<div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-96 p-6 flex flex-col gap-4">
+					<h3 class="text-base font-bold text-black">
+						{{ pendingAction === 'reject' ? __('반려 사유') : __('코멘트 (선택)') }}
 					</h3>
 					<textarea
 						v-model="commentText"
-						:placeholder="pendingAction === 'reject' ? '반려 사유를 입력하세요.' : '코멘트를 입력하세요. (선택)'"
-						class="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-gray-300"
+						:placeholder="pendingAction === 'reject' ? __('반려 사유를 입력하세요.') : __('코멘트를 입력하세요. (선택)')"
+						class="w-full border border-[#e6e6e6] rounded-lg p-3 text-sm text-black resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
 						rows="4"
 					></textarea>
 					<div class="flex gap-2">
-						<Button class="flex-1" variant="subtle" @click="cancelComment">취소</Button>
-						<Button
-							class="flex-1"
-							:variant="pendingAction === 'reject' ? 'danger' : 'solid'"
+						<button
+							class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
+							@click="cancelComment"
+						>
+							{{ __("취소") }}
+						</button>
+						<button
+							class="flex-1 rounded-full bg-black py-2.5 text-sm font-semibold text-white disabled:opacity-50"
 							:disabled="pendingAction === 'reject' && !commentText.trim()"
 							@click="confirmAction"
 						>
-							{{ pendingAction === 'reject' ? '반려 확인' : '승인 확인' }}
-						</Button>
+							{{ pendingAction === 'reject' ? __('반려 확인') : __('승인 확인') }}
+						</button>
 					</div>
 				</div>
 			</div>
@@ -147,7 +168,7 @@
 
 <script setup>
 import { ref, computed, onMounted, inject } from "vue"
-import { FeatherIcon, Button } from "frappe-ui"
+import { FeatherIcon } from "frappe-ui"
 
 import BaseLayout from "@/components/BaseLayout.vue"
 import {
@@ -178,11 +199,11 @@ const commentText = ref("")
 // 필터 탭 정의
 // ---------------------------------------------------------------------------
 const filterTabs = [
-	{ key: "all", label: "전체" },
-	{ key: "Leave Application", label: "휴가" },
-	{ key: "Expense Claim", label: "경비" },
-	{ key: "Employment Contract", label: "계약" },
-	{ key: "Korea Payroll Closing Draft", label: "페이롤마감" },
+	{ key: "all", label: __("전체") },
+	{ key: "Leave Application", label: __("휴가") },
+	{ key: "Expense Claim", label: __("경비") },
+	{ key: "Employment Contract", label: __("계약") },
+	{ key: "Korea Payroll Closing Draft", label: __("급여 마감") },
 ]
 
 const filteredItems = computed(() => {
@@ -275,31 +296,16 @@ async function confirmAction() {
 // ---------------------------------------------------------------------------
 // 표시 헬퍼
 // ---------------------------------------------------------------------------
+// 모노크롬 아이콘 매핑 — 색은 상태 배지에만 사용 (DESIGN-figma)
 const DOCTYPE_STYLES = {
-	"Leave Application": {
-		icon: "calendar",
-		bg: "bg-gray-100",
-		color: "text-gray-700",
-	},
-	"Expense Claim": {
-		icon: "dollar-sign",
-		bg: "bg-amber-50",
-		color: "text-amber-600",
-	},
-	"Employment Contract": {
-		icon: "file-text",
-		bg: "bg-purple-50",
-		color: "text-purple-600",
-	},
-	"Korea Payroll Closing Draft": {
-		icon: "layers",
-		bg: "bg-green-50",
-		color: "text-green-600",
-	},
+	"Leave Application": { icon: "calendar" },
+	"Expense Claim": { icon: "dollar-sign" },
+	"Employment Contract": { icon: "file-text" },
+	"Korea Payroll Closing Draft": { icon: "layers" },
 }
 
 function doctypeStyle(doctype) {
-	return DOCTYPE_STYLES[doctype] || { icon: "inbox", bg: "bg-gray-50", color: "text-gray-500" }
+	return DOCTYPE_STYLES[doctype] || { icon: "inbox" }
 }
 
 function formatDate(isoStr) {

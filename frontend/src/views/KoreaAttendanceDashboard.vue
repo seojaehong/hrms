@@ -1,69 +1,81 @@
 <template>
-	<BaseLayout pageTitle="한국 근태/가산수당">
+	<BaseLayout :pageTitle="__('근태 현황')">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-gray-50 p-4 pb-24">
+			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-24">
+
+				<!-- 히어로 — 근태(mint) 색블록 + 핵심 스탯 -->
+				<section class="k-block k-block--mint">
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<p class="k-eyebrow">ATTENDANCE</p>
+							<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("근태 현황") }}</h1>
+							<p class="k-numeric mt-1 text-sm font-medium text-black/60">{{ closingPeriodLabel }}</p>
+						</div>
+						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
+					</div>
+					<div class="mt-4 grid grid-cols-3 gap-2">
+						<div class="rounded-xl bg-white/60 p-3 text-center">
+							<p class="k-numeric text-2xl font-bold text-black">{{ empSummary?.present_days ?? "—" }}</p>
+							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("출근(일)") }}</p>
+						</div>
+						<div class="rounded-xl bg-white/60 p-3 text-center">
+							<p class="k-numeric text-2xl font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">{{ attendanceRatioFormatted }}</p>
+							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("출근률") }}</p>
+						</div>
+						<div class="rounded-xl bg-white/60 p-3 text-center">
+							<p class="k-numeric text-2xl font-bold text-black">{{ closingDays }}</p>
+							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("마감기준일") }}</p>
+						</div>
+					</div>
+				</section>
 
 				<!-- 픽스처/오류 배너 -->
-				<div
-					v-if="attendanceError || premiumError"
-					class="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-				>
-					<p class="font-semibold">미리보기 모드 (픽스처)</p>
-					<p v-if="attendanceError" class="mt-1">{{ attendanceError }}</p>
-					<p v-if="premiumError" class="mt-1">{{ premiumError }}</p>
+				<div v-if="attendanceError || premiumError" class="k-card p-4 text-sm">
+					<div class="flex items-center gap-2">
+						<span class="rounded-full bg-black/10 px-2.5 py-0.5 text-xs font-semibold text-black">{{ __("정적 예시") }}</span>
+						<p class="font-semibold text-black">{{ __("미리보기 모드 (픽스처)") }}</p>
+					</div>
+					<p v-if="attendanceError" class="mt-2 text-black/60">{{ attendanceError }}</p>
+					<p v-if="premiumError" class="mt-1 text-black/60">{{ premiumError }}</p>
 				</div>
 
 				<!-- Card 1: 이번 달 출근 요약 -->
-				<section class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-					<div class="flex items-center justify-between mb-3">
-						<h2 class="text-base font-bold text-gray-900">이번 달 출근 요약</h2>
-						<span
-							class="rounded-full px-2 py-0.5 text-xs font-semibold"
-							:class="dataSourceBadgeClass"
-						>
-							{{ dataSourceBadge }}
-						</span>
-					</div>
+				<section class="k-card p-4">
+					<p class="k-eyebrow">MONTHLY SUMMARY</p>
+					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("이번 달 출근 요약") }}</h2>
 
-					<div v-if="attendanceLoading" class="text-sm text-gray-400">불러오는 중...</div>
+					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
 
 					<template v-else>
-						<div class="grid grid-cols-2 gap-3">
-							<div class="rounded-xl bg-gray-50 p-3">
-								<p class="text-xs text-gray-500">출근일</p>
-								<p class="mt-1 text-xl font-bold text-gray-900">{{ empSummary?.present_days ?? "—" }}일</p>
+						<div class="mt-3 grid grid-cols-2 gap-2">
+							<div class="rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-xs text-black/50">{{ __("출근일") }}</p>
+								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ empSummary?.present_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-gray-50 p-3">
-								<p class="text-xs text-gray-500">마감기준일</p>
-								<p class="mt-1 text-xl font-bold text-gray-900">{{ closingDays }}</p>
+							<div class="rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-xs text-black/50">{{ __("마감기준일") }}</p>
+								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ closingDays }}</p>
 							</div>
-							<div class="rounded-xl bg-gray-50 p-3">
-								<p class="text-xs text-gray-500">결근</p>
-								<p class="mt-1 text-lg font-bold text-gray-900">{{ empSummary?.absent_days ?? "—" }}일</p>
+							<div class="rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-xs text-black/50">{{ __("결근") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.absent_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-gray-50 p-3">
-								<p class="text-xs text-gray-500">휴가</p>
-								<p class="mt-1 text-lg font-bold text-gray-900">{{ empSummary?.leave_days ?? "—" }}일</p>
+							<div class="rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-xs text-black/50">{{ __("휴가") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.leave_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-gray-50 p-3">
-								<p class="text-xs text-gray-500">반차</p>
-								<p class="mt-1 text-lg font-bold text-gray-900">{{ empSummary?.half_day_count ?? "—" }}회</p>
+							<div class="rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-xs text-black/50">{{ __("반차") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.half_day_count ?? "—" }}{{ __("회") }}</p>
 							</div>
-							<div
-								class="rounded-xl p-3"
-								:class="attendanceRatioLow ? 'bg-red-50' : 'bg-green-50'"
-							>
-								<p class="text-xs" :class="attendanceRatioLow ? 'text-red-600' : 'text-gray-500'">
-									출근률
-									<span v-if="attendanceRatioLow" class="ml-1">⚠️</span>
+							<div class="rounded-xl p-3" :class="attendanceRatioLow ? 'bg-red-100' : 'bg-[#f7f7f5]'">
+								<p class="text-xs" :class="attendanceRatioLow ? 'text-red-700' : 'text-black/50'">
+									{{ __("출근률") }}
 								</p>
-								<p
-									class="mt-1 text-lg font-bold"
-									:class="attendanceRatioLow ? 'text-red-700' : 'text-gray-900'"
-								>
+								<p class="k-numeric mt-1 text-lg font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">
 									{{ attendanceRatioFormatted }}
 								</p>
-								<p v-if="attendanceRatioLow" class="mt-0.5 text-xs text-red-600">
+								<p v-if="attendanceRatioLow" class="mt-0.5 text-xs font-semibold text-red-700">
 									80% 미달 — 연차 감액 위험 (근기법 60조 4항)
 								</p>
 							</div>
@@ -72,144 +84,143 @@
 				</section>
 
 				<!-- Card 2: 연장/야간/휴일 시간 -->
-				<section class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-					<h2 class="text-base font-bold text-gray-900 mb-3">연장·야간·휴일 시간</h2>
+				<section class="k-card p-4">
+					<p class="k-eyebrow">OVERTIME</p>
+					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("연장·야간·휴일 시간") }}</h2>
 
-					<div v-if="attendanceLoading" class="text-sm text-gray-400">불러오는 중...</div>
+					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
 
 					<template v-else>
-						<div class="flex flex-col gap-2">
-							<div class="flex items-center justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">정시근로</p>
-								<p class="text-sm font-bold text-gray-900">{{ regularHours }}시간</p>
+						<div class="mt-3 flex flex-col gap-2">
+							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("정시근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ regularHours }}{{ __("시간") }}</p>
 							</div>
 							<div
 								class="flex items-center justify-between rounded-xl p-3"
-								:class="weeklyOvertimeExceeded ? 'bg-red-50' : 'bg-gray-50'"
+								:class="weeklyOvertimeExceeded ? 'bg-red-100' : 'bg-[#f7f7f5]'"
 							>
 								<div>
-									<p class="text-sm" :class="weeklyOvertimeExceeded ? 'text-red-700' : 'text-gray-600'">
-										연장근로
-										<span v-if="weeklyOvertimeExceeded" class="ml-1">⚠️</span>
+									<p class="text-sm" :class="weeklyOvertimeExceeded ? 'font-semibold text-red-700' : 'text-black'">
+										{{ __("연장근로") }}
 									</p>
-									<p v-if="weeklyOvertimeExceeded" class="text-xs text-red-600 mt-0.5">
+									<p v-if="weeklyOvertimeExceeded" class="mt-0.5 text-xs font-semibold text-red-700">
 										주 12h 초과 — 근기법 53조 위반 위험
 									</p>
 								</div>
 								<div class="text-right">
-									<p class="text-sm font-bold" :class="weeklyOvertimeExceeded ? 'text-red-700' : 'text-gray-900'">
-										{{ overtimeHours }}시간
+									<p class="k-numeric text-sm font-bold" :class="weeklyOvertimeExceeded ? 'text-red-700' : 'text-black'">
+										{{ overtimeHours }}{{ __("시간") }}
 									</p>
-									<p class="text-xs text-gray-400">/ 주 한도 12h</p>
+									<p class="k-numeric text-xs text-black/40">/ {{ __("주 한도") }} 12h</p>
 								</div>
 							</div>
-							<div class="flex items-center justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">야간근로</p>
-								<p class="text-sm font-bold text-gray-900">{{ nightHours }}시간</p>
+							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("야간근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ nightHours }}{{ __("시간") }}</p>
 							</div>
-							<div class="flex items-center justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">휴일근로</p>
-								<p class="text-sm font-bold text-gray-900">{{ holidayHours }}시간</p>
+							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("휴일근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ holidayHours }}{{ __("시간") }}</p>
 							</div>
 						</div>
 					</template>
 				</section>
 
 				<!-- Card 3: 가산수당 미리보기 -->
-				<section class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-					<h2 class="text-base font-bold text-gray-900 mb-3">가산수당 미리보기 (근기법 56조)</h2>
+				<section class="k-card p-4">
+					<p class="k-eyebrow">PREMIUM PAY</p>
+					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("가산수당 미리보기 (근기법 56조)") }}</h2>
 
-					<div class="flex flex-col gap-2 mb-4">
-						<label class="text-xs text-gray-500 font-medium">통상시급 (원)</label>
+					<div class="mt-3 mb-4 flex flex-col gap-2">
+						<label class="text-xs font-medium text-black/50">{{ __("통상시급 (원)") }}</label>
 						<div class="flex gap-2">
 							<input
 								v-model.number="hourlyRateInput"
 								type="number"
 								min="0"
 								placeholder="예: 10030"
-								class="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-								style="color: var(--color-text-primary, #111827); background: var(--color-surface, #fff);"
+								class="k-numeric flex-1 rounded-lg border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
 								@input="onHourlyRateInput"
 							/>
 							<button
-								class="rounded-xl px-4 py-2 text-sm font-semibold text-white"
-								style="background: var(--color-primary, #2563eb);"
+								class="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white"
 								@click="loadPremiumPreview"
 							>
-								계산
+								{{ __("계산") }}
 							</button>
 						</div>
 					</div>
 
-					<div v-if="premiumLoading" class="text-sm text-gray-400">계산 중...</div>
+					<div v-if="premiumLoading" class="text-sm text-black/40">{{ __("계산 중…") }}</div>
 
 					<template v-else>
 						<div class="flex flex-col gap-2">
-							<div class="flex justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">정시급 (정시 × 시급)</p>
-								<p class="text-sm font-bold text-gray-900">{{ formatWon(premiumBasePay) }}</p>
+							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("정시급 (정시 × 시급)") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumBasePay) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">연장수당 (50% 가산)</p>
-								<p class="text-sm font-bold text-gray-900">{{ formatWon(premiumOvertime) }}</p>
+							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("연장수당 (50% 가산)") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumOvertime) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">야간수당 (50% 추가)</p>
-								<p class="text-sm font-bold text-gray-900">{{ formatWon(premiumNight) }}</p>
+							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("야간수당 (50% 추가)") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumNight) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-gray-50 p-3">
-								<p class="text-sm text-gray-600">휴일수당 (50%/100%)</p>
-								<p class="text-sm font-bold text-gray-900">{{ formatWon(premiumHoliday) }}</p>
+							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+								<p class="text-sm text-black">{{ __("휴일수당 (50%/100%)") }}</p>
+								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumHoliday) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl p-3" style="background: var(--color-primary, #2563eb); opacity: 0.9;">
-								<p class="text-sm font-bold text-white">합계</p>
-								<p class="text-base font-bold text-white">{{ formatWon(premiumTotal) }}</p>
+							<div class="flex justify-between rounded-xl bg-black p-3 text-white">
+								<p class="text-sm font-bold">{{ __("합계") }}</p>
+								<p class="k-numeric text-base font-bold">{{ formatWon(premiumTotal) }}</p>
 							</div>
 						</div>
-						<p class="mt-2 text-xs text-gray-400">
-							* 통상시급 미입력 시 가산금액은 0원입니다. 정확한 계산을 위해 시급을 입력하세요.
+						<p class="mt-2 text-xs text-black/40">
+							{{ __("* 통상시급 미입력 시 가산금액은 0원입니다. 정확한 계산을 위해 시급을 입력하세요.") }}
 						</p>
 					</template>
 				</section>
 
 				<!-- Card 4: 마감 상태 (관리자용) -->
-				<section v-if="isAdminUser" class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
-					<h2 class="text-base font-bold text-white mb-1">마감 상태 (관리자)</h2>
-					<p class="text-xs text-gray-400 mb-3">사업장 단위 마감 진행 현황</p>
+				<section v-if="isAdminUser" class="k-card p-4">
+					<p class="k-eyebrow">CLOSING · ADMIN</p>
+					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("마감 상태 (관리자)") }}</h2>
+					<p class="mt-1 text-xs text-black/50">{{ __("사업장 단위 마감 진행 현황") }}</p>
 
-					<div class="grid grid-cols-2 gap-2 mb-4">
-						<div class="rounded-xl bg-white/10 p-3 text-center">
-							<p class="text-xl font-bold text-white">{{ closingProgress.total }}</p>
-							<p class="text-xs text-gray-300">전체</p>
+					<div class="mt-3 mb-4 grid grid-cols-2 gap-2">
+						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+							<p class="k-numeric text-xl font-bold text-black">{{ closingProgress.total }}</p>
+							<p class="text-xs text-black/50">{{ __("전체") }}</p>
 						</div>
-						<div class="rounded-xl bg-green-400/20 p-3 text-center">
-							<p class="text-xl font-bold text-green-100">{{ closingProgress.completed }}</p>
-							<p class="text-xs text-green-300">마감 완료</p>
+						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+							<p class="k-numeric text-xl font-bold text-green-800">{{ closingProgress.completed }}</p>
+							<p class="text-xs text-black/50">{{ __("마감 완료") }}</p>
 						</div>
 					</div>
 
-					<div class="rounded-xl border border-amber-200/30 bg-amber-400/10 p-3 mb-4 text-sm text-amber-100">
-						<p class="font-semibold">뮤테이션 경계</p>
-						<p class="mt-1 text-xs text-amber-200">
-							마감 적용은 draft 저장 전용입니다. submit/cancel/approve/send는 별도 워크플로우에서 처리합니다.
+					<div class="mb-4 rounded-xl bg-[#f7f7f5] p-3 text-sm">
+						<p class="font-semibold text-black">{{ __("뮤테이션 경계") }}</p>
+						<p class="mt-1 text-xs text-black/60">
+							{{ __("마감 적용은 draft 저장 전용입니다. submit/cancel/approve/send는 별도 워크플로우에서 처리합니다.") }}
 						</p>
 						<!-- mutation_boundary: draft_only_no_submit_no_approve_no_send -->
-						<p class="mt-1 text-xs text-amber-300/50">boundary: draft_only_no_submit_no_approve_no_send</p>
+						<p class="k-numeric mt-1 text-xs text-black/30">boundary: draft_only_no_submit_no_approve_no_send</p>
 					</div>
 
 					<div class="flex gap-2">
 						<button
-							class="flex-1 rounded-xl border border-white/30 py-2.5 text-sm font-semibold text-white"
+							class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
 							@click="loadAttendanceSummary"
 						>
-							마감 미리보기
+							{{ __("마감 미리보기") }}
 						</button>
 						<button
-							class="flex-1 rounded-xl py-2.5 text-sm font-semibold text-gray-900"
-							style="background: #fbbf24;"
+							class="flex-1 rounded-full bg-black py-2.5 text-sm font-semibold text-white"
 							@click="showApplyDialog = true"
 						>
-							마감 적용
+							{{ __("마감 임시저장(Draft)") }}
 						</button>
 					</div>
 				</section>
@@ -220,33 +231,32 @@
 					class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4"
 					@click.self="showApplyDialog = false"
 				>
-					<div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-						<h3 class="text-base font-bold text-gray-900">마감 적용 확인</h3>
-						<p class="mt-2 text-sm text-gray-600">
-							{{ closingPeriodLabel }} 근태 마감을 적용합니다.<br />
-							이 작업은 Draft 저장이며 승인·발송은 포함하지 않습니다.
+					<div class="w-full max-w-sm rounded-2xl bg-white p-6">
+						<h3 class="text-base font-bold text-black">{{ __("마감 임시저장 확인") }}</h3>
+						<p class="mt-2 text-sm text-black/60">
+							{{ closingPeriodLabel }} {{ __("근태 마감을 임시저장(Draft)합니다.") }}<br />
+							{{ __("이 작업은 Draft 저장이며 승인·발송은 포함하지 않습니다.") }}
 						</p>
-						<div class="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-700">
-							⚠️ 관리자가 직접 검토·승인한 경우에만 진행하세요.
+						<div class="mt-4 rounded-xl bg-red-100 p-3 text-xs font-semibold text-red-700">
+							{{ __("관리자가 직접 검토·승인한 경우에만 진행하세요.") }}
 						</div>
 						<div class="mt-5 flex gap-3">
 							<button
-								class="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-700"
+								class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
 								@click="showApplyDialog = false"
 							>
-								취소
+								{{ __("취소") }}
 							</button>
 							<button
-								class="flex-1 rounded-xl py-2.5 text-sm font-bold text-white"
-								style="background: var(--color-primary, #2563eb);"
+								class="flex-1 rounded-full bg-black py-2.5 text-sm font-bold text-white disabled:opacity-50"
 								:disabled="applyLoading"
 								@click="doApplyClosing"
 							>
-								{{ applyLoading ? "처리 중..." : "적용 확인" }}
+								{{ applyLoading ? __("처리 중…") : __("임시저장 확인") }}
 							</button>
 						</div>
-						<p v-if="applyError" class="mt-3 text-xs text-red-600">{{ applyError }}</p>
-						<p v-if="applySuccess" class="mt-3 text-xs text-green-700">{{ applySuccess }}</p>
+						<p v-if="applyError" class="mt-3 text-xs font-semibold text-red-700">{{ applyError }}</p>
+						<p v-if="applySuccess" class="mt-3 text-xs font-semibold text-green-800">{{ applySuccess }}</p>
 					</div>
 				</div>
 
@@ -270,6 +280,7 @@ import {
 // ── Frappe 주입 ──────────────────────────────────────────────────
 const employee = inject("$employee")
 const dayjs = inject("$dayjs")
+const __ = inject("$translate")
 
 // ── 기간 설정 (이번 달) ──────────────────────────────────────────
 const periodStart = computed(() => dayjs().startOf("month").format("YYYY-MM-DD"))
@@ -322,7 +333,7 @@ const dataSourceBadge = computed(() =>
 const dataSourceBadgeClass = computed(() =>
 	attendanceSource.value === "runtime"
 		? "bg-green-100 text-green-800"
-		: "bg-amber-100 text-amber-800"
+		: "bg-black/10 text-black"
 )
 
 // ── 가산수당 상태 ────────────────────────────────────────────────

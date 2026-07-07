@@ -15,12 +15,35 @@
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<!-- 주인공: 잔여 연차 -->
-					<div v-if="display" class="mt-3">
-						<p class="text-sm font-medium text-black/60">{{ __("잔여 연차") }}</p>
-						<p class="k-numeric text-4xl font-bold tracking-tight leading-tight" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
-							{{ display.remainingDays }}<span class="text-xl font-bold">일</span>
-						</p>
+					<!-- 주인공: 잔여 연차 (+ 우측: 사용률 도넛 — 인라인 SVG) -->
+					<div v-if="display" class="mt-3 flex items-center justify-between gap-3">
+						<div>
+							<p class="text-sm font-medium text-black/60">{{ __("잔여 연차") }}</p>
+							<p class="k-numeric text-4xl font-bold tracking-tight leading-tight" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
+								{{ display.remainingDays }}<span class="text-xl font-bold">일</span>
+							</p>
+						</div>
+						<div v-if="usageDonut" class="relative h-20 w-20 shrink-0" data-testid="leave-usage-donut">
+							<svg viewBox="0 0 96 96" class="h-full w-full -rotate-90 text-black" role="img" aria-label="연차 사용률">
+								<!-- 트랙: 파스텔 배경 위 white/55 -->
+								<circle cx="48" cy="48" r="40" fill="none" stroke="white" stroke-opacity="0.55" stroke-width="10" />
+								<!-- 진행: 사용/총부여 -->
+								<circle
+									cx="48"
+									cy="48"
+									r="40"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="10"
+									stroke-linecap="round"
+									:stroke-dasharray="usageDonut.dashArray"
+								/>
+							</svg>
+							<div class="absolute inset-0 flex flex-col items-center justify-center">
+								<span class="k-numeric text-base font-bold leading-none text-black">{{ Math.round(usageDonut.percent) }}%</span>
+								<span class="mt-0.5 text-[10px] font-medium text-black/50">{{ __("사용률") }}</span>
+							</div>
+						</div>
 					</div>
 					<div v-if="display" class="mt-4 grid grid-cols-3 gap-2">
 						<div class="rounded-xl bg-white/60 p-3 text-center">
@@ -168,21 +191,11 @@
 							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black/40'">{{ __("일") }}</p>
 						</div>
 					</div>
-					<!-- 사용률 바 -->
-					<div class="mt-4">
-						<div class="mb-1 flex items-center justify-between text-xs text-black/50">
-							<span>{{ __("사용률") }}</span>
-							<span class="k-numeric">{{ usagePercent }}%</span>
-						</div>
-						<div class="h-2 overflow-hidden rounded-full bg-[#f1f1f1]">
-							<div
-								class="h-full rounded-full transition-all duration-300"
-								:class="usagePercent >= 100 ? 'bg-red-600' : 'bg-black'"
-								:style="{ width: Math.min(usagePercent, 100) + '%' }"
-							></div>
-						</div>
-						<p class="mt-1 text-xs text-black/40">{{ __("총") }} {{ display.allocatedDays }}{{ __("일 중") }} {{ display.usedDays }}{{ __("일 사용") }}</p>
-					</div>
+					<!-- 사용률 요약 (차트는 히어로 도넛 1개로 절제 — 화면당 차트 1개 원칙) -->
+					<p class="mt-3 text-xs text-black/40">
+						{{ __("사용률") }} <span class="k-numeric font-semibold text-black/60">{{ usagePercent }}%</span>
+						· {{ __("총") }} {{ display.allocatedDays }}{{ __("일 중") }} {{ display.usedDays }}{{ __("일 사용") }}
+					</p>
 				</section>
 
 				<!-- 조회 전용 안내 -->
@@ -253,6 +266,7 @@
 import { computed, inject, onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
 import BaseLayout from "@/components/BaseLayout.vue"
+import { buildDonut } from "@/utils/koreaCharts"
 import { koreaAnnualLeaveFixture, buildKoreaAnnualLeaveFixtureForEmployee } from "@/data/koreaAnnualLeaveFixture"
 import {
 	fetchKoreaAnnualLeavePreview,
@@ -328,6 +342,13 @@ const tenureLabel = computed(() => {
 const usagePercent = computed(() => {
 	if (!display.value || display.value.allocatedDays <= 0) return 0
 	return Math.round((display.value.usedDays / display.value.allocatedDays) * 100)
+})
+
+// 사용률 도넛 (사용/총부여) — 총부여 0 이하면 null → 도넛 숨김 (빈 차트 렌더 금지)
+const usageDonut = computed(() => {
+	const d = display.value
+	if (!d || !(d.totalEntitlement > 0)) return null
+	return buildDonut(d.usedDays / d.totalEntitlement, 40)
 })
 
 const dataSourceLabel = computed(() => {

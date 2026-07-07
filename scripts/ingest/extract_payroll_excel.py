@@ -16,91 +16,30 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import pathlib
 import sys
 
-import openpyxl
+# 파싱·무결성 로직은 hrms 패키지 코어로 승격됨 — 이 스크립트는 thin wrapper.
+_CORE_PATH = (
+    pathlib.Path(__file__).resolve().parents[2]
+    / "hrms" / "regional" / "south_korea" / "payroll_excel.py"
+)
+_spec = importlib.util.spec_from_file_location("_korea_payroll_excel_core", _CORE_PATH)
+_core = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_core)
 
-# 시트 종류별 컬럼 매핑 프로파일 (1-base 인덱스). 다른 포맷은 프로파일만 추가.
-PROFILES = {
-    # 월급제 '급여(직원)' 시트 — 노호 5월 32명 1원 일치.
-    "monthly": {
-        "sheet": "급여(직원)",
-        "cols": {"dept": 2, "name": 3, "join": 8, "email": 14,
-                 "gross": 31, "ded_total": 38, "net": 39},
-        "earnings": {
-            20: "기본급", 21: "고정연장수당", 22: "고정야간수당", 23: "고정휴일수당",
-            24: "고정휴일연장수당", 25: "연차선지급", 26: "식대(비과세)", 27: "보안수당",
-            28: "근로자의날추가지급", 29: "초과근무수당", 30: "전월미지급",
-        },
-        "deductions": {32: "소득세", 33: "지방소득세", 34: "국민연금", 35: "건강보험", 36: "장기요양", 37: "고용보험"},
-    },
-    # 시급제 '파트타임' 시트 — U~X=지급, Y=세전합계, Z~AE=공제, AF=공제합계, AG=차인지급액.
-    "parttime": {
-        "sheet": "파트타임",
-        "cols": {"dept": 2, "name": 3, "join": 8, "email": 14,
-                 "gross": 25, "ded_total": 32, "net": 33},
-        "earnings": {21: "기본급", 22: "주휴수당", 23: "근로자의날추가지급", 24: "기타수당"},
-        "deductions": {26: "소득세", 27: "지방소득세", 28: "국민연금", 29: "건강보험", 30: "장기요양", 31: "고용보험"},
-    },
-}
+PROFILES = _core.PROFILES
 
 
 def extract(path: str, period: str, sheet_type: str = "monthly", sheet: str | None = None) -> dict:
     if sheet_type not in PROFILES:
         raise SystemExit(f"알 수 없는 --sheet-type: {sheet_type} (가능: {', '.join(PROFILES)})")
-    profile = PROFILES[sheet_type]
-    cols = profile["cols"]
-    earning_cols = profile["earnings"]
-    deduction_cols = profile["deductions"]
-
-    wb = openpyxl.load_workbook(path, data_only=True)
-    ws = wb[sheet or profile["sheet"]]
-
-    SUMMARY_NAMES = {"합계", "총계", "소계", "계"}
-
-    def num(r: int, c: int) -> int:
-        v = ws.cell(r, c).value
-        if isinstance(v, bool) or not isinstance(v, (int, float)):
-            return 0
-        return int(round(float(v)))
-
-    employees = []
-    for r in range(2, ws.max_row + 1):
-        name = ws.cell(r, cols["name"]).value
-        if not name:
-            continue
-        if str(name).strip() in SUMMARY_NAMES:
-            continue  # 합계행은 자기일관이라 무결성 검사를 통과하므로 반드시 이름으로 스킵
-        earnings = {label: num(r, c) for c, label in earning_cols.items() if num(r, c)}
-        deductions = {label: num(r, c) for c, label in deduction_cols.items() if num(r, c)}
-        employees.append(
-            {
-                "name": str(name).strip(),
-                "dept": str(ws.cell(r, cols["dept"]).value or "").strip(),
-                "join": str(ws.cell(r, cols["join"]).value)[:10] if ws.cell(r, cols["join"]).value else "",
-                "email": str(ws.cell(r, cols["email"]).value or "").strip(),
-                "earnings": earnings,
-                "deductions": deductions,
-                "expected_gross": num(r, cols["gross"]),
-                "expected_ded": num(r, cols["ded_total"]),
-                "expected_net": num(r, cols["net"]),
-            }
-        )
-
-    errors = []
-    for e in employees:
-        if not e["earnings"] and e["expected_gross"] == 0 and e["expected_net"] == 0:
-            errors.append(f"{e['name']}: 숫자 셀 없음 — 텍스트 서식 행 의심 (0원 시드 방지)")
-            continue
-        if sum(e["earnings"].values()) != e["expected_gross"]:
-            errors.append(f"{e['name']}: earnings 합 != 세전")
-        if e["expected_gross"] - sum(e["deductions"].values()) != e["expected_net"]:
-            errors.append(f"{e['name']}: 세전-공제 != 실지급")
-    if errors:
-        raise SystemExit("무결성 실패 (엑셀이 권위 — 매핑을 점검하라):\n" + "\n".join(errors))
-
-    return {"period": period, "count": len(employees), "employees": employees}
+    try:
+        return _core.extract_payroll(path, period, sheet_type, sheet)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
 
 def _parse_args(argv: list[str]) -> dict:

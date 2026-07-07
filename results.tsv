@@ -19,3 +19,4 @@ date	commit	metric	status	description
 2026-07-07	2a0fa3fa6	마감대시보드 실데이터(runtime 1건 review_ready)+company폴백 TDD 5케이스+워크스페이스 19숨김+코어번역 25종	keep	노호 2차 라운드: 문종원 계정·모듈숨김·실데이터 대시보드·디자인 계획 D1~D4
 2026-07-07	61c3132f5	SW납치 가드 TDD 2케이스+i18n 미번역 0/191+코어번역 174종 누적+스모크 passed	keep	전달 직전 3차: SW 스코프·전수 한글화·한국 접두어 제거·HR 홈 개편
 2026-07-07	e89f5d539	디자인1차: 4축 색블록 홈+pill+공제3줄요약+dayjs ko, 스모크 passed+워크스페이스 19/19	keep	DESIGN-figma 리팩토링 1차 + 데스크 4축·숏컷·오버뷰 복원
+2026-07-07	6599c21db	D2 navy히어로+배너 한글화(프로브 계약 4곳 동기), 스모크 passed, 프론트 테스트 GREEN(env 1건 제외)	keep	디자인 리팩토링 2차 — 마감 대시보드 완성

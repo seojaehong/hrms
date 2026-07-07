@@ -25,6 +25,11 @@ const routes = [
 		path: "/dashboard/korea-onboarding-request",
 		component: () => import("@/views/korea/KoreaOnboardingRequest.vue"),
 	},
+	{
+		name: "KoreaPayrollExcel",
+		path: "/dashboard/korea-payroll-excel",
+		component: () => import("@/views/korea/KoreaPayrollExcel.vue"),
+	},
 ]
 
 export default routes

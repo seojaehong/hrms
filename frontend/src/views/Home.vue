@@ -61,6 +61,7 @@ const sections = [
 		title: __("급여"),
 		links: [
 			{ title: __("임금명세서"), route: "KoreaWageStatementDashboard" },
+			{ title: __("급여 엑셀 관리"), route: "KoreaPayrollExcel" },
 			{ title: __("급여 마감 센터"), route: "KoreaPayrollClosingDashboard" },
 			{ title: __("급여 검토 감사 로그"), route: "KoreaPayrollReviewAuditLogs" },
 		],

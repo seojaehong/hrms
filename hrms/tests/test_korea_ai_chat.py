@@ -31,6 +31,8 @@ chat_query = _ai_chat.chat_query
 detect_intent = _ai_chat.detect_intent
 retrieve_relevant_documents = _ai_chat.retrieve_relevant_documents
 store_chat_audit_log = _ai_chat.store_chat_audit_log
+detect_payroll_data_intent = _ai_chat.detect_payroll_data_intent
+build_payroll_summary_line = _ai_chat.build_payroll_summary_line
 
 # ──────────────────────────────────────────────
 # 의도 분류 테스트
@@ -603,6 +605,104 @@ class TestAdminCatalogMerge(unittest.TestCase):
         finally:
             _ai_chat._CATALOG_CACHE = old_cache
             _ai_chat._INDEX_CACHE = old_index
+
+
+# ──────────────────────────────────────────────
+# US-X6: 사이트 급여 데이터 인텐트 + 요약 문구
+# ──────────────────────────────────────────────
+
+
+class TestDetectPayrollDataIntent(unittest.TestCase):
+    def test_positive_total_pay(self):
+        self.assertTrue(detect_payroll_data_intent("이번 달 총지급 얼마야?"))
+
+    def test_positive_headcount(self):
+        self.assertTrue(detect_payroll_data_intent("이번 급여 몇 명이지?"))
+
+    def test_positive_closing_status(self):
+        self.assertTrue(detect_payroll_data_intent("5월 급여 마감 상태 알려줘"))
+
+    def test_negative_payroll_law_question(self):
+        """급여 '법령' 질문에는 걸리지 않아야 한다 (데이터 vs 법령 분리)."""
+        self.assertFalse(
+            detect_payroll_data_intent("최저임금 위반 시 퇴직금은 어떻게 처리되나요?")
+        )
+
+    def test_negative_empty(self):
+        self.assertFalse(detect_payroll_data_intent(""))
+        self.assertFalse(detect_payroll_data_intent("   "))
+
+
+class TestBuildPayrollSummaryLine(unittest.TestCase):
+    def test_comma_formatting(self):
+        line = build_payroll_summary_line({
+            "period": "2026-05",
+            "employee_count": 32,
+            "net_total": 95940486,
+            "closing_status": "마감 확정 대기",
+        })
+        self.assertEqual(
+            line,
+            "2026-05 급여: 32명 · 실지급 합계 95,940,486원 · 마감 확정 대기",
+        )
+
+    def test_status_omitted_when_blank(self):
+        line = build_payroll_summary_line({
+            "period": "2026-05",
+            "employee_count": 1,
+            "net_total": 1000,
+            "closing_status": "",
+        })
+        self.assertEqual(line, "2026-05 급여: 1명 · 실지급 합계 1,000원")
+
+
+class TestChatQueryPayrollSummary(unittest.TestCase):
+    def test_summary_prepended_with_provider(self):
+        """급여 데이터 질의 + provider 제공 시 요약이 답변 앞에 붙는다."""
+        stats = {
+            "period": "2026-05",
+            "employee_count": 32,
+            "net_total": 95940486,
+            "closing_status": "마감 확정 대기",
+        }
+        result = chat_query(
+            user_question="이번 달 총지급 실지급 합계 얼마야?",
+            user_role="admin",
+            session_id="test-payroll-summary",
+            payroll_stats_provider=lambda: stats,
+        )
+        self.assertTrue(
+            result["answer"].startswith(
+                "2026-05 급여: 32명 · 실지급 합계 95,940,486원 · 마감 확정 대기"
+            )
+        )
+        self.assertTrue(result["no_mutation_performed"])
+
+    def test_no_provider_unchanged(self):
+        """provider 미제공(기본값) 시 요약 미부착 — 기존 동작."""
+        result = chat_query(
+            user_question="이번 달 총지급 실지급 합계 얼마야?",
+            user_role="admin",
+            session_id="test-payroll-noprovider",
+        )
+        self.assertNotIn("실지급 합계", result["answer"])
+
+    def test_non_payroll_intent_no_summary(self):
+        """급여 데이터 질의가 아니면 provider 있어도 미부착."""
+        called = {"n": 0}
+
+        def _provider():
+            called["n"] += 1
+            return {"period": "2026-05", "employee_count": 1, "net_total": 1, "closing_status": "x"}
+
+        result = chat_query(
+            user_question="연차 유급휴가는 어떻게 계산하나요?",
+            user_role="employee",
+            session_id="test-payroll-leave",
+            payroll_stats_provider=_provider,
+        )
+        self.assertEqual(called["n"], 0)  # 인텐트 아님 → provider 미호출
+        self.assertNotIn("실지급 합계", result["answer"])
 
 
 if __name__ == "__main__":

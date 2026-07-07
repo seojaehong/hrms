@@ -75,7 +75,51 @@ def chat_query_api(
         context_doctype=context_doctype,
         context_doc_name=context_doc_name,
         session_id=session_id,
+        payroll_stats_provider=_payroll_stats_provider,
     )
+
+
+def _payroll_stats_provider() -> dict | None:
+    """사이트 급여 데이터 질의용 read-only 집계 stats (frappe 백엔드).
+
+    가장 최근 급여월의 Salary Slip 을 집계해 {period, employee_count,
+    net_total, closing_status} 반환. 어떤 오류든 None 을 반환해 챗봇 답변을
+    절대 중단시키지 않는다(개인 급여액이 아닌 집계 수치만 반환).
+    """
+    try:
+        latest = frappe.get_all(
+            "Salary Slip",
+            fields=["start_date"],
+            order_by="start_date desc",
+            limit_page_length=1,
+        )
+        if not latest or not latest[0].get("start_date"):
+            return None
+        start_date = latest[0]["start_date"]
+        period = str(start_date)[:7]  # YYYY-MM
+
+        slips = frappe.get_all(
+            "Salary Slip",
+            filters={"start_date": start_date},
+            fields=["net_pay", "docstatus"],
+        )
+        if not slips:
+            return None
+
+        employee_count = len(slips)
+        net_total = int(round(sum(float(s.get("net_pay") or 0) for s in slips)))
+        # 전건 제출(docstatus 1) → 마감 확정, 아니면 확정 대기.
+        all_submitted = all(int(s.get("docstatus") or 0) == 1 for s in slips)
+        closing_status = "마감 확정" if all_submitted else "마감 확정 대기"
+
+        return {
+            "period": period,
+            "employee_count": employee_count,
+            "net_total": net_total,
+            "closing_status": closing_status,
+        }
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------------------------------

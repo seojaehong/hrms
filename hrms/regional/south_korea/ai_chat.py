@@ -17,7 +17,7 @@ import os
 import re
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 # ──────────────────────────────────────────────
 # 모듈 상수 — contract / boundary 식별자
@@ -191,6 +191,7 @@ def chat_query(
     context_doctype: str | None = None,
     context_doc_name: str | None = None,
     session_id: str,
+    payroll_stats_provider: Callable[[], dict | None] | None = None,
 ) -> dict:
     """사용자 질문 → 한국 노동법/HRMS 모듈 retrieval + 답변.
 
@@ -245,6 +246,16 @@ def chat_query(
         user_role=user_role,
         docs=docs,
     )
+
+    # 사이트 급여 데이터 질의면 read-only 집계 한 줄 요약을 답변 앞에 붙인다.
+    # provider 미제공(테스트 환경/기본값) 또는 stats None이면 기존 동작 그대로.
+    if payroll_stats_provider is not None and detect_payroll_data_intent(user_question):
+        try:
+            stats = payroll_stats_provider()
+        except Exception:
+            stats = None
+        if stats:
+            answer = build_payroll_summary_line(stats) + "\n\n" + answer
 
     suggested_actions = _build_suggested_actions(
         intent=intent,
@@ -423,6 +434,53 @@ def detect_intent(question: str) -> dict:
         "intent": best_intent,
         "matched_keywords": best_matched,
     }
+
+
+# ──────────────────────────────────────────────
+# 사이트 급여 데이터 질의 인텐트 (read-only 집계 요약)
+# ──────────────────────────────────────────────
+# NOTE: 급여 "법령" 질의(급여/임금/수당/퇴직금 …, INTENT_KEYWORD_MAP["payroll"])와
+# 반드시 구분한다. 여기 키워드는 "우리 사이트의 실제 숫자"를 묻는 질의에만 반응해야
+# 하므로 좁게 유지한다("최저임금 위반 시 퇴직금…" 같은 법령 질문에는 걸리지 않음).
+PAYROLL_DATA_INTENT_KEYWORDS: list[str] = [
+    "총지급", "총 지급", "실지급", "실 지급", "지급 합계", "지급합계",
+    "급여 총액", "급여총액", "급여 합계", "급여합계",
+    "마감 상태", "마감상태", "마감 확정", "마감됐", "마감 됐", "마감했",
+    "몇 명", "몇명", "인원 수", "인원수",
+]
+
+
+def detect_payroll_data_intent(question: str) -> bool:
+    """질문이 사이트 급여 데이터(집계 수치) 질의인지 판별하는 순수 함수.
+
+    급여 "법령" 질의가 아니라 "우리 사이트의 총지급/실지급/인원/마감 상태" 같은
+    실제 데이터 조회 의도만 True. 점수/확률 없음.
+    """
+    if not question or not question.strip():
+        return False
+    return any(kw in question for kw in PAYROLL_DATA_INTENT_KEYWORDS)
+
+
+def build_payroll_summary_line(stats: dict) -> str:
+    """급여 집계 stats → 한 줄 요약 문구 (순수 함수, 원 단위 콤마).
+
+    예: '2026-05 급여: 32명 · 실지급 합계 95,940,486원 · 마감 확정 대기'
+
+    stats 키:
+        - period: 'YYYY-MM'
+        - employee_count: int
+        - net_total: int (실지급 합계, 원)
+        - closing_status: str (예: '마감 확정 대기' / '마감 확정')
+    """
+    period = str(stats.get("period", "")).strip()
+    count = int(stats.get("employee_count", 0) or 0)
+    net_total = int(round(float(stats.get("net_total", 0) or 0)))
+    status = str(stats.get("closing_status", "")).strip()
+
+    line = f"{period} 급여: {count}명 · 실지급 합계 {net_total:,}원"
+    if status:
+        line += f" · {status}"
+    return line
 
 
 # ──────────────────────────────────────────────

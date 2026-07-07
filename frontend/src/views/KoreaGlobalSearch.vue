@@ -63,7 +63,7 @@
 							<!-- 결과 카드 -->
 							<div class="flex flex-col gap-1.5">
 								<component
-									:is="isInternalPwa(item.pwa_url) ? 'router-link' : 'a'"
+									:is="pwaRoutePath(item) ? 'router-link' : 'a'"
 									v-for="item in group.items"
 									:key="item.name"
 									v-bind="linkProps(item)"
@@ -71,7 +71,7 @@
 									@click="onResultClick(item)"
 								>
 									<span class="text-sm font-medium text-gray-900 leading-5">
-										{{ item.label }}
+										{{ formatResultLabel(item.label) || item.name }}
 									</span>
 									<span
 										v-if="item.snippet"
@@ -152,6 +152,8 @@ import {
 	toggleFilterPill,
 	getSelectedDoctypes,
 	groupResults,
+	toRouterPath,
+	formatResultLabel,
 } from "@/utils/koreaGlobalSearch"
 
 const __ = inject("$translate")
@@ -254,13 +256,24 @@ function onClearRecent() {
 // 링크 헬퍼
 // ---------------------------------------------------------------------------
 
-function isInternalPwa(pwaUrl) {
-	return pwaUrl && pwaUrl.startsWith("/hrms/")
+// pwa_url("/hrms/..." 절대 경로)을 router 내부 경로로 변환한 뒤,
+// 실제 등록된 라우트인지 확인. 라우트 없으면 null → 데스크(/app/...) 새 탭 폴백.
+// router base 가 이미 /hrms 이므로 그대로 push 하면 "/hrms/hrms/..." 중복 → 빈 화면.
+function pwaRoutePath(item) {
+	const path = toRouterPath(item.pwa_url)
+	if (!path) return null
+	try {
+		const resolved = router.resolve(path)
+		return resolved?.matched?.length > 0 ? path : null
+	} catch {
+		return null
+	}
 }
 
 function linkProps(item) {
-	if (isInternalPwa(item.pwa_url)) {
-		return { to: item.pwa_url }
+	const path = pwaRoutePath(item)
+	if (path) {
+		return { to: path }
 	}
 	return { href: item.url, target: "_blank", rel: "noopener noreferrer" }
 }

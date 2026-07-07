@@ -291,14 +291,55 @@ class TestGlobalSearchCore(unittest.TestCase):
         for key in ("name", "label", "url", "pwa_url", "snippet", "doctype"):
             self.assertIn(key, card, f"결과 카드에 '{key}' 키 누락")
 
-    def test_pwa_url_contains_name(self):
+    def test_pwa_url_is_none_when_no_pwa_route(self):
+        """직원 상세는 PWA 라우트가 없으므로 pwa_url=None → 데스크 폴백."""
         result = M.global_search(
             query="김",
             user_role="HR Manager",
             data_loader=self._loader({"Employee": self.EMPLOYEE_ROWS[:1]}),
         )
         card = result["results_by_doctype"]["Employee"][0]
-        self.assertIn("EMP-0001", card["pwa_url"])
+        self.assertIsNone(card["pwa_url"])
+        self.assertEqual(card["url"], "/app/employee/EMP-0001")
+
+    def test_pwa_url_contains_name_for_routed_doctype(self):
+        """PWA 라우트가 있는 doctype 은 pwa_url 에 name 포함."""
+        rows = [
+            {
+                "name": "SS-0001",
+                "employee": "EMP-0001",
+                "employee_name": "김철수",
+                "start_date": "2026-05-01",
+                "end_date": "2026-05-31",
+            }
+        ]
+        result = M.global_search(
+            query="김",
+            user_role="HR Manager",
+            doctypes=["Salary Slip"],
+            data_loader=self._loader({"Salary Slip": rows}),
+        )
+        card = result["results_by_doctype"]["Salary Slip"][0]
+        self.assertEqual(card["pwa_url"], "/hrms/salary-slips/SS-0001")
+
+    def test_pwa_url_templates_match_registered_pwa_routes(self):
+        """pwa_url_template 은 frontend/src/router 에 실제 존재하는 라우트만 사용.
+
+        (경로 중복/미존재 라우트 → 빈 화면 버그 회귀 방지)
+        """
+        allowed_prefixes = (
+            "/hrms/salary-slips/",
+            "/hrms/leave-applications/",
+            "/hrms/korea-payroll-closing-session/",
+        )
+        for doctype, meta in M.SEARCHABLE_DOCTYPES.items():
+            template = meta.get("pwa_url_template")
+            if template is None:
+                continue
+            self.assertTrue(
+                template.startswith(allowed_prefixes),
+                f"{doctype}: PWA 미등록 경로 {template!r}",
+            )
 
     def test_elapsed_ms_is_non_negative_int(self):
         result = M.global_search(
@@ -379,6 +420,54 @@ class TestGlobalSearchCore(unittest.TestCase):
         )
         emp_results = result["results_by_doctype"].get("Employee", [])
         self.assertLessEqual(len(emp_results), 5)
+
+
+class TestRenderTemplateLabel(unittest.TestCase):
+    """결과 카드 라벨 렌더링 — null/빈값 조각 생략 ("류두선 () — None" 버그)."""
+
+    TEMPLATE = "{employee_name} ({email}) — {department}"
+
+    def test_null_values_omit_fragments(self):
+        doc = {"employee_name": "류두선", "email": None, "department": None}
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "류두선")
+
+    def test_empty_string_values_omit_fragments(self):
+        doc = {"employee_name": "류두선", "email": "", "department": ""}
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "류두선")
+
+    def test_normal_values_render_full_label(self):
+        doc = {
+            "employee_name": "김철수",
+            "email": "kim@example.com",
+            "department": "개발팀",
+        }
+        label = M._render_template(self.TEMPLATE, doc)
+        self.assertEqual(label, "김철수 (kim@example.com) — 개발팀")
+
+    def test_format_result_card_label_has_no_none(self):
+        """global_search 종단에서도 None 문자열이 라벨에 노출되지 않는다."""
+        rows = [
+            {
+                "name": "EMP-0003",
+                "employee_name": "류두선",
+                "email": None,
+                "designation": None,
+                "department": None,
+                "employee": "EMP-0003",
+            }
+        ]
+        result = M.global_search(
+            query="류두선",
+            user_role="HR Manager",
+            doctypes=["Employee"],
+            data_loader=make_loader({"Employee": rows}),
+        )
+        card = result["results_by_doctype"]["Employee"][0]
+        self.assertNotIn("None", card["label"])
+        self.assertNotIn("()", card["label"])
+        self.assertEqual(card["label"], "류두선")
 
 
 class TestSnippetEdgeCases(unittest.TestCase):

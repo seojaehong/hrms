@@ -251,7 +251,9 @@ def _collect_payroll_closing_drafts(
     if not db or not _doctype_exists(_DOCTYPE_PAYROLL):
         return []
 
-    # 필드명은 커스텀 doctype에 따라 다를 수 있음 — 방어적으로 처리
+    # 주의: fields는 korea_payroll_closing_draft.json에 실재하는 필드만 사용.
+    # (과거 employee_name/pay_year_month 등 미존재 필드 요청 → get_list 예외
+    #  → 조용히 빈 리스트 반환 → "1 확정 대기 ↔ 인박스 0건" 버그)
     try:
         rows = frappe.get_list(
             _DOCTYPE_PAYROLL,
@@ -262,9 +264,11 @@ def _collect_payroll_closing_drafts(
             },
             fields=[
                 "name",
-                "employee_name",
-                "pay_year_month",
                 "company",
+                "workplace",
+                "period_start",
+                "period_end",
+                "status",
                 "creation",
             ],
             order_by="creation desc",
@@ -276,20 +280,26 @@ def _collect_payroll_closing_drafts(
     items = []
     for row in rows:
         name = row.get("name", "")
-        employee_name = row.get("employee_name") or name
+        workplace = row.get("workplace") or row.get("company") or name
+        period = f"{_fmt_date(row.get('period_start')) or ''}~{_fmt_date(row.get('period_end')) or ''}"
         items.append(
             {
                 "doctype": _DOCTYPE_PAYROLL,
                 "name": name,
-                "title": f"{_DOCTYPE_LABELS[_DOCTYPE_PAYROLL]} - {row.get('pay_year_month', '')}",
-                "applicant_name": employee_name,
+                "title": f"{_DOCTYPE_LABELS[_DOCTYPE_PAYROLL]} - {workplace} {period}",
+                "applicant_name": workplace,
                 "requested_at": _fmt_datetime(row.get("creation")),
                 "details": {
-                    "pay_year_month": row.get("pay_year_month") or "",
+                    "workplace": row.get("workplace") or "",
                     "company": row.get("company") or "",
+                    "period_start": _fmt_date(row.get("period_start")),
+                    "period_end": _fmt_date(row.get("period_end")),
+                    "status": row.get("status") or "",
                 },
                 "url_app": f"/app/korea-payroll-closing-draft/{name}",
-                "url_pwa": f"/hrms/korea-payroll-closing-draft/{name}",
+                # PWA에는 korea-payroll-closing-draft 상세 라우트가 없고
+                # 세션 미리보기 라우트(/korea-payroll-closing-session/:name)가 있음
+                "url_pwa": f"/hrms/korea-payroll-closing-session/{name}",
             }
         )
     return items
@@ -402,10 +412,21 @@ def _mutate_expense_claim(
 def _mutate_payroll_closing_draft(
     *, name: str, action: str, actor: str, comment: str | None
 ) -> dict:
+    """마감 draft 승인/반려 — draft 안전 불변식 준수.
+
+    mutation_boundary=draft_only_no_submit_no_approve_no_send:
+    여기서의 '승인'은 문서 제출(submit)이 아니라 draft에 승인 기록을
+    남기는 수준이다. 판단 근거 — korea_payroll_closing_draft.json의
+    status Select options에 draft_human_approved / draft_human_rejected가
+    허용된 전이로 정의되어 있고(is_submittable=0, docstatus 0 유지),
+    실제 확정·전송은 별도 담당자 플로우에서 수행된다.
+    (과거 코드의 "approved"/"rejected"는 Select options에 없는 값이라
+    저장 시 validation 실패를 유발했음.)
+    """
     if not _doctype_exists(_DOCTYPE_PAYROLL):
         frappe.throw(f"{_DOCTYPE_PAYROLL} doctype이 설치되어 있지 않습니다.")
     doc = frappe.get_doc(_DOCTYPE_PAYROLL, name)
-    new_status = "approved" if action == "approve" else "rejected"
+    new_status = "draft_human_approved" if action == "approve" else "draft_human_rejected"
     doc.status = new_status
     doc.save(ignore_permissions=True)
     _record_audit_comment(

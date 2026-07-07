@@ -41,6 +41,8 @@ const mod = await import("../src/utils/koreaGlobalSearch.js")
 const {
 	debounce,
 	renderSnippet,
+	toRouterPath,
+	formatResultLabel,
 	getRecentSearches,
 	addRecentSearch,
 	clearRecentSearches,
@@ -100,6 +102,57 @@ describe("renderSnippet", () => {
 	test("마커 없는 snippet 그대로 이스케이프만", () => {
 		const result = renderSnippet("일반 텍스트")
 		assert.equal(result, "일반 텍스트")
+	})
+})
+
+// ---------------------------------------------------------------------------
+// formatResultLabel 테스트 — null/빈값 조각 생략 계약
+// ---------------------------------------------------------------------------
+
+describe("formatResultLabel", () => {
+	test("null/undefined/빈 문자열 → 빈 문자열", () => {
+		assert.equal(formatResultLabel(null), "")
+		assert.equal(formatResultLabel(undefined), "")
+		assert.equal(formatResultLabel(""), "")
+	})
+
+	test("빈 괄호·None 조각 제거: '류두선 () — None' → '류두선'", () => {
+		assert.equal(formatResultLabel("류두선 () — None"), "류두선")
+		assert.equal(formatResultLabel("류두선 (None) — "), "류두선")
+		assert.equal(formatResultLabel("김철수 — None ~ None"), "김철수")
+	})
+
+	test("정상 라벨은 그대로 유지", () => {
+		assert.equal(
+			formatResultLabel("김철수 (kim@example.com) — 개발팀"),
+			"김철수 (kim@example.com) — 개발팀",
+		)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// toRouterPath 테스트 — router base(/hrms) 중복 제거 계약
+// ---------------------------------------------------------------------------
+
+describe("toRouterPath", () => {
+	test("/hrms prefix 를 제거해 router 내부 경로 반환 (경로 중복 방지)", () => {
+		assert.equal(toRouterPath("/hrms/salary-slips/SS-0001"), "/salary-slips/SS-0001")
+		assert.equal(
+			toRouterPath("/hrms/korea-payroll-closing-session/KPCD-0001"),
+			"/korea-payroll-closing-session/KPCD-0001",
+		)
+	})
+
+	test("prefix 없는 경로는 그대로 (선행 슬래시 보장)", () => {
+		assert.equal(toRouterPath("/leave-applications/LA-0001"), "/leave-applications/LA-0001")
+		assert.equal(toRouterPath("leave-applications/LA-0001"), "/leave-applications/LA-0001")
+	})
+
+	test("null/undefined/빈값/루트는 null 반환 (데스크 폴백)", () => {
+		assert.equal(toRouterPath(null), null)
+		assert.equal(toRouterPath(undefined), null)
+		assert.equal(toRouterPath(""), null)
+		assert.equal(toRouterPath("/hrms"), null)
 	})
 })
 

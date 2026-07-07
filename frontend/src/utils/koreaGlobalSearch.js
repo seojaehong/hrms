@@ -53,6 +53,53 @@ export function renderSnippet(snippet) {
 }
 
 // ---------------------------------------------------------------------------
+// 결과 카드 라벨 포맷
+// ---------------------------------------------------------------------------
+
+/**
+ * 검색 결과 라벨에서 null 값 흔적을 제거합니다.
+ * 직함/부서 등이 null 이면 "류두선 () — None" 처럼 빈 괄호와
+ * "None" 문자열이 노출되므로 해당 조각 자체를 생략합니다.
+ *
+ * @param {string|null|undefined} label
+ * @returns {string}
+ */
+export function formatResultLabel(label) {
+	if (!label) return ""
+	let out = String(label)
+	// 빈 괄호 또는 null 흔적만 담긴 괄호 제거: "() ", "(None)"
+	out = out.replace(/\s*\(\s*(?:None|null|undefined)?\s*\)/g, "")
+	// " — " 구분 조각별로 null 흔적 토큰을 지우고, 내용 없는 조각은 생략
+	const parts = out
+		.split(" — ")
+		.map((p) => p.replace(/\b(?:None|null|undefined)\b/g, "").trim())
+		.filter((p) => /[0-9A-Za-z가-힣]/.test(p))
+	return parts.join(" — ").trim()
+}
+
+// ---------------------------------------------------------------------------
+// PWA 경로 변환
+// ---------------------------------------------------------------------------
+
+/**
+ * 백엔드 pwa_url("/hrms/..." 절대 경로)을 vue-router 내부 경로로 변환합니다.
+ * router base 가 이미 "/hrms" 이므로 prefix 를 제거해야
+ * "/hrms/hrms/..." 경로 중복(빈 화면)이 발생하지 않습니다.
+ *
+ * @param {string|null|undefined} pwaUrl
+ * @returns {string|null} router 내부 경로 (없으면 null)
+ */
+export function toRouterPath(pwaUrl) {
+	if (!pwaUrl || typeof pwaUrl !== "string") return null
+	let path = pwaUrl
+	if (path === "/hrms" || path.startsWith("/hrms/")) {
+		path = path.slice("/hrms".length)
+	}
+	if (!path.startsWith("/")) path = `/${path}`
+	return path === "/" ? null : path
+}
+
+// ---------------------------------------------------------------------------
 // 최근 검색어 (localStorage)
 // ---------------------------------------------------------------------------
 

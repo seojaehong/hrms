@@ -333,7 +333,8 @@ function detailSummary(item) {
 		case "Employment Contract":
 			return `${d.contract_type || ""} · ${d.start_date || ""} ~ ${d.end_date || ""}`
 		case "Korea Payroll Closing Draft":
-			return `${d.pay_year_month || ""} · ${d.company || ""}`
+			// 승인=draft 승인 기록(문서 제출 아님) — 확정·전송은 담당자 플로우
+			return `${d.workplace || d.company || ""} · ${d.period_start || ""} ~ ${d.period_end || ""}`
 		default:
 			return ""
 	}

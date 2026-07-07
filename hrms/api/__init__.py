@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model import get_permitted_fields
 from frappe.model.workflow import get_workflow_name
 from frappe.query_builder import Order
-from frappe.utils import add_days, date_diff, getdate, strip_html
+from frappe.utils import add_days, cint, date_diff, getdate, strip_html
 
 from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
 
@@ -36,6 +36,23 @@ def get_current_user_info() -> dict:
 	user["roles"] = frappe.get_roles(current_user)
 
 	return user
+
+
+@frappe.whitelist()
+def get_system_locale_settings() -> dict:
+	"""PWA 포맷팅용 System Settings 안전 필드.
+
+	일반 직원은 System Settings 문서 read 권한이 없어
+	frappe.client.get_single_value / 문서 조회 시 페이지 이동마다
+	PermissionError가 서버 로그를 오염시킨다. 민감하지 않은 로케일
+	필드만 서버측에서 읽어 반환한다 (문서 read 권한 불필요).
+	"""
+	return {
+		"country": frappe.db.get_single_value("System Settings", "country"),
+		"language": frappe.db.get_single_value("System Settings", "language"),
+		"currency_precision": cint(frappe.db.get_single_value("System Settings", "currency_precision"))
+		or 2,
+	}
 
 
 @frappe.whitelist()

@@ -50,18 +50,18 @@
 						<div class="k-block k-block--lime -mx-1">
 							<div class="k-eyebrow">NET PAY · {{ selectedYear }}.{{ String(selectedMonth).padStart(2, "0") }}</div>
 							<div class="mt-1 text-sm font-medium text-black/60">실수령액</div>
-							<div class="k-display">
+							<div class="k-display k-settled">
 								{{ formatKRW(statement.net_pay) }}
 							</div>
 							<!-- 요약 3스탯: 지급 → 공제 → 실수령 흐름 -->
 							<div class="mt-4 grid grid-cols-3 gap-2">
 								<div class="rounded-lg bg-white/55 px-3 py-2">
 									<p class="text-[11px] text-black/55">지급 합계</p>
-									<p class="text-sm font-bold text-black k-numeric">{{ formatKRW(statementGrossTotal) }}</p>
+									<p class="text-sm font-bold k-amount">{{ formatKRW(statementGrossTotal) }}</p>
 								</div>
 								<div class="rounded-lg bg-white/55 px-3 py-2">
 									<p class="text-[11px] text-black/55">공제 합계</p>
-									<p class="text-sm font-bold text-black k-numeric">−{{ formatKRW(statement.total_deduction) }}</p>
+									<p class="text-sm font-bold k-amount">−{{ formatKRW(statement.total_deduction) }}</p>
 								</div>
 								<div class="rounded-lg bg-black px-3 py-2">
 									<p class="text-[11px] text-white/60">실수령</p>
@@ -113,7 +113,7 @@
 							<div class="flex flex-col">
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<span class="text-sm text-gray-600">기본급</span>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.base_salary) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.base_salary) }}</span>
 								</div>
 								<div
 									v-for="item in statement.allowances"
@@ -121,15 +121,15 @@
 									class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]"
 								>
 									<span class="text-sm text-gray-600">{{ item.label }}</span>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(item.amount) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(item.amount) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<span class="text-sm text-gray-600">비과세 합계</span>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.non_taxable_total) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.non_taxable_total) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
 									<span class="text-sm font-bold text-black">지급 합계</span>
-									<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(statementGrossTotal) }}</span>
+									<span class="text-sm font-bold k-amount">{{ formatKRW(statementGrossTotal) }}</span>
 								</div>
 							</div>
 						</div>
@@ -143,37 +143,37 @@
 									<button class="text-sm text-gray-600 flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
 										4대보험 <span class="text-gray-400 text-xs">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
 									</button>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statementInsuranceTotal) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(statementInsuranceTotal) }}</span>
 								</div>
 								<template v-if="showInsuranceDetail">
 									<div class="flex justify-between items-center py-1 pl-4">
 										<span class="text-xs text-gray-500">국민연금</span>
-										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.national_pension) }}</span>
+										<span class="text-xs k-amount">{{ formatKRW(statement.national_pension) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
 										<span class="text-xs text-gray-500">건강보험</span>
-										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.health_insurance) }}</span>
+										<span class="text-xs k-amount">{{ formatKRW(statement.health_insurance) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
 										<span class="text-xs text-gray-500">장기요양보험</span>
-										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.long_term_care_insurance) }}</span>
+										<span class="text-xs k-amount">{{ formatKRW(statement.long_term_care_insurance) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
 										<span class="text-xs text-gray-500">고용보험</span>
-										<span class="text-xs text-gray-600 k-numeric">{{ formatKRW(statement.employment_insurance) }}</span>
+										<span class="text-xs k-amount">{{ formatKRW(statement.employment_insurance) }}</span>
 									</div>
 								</template>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<span class="text-sm text-gray-600">소득세</span>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.income_tax) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.income_tax) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<span class="text-sm text-gray-600">주민세(지방소득세)</span>
-									<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(statement.local_income_tax) }}</span>
+									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.local_income_tax) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
 									<span class="text-sm font-bold text-black">공제 합계</span>
-									<span class="text-sm font-bold text-black k-numeric">−{{ formatKRW(statement.total_deduction) }}</span>
+									<span class="text-sm font-bold k-amount">−{{ formatKRW(statement.total_deduction) }}</span>
 								</div>
 							</div>
 						</div>

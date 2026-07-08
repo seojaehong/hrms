@@ -143,3 +143,10 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
 }
+/* 금액 잉크 — 돈에만 (Stripe: 전 금액 tabular + 딥 네이비). 색만 부여, 크기/굵기는 맥락 유지.
+   날짜·개수엔 쓰지 않는다(그건 .k-numeric). 확정 금액은 여기에 .k-settled를 더한다. */
+.k-amount {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--k-ledger-navy);
+}

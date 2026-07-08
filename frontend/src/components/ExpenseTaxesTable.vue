@@ -3,7 +3,7 @@
 		<div class="flex flex-row justify-between items-center pt-4">
 			<h2 class="text-base font-semibold text-gray-800">{{ __("Taxes & Charges") }} </h2>
 			<div class="flex flex-row gap-3 items-center">
-				<span class="text-base font-semibold text-gray-800">
+				<span class="text-base font-semibold k-amount">
 					{{ formatCurrency(expenseClaim.total_taxes_and_charges, expenseClaim.currency) }}
 				</span>
 				<Button
@@ -44,7 +44,7 @@
 							</div>
 						</div>
 						<div class="flex flex-row justify-end items-center gap-2">
-							<span class="text-gray-700 font-normal rounded text-base">
+							<span class="font-normal rounded text-base k-amount">
 								{{ formatCurrency(item.total, expenseClaim.currency) }}
 							</span>
 							<FeatherIcon name="chevron-right" class="h-5 w-5 text-gray-500" />

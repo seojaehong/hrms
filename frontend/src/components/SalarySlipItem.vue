@@ -20,7 +20,7 @@
 			</div>
 		</template>
 		<template #right>
-			<span v-if="doc?.net_pay" class="text-gray-700 font-normal rounded text-base">
+			<span v-if="doc?.net_pay" class="font-normal rounded text-base k-amount">
 				{{ formatCurrency(doc.net_pay, doc.currency) }}
 			</span>
 			<FeatherIcon name="chevron-right" class="h-5 w-5 text-gray-500" />

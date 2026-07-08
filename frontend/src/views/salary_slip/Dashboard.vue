@@ -7,7 +7,7 @@
 						<span class="text-gray-600 text-sm font-medium leading-5">
 							{{ __("Year To Date") }}
 						</span>
-						<span class="text-gray-800 text-xl font-bold leading-6">
+						<span class="text-xl font-bold leading-6 k-amount">
 							{{
 								formatCurrency(
 									lastSalarySlip.year_to_date,

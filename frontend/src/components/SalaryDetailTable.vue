@@ -2,7 +2,7 @@
 	<!-- Header -->
 	<div class="flex flex-row justify-between items-center">
 		<h2 class="text-base font-semibold text-gray-800">{{ type }}</h2>
-		<span class="text-base font-semibold text-gray-800">
+		<span class="text-base font-semibold k-amount">
 			{{ total }}
 		</span>
 	</div>
@@ -22,7 +22,7 @@
 			>
 				{{ item.salary_component }}
 			</div>
-			<span class="text-gray-700 font-normal rounded text-base">
+			<span class="font-normal rounded text-base k-amount">
 				{{ formatCurrency(item.amount, salarySlip.currency) }}
 			</span>
 		</div>

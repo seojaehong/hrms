@@ -32,7 +32,7 @@
 							</div>
 						</div>
 					</div>
-					<span class="text-gray-700 font-normal rounded text-base">
+					<span class="font-normal rounded text-base k-amount">
 						{{ formatCurrency(item.amount, doc.currency) }}
 					</span>
 				</div>

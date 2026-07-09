@@ -1,0 +1,149 @@
+<!doctype html><html><head><meta charset="utf8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;box-sizing:border-box}html{scroll-behavior:smooth}/* Linear 디자인 시스템 — 다크 마케팅/랜딩/가입 표면 전용 (DESIGN-linear.app.md 기반)
+ * 격리 원칙: 모든 토큰/클래스는 `.linear` 루트 하위에서만 유효 → 급여 PWA(Ledger 라이트)에 누출 금지.
+ * 마케팅 표면에만: 랜딩·가격·가입·상품소개. 데이터 화면(명세서·근태·연차)은 v2 Ledger 유지. */
+.linear {
+  /* ── 캔버스 & 4단 서피스 래더 (그림자 아닌 리프트로 위계) ── */
+  --ln-canvas: #010102;      /* 순흑에 가까운, 미세 블루틴트 */
+  --ln-surface-1: #0f1011;   /* 카드·패널 기본 */
+  --ln-surface-2: #141516;   /* featured·hover */
+  --ln-surface-3: #18191a;   /* 서브내비·드롭다운 */
+  --ln-surface-4: #191a1b;   /* 최상 리프트 */
+  --ln-hairline: #23252a;    /* 1px 카드/구분선 */
+  --ln-hairline-strong: #34343a;
+  --ln-hairline-tertiary: #3e3e44;
+  /* ── 잉크 램프 (라이트 그레이) ── */
+  --ln-ink: #f7f8f8;
+  --ln-ink-muted: #d0d6e0;
+  --ln-ink-subtle: #8a8f98;
+  --ln-ink-tertiary: #62666d;
+  /* ── 단일 크로매틱 액센트: 라벤더블루 (브랜드마크·주CTA·포커스·링크만) ── */
+  --ln-primary: #5e6ad2;
+  --ln-primary-hover: #828fff;
+  --ln-primary-focus: #5e69d1;
+  --ln-on-primary: #ffffff;
+  --ln-brand-secure: #7a7fad;
+  /* ── 시맨틱 (마케팅 유일 색: 성공) ── */
+  --ln-success: #27a644;
+  /* ── 인버스 (드문 화이트 CTA) ── */
+  --ln-inverse-canvas: #ffffff;
+  --ln-inverse-ink: #000000;
+  /* ── 셰이프 ── */
+  --ln-r-xs: 4px; --ln-r-sm: 6px; --ln-r-md: 8px; --ln-r-lg: 12px; --ln-r-xl: 16px; --ln-r-xxl: 24px; --ln-r-pill: 9999px;
+  /* ── 서체 (한글 네이티브: Pretendard → Noto Sans KR) ── */
+  --ln-font-display: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --ln-font-text: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --ln-font-mono: ui-monospace, "JetBrains Mono", "D2Coding", "SF Mono", Menlo, monospace;
+
+  background: var(--ln-canvas);
+  color: var(--ln-ink);
+  font-family: var(--ln-font-text);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.05px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ══ 타이포 (음수 트래킹 공격적, display 600 / body 400 단일 보이스) ══ */
+/* word-break: keep-all — 한글은 어절(공백) 단위로만 줄바꿈(음절 고아 방지) */
+.linear .ln-display-xl { font-family: var(--ln-font-display); font-size: clamp(2.25rem, 6vw, 5rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.03em; word-break: keep-all; }
+.linear .ln-display-lg { font-family: var(--ln-font-display); font-size: clamp(2rem, 4.5vw, 3.5rem); font-weight: 600; line-height: 1.10; letter-spacing: -0.025em; word-break: keep-all; }
+.linear .ln-display-md { font-family: var(--ln-font-display); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; word-break: keep-all; }
+.linear .ln-headline   { font-family: var(--ln-font-display); font-size: 1.75rem; font-weight: 600; line-height: 1.20; letter-spacing: -0.021em; word-break: keep-all; }
+.linear .ln-card-title { font-family: var(--ln-font-display); font-size: 1.375rem; font-weight: 500; line-height: 1.25; letter-spacing: -0.018em; }
+.linear .ln-subhead    { font-family: var(--ln-font-display); font-size: 1.25rem; font-weight: 400; line-height: 1.40; letter-spacing: -0.01em; color: var(--ln-ink-muted); }
+.linear .ln-body-lg    { font-size: 1.125rem; line-height: 1.50; letter-spacing: -0.006em; color: var(--ln-ink-muted); }
+.linear .ln-body       { font-size: 1rem; line-height: 1.50; color: var(--ln-ink-muted); }
+.linear .ln-body-sm    { font-size: 0.875rem; line-height: 1.50; color: var(--ln-ink-subtle); }
+.linear .ln-caption    { font-size: 0.75rem; line-height: 1.40; color: var(--ln-ink-subtle); }
+.linear .ln-eyebrow    { font-family: var(--ln-font-text); font-size: 0.8125rem; font-weight: 500; line-height: 1.30; letter-spacing: 0.4px; color: var(--ln-primary); text-transform: none; }
+.linear .ln-mono       { font-family: var(--ln-font-mono); font-size: 0.8125rem; line-height: 1.50; }
+
+/* ══ 버튼 (8px 라운드, pill 금지) ══ */
+.linear .ln-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--ln-font-text); font-size: 0.875rem; font-weight: 500; line-height: 1.2; border-radius: var(--ln-r-md); padding: 10px 16px; min-height: 40px; cursor: pointer; border: 1px solid transparent; transition: background .15s, border-color .15s, color .15s, transform .1s; text-decoration: none; }
+.linear .ln-btn:active { transform: scale(0.98); }
+.linear .ln-btn-primary { background: var(--ln-primary); color: var(--ln-on-primary); }
+.linear .ln-btn-primary:hover { background: var(--ln-primary-hover); }
+.linear .ln-btn-secondary { background: var(--ln-surface-1); color: var(--ln-ink); border-color: var(--ln-hairline); }
+.linear .ln-btn-secondary:hover { background: var(--ln-surface-2); border-color: var(--ln-hairline-strong); }
+.linear .ln-btn-tertiary { background: transparent; color: var(--ln-ink); }
+.linear .ln-btn-tertiary:hover { background: var(--ln-surface-1); }
+.linear .ln-btn-inverse { background: var(--ln-inverse-canvas); color: var(--ln-inverse-ink); }
+.linear .ln-btn-inverse:hover { opacity: .9; }
+
+/* ══ 카드 & 컨테이너 (서피스 리프트 + 헤어라인, 그림자 없음) ══ */
+.linear .ln-card { background: var(--ln-surface-1); border: 1px solid var(--ln-hairline); border-radius: var(--ln-r-lg); padding: 24px; }
+.linear .ln-card-lift { background: var(--ln-surface-2); border-color: var(--ln-hairline-strong); }
+/* 상단 엣지 하이라이트 — 다크 서피스에 "픽셀 렌더" 느낌 */
+.linear .ln-card--edge { position: relative; }
+.linear .ln-card--edge::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: var(--ln-r-lg) var(--ln-r-lg) 0 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.08) 30%, rgba(255,255,255,.08) 70%, transparent); }
+.linear .ln-screenshot { background: var(--ln-surface-1); border: 1px solid var(--ln-hairline); border-radius: var(--ln-r-xl); padding: 24px; overflow: hidden; }
+.linear .ln-cta-banner { background: var(--ln-surface-1); border: 1px solid var(--ln-hairline); border-radius: var(--ln-r-lg); padding: 48px; text-align: center; }
+
+/* ══ 배지·탭 (pill 허용은 여기만) ══ */
+.linear .ln-status-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ln-surface-2); color: var(--ln-ink-muted); font-size: 0.75rem; border-radius: var(--ln-r-pill); padding: 3px 10px; border: 1px solid var(--ln-hairline); }
+.linear .ln-status-badge .ln-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ln-success); }
+.linear .ln-tab { background: transparent; color: var(--ln-ink-subtle); font-size: 0.875rem; font-weight: 500; border-radius: var(--ln-r-pill); padding: 7px 16px; min-height: 36px; cursor: pointer; border: none; transition: background .15s, color .15s; }
+.linear .ln-tab--selected { background: var(--ln-surface-2); color: var(--ln-ink); }
+
+/* ══ 입력 (포커스링 = 라벤더 2px) ══ */
+.linear .ln-input { width: 100%; background: var(--ln-surface-1); color: var(--ln-ink); border: 1px solid var(--ln-hairline); border-radius: var(--ln-r-md); padding: 10px 12px; font-size: 1rem; min-height: 44px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.linear .ln-input::placeholder { color: var(--ln-ink-tertiary); }
+.linear .ln-input:focus { border-color: var(--ln-primary-focus); box-shadow: 0 0 0 2px rgba(94,105,209,.5); }
+.linear .ln-label { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--ln-ink-muted); margin-bottom: 6px; }
+
+/* ══ 내비 & 푸터 ══ */
+.linear .ln-nav { position: sticky; top: 0; z-index: 50; background: rgba(1,1,2,.72); backdrop-filter: saturate(150%) blur(12px); border-bottom: 1px solid var(--ln-hairline); height: 56px; }
+.linear .ln-footer { background: var(--ln-canvas); color: var(--ln-ink-subtle); border-top: 1px solid var(--ln-hairline); padding: 64px 32px; }
+.linear .ln-link { color: var(--ln-ink-subtle); text-decoration: none; transition: color .15s; }
+.linear .ln-link:hover { color: var(--ln-ink); }
+.linear .ln-link--accent { color: var(--ln-primary); }
+.linear .ln-link--accent:hover { color: var(--ln-primary-hover); }
+
+/* ══ 레이아웃 ══ */
+.linear .ln-container { max-width: 1216px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+.linear .ln-section { padding-top: 96px; padding-bottom: 96px; }
+@media (max-width: 768px) { .linear .ln-section { padding-top: 64px; padding-bottom: 64px; } }
+.linear .ln-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 1024px) { .linear .ln-grid-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px)  { .linear .ln-grid-3 { grid-template-columns: 1fr; } }
+.linear .ln-hero-glow { background: radial-gradient(60% 60% at 50% 0%, rgba(94,105,209,.10), transparent 70%); }
+
+/* 페이지 전용 보조 스타일 (linear-tokens.css의 .linear 스코프 보완) */
+.linear { min-height: 100vh; }
+.ln-mark { width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(135deg, var(--ln-primary), var(--ln-primary-hover)); display: inline-block; }
+.ln-navlinks { display: flex; gap: 28px; font-size: 0.875rem; }
+.ln-num { font-family: var(--ln-font-display); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ln-ink); line-height: 1.1; }
+.ln-num--accent { color: var(--ln-primary); }
+.ln-num-sm { font-family: var(--ln-font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ln-ficon { width: 40px; height: 40px; border-radius: 10px; background: var(--ln-surface-2); border: 1px solid var(--ln-hairline); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.ln-checklist { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.ln-checklist li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.875rem; color: var(--ln-ink-muted); }
+.ln-check { color: var(--ln-success); font-weight: 700; }
+.ln-verify-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--ln-hairline); }
+.ln-verify-row .ln-num-sm { margin-left: auto; }
+.ln-chip { background: var(--ln-surface-1); border: 1px solid var(--ln-hairline); border-radius: var(--ln-r-pill); padding: 8px 16px; font-size: 0.875rem; color: var(--ln-ink-muted); }
+.ln-form { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+.ln-fcol { display: flex; flex-direction: column; gap: 10px; font-size: 0.8125rem; }
+.ln-fhead { color: var(--ln-ink); font-weight: 600; }
+.ln-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+@media (max-width: 768px) {
+	.ln-navlinks { display: none; }
+	.ln-hide-sm { display: none; }
+	.ln-two-col { grid-template-columns: 1fr; }
+}
+</style></head><body class="linear">
+<nav class="ln-nav"><div class="ln-container" style="height:56px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span class="ln-mark"></span><span style="font-family:var(--ln-font-display);font-weight:600;letter-spacing:-.02em;font-size:1.0625rem">SafeClaw HR</span></div><div class="ln-navlinks"><a class="ln-link" href="#features">기능</a><a class="ln-link" href="#accuracy">정확성</a><a class="ln-link" href="#pricing">요금</a><a class="ln-link" href="#ai">AI 담당자</a></div><div style="display:flex;gap:8px"><a class="ln-btn ln-btn-tertiary" href="#login">로그인</a><a class="ln-btn ln-btn-primary" href="#signup">시작하기</a></div></div></nav>
+<header class="ln-hero-glow"><div class="ln-container ln-section" style="text-align:center"><span class="ln-status-badge" style="margin-bottom:20px"><span class="ln-dot"></span>한국 노무 특화 · 급여부터 4대보험까지 하나로</span><h1 class="ln-display-xl" style="color:var(--ln-ink)">틀리면 안 되는 급여를<br>1원 단위로.</h1><p class="ln-body-lg" style="max-width:52ch;margin:20px auto 0">한국 노무에 특화된 HR SaaS. 급여·4대보험 신고·명세서를 자동으로 처리하고, AI HR 담당자가 텔레그램·메일·슬랙에서 직원 문의에 바로 답합니다.</p><div style="display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap"><a class="ln-btn ln-btn-primary" href="#signup" style="min-height:44px;padding:12px 20px">사업장 무료로 시작</a><a class="ln-btn ln-btn-secondary" href="#accuracy" style="min-height:44px;padding:12px 20px">정확성 원리 보기</a></div><div class="ln-screenshot ln-card--edge" style="margin-top:56px;text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><span class="ln-mono" style="color:var(--ln-ink-subtle)">급여 마감 미리보기 · 예시</span><span class="ln-status-badge" style="margin-left:auto"><span class="ln-dot"></span>확정</span></div><div class="ln-grid-3"><div class="ln-card" style="padding:20px"><div class="ln-caption" style="color:var(--ln-ink-subtle)">이번 달 급여</div><div class="ln-num ">124,800,000원</div><div class="ln-caption" style="margin-top:4px;color:var(--ln-ink-tertiary)">직원 48명 · 예시</div></div><div class="ln-card" style="padding:20px"><div class="ln-caption" style="color:var(--ln-ink-subtle)">대장 대비 오차</div><div class="ln-num ln-num--accent">0원</div><div class="ln-caption" style="margin-top:4px;color:var(--ln-ink-tertiary)">1원 단위 일치</div></div><div class="ln-card" style="padding:20px"><div class="ln-caption" style="color:var(--ln-ink-subtle)">명세서 발송</div><div class="ln-num ">48 / 48</div><div class="ln-caption" style="margin-top:4px;color:var(--ln-ink-tertiary)">자동 발송</div></div></div></div></div></header>
+<section id="features" class="ln-container ln-section"><div style="max-width:44ch;margin-bottom:40px"><div class="ln-eyebrow">플랫폼</div><h2 class="ln-display-md" style="margin-top:12px;color:var(--ln-ink)">급여실무 전 과정을 한 곳에서</h2></div><div class="ln-grid-3"><article class="ln-card ln-card--edge"><div class="ln-ficon">₩</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">급여 자동 계산</h3><p class="ln-body-sm" style="margin-top:8px">월급제·시급제·일용직 급여를 사업장 규칙대로 계산하고, 확정 대장과 1원 단위로 대조합니다.</p></article><article class="ln-card ln-card--edge"><div class="ln-ficon">🛡</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">4대보험 신고</h3><p class="ln-body-sm" style="margin-top:8px">취득·상실·근로내용확인 신고서를 서식 그대로 자동 생성. 사람 승인 게이트를 거쳐 제출합니다.</p></article><article class="ln-card ln-card--edge"><div class="ln-ficon">🤖</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">AI HR 담당자</h3><p class="ln-body-sm" style="margin-top:8px">연차·급여·노동법 문의를 조문 근거와 함께 응답. 5채널.</p></article><article class="ln-card ln-card--edge"><div class="ln-ficon">📄</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">임금명세서</h3><p class="ln-body-sm" style="margin-top:8px">근로기준법 제48조제2항 요건 충족 명세서를 자동 생성.</p></article><article class="ln-card ln-card--edge"><div class="ln-ficon">📊</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">급여 마감 워크플로</h3><p class="ln-body-sm" style="margin-top:8px">업로드→검증→미리보기→승인. 확정 전에는 어떤 숫자도 반영되지 않습니다.</p></article><article class="ln-card ln-card--edge"><div class="ln-ficon">🔒</div><h3 class="ln-card-title" style="margin-top:16px;color:var(--ln-ink)">테넌트 격리</h3><p class="ln-body-sm" style="margin-top:8px">사업장마다 독립 데이터 · 개인정보 암호화 · 감사 로그.</p></article></div></section>
+<section id="accuracy" style="background:var(--ln-surface-1);border-top:1px solid var(--ln-hairline);border-bottom:1px solid var(--ln-hairline)"><div class="ln-container ln-section ln-two-col"><div><div class="ln-eyebrow">정확성</div><h2 class="ln-display-md" style="margin-top:12px;color:var(--ln-ink)">숫자는 흔들리지 않는다</h2><p class="ln-body" style="margin-top:16px">모든 급여는 확정 대장과 1원 단위로 크로스체크한 뒤에만 반영됩니다. 엔진과 엑셀이 다르면 엑셀이 권위 — 사유를 분석하고 엔진을 고칩니다.</p><ul class="ln-checklist"><li><span class="ln-check">✓</span>엑셀이 권위</li><li><span class="ln-check">✓</span>확정 행위는 사람 승인 게이트</li><li><span class="ln-check">✓</span>모든 변경은 results 저널 기록</li></ul></div><div class="ln-screenshot ln-card--edge"><div class="ln-mono" style="color:var(--ln-ink-subtle);margin-bottom:12px">검증 로그 · results</div><div class="ln-verify-row"><span class="ln-body-sm" style="color:var(--ln-ink-muted)">직원 A</span><span class="ln-num-sm ln-num--accent">3,120,400원</span><span class="ln-status-badge"><span class="ln-dot"></span>1원 일치</span></div><div class="ln-verify-row"><span class="ln-body-sm" style="color:var(--ln-ink-muted)">직원 B</span><span class="ln-num-sm ln-num--accent">2,845,900원</span><span class="ln-status-badge"><span class="ln-dot"></span>1원 일치</span></div><div class="ln-verify-row"><span class="ln-body-sm" style="color:var(--ln-ink-muted)">직원 C</span><span class="ln-num-sm ln-num--accent">3,507,120원</span><span class="ln-status-badge"><span class="ln-dot"></span>1원 일치</span></div></div></div></section>
+<section class="ln-container ln-section"><div style="text-align:center;max-width:52ch;margin:0 auto 40px"><div class="ln-eyebrow" id="ai">AI HR 담당자</div><h2 class="ln-display-md" style="margin-top:12px;color:var(--ln-ink)">직원 문의에 24시간 바로 답합니다</h2></div><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><span class="ln-chip">텔레그램</span><span class="ln-chip">이메일</span><span class="ln-chip">슬랙</span><span class="ln-chip">디스코드</span><span class="ln-chip">구글챗</span></div></section>
+<section id="pricing" style="background:var(--ln-surface-1);border-top:1px solid var(--ln-hairline)"><div class="ln-container ln-section"><div style="text-align:center;max-width:44ch;margin:0 auto 40px"><div class="ln-eyebrow">요금</div><h2 class="ln-display-md" style="margin-top:12px;color:var(--ln-ink)">사업장 규모에 맞게</h2></div><div class="ln-grid-3"><article class="ln-card "><div style="display:flex;align-items:center;gap:8px"><h3 class="ln-card-title" style="color:var(--ln-ink)">스타터</h3></div><div style="margin-top:16px;display:flex;align-items:baseline;gap:6px"><span class="ln-num">무료</span><span class="ln-caption">~5인</span></div><p class="ln-body-sm" style="margin-top:8px;min-height:40px">소규모 사업장 · 급여·명세서 기본</p><ul class="ln-checklist" style="margin-top:16px"><li><span class="ln-check">✓</span>급여 자동계산</li><li><span class="ln-check">✓</span>임금명세서 PDF</li><li><span class="ln-check">✓</span>직원 셀프 조회</li></ul><a class="ln-btn ln-btn-secondary" href="#signup" style="width:100%;margin-top:20px">무료 시작</a></article><article class="ln-card ln-card-lift ln-card--edge"><div style="display:flex;align-items:center;gap:8px"><h3 class="ln-card-title" style="color:var(--ln-ink)">프로</h3><span class="ln-status-badge" style="margin-left:auto;color:var(--ln-primary);border-color:var(--ln-primary)">추천</span></div><div style="margin-top:16px;display:flex;align-items:baseline;gap:6px"><span class="ln-num">월 3만원~</span><span class="ln-caption">인원 비례</span></div><p class="ln-body-sm" style="margin-top:8px;min-height:40px">4대보험 신고 + AI HR 담당자 5채널</p><ul class="ln-checklist" style="margin-top:16px"><li><span class="ln-check">✓</span>스타터 전체</li><li><span class="ln-check">✓</span>4대보험 신고 3종</li><li><span class="ln-check">✓</span>AI HR 담당자</li><li><span class="ln-check">✓</span>급여 마감 승인</li></ul><a class="ln-btn ln-btn-primary" href="#signup" style="width:100%;margin-top:20px">프로 시작</a></article><article class="ln-card "><div style="display:flex;align-items:center;gap:8px"><h3 class="ln-card-title" style="color:var(--ln-ink)">엔터프라이즈</h3></div><div style="margin-top:16px;display:flex;align-items:baseline;gap:6px"><span class="ln-num">문의</span><span class="ln-caption">다사업장</span></div><p class="ln-body-sm" style="margin-top:8px;min-height:40px">노무법인·다사업장 · 전용 지원</p><ul class="ln-checklist" style="margin-top:16px"><li><span class="ln-check">✓</span>프로 전체</li><li><span class="ln-check">✓</span>다사업장 관리</li><li><span class="ln-check">✓</span>전용 온보딩</li><li><span class="ln-check">✓</span>SLA·우선지원</li></ul><a class="ln-btn ln-btn-secondary" href="#signup" style="width:100%;margin-top:20px">상담 요청</a></article></div></div></section>
+<section id="signup" class="ln-container ln-section"><div class="ln-cta-banner ln-card--edge" style="max-width:640px;margin:0 auto"><h2 class="ln-headline" style="color:var(--ln-ink)">2분이면 사업장이 열립니다</h2><p class="ln-body" style="margin-top:12px">사업장명과 이메일을 남기면 하루 안에 전용 사업장 주소를 만들어 안내드립니다.</p><div class="ln-form"><div style="text-align:left"><label class="ln-label" for="sc-company">사업장명</label><input id="sc-company" class="ln-input" placeholder="예: (주)윈하이어"></div><div style="text-align:left"><label class="ln-label" for="sc-email">담당자 이메일</label><input id="sc-email" class="ln-input" type="email" placeholder="you@company.com"></div><button class="ln-btn ln-btn-primary" type="button" onclick="scApply()" style="width:100%;min-height:44px">무료로 사업장 신청</button><p class="ln-caption">버튼을 누르면 메일 앱이 열립니다 · 직접 문의: <a class="ln-link ln-link--accent" href="mailto:abc@winhr.co.kr">abc@winhr.co.kr</a></p></div></div>
+<p id="login" class="ln-caption" style="text-align:center;margin-top:40px">이미 이용 중이신가요? 각 사업장 전용 주소(<span class="ln-mono">회사명.safeclaw.kr</span>)로 접속해 로그인하세요.</p>
+<script>function scApply(){var c=document.getElementById("sc-company").value.trim();var e=document.getElementById("sc-email").value.trim();var s=encodeURIComponent("[SafeClaw HR] 사업장 개설 신청 — "+(c||"사업장명 미기재"));var b=encodeURIComponent("사업장명: "+c+"
+담당자 이메일: "+e+"
+
+(추가로 궁금한 점을 적어주세요)");location.href="mailto:abc@winhr.co.kr?subject="+s+"&body="+b}</script></section>
+<footer class="ln-footer"><div class="ln-container" style="display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap"><div><div style="font-family:var(--ln-font-display);font-weight:600;color:var(--ln-ink)">SafeClaw HR</div><p class="ln-caption" style="margin-top:8px">한국 노무 특화 HR SaaS</p></div></div></footer>
+</body></html>

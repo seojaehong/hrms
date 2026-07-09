@@ -29,10 +29,10 @@
   --ln-inverse-ink: #000000;
   /* ── 셰이프 ── */
   --ln-r-xs: 4px; --ln-r-sm: 6px; --ln-r-md: 8px; --ln-r-lg: 12px; --ln-r-xl: 16px; --ln-r-xxl: 24px; --ln-r-pill: 9999px;
-  /* ── 서체 (Linear 커스텀은 비공개 → SF Pro Display / Inter 폴백) ── */
-  --ln-font-display: "SF Pro Display", -apple-system, system-ui, "Inter", "Pretendard", "Segoe UI", Roboto, sans-serif;
-  --ln-font-text: "SF Pro Text", -apple-system, system-ui, "Inter", "Pretendard", "Segoe UI", Roboto, sans-serif;
-  --ln-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  /* ── 서체 (한글 네이티브: Pretendard → Noto Sans KR) ── */
+  --ln-font-display: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --ln-font-text: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --ln-font-mono: ui-monospace, "JetBrains Mono", "D2Coding", "SF Mono", Menlo, monospace;
 
   background: var(--ln-canvas);
   color: var(--ln-ink);

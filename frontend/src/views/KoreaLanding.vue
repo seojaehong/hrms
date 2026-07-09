@@ -23,7 +23,7 @@
 		<!-- ══ Hero ══ -->
 		<header class="ln-hero-glow">
 			<div class="ln-container ln-section" style="text-align:center;">
-				<span class="ln-status-badge" style="margin-bottom:20px;"><span class="ln-dot"></span>노호 1호 사업장 실가동 중</span>
+				<span class="ln-status-badge" style="margin-bottom:20px;"><span class="ln-dot"></span>한국 노무 특화 · 급여부터 4대보험까지 하나로</span>
 				<h1 class="ln-display-xl" style="color:var(--ln-ink);">틀리면 안 되는 급여를<br />1원 단위로.</h1>
 				<p class="ln-body-lg" style="max-width:52ch;margin:20px auto 0;">
 					한국 노무에 특화된 HR SaaS. 급여·4대보험 신고·명세서를 자동으로 처리하고,
@@ -36,7 +36,7 @@
 				<!-- 제품 스크린샷 프레임 (히어로 프로덕트 패널) -->
 				<div class="ln-screenshot ln-card--edge" style="margin-top:56px;text-align:left;">
 					<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-						<span class="ln-mono" style="color:var(--ln-ink-subtle);">급여 마감 · 2026.05</span>
+						<span class="ln-mono" style="color:var(--ln-ink-subtle);">급여 마감 미리보기 · 예시</span>
 						<span class="ln-status-badge" style="margin-left:auto;"><span class="ln-dot"></span>확정</span>
 					</div>
 					<div class="ln-grid-3">
@@ -177,10 +177,11 @@ import { computed, reactive } from "vue"
 
 import "@/styles/linear-tokens.css"
 
+// 히어로 제품 패널 — 상품 정확성 약속을 보여주는 예시 수치 (특정 고객 데이터 아님)
 const heroStats = [
-	{ label: "지급 총액", value: "95,940,486원", note: "직원 32명" },
+	{ label: "이번 달 급여", value: "124,800,000원", note: "직원 48명 · 예시" },
 	{ label: "대장 대비 오차", value: "0원", note: "1원 단위 일치", accent: true },
-	{ label: "명세서 발송", value: "32 / 32", note: "PDF 자동" },
+	{ label: "명세서 발송", value: "48 / 48", note: "자동 발송" },
 ]
 
 const features = [
@@ -198,10 +199,11 @@ const accuracyPoints = [
 	"모든 변경은 results 저널에 기록",
 ]
 
+// 예시 데이터 (특정 고객 아님)
 const verifyRows = [
-	{ name: "김민지", amt: "3,120,400원" },
-	{ name: "박현우", amt: "2,845,900원" },
-	{ name: "이서준", amt: "3,507,120원" },
+	{ name: "직원 A", amt: "3,120,400원" },
+	{ name: "직원 B", amt: "2,845,900원" },
+	{ name: "직원 C", amt: "3,507,120원" },
 ]
 
 const channels = ["텔레그램", "이메일", "슬랙", "디스코드", "구글챗"]

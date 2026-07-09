@@ -79,6 +79,7 @@ def generate_insurance_filing(
 	company: str | None = None,
 	rrn_field: str = DEFAULT_RRN_FIELD,
 	workplace_info: dict | None = None,
+	management_number: str | None = None,
 ) -> dict[str, Any]:
 	"""사이트 데이터로 4대보험 신고서(취득/상실/일용직) xlsx 생성.
 
@@ -91,6 +92,10 @@ def generate_insurance_filing(
 		company: Employee/Attendance 조회 필터(선택).
 		rrn_field: Employee 주민번호 커스텀 필드명(없으면 빈칸 + rrn_missing).
 		workplace_info: 생성기에 전달할 사업장 정보(선택).
+		management_number: 사업장 관리번호 필터(선택) — 한 법인에 관리번호가 여러 개
+			(본점/지점·상용/일용 분리성립)일 때 해당 관리번호 소속 직원만으로 신고서를 생성.
+			직원 소속은 Employee.workplace_management_number(비면 미소속으로 간주, 필터 시 제외).
+			신고서는 관리번호 단위로 나가야 하므로 관리번호별로 이 함수를 각각 호출한다.
 
 	Returns:
 		human_approved 아니면 {'status':'blocked', ...} (파일 미생성).
@@ -121,6 +126,10 @@ def generate_insurance_filing(
 
 	# --- 대상자 추출 (Employee 브로드 조회 후 코어가 귀속월 필터) ---
 	employees = _get_employees(company, rrn_field)
+	if management_number:
+		employees = _filter_by_management_number(employees, management_number)
+		workplace_info = dict(workplace_info or {})
+		workplace_info.setdefault("management_number", str(management_number))
 	_attach_wages(employees)
 	rrn_by_id = {emp.get("name"): emp.get(rrn_field) for emp in employees}
 
@@ -196,12 +205,34 @@ def _decrypt_rrn(employee_name: str, fieldname: str) -> str | None:
 		return None
 
 
+MGMT_NO_FIELD = "workplace_management_number"
+
+
+def _filter_by_management_number(employees: list[dict], management_number: str) -> list[dict]:
+	"""관리번호 소속 직원만 남긴다 (Employee.workplace_management_number 정확 일치).
+
+	공백/미입력 직원은 필터 시 제외된다 — 잘못된 관리번호로 신고서에 섞여 나가는 것보다
+	명단에서 빠져 보이는 쪽이 안전하다(누락은 검수에서 드러나고, 오소속 신고는 정정신고 비용).
+	"""
+	target = str(management_number).strip()
+	return [
+		emp for emp in employees
+		if str(emp.get(MGMT_NO_FIELD) or "").strip() == target
+	]
+
+
 def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 	"""사이트 Employee 조회 (귀속월 필터는 코어가 담당)."""
 	fields = [
 		"name", "employee_name", "date_of_joining", "relieving_date",
 		"employment_type", "reason_for_leaving",
 	]
+	# 관리번호 필드는 사이트에 실존할 때만 조회 (구 사이트 호환)
+	try:
+		if _frappe.get_meta("Employee").get_field(MGMT_NO_FIELD):  # type: ignore[union-attr]
+			fields.append(MGMT_NO_FIELD)
+	except Exception:
+		pass
 	# 커스텀 주민번호 필드는 사이트에 실존할 때만 조회한다 (없으면 빈칸 + rrn_missing 처리).
 	resolved_field, rrn_encrypted = _resolve_rrn_field(rrn_field)
 	if resolved_field and not rrn_encrypted and resolved_field not in fields:

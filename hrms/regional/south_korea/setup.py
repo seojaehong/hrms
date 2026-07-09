@@ -111,6 +111,14 @@ def get_custom_fields():
                 "insert_after": "employment_type_kr",
             },
             {
+                "fieldname": "workplace_management_number",
+                "label": "Workplace Management Number (KR)",
+                "fieldtype": "Data",
+                "insert_after": "work_location_name",
+                "description": "소속 사업장 관리번호 — 한 법인에 관리번호가 여러 개(본점/지점·상용/일용 분리성립)일 때 직원별 소속. 비우면 회사 기본 관리번호.",
+                "translatable": 0,
+            },
+            {
                 "fieldname": "korea_employee_column_break",
                 "fieldtype": "Column Break",
                 "insert_after": "work_location_name",

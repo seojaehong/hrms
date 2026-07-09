@@ -120,12 +120,6 @@ const routes = [
 		component: () => import("@/views/Login.vue"),
 	},
 	{
-		// 공개 마케팅/랜딩 표면 (Linear 다크) — 급여 PWA(Ledger)와 분리된 표면
-		path: "/product",
-		name: "KoreaLanding",
-		component: () => import("@/views/KoreaLanding.vue"),
-	},
-	{
 		path: "/profile",
 		name: "Profile",
 		component: () => import("@/views/Profile.vue"),

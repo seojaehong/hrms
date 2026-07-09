@@ -9,7 +9,7 @@
 								<FrappeHRLogo class="h-8 w-8" />
 								<div class="k-eyebrow">KOREA HRMS</div>
 								<div class="text-2xl font-semibold text-gray-900 text-center">
-									{{ __("Login to Korea HRMS") }}
+									{{ __("Login to SafeClaw HR") }}
 								</div>
 							</div>
 

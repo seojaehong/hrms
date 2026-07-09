@@ -2,7 +2,7 @@
 	<!-- 앱 설치 다이얼로그 (Android / Chrome) -->
 	<Dialog v-model="showDialog">
 		<template #body-title>
-			<h2 class="text-lg font-bold">Korea HRMS 앱 설치</h2>
+			<h2 class="text-lg font-bold">SafeClaw HR 앱 설치</h2>
 		</template>
 		<template #body-content>
 			<p class="text-sm text-gray-700">

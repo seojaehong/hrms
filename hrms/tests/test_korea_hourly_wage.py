@@ -21,6 +21,7 @@ weekly_holiday_allowance = _mod.weekly_holiday_allowance
 monthly_weekly_holiday_allowance = _mod.monthly_weekly_holiday_allowance
 is_below_minimum_wage = _mod.is_below_minimum_wage
 compose_hourly_earnings = _mod.compose_hourly_earnings
+aggregate_monthly_gross = _mod.aggregate_monthly_gross
 
 
 class TestWeeklyHolidayHours(unittest.TestCase):
@@ -127,6 +128,43 @@ class TestComposeHourlyEarnings(unittest.TestCase):
 		components = {line["component"]: line["amount"] for line in result["earnings"]}
 		self.assertEqual(components["식대"], 200_000)
 		self.assertEqual(result["gross_pay"], 1_200_000)
+
+
+class TestAggregateMonthlyGross(unittest.TestCase):
+	def test_basic_month(self):
+		# 2일 근무, 각 통상 80,000 + 연장 15,000 + 야간 5,000, 주 40h @10,000
+		daily = [
+			{"regular_pay": 80000, "overtime_pay": 15000, "night_pay": 5000, "holiday_pay": 0, "holiday_overtime_pay": 0},
+			{"regular_pay": 80000, "overtime_pay": 15000, "night_pay": 5000, "holiday_pay": 0, "holiday_overtime_pay": 0},
+		]
+		result = aggregate_monthly_gross(daily_pays=daily, contracted_weekly_hours=40, hourly_rate=10000)
+		comp = {line["component"]: line["amount"] for line in result["earnings"]}
+		self.assertEqual(comp["기본급"], 160000)
+		self.assertEqual(comp["연장근로수당"], 30000)
+		self.assertEqual(comp["야간근로수당"], 10000)
+		self.assertEqual(comp["주휴수당"], 347619)  # 8h×10000×(365/12/7)
+		self.assertNotIn("휴일근로수당", comp)  # 0이면 제외
+		self.assertEqual(result["gross_pay"], 160000 + 30000 + 10000 + 347619)
+
+	def test_holiday_buckets_merged(self):
+		daily = [{"regular_pay": 0, "holiday_pay": 120000, "holiday_overtime_pay": 40000}]
+		result = aggregate_monthly_gross(daily_pays=daily, contracted_weekly_hours=40, hourly_rate=10000)
+		comp = {line["component"]: line["amount"] for line in result["earnings"]}
+		self.assertEqual(comp["휴일근로수당"], 160000)
+
+	def test_below_threshold_no_weekly_holiday(self):
+		# 주 10h → 주휴수당 0, 기본급만
+		daily = [{"regular_pay": 50000}]
+		result = aggregate_monthly_gross(daily_pays=daily, contracted_weekly_hours=10, hourly_rate=10000)
+		comp = {line["component"]: line["amount"] for line in result["earnings"]}
+		self.assertEqual(comp["기본급"], 50000)
+		self.assertNotIn("주휴수당", comp)
+		self.assertEqual(result["gross_pay"], 50000)
+
+	def test_empty_month(self):
+		result = aggregate_monthly_gross(daily_pays=[], contracted_weekly_hours=10, hourly_rate=10000)
+		self.assertEqual(result["earnings"], [])
+		self.assertEqual(result["gross_pay"], 0)
 
 
 if __name__ == "__main__":

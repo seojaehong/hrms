@@ -132,3 +132,55 @@ def compose_hourly_earnings(
 
 	gross = sum(line["amount"] for line in lines)
 	return {"earnings": lines, "gross_pay": gross}
+
+
+def aggregate_monthly_gross(
+	*,
+	daily_pays: list[dict[str, Any]],
+	contracted_weekly_hours: Any,
+	hourly_rate: Any,
+	perfect_attendance: bool = True,
+	weeks_per_month: Any = AVG_WEEKS_PER_MONTH,
+	extra_allowances: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+	"""월 시급제 gross 자동계산 — 일별 지급액을 집계하고 주휴수당을 얹어 earnings로 조립.
+
+	`daily_pays`는 overtime_premium.estimate_premium_amount()의 반환값 리스트(각 일자별)이다.
+	이 모듈은 프레임워크 비의존을 위해 overtime_premium을 직접 import하지 않고
+	**계산 결과를 인자로 주입**받는다(실 급여 플로우: 일별 세션 → estimate_premium_amount → 여기로).
+
+	버킷 매핑:
+		기본급   = Σ regular_pay          (근로한 통상시간 지급)
+		연장수당 = Σ overtime_pay
+		야간수당 = Σ night_pay            (야간 추가분)
+		휴일수당 = Σ (holiday_pay + holiday_overtime_pay)
+		주휴수당 = monthly_weekly_holiday_allowance(...)  (근로시간 아닌 법정수당)
+
+	Returns: compose_hourly_earnings와 동일 형식 {"earnings": [...], "gross_pay": int}
+	"""
+	def _sum(key: str) -> Decimal:
+		total = Decimal("0")
+		for day in daily_pays:
+			total += _dec(day.get(key, 0), key)
+		return total
+
+	base = _sum("regular_pay")
+	overtime = _sum("overtime_pay")
+	night = _sum("night_pay")
+	holiday = _sum("holiday_pay") + _sum("holiday_overtime_pay")
+
+	weekly_holiday = monthly_weekly_holiday_allowance(
+		contracted_weekly_hours=contracted_weekly_hours,
+		hourly_rate=hourly_rate,
+		perfect_attendance=perfect_attendance,
+		weeks_per_month=weeks_per_month,
+	)
+
+	return compose_hourly_earnings(
+		base_pay=base,
+		weekly_holiday_pay=weekly_holiday,
+		overtime_pay=overtime,
+		night_pay=night,
+		holiday_pay=holiday,
+		extra_allowances=extra_allowances,
+	)

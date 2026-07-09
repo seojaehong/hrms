@@ -56,8 +56,11 @@ _forms = _load_core("insurance_forms")
 
 FILING_TYPES = ("acquisition", "loss", "daily")
 
-# Employee 커스텀 필드(주민번호) 기본 필드명 — 사이트에 없으면 빈칸 처리
-DEFAULT_RRN_FIELD = "custom_resident_registration_number"
+# Employee 커스텀 필드(주민번호) 기본 필드명 — 사이트에 없으면 빈칸 처리.
+# 표준: resident_registration_number (setup.py, Password=암호화 저장 → 복호화 경로로 읽음).
+# 레거시: custom_resident_registration_number (구 사이트 호환 폴백).
+DEFAULT_RRN_FIELD = "resident_registration_number"
+LEGACY_RRN_FIELDS = ("custom_resident_registration_number",)
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +167,35 @@ def generate_insurance_filing(
 # ---------------------------------------------------------------------------
 
 
+def _resolve_rrn_field(rrn_field: str) -> tuple[str | None, bool]:
+	"""사이트에 실존하는 주민번호 필드를 해석한다.
+
+	요청 필드가 없으면 레거시 필드명(LEGACY_RRN_FIELDS)으로 폴백.
+	Returns: (실존 필드명 또는 None, Password(암호화) 타입 여부).
+	"""
+	for candidate in (rrn_field, *LEGACY_RRN_FIELDS):
+		if not candidate:
+			continue
+		try:
+			meta_field = _frappe.get_meta("Employee").get_field(candidate)  # type: ignore[union-attr]
+		except Exception:
+			meta_field = None
+		if meta_field:
+			is_password = getattr(meta_field, "fieldtype", None) == "Password"
+			return candidate, is_password
+	return None, False
+
+
+def _decrypt_rrn(employee_name: str, fieldname: str) -> str | None:
+	"""Password(암호화) 필드에서 주민번호 복호화. 실패 시 None(빈칸 + rrn_missing 처리)."""
+	try:
+		from frappe.utils.password import get_decrypted_password  # noqa: PLC0415
+
+		return get_decrypted_password("Employee", employee_name, fieldname, raise_exception=False)
+	except Exception:
+		return None
+
+
 def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 	"""사이트 Employee 조회 (귀속월 필터는 코어가 담당)."""
 	fields = [
@@ -171,13 +203,9 @@ def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 		"employment_type", "reason_for_leaving",
 	]
 	# 커스텀 주민번호 필드는 사이트에 실존할 때만 조회한다 (없으면 빈칸 + rrn_missing 처리).
-	if rrn_field and rrn_field not in fields:
-		try:
-			has_field = bool(_frappe.get_meta("Employee").get_field(rrn_field))  # type: ignore[union-attr]
-		except Exception:
-			has_field = False
-		if has_field:
-			fields.append(rrn_field)
+	resolved_field, rrn_encrypted = _resolve_rrn_field(rrn_field)
+	if resolved_field and not rrn_encrypted and resolved_field not in fields:
+		fields.append(resolved_field)  # 평문(Data) 필드만 get_all로 직접 조회
 	filters: dict[str, Any] = {}
 	if company:
 		filters["company"] = company
@@ -187,6 +215,11 @@ def _get_employees(company: str | None, rrn_field: str) -> list[dict]:
 		# detect_losses의 상실사유 키로 매핑 (없으면 코어가 기본값+코드로 처리, 명단 확인 게이트에서 검증)
 		if emp.get("reason_for_leaving"):
 			emp["loss_reason"] = str(emp["reason_for_leaving"])
+		# 암호화(Password) 필드는 직원별 복호화로 읽는다 (get_all은 암호문/공백만 반환).
+		if resolved_field and rrn_encrypted:
+			emp[rrn_field] = _decrypt_rrn(emp.get("name"), resolved_field)
+		elif resolved_field and resolved_field != rrn_field:
+			emp[rrn_field] = emp.get(resolved_field)  # 레거시 필드값을 요청 키로 노출
 	return employees
 
 

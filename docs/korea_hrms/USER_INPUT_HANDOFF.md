@@ -10,12 +10,12 @@
 
 ## 🔴 TIER 1 — 지금 노호 개통 (각 독립, 1번만 해도 접속 열림)
 
-### 1. Cloudflare DNS — ⏱️2분, **이것만 하면 접속 개통**
-- **어디서**: Cloudflare 대시보드 → `safeclaw.kr` → DNS → Records
-- **어떻게**: 기존 `*.hrms` CNAME **Edit** → Name을 `*` 로 수정 → Save
-  - Target `a04b8f7a-8b04-49f7-8c73-3fc1c07519fb.cfargotunnel.com` (Proxied 유지)
-- **결과**: 1~2분 뒤 `https://noho.safeclaw.kr` + `https://ai.safeclaw.kr` 개통
-- **Claude 불가 이유**: Cloudflare 계정 = 본인 소유(euiri.choi 계정 아님, safeclaw는 iceamericano9). 대시보드 인증 필요
+### 1. Cloudflare DNS — ✅ **이미 완료 (2026-07-09 검증)**
+- **현재 상태**: `*.safeclaw.kr` (Tunnel → winhr-intake, Proxied) 와일드카드 레코드가 **이미 존재**.
+  `noho.safeclaw.kr` **HTTP 200 라이브**, `noho.safeclaw.kr/app` 200, `ai.safeclaw.kr` 401(인증게이트 정상).
+  노호 사장님(류두선) 실 로그인·가동 확인됨.
+- ⚠️ **런북의 "`*.hrms`를 `*`로 수정" 지시는 낡음** — `*` 레코드가 이미 있으므로 **편집하지 말 것**(중복/충돌·라이브 서비스 손상 위험).
+- DNS 레코드 4개: `safeclaw.kr`(A 216.150.1.1) · `*.hrms.safeclaw.kr`(Tunnel) · `*.safeclaw.kr`(Tunnel winhr-intake) · `www.safeclaw.kr`(CNAME vercel).
 
 ### 2. 구글 로그인 — ⏱️10분
 - **어디서**: console.cloud.google.com → API 및 서비스 → 사용자 인증 정보 → OAuth 클라이언트 ID(웹)
@@ -96,8 +96,10 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 
 ---
 
-## 📌 요약 — 지금 당장 할 것 딱 하나
-**TIER 1 §1 (Cloudflare DNS `*`)** = 2분, 그거 하나로 노호 접속이 열린다. 나머지는 병렬로.
+## 📌 요약 (2026-07-09 실검증 반영)
+- **DNS·접속 = 이미 완료** (noho.safeclaw.kr 라이브, 류두선 가동 중). §1은 손대지 말 것.
+- 남은 사용자 투입 = **소셜로그인 키(구글/카카오)·SMTP·주민번호 CSV** 중 아직 미적용분. 단, 노호가 이미 로그인·운영 중이므로 **일부는 이미 적용됐을 수 있음** → 실제 미적용분만 확인 후 `launch_day_apply.sh`.
+- **⚠️ 낡은 런북 주의**: `LAUNCH_DAY_RUNBOOK.md`는 출시 전 작성본 — DNS 등 일부 항목이 이미 처리됨. 이 문서(실검증)를 우선.
 
 ## 참고 문서
 - 출시 런북(원문): `docs/korea_hrms/LAUNCH_DAY_RUNBOOK.md`

@@ -75,6 +75,10 @@ core-triples.json, graph-store published 게이트)와 문서 생성 파이프�
 | 상시 | USER_INPUT_HANDOFF.md TIER1~2 키들 |
 
 ## 고지 통과 규율
+- **TDD 철칙(사용자 상설 지시 2026-07-10, 모든 개발 레벨)**: 프로덕션 코드 전에 실패하는
+  테스트 먼저 — RED(의도된 사유로 실패) 실행 확인 → 최소 구현 → GREEN 확인 → 리팩터.
+  테스트가 즉시 통과하면 잘못된 테스트. 랄프 루프는 progress.txt 패턴으로 강제,
+  인라인 작업도 동일. 커밋에 `tdd: red→green` 표기.
 - 게이트: `bash scripts/run_korea_tests.sh` 전체 그린 + 해당 고지 완료 기준 실측
 - 기록: results.tsv keep 저널 · 큰 구현은 랄프 루프(오퍼레이터+워크트리 패턴)
 - 불변식: 숫자 1원 단위 · 확정=사람 승인 · 테넌트 격리 · 키/고객데이터 레포 금지

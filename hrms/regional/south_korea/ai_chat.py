@@ -32,6 +32,15 @@ def _load_sibling(name: str):
 
 _factcheck = _load_sibling("ai_chat_factcheck")
 
+
+def _resolve_env_retriever():
+    """env(Supabase 접속)가 갖춰지면 v2 시맨틱 retriever, 아니면 None. 오류 시 None(→v1 폴백)."""
+    try:
+        cfg = _load_sibling("semantic_config")
+        return cfg.build_semantic_retriever_from_env()
+    except Exception:  # noqa: BLE001 — 어떤 실패든 v1로 안전 폴백
+        return None
+
 # ──────────────────────────────────────────────
 # 모듈 상수 — contract / boundary 식별자
 # ──────────────────────────────────────────────
@@ -249,7 +258,10 @@ def chat_query(
     intent_result = detect_intent(user_question)
     intent = intent_result["intent"]
 
-    # v2 시맨틱 retriever 주입 시 그것을, 아니면 v1 char-bigram 로컬 검색.
+    # retriever 미주입 시 env(Supabase 접속)가 있으면 v2 시맨틱으로 자동 승격(더러운
+    # 로컬 카탈로그 은퇴), 없으면 v1 char-bigram 폴백. 조립/네트워크 오류는 v1로 안전 폴백.
+    if retriever is None:
+        retriever = _resolve_env_retriever()
     if retriever is not None:
         docs = retriever(query=user_question, top_k=5)
     else:

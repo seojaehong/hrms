@@ -192,6 +192,7 @@ def chat_query(
     context_doc_name: str | None = None,
     session_id: str,
     payroll_stats_provider: Callable[[], dict | None] | None = None,
+    retriever: Callable[..., list[dict]] | None = None,
 ) -> dict:
     """사용자 질문 → 한국 노동법/HRMS 모듈 retrieval + 답변.
 
@@ -235,7 +236,11 @@ def chat_query(
     intent_result = detect_intent(user_question)
     intent = intent_result["intent"]
 
-    docs = retrieve_relevant_documents(query=user_question, top_k=5)
+    # v2 시맨틱 retriever 주입 시 그것을, 아니면 v1 char-bigram 로컬 검색.
+    if retriever is not None:
+        docs = retriever(query=user_question, top_k=5)
+    else:
+        docs = retrieve_relevant_documents(query=user_question, top_k=5)
     citations = _docs_to_citations(docs)
 
     answer = _build_answer(

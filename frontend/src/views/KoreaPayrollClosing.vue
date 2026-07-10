@@ -137,6 +137,40 @@
 					</p>
 				</section>
 
+				<!-- 시급제 gross 제안 — 계산 전용 미리보기 (데이터 없으면 미표시) -->
+				<section v-if="hourlyProposalsVisible" class="k-card p-4">
+					<div class="k-eyebrow mb-2">HOURLY PROPOSALS</div>
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<h2 class="text-lg font-bold text-black">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
+							<p class="mt-1 text-xs text-gray-500">근무시간 입력 × 시급 프로파일로 계산한 제안입니다 — 반영은 결재 승인으로만 이뤄집니다.</p>
+						</div>
+						<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">계산 전용</span>
+					</div>
+					<div class="mt-3 flex flex-col">
+						<div
+							v-for="p in hourlyProposals.data.proposals"
+							:key="p.employee"
+							class="flex items-center justify-between gap-3 border-t border-[var(--k-hairline-soft)] py-2"
+						>
+							<div>
+								<p class="text-sm font-semibold text-black">{{ p.employee_name || p.employee }}</p>
+								<p class="text-xs text-gray-500">
+									시급 {{ formatWonPlain(p.hourly_rate) }} · 주 {{ p.weekly_hours }}h
+									<span v-if="p.below_minimum_wage" class="ml-1 font-semibold text-red-600">최저임금 미달</span>
+								</p>
+							</div>
+							<span class="text-sm font-bold k-amount">{{ formatWonPlain(p.gross_pay) }}</span>
+						</div>
+					</div>
+					<div v-if="hourlyProposals.data.missing_time_input.length" class="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">
+						근무시간 미입력: {{ hourlyProposals.data.missing_time_input.join(", ") }}
+					</div>
+					<div v-if="hourlyProposals.data.missing_rate.length" class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">
+						시급 미입력(프로파일): {{ hourlyProposals.data.missing_rate.join(", ") }}
+					</div>
+				</section>
+
 				<section class="flex flex-col gap-3">
 					<article
 						v-for="item in activeWorklist.items"
@@ -201,8 +235,10 @@ import {
 import {
 	hasKoreaAdminDashboardRuntimeData,
 	hasKoreaPayrollClosingRuntimeWorklistData,
+	hasKoreaHourlyPayrollProposalData,
 	getKoreaPayrollClosingRuntimeUiState,
 	loadKoreaAdminDashboardRuntime,
+	loadKoreaHourlyPayrollProposals,
 	loadKoreaPayrollClosingRuntimeWorklist,
 } from "@/data/koreaPayrollClosingRuntime"
 
@@ -212,6 +248,9 @@ const runtimeWorklist = ref(null)
 const runtimeLoading = ref(false)
 const runtimeError = ref("")
 const runtimeWorklistError = ref("")
+// 시급제 gross 제안 (계산 전용) — 데이터 없으면 섹션 자체를 숨긴다
+const hourlyProposals = ref(null)
+const hourlyProposalsVisible = computed(() => hasKoreaHourlyPayrollProposalData(hourlyProposals.value))
 const requestedCompany = computed(() => {
 	const company = route.query.company
 	// 쿼리 없으면 빈 값 유지 — 런타임 로더가 company를 생략해 서버 Global Defaults 폴백을 태운다
@@ -273,9 +312,27 @@ async function loadRuntimeData() {
 			const error = worklistResult.reason || dashboardResult.reason
 			runtimeError.value = error instanceof Error ? error.message : String(error)
 		}
+		await loadHourlyProposals()
 	} finally {
 		runtimeLoading.value = false
 	}
+}
+
+async function loadHourlyProposals() {
+	// 마감 기간에서 period(YYYY-MM) 유도 — 실패는 조용히 skip (부가 섹션, 마감 본선 방해 금지)
+	try {
+		const first = activeWorklist.value?.items?.[0]
+		const period = String(first?.period_start || "").slice(0, 7)
+		if (!/^\d{4}-\d{2}$/.test(period)) return
+		const result = await loadKoreaHourlyPayrollProposals({ period, fallbackCompany: requestedCompany.value })
+		hourlyProposals.value = result
+	} catch {
+		hourlyProposals.value = null
+	}
+}
+
+function formatWonPlain(value) {
+	return `${Number(value || 0).toLocaleString("ko-KR")}원`
 }
 
 function findActiveSessionItem(name) {

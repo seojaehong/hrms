@@ -35,8 +35,13 @@ test("공제 요약 3줄(4대보험·소득세·주민세) 구조 유지", () =>
 	assert.match(src, /주민세\(지방소득세\)/)
 })
 
-test("금액은 tabular 숫자 정렬(k-numeric)", () => {
-	assert.ok((src.match(/k-numeric/g) || []).length >= 5)
+test("금액은 tabular 숫자 정렬 — v2 Ledger: 돈은 k-amount(네이비+tabular), 비금액 숫자는 k-numeric", () => {
+	// DESIGN.md v2 (2026-07): 금액 클래스가 k-numeric → k-amount(네이비 잉크 포함)로 승격.
+	// 둘 다 tabular-nums를 강제하므로 계약 의도(열이 흔들리지 않는 숫자)는 동일.
+	const amountLike = (src.match(/k-amount|k-numeric/g) || []).length
+	assert.ok(amountLike >= 5)
+	// 확정 실수령액에는 결산선(.k-settled) — v2 시그니처
+	assert.match(src, /k-settled/)
 })
 
 test("근거 고지: 근로기준법 제48조 명세서 문구 존재", () => {

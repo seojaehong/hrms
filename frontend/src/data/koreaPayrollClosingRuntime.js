@@ -4,6 +4,10 @@ export const KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD =
 export const KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD =
 	"hrms.regional.south_korea.payroll_closing_worklist_runtime_api.list_korea_payroll_closing_worklist_runtime"
 
+// 시급제 gross 제안 — 계산 전용(서버는 어떤 저장도 하지 않음)
+export const KOREA_HOURLY_PAYROLL_PROPOSALS_METHOD =
+	"hrms.regional.south_korea.hourly_wage_api.list_hourly_payroll_proposals"
+
 import { KOREA_ATTENDANCE_READ_ONLY_METHODS } from "./koreaAttendanceRuntime.js"
 
 // 폴리필은 페이지 방문 순서에 따라 이 모듈이 먼저 설치할 수 있으므로,
@@ -11,6 +15,7 @@ import { KOREA_ATTENDANCE_READ_ONLY_METHODS } from "./koreaAttendanceRuntime.js"
 const KOREA_PAYROLL_CLOSING_READ_ONLY_RUNTIME_METHODS = new Set([
 	KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD,
 	KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD,
+	KOREA_HOURLY_PAYROLL_PROPOSALS_METHOD,
 	...KOREA_ATTENDANCE_READ_ONLY_METHODS,
 ])
 
@@ -137,6 +142,41 @@ export async function loadKoreaPayrollClosingRuntimeWorklist({
 		source: "runtime_read_only",
 		data,
 	}
+}
+
+export async function loadKoreaHourlyPayrollProposals({
+	win = globalThis.window,
+	period,
+	fallbackCompany,
+	minimumWage,
+} = {}) {
+	ensureKoreaPayrollClosingFrappeCallRuntime(win)
+	if (!isFrappeRuntimeAvailable(win)) {
+		throw new Error("Frappe runtime is not available for Korea hourly payroll proposals")
+	}
+	if (!period || !String(period).trim()) throw new Error("period is required for hourly payroll proposals")
+
+	const company = getKoreaPayrollClosingRuntimeCompany(win, fallbackCompany)
+	const args = { period: String(period).trim() }
+	if (company) args.company = company
+	if (minimumWage !== undefined && minimumWage !== null) args.minimum_wage = minimumWage
+
+	const response = await win.frappe.call({ method: KOREA_HOURLY_PAYROLL_PROPOSALS_METHOD, args })
+	const data = response?.message ?? response
+	if (!data || typeof data !== "object" || !Array.isArray(data.proposals)) {
+		throw new Error("Unexpected hourly payroll proposals response")
+	}
+	return { source: "runtime_read_only", data }
+}
+
+export function hasKoreaHourlyPayrollProposalData(result) {
+	const data = result?.data
+	if (!data) return false
+	return (
+		(Array.isArray(data.proposals) && data.proposals.length > 0) ||
+		(Array.isArray(data.missing_time_input) && data.missing_time_input.length > 0) ||
+		(Array.isArray(data.missing_rate) && data.missing_rate.length > 0)
+	)
 }
 
 export function assertKoreaPayrollClosingRuntimeWorklist(data) {

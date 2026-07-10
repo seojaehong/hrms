@@ -1,0 +1,25 @@
+# Hermes Agent gateway — OpenAI 호환 API 서버 (Goal Set: 온톨로지+Hermes 하네스 HR SaaS)
+# 소스: ~/workspaces/hermes-agent (vendor/HERMES_PIN 참조, MIT © Nous Research)
+# 설치: sudo cp scripts/systemd/hermes-gateway.service /etc/systemd/system/
+#       sudo systemctl daemon-reload && sudo systemctl enable --now hermes-gateway
+# 키:   /home/ubuntu/.hermes-gateway.env (600) — API_SERVER_KEY=게이트웨이 접근 토큰
+#       LLM 상류 자격증명은 hermes auth(OAuth) 또는 env(ANTHROPIC_API_KEY 등)로 Hermes가 해석
+[Unit]
+Description=Hermes Agent gateway (OpenAI-compatible API server)
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/workspaces/hermes-agent
+EnvironmentFile=/home/ubuntu/.hermes-gateway.env
+# 격리 홈 — 서버의 기존 봇 인프라(~/.hermes, 제우스봇)와 락·인증 분리 (건드리지 말 것)
+Environment=HERMES_HOME=/home/ubuntu/workspaces/hermes-agent/.hermes-home
+Environment=API_SERVER_ENABLED=1
+Environment=API_SERVER_HOST=0.0.0.0
+Environment=API_SERVER_PORT=8130
+ExecStart=/home/ubuntu/workspaces/hermes-agent/.venv/bin/python gateway/run.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

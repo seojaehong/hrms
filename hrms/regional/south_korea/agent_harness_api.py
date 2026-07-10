@@ -60,6 +60,7 @@ _agent_loop = _load_core("agent_loop")
 _tool_registry_mod = _load_core("tool_registry")
 _llm_credentials = _load_core("llm_credentials")
 _hermes_provider = _load_core("hermes_provider")
+_prompt_builder = _load_core("prompt_builder")
 
 # site config 키 — 이 키가 있어야 provider가 설정된 것으로 본다(값 읽기만, 네트워크 없음).
 PROVIDER_CONFIG_KEY = "korea_agent_harness_provider"
@@ -135,7 +136,16 @@ def run_agent_skill(
 		}
 
 	skill = registry.get(skill_name)
-	messages = [{"role": "user", "skill": skill_name, "args": args}]
+	# 하네스가 시스템 프롬프트를 소유한다 — provider(Hermes 등)가 자체 셸 도구로
+	# 이탈하지 못하도록 불변 원칙·스킬·등록 도구 스펙을 조립해 messages[0]에 주입한다.
+	tool_specs = {
+		name: tool_registry.get_spec(name) for name in tool_registry.list_tools()
+	}
+	system_prompt = _prompt_builder.build_system_prompt(skill, tool_specs, {})
+	messages = [
+		{"role": "system", "content": system_prompt},
+		{"role": "user", "skill": skill_name, "args": args},
+	]
 	loop_result = _agent_loop.run_agent_loop(
 		provider, messages, tool_registry, max_steps=max_steps
 	)

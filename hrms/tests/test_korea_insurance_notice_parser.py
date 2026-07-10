@@ -24,6 +24,7 @@ _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
 
 parse_notice_xlsx = _mod.parse_notice_xlsx
+match_notice_to_employees = _mod.match_notice_to_employees
 
 
 def _write_xlsx(rows: list[list]) -> str:
@@ -144,6 +145,87 @@ class TestParseNotice(unittest.TestCase):
 		)
 		self.assertEqual(out["rows"], [{"match_key": "천시원", "national_pension": 166500}])
 		self.assertEqual(out["errors"], [])
+
+
+class TestMatchNoticeToEmployees(unittest.TestCase):
+	def _employees(self):
+		return [
+			{"employee": "HR-001", "employee_name": "천시원", "rrn_masked": "900101-1******"},
+			{"employee": "HR-002", "employee_name": "김철수", "rrn_masked": "850315-2******"},
+		]
+
+	def test_match_by_rrn(self):
+		# match_key가 주민번호(하이픈 포함) → rrn_masked 앞 7자리로 매칭
+		out = match_notice_to_employees(
+			[{"match_key": "900101-1234567", "national_pension": 166500}],
+			self._employees(),
+		)
+		self.assertEqual(out["rows"], [{"employee": "HR-001", "national_pension": 166500}])
+		self.assertEqual(out["unmatched"], [])
+		self.assertEqual(out["ambiguous"], [])
+
+	def test_match_by_rrn_without_hyphen(self):
+		# 하이픈 미포함 13자리도 매칭
+		out = match_notice_to_employees(
+			[{"match_key": "8503152345678", "health_insurance": 70900}],
+			self._employees(),
+		)
+		self.assertEqual(out["rows"], [{"employee": "HR-002", "health_insurance": 70900}])
+
+	def test_match_by_name(self):
+		# 주민번호 형태가 아니면 이름 정확 일치(공백 제거)
+		out = match_notice_to_employees(
+			[{"match_key": " 천 시원 ", "national_pension": 166500}],
+			self._employees(),
+		)
+		self.assertEqual(out["rows"], [{"employee": "HR-001", "national_pension": 166500}])
+		self.assertEqual(out["unmatched"], [])
+
+	def test_ambiguous_duplicate_name(self):
+		# 동명이인 → ambiguous, 추측 배정 금지
+		emps = [
+			{"employee": "HR-010", "employee_name": "이영희"},
+			{"employee": "HR-011", "employee_name": "이영희"},
+		]
+		out = match_notice_to_employees(
+			[{"match_key": "이영희", "national_pension": 90000}],
+			emps,
+		)
+		self.assertEqual(out["rows"], [])
+		self.assertEqual(len(out["ambiguous"]), 1)
+		amb = out["ambiguous"][0]
+		self.assertEqual(amb["row"]["match_key"], "이영희")
+		self.assertEqual([c["employee"] for c in amb["candidates"]], ["HR-010", "HR-011"])
+		self.assertEqual(out["unmatched"], [])
+
+	def test_unmatched(self):
+		# 아무에게도 매칭 안 되면 unmatched
+		out = match_notice_to_employees(
+			[{"match_key": "박존재안함", "national_pension": 50000}],
+			self._employees(),
+		)
+		self.assertEqual(out["rows"], [])
+		self.assertEqual(out["ambiguous"], [])
+		self.assertEqual(out["unmatched"], [{"match_key": "박존재안함", "national_pension": 50000}])
+
+	def test_employee_without_rrn_masked(self):
+		# rrn_masked 없는 직원 — RRN 매칭에선 제외, 이름 매칭은 정상
+		emps = [
+			{"employee": "HR-020", "employee_name": "정민수"},  # rrn_masked 없음
+		]
+		# 주민번호로는 매칭 안 됨 → unmatched
+		out_rrn = match_notice_to_employees(
+			[{"match_key": "900101-1234567", "national_pension": 100}],
+			emps,
+		)
+		self.assertEqual(out_rrn["rows"], [])
+		self.assertEqual(len(out_rrn["unmatched"]), 1)
+		# 이름으로는 매칭됨
+		out_name = match_notice_to_employees(
+			[{"match_key": "정민수", "national_pension": 100}],
+			emps,
+		)
+		self.assertEqual(out_name["rows"], [{"employee": "HR-020", "national_pension": 100}])
 
 
 if __name__ == "__main__":

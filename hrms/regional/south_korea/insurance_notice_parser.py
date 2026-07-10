@@ -121,3 +121,92 @@ def parse_notice_xlsx(
 		return {"rows": rows, "errors": errors}
 	finally:
 		wb.close()
+
+
+def _normalize_name(value: Any) -> str:
+	"""이름 비교용 정규화 — 모든 공백 제거."""
+	if value is None:
+		return ""
+	return "".join(str(value).split())
+
+
+def _rrn_front7(match_key: Any) -> str | None:
+	"""match_key가 주민번호 형태(하이픈 포함/미포함 13자리)이면 앞 7자리 숫자 반환.
+
+	"YYMMDD-G"의 숫자 부분(YYMMDD + 성별코드 1자리)만 남긴 7자리 문자열.
+	주민번호 형태가 아니면 None.
+	"""
+	s = str(match_key).replace("-", "").replace(" ", "")
+	if len(s) == 13 and s.isdigit():
+		return s[:7]
+	return None
+
+
+def _masked_front7(rrn_masked: Any) -> str | None:
+	"""rrn_masked(예 "900101-1******")에서 앞 7자리 숫자 반환. 없으면 None."""
+	if not rrn_masked:
+		return None
+	digits = "".join(ch for ch in str(rrn_masked) if ch.isdigit())
+	if len(digits) >= 7:
+		return digits[:7]
+	return None
+
+
+def match_notice_to_employees(
+	notice_rows: list[dict[str, Any]],
+	employees: list[dict[str, Any]],
+) -> dict[str, Any]:
+	"""고지 표준행의 match_key를 사내 직원 레코드와 매칭한다.
+
+	Args:
+		notice_rows: parse_notice_xlsx가 낸 rows — [{"match_key": str, <금액키>: int}...].
+		employees: [{"employee": ..., "employee_name": ...,
+			"rrn_masked": <옵션, 예 "900101-1******">}...].
+
+	매칭 우선순위:
+		1. match_key가 주민번호 형태면 rrn_masked 앞 7자리("YYMMDD-G")로 대조.
+		2. 주민번호 매칭이 안 되면 이름 정확 일치(양쪽 공백 전부 제거 후 비교).
+		동명이인(2명 이상) → ambiguous. 아무에게도 매칭 안 되면 → unmatched.
+		추측 배정은 절대 하지 않는다.
+
+	Returns:
+		{"rows": [{"employee": ..., <금액키>: int}...],
+		 "unmatched": [매칭 실패 고지행...],
+		 "ambiguous": [{"row": 고지행, "candidates": [employee들]}...]}
+	"""
+	rows: list[dict[str, Any]] = []
+	unmatched: list[dict[str, Any]] = []
+	ambiguous: list[dict[str, Any]] = []
+
+	for notice_row in notice_rows:
+		match_key = notice_row.get("match_key")
+
+		candidates: list[dict[str, Any]] = []
+		front7 = _rrn_front7(match_key)
+		if front7 is not None:
+			candidates = [
+				emp for emp in employees
+				if _masked_front7(emp.get("rrn_masked")) == front7
+			]
+		if not candidates:
+			# 이름 정확 일치 (주민번호 매칭이 안 됐을 때만)
+			name = _normalize_name(match_key)
+			if name:
+				candidates = [
+					emp for emp in employees
+					if _normalize_name(emp.get("employee_name")) == name
+				]
+
+		if len(candidates) == 1:
+			emp = candidates[0]
+			out_row: dict[str, Any] = {"employee": emp.get("employee")}
+			for key, value in notice_row.items():
+				if key != "match_key":
+					out_row[key] = value
+			rows.append(out_row)
+		elif len(candidates) >= 2:
+			ambiguous.append({"row": notice_row, "candidates": candidates})
+		else:
+			unmatched.append(notice_row)
+
+	return {"rows": rows, "unmatched": unmatched, "ambiguous": ambiguous}

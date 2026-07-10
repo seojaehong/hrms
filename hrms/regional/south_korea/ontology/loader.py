@@ -40,6 +40,7 @@ class OntologyNode:
 	body: str
 	edges: list
 	path: str
+	frontmatter: dict  # 원본 frontmatter 전체 (value·effective_year 등 커스텀 키 접근용)
 
 
 def load_nodes(root, review_state="published"):
@@ -92,6 +93,7 @@ def _parse_node(text, path):
 		body=body,
 		edges=_extract_edges(body),
 		path=str(path),
+		frontmatter=fields,
 	)
 
 

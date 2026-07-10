@@ -60,5 +60,20 @@ class TestReconciliation(unittest.TestCase):
 		self.assertTrue(out["ok"])
 
 
+class TestMinimumWageFromOntology(unittest.TestCase):
+	"""사고 방지: minimum_wage 미지정 시 온톨로지 published 확정값(2026=10,320)으로 판정."""
+
+	def test_10030_flagged_violation_via_ontology_default(self):
+		# 시급 10,030 · 최저임금 인자 없음 → 온톨로지 2026값 10,320 기준 위반 판정
+		out = estimate_hourly(regular_hours=80, hourly_rate=10030, contracted_weekly_hours=20)
+		self.assertTrue(out["below_minimum_wage"])
+		self.assertEqual(out.get("minimum_wage_applied"), 10320)
+
+	def test_explicit_minimum_wage_overrides(self):
+		out = estimate_hourly(regular_hours=80, hourly_rate=10030, contracted_weekly_hours=20, minimum_wage=9000)
+		self.assertFalse(out["below_minimum_wage"])
+		self.assertEqual(out.get("minimum_wage_applied"), 9000)
+
+
 if __name__ == "__main__":
 	unittest.main()

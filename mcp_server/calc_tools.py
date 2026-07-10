@@ -24,6 +24,23 @@ def _load_core(name: str):
 _hourly = _load_core("hourly_wage")
 _recon = _load_core("insurance_reconciliation")
 
+# 온톨로지 확정값 리더 (published 노드에서 최저임금 등)
+_ONT_DIR = _CORE_DIR / "ontology"
+_WIKI_ROOT = _pl.Path(__file__).resolve().parents[1] / "wiki" / "ontology"
+
+
+def _load_ont(name: str):
+	spec = _ilu.spec_from_file_location(f"korea_ont_{name}", _ONT_DIR / f"{name}.py")
+	module = _ilu.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+_statutory = _load_ont("statutory_ontology")
+
+# 기본 판정 연도 (계약: 미지정 최저임금은 이 연도의 published 확정값 사용)
+_DEFAULT_MIN_WAGE_YEAR = 2026
+
 
 def estimate_hourly_pay(
 	regular_hours: float,
@@ -42,6 +59,10 @@ def estimate_hourly_pay(
 	"""
 	if float(hourly_rate) <= 0:
 		raise ValueError("hourly_rate는 양수여야 합니다")
+	# 최저임금 미지정 시: 임의 값이 아니라 온톨로지 published 확정값(연도별)을 적용.
+	# (2026=10,320을 10,030으로 스모크한 사고 대응 — 법정값은 사람이 승인한 노드에서만.)
+	if minimum_wage in (None, "", 0):
+		minimum_wage = _statutory.get_minimum_hourly_wage(_WIKI_ROOT, _DEFAULT_MIN_WAGE_YEAR)
 	result = _hourly.gross_from_hour_buckets(
 		regular_hours=regular_hours,
 		overtime_hours=overtime_hours,
@@ -58,6 +79,7 @@ def estimate_hourly_pay(
 		"earnings": result["earnings"],
 		"gross_pay": result["gross_pay"],
 		"below_minimum_wage": below,
+		"minimum_wage_applied": int(minimum_wage) if minimum_wage not in (None, "", 0) else None,
 	}
 
 

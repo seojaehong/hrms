@@ -175,3 +175,60 @@ def estimate_hourly_monthly_payroll(
 		"weekly_aggregate": _premium.calculate_weekly_aggregate(work_sessions),
 		"below_minimum_wage": below_min,
 	}
+
+
+@_whitelist
+def estimate_hourly_payroll_from_time_input(
+	period: str,
+	employee: str,
+	hourly_rate: Any,
+	contracted_weekly_hours: Any,
+	perfect_attendance: Any = True,
+	minimum_wage: Any = None,
+	extra_allowances: Any = None,
+) -> dict[str, Any]:
+	"""저장된 근무시간 입력(Korea Payroll Time Input) → 시급제 월 gross 계산.
+
+	time_input은 월 합계 시간 버킷(part_time/overtime/night/holiday hours)이므로
+	gross_from_hour_buckets 경로를 쓴다(휴일 8h 초과 ×2.0 구분 불가 — 한계는 코어 docstring).
+	계산 전용 — 어떤 저장도 하지 않는다.
+
+	Returns: {"earnings", "gross_pay", "below_minimum_wage", "time_input": {버킷 원본}}
+	"""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		raise RuntimeError("frappe 환경에서만 호출 가능합니다 (time_input 조회 필요)")
+
+	rows = _frappe.get_all(
+		"Korea Payroll Time Input",
+		filters={"period": str(period).strip(), "employee": employee},
+		fields=["part_time_hours", "overtime_hours", "night_hours", "holiday_hours", "status"],
+		limit=1,
+	)
+	if not rows:
+		raise ValueError(f"근무시간 입력이 없습니다: employee={employee}, period={period}")
+	row = dict(rows[0])
+
+	if isinstance(extra_allowances, str) and extra_allowances.strip():
+		extra_allowances = _json.loads(extra_allowances)
+
+	monthly = _hourly.gross_from_hour_buckets(
+		regular_hours=row.get("part_time_hours") or 0,
+		overtime_hours=row.get("overtime_hours") or 0,
+		night_hours=row.get("night_hours") or 0,
+		holiday_hours=row.get("holiday_hours") or 0,
+		hourly_rate=hourly_rate,
+		contracted_weekly_hours=contracted_weekly_hours,
+		perfect_attendance=_coerce_bool(perfect_attendance),
+		extra_allowances=extra_allowances or None,
+	)
+
+	below_min = None
+	if minimum_wage not in (None, "", 0):
+		below_min = _hourly.is_below_minimum_wage(hourly_rate, minimum_wage)
+
+	return {
+		"earnings": monthly["earnings"],
+		"gross_pay": monthly["gross_pay"],
+		"below_minimum_wage": below_min,
+		"time_input": row,
+	}

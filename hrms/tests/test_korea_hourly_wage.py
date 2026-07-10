@@ -130,6 +130,34 @@ class TestComposeHourlyEarnings(unittest.TestCase):
 		self.assertEqual(result["gross_pay"], 1_200_000)
 
 
+class TestGrossFromHourBuckets(unittest.TestCase):
+	def test_buckets_full(self):
+		# 정상 80h + 연장 10h + 야간 5h + 휴일 8h, 시급 10,000, 주 40h
+		out = _mod.gross_from_hour_buckets(
+			regular_hours=80, overtime_hours=10, night_hours=5, holiday_hours=8,
+			hourly_rate=10000, contracted_weekly_hours=40,
+		)
+		comp = {r["component"]: r["amount"] for r in out["earnings"]}
+		self.assertEqual(comp["기본급"], 800000)          # 80 × 10,000
+		self.assertEqual(comp["연장근로수당"], 150000)      # 10 × 10,000 × 1.5
+		self.assertEqual(comp["야간근로수당"], 25000)       # 5 × 10,000 × 0.5 (추가분)
+		self.assertEqual(comp["휴일근로수당"], 120000)      # 8 × 10,000 × 1.5
+		self.assertEqual(comp["주휴수당"], 347619)
+		self.assertEqual(out["gross_pay"], 800000 + 150000 + 25000 + 120000 + 347619)
+
+	def test_zero_buckets_only_regular(self):
+		out = _mod.gross_from_hour_buckets(
+			regular_hours=20, hourly_rate=10000, contracted_weekly_hours=10,
+		)
+		comp = {r["component"]: r["amount"] for r in out["earnings"]}
+		self.assertEqual(list(comp), ["기본급"])           # 주 10h → 주휴 없음
+		self.assertEqual(out["gross_pay"], 200000)
+
+	def test_negative_rate_rejected(self):
+		with self.assertRaises(ValueError):
+			_mod.gross_from_hour_buckets(regular_hours=10, hourly_rate=-1, contracted_weekly_hours=20)
+
+
 class TestAggregateMonthlyGross(unittest.TestCase):
 	def test_basic_month(self):
 		# 2일 근무, 각 통상 80,000 + 연장 15,000 + 야간 5,000, 주 40h @10,000

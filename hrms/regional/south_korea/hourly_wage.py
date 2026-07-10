@@ -134,6 +134,58 @@ def compose_hourly_earnings(
 	return {"earnings": lines, "gross_pay": gross}
 
 
+# §56 가산 배수 (overtime_premium과 동일 값 — DI 원칙상 상수 재정의)
+MULTIPLIER_REGULAR = Decimal("1.0")
+MULTIPLIER_OVERTIME = Decimal("1.5")   # 연장: 통상 + 50%
+MULTIPLIER_NIGHT_ADDEND = Decimal("0.5")  # 야간: 추가분만(통상은 다른 버킷에 포함)
+MULTIPLIER_HOLIDAY = Decimal("1.5")    # 휴일 8h 이내: 통상 + 50%
+
+
+def gross_from_hour_buckets(
+	*,
+	regular_hours: Any,
+	overtime_hours: Any = 0,
+	night_hours: Any = 0,
+	holiday_hours: Any = 0,
+	hourly_rate: Any,
+	contracted_weekly_hours: Any,
+	perfect_attendance: bool = True,
+	weeks_per_month: Any = AVG_WEEKS_PER_MONTH,
+	extra_allowances: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+	"""월 시간 버킷(Korea Payroll Time Input 형태) → gross earnings.
+
+	세션(출퇴근) 없이 월 합계 시간만 있을 때의 시급제 계산 경로.
+	⚠️ 한계: 휴일 8h 초과(×2.0)는 버킷형으로 구분 불가 — holiday_hours 전체에
+	×1.5를 적용한다. 8h 초과 휴일근로가 있는 사업장은 세션 기반
+	estimate_hourly_monthly_payroll을 사용할 것.
+	"""
+	rate = _dec(hourly_rate, "hourly_rate")
+	if rate < 0:
+		raise ValueError("hourly_rate must be non-negative")
+
+	base = _dec(regular_hours, "regular_hours") * rate * MULTIPLIER_REGULAR
+	overtime = _dec(overtime_hours, "overtime_hours") * rate * MULTIPLIER_OVERTIME
+	night = _dec(night_hours, "night_hours") * rate * MULTIPLIER_NIGHT_ADDEND
+	holiday = _dec(holiday_hours, "holiday_hours") * rate * MULTIPLIER_HOLIDAY
+
+	weekly_holiday = monthly_weekly_holiday_allowance(
+		contracted_weekly_hours=contracted_weekly_hours,
+		hourly_rate=hourly_rate,
+		perfect_attendance=perfect_attendance,
+		weeks_per_month=weeks_per_month,
+	)
+
+	return compose_hourly_earnings(
+		base_pay=base,
+		weekly_holiday_pay=weekly_holiday,
+		overtime_pay=overtime,
+		night_pay=night,
+		holiday_pay=holiday,
+		extra_allowances=extra_allowances,
+	)
+
+
 def aggregate_monthly_gross(
 	*,
 	daily_pays: list[dict[str, Any]],

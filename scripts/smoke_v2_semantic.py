@@ -28,8 +28,22 @@ def _load(name, path):
     return m
 
 
+def _load_dotenv():
+    """repo 루트 .env.smoke(gitignore됨)의 KEY=VALUE를 env로 로드(이미 설정된 건 유지)."""
+    f = _ROOT / ".env.smoke"
+    if not f.exists():
+        return
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def main():
     query = sys.argv[1] if len(sys.argv) > 1 else "주휴수당 발생 요건"
+    _load_dotenv()
 
     missing = [k for k in ("YELLOW_ENVELOPE_SUPABASE_URL", "YELLOW_ENVELOPE_SUPABASE_KEY")
                if not os.environ.get(k)]

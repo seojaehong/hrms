@@ -52,10 +52,20 @@ def _tool_results(messages):
 
 
 class TestSkillDefinitions(unittest.TestCase):
-	def test_two_builtin_skills(self):
+	def test_three_builtin_skills(self):
 		skills = get_builtin_skills()
 		names = [s["name"] for s in skills]
-		self.assertEqual(names, ["hourly_closing_prep", "insurance_reconcile"])
+		self.assertEqual(
+			names, ["hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"]
+		)
+
+	def test_freeform_qa_is_freeform_with_empty_steps(self):
+		# 자유 질의 스킬은 고정 steps 없이(freeform=True) validate를 통과해야 함.
+		defn = {s["name"]: s for s in get_builtin_skills()}["hr_freeform_qa"]
+		self.assertEqual(defn["steps"], [])
+		self.assertTrue(defn["freeform"])
+		self.assertFalse(defn["requires_approval"])
+		self.assertIs(validate_skill_definition(defn), defn)
 
 	def test_all_pass_validation(self):
 		# AC: 빌트인 스킬은 US-001 스키마를 그대로 따르고 validate 통과
@@ -81,9 +91,12 @@ class TestRegisterBuiltinSkills(unittest.TestCase):
 	def test_register_into_registry(self):
 		reg = SkillRegistry()
 		names = register_builtin_skills(reg)
-		self.assertEqual(names, ["hourly_closing_prep", "insurance_reconcile"])
+		self.assertEqual(
+			names, ["hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"]
+		)
 		self.assertTrue(reg.has("hourly_closing_prep"))
 		self.assertTrue(reg.has("insurance_reconcile"))
+		self.assertTrue(reg.has("hr_freeform_qa"))
 
 	def test_duplicate_register_raises(self):
 		reg = SkillRegistry()

@@ -149,6 +149,66 @@ class TestInjectedRun(unittest.TestCase):
 		self.assertIn("제안 2명", result["final_text"])
 
 
+class TestFreeformQA(unittest.TestCase):
+	"""자유 질의 빌트인 스킬 hr_freeform_qa — 도구 필요시에만 호출(US-3)."""
+
+	def test_freeform_no_tool_call_completes(self):
+		# (a) 도구 0회, 바로 텍스트 응답 → completed, tool_calls 0건.
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()  # 빈 레지스트리 — no_tools 회피용(None 아님)
+
+		captured = {}
+
+		def provider(convo):
+			captured["messages"] = [dict(m) for m in convo]
+			return {"text": "연차는 1년 만근 시 15일 발생합니다."}
+
+		result = mod.run_agent_skill(
+			"hr_freeform_qa", {"question": "연차 며칠?"}, provider=provider, tool_registry=reg
+		)
+		self.assertNotEqual(result["status"], "unknown_skill")
+		self.assertEqual(result["status"], "completed")
+		self.assertEqual(result["skill_name"], "hr_freeform_qa")
+		self.assertEqual(result["tool_calls"], [])
+		self.assertIn("15일", result["final_text"])
+		# question이 user 메시지 args로 전달되는지 확인.
+		msgs = captured["messages"]
+		self.assertEqual(msgs[1]["role"], "user")
+		self.assertEqual(msgs[1]["args"]["question"], "연차 며칠?")
+
+	def test_freeform_one_tool_call_then_answer(self):
+		# (b) tool_call 1회(list_hourly_payroll_proposals) 후 텍스트 → tool_calls 1건, completed.
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"list_hourly_payroll_proposals",
+			lambda **kw: {"proposals": [{"emp": "A"}, {"emp": "B"}]},
+			{"description": "시급 제안 조회"},
+			read_only=True,
+		)
+
+		def provider(convo):
+			for m in convo:
+				if m.get("role") == "tool" and m.get("tool") == "list_hourly_payroll_proposals":
+					count = len(m["result"]["result"]["proposals"])
+					return {"text": f"현재 시급 제안 대상은 {count}명입니다."}
+			return {"tool_call": {"name": "list_hourly_payroll_proposals", "args": {}}}
+
+		result = mod.run_agent_skill(
+			"hr_freeform_qa",
+			{"question": "이번 달 시급 대상 몇 명?"},
+			provider=provider,
+			tool_registry=reg,
+		)
+		self.assertEqual(result["status"], "completed")
+		self.assertEqual(
+			[c["tool"] for c in result["tool_calls"]], ["list_hourly_payroll_proposals"]
+		)
+		self.assertIn("2명", result["final_text"])
+
+
 class TestSystemPromptInjection(unittest.TestCase):
 	"""하네스가 messages[0]에 시스템 프롬프트를 소유·주입하는지(US-1)."""
 

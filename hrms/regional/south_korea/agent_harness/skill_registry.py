@@ -13,6 +13,11 @@
 - requires_approval (bool)         : 확정 행위 여부 — True면 사람 승인 게이트 필요
 - output_summary_template (str)    : 최종 요약 문자열 템플릿 (str.format 소비용)
 
+선택 키:
+- freeform (bool, 기본 False)      : 자유 질의 스킬 표시. True면 고정 steps를 강제하지
+    않으므로 steps 빈 리스트를 허용한다(도구는 에이전트가 필요시에만 호출). 비-freeform
+    스킬은 종전대로 steps 1개 이상을 요구한다(기존 계약 불변).
+
 확정 행위는 human 승인 게이트(fail-closed) 원칙에 따라 requires_approval로 표시한다.
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_skill_registry.py` 직접 실행 검증.
 """
@@ -54,8 +59,16 @@ def validate_skill_definition(defn: Any) -> dict:
 	if not name.strip():
 		raise ValueError("'name'은 빈 문자열일 수 없음")
 
+	# freeform(자유 질의) 스킬은 고정 steps를 강제하지 않으므로 빈 steps 허용.
+	# 비-freeform은 종전 계약(steps 1개 이상)을 그대로 유지한다.
+	freeform = defn.get("freeform", False)
+	if not isinstance(freeform, bool):
+		raise ValueError(
+			f"'freeform'은 bool이어야 함 (스킬 '{name}', got {type(freeform).__name__})"
+		)
+
 	steps = defn["steps"]
-	if not steps:
+	if not steps and not freeform:
 		raise ValueError(f"'steps'는 빈 리스트일 수 없음 (스킬 '{name}')")
 
 	for idx, step in enumerate(steps):

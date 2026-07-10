@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from typing import Any, Callable
 
-DEFAULT_TIMEOUT = 120
+DEFAULT_TIMEOUT = 300  # Hermes 풀 하네스(대형 시스템프롬프트+자체 도구) 왕복 여유
 _VALID_ROLES = ("system", "user", "assistant", "tool")
 
 

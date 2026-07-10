@@ -12,12 +12,25 @@ v2 (연말): 실제 LLM (Claude/GPT) + vector DB (Pinecone/pgvector) 연동.
 """
 from __future__ import annotations
 
+import importlib.util as _ilu
 import json
 import os
+import pathlib as _pl
 import re
 import uuid
 from datetime import datetime
 from typing import Any, Callable
+
+
+def _load_sibling(name: str):
+    """같은 폴더의 framework-free 모듈을 경로로 로드(패키지 컨텍스트 없이도 동작)."""
+    spec = _ilu.spec_from_file_location(name, _pl.Path(__file__).resolve().parent / f"{name}.py")
+    module = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_factcheck = _load_sibling("ai_chat_factcheck")
 
 # ──────────────────────────────────────────────
 # 모듈 상수 — contract / boundary 식별자
@@ -241,16 +254,26 @@ def chat_query(
         docs = retriever(query=user_question, top_k=5)
     else:
         docs = retrieve_relevant_documents(query=user_question, top_k=5)
-    citations = _docs_to_citations(docs)
 
-    answer = _build_answer(
-        intent=intent,
-        question=user_question,
-        citations=citations,
-        context_doctype=context_doctype,
-        user_role=user_role,
-        docs=docs,
-    )
+    # 팩트체크 하네스 게이트(PRD §7.4) — 점수기반(v2)일 때 신뢰도 미달이면 단정 대신 사람 연결.
+    fc = _factcheck.evaluate(docs)
+    requires_human_consult = fc["applicable"] and not fc["grounded"]
+
+    if requires_human_consult:
+        citations = []
+        answer = _factcheck.harness_fallback_answer(user_question)
+    else:
+        citations = _docs_to_citations(docs)
+        answer = _build_answer(
+            intent=intent,
+            question=user_question,
+            citations=citations,
+            context_doctype=context_doctype,
+            user_role=user_role,
+            docs=docs,
+        )
+        # 검증가능한 근거(사건번호·URL) 노출 — 있을 때만.
+        answer += _factcheck.build_verification_footer(docs)
 
     # 사이트 급여 데이터 질의면 read-only 집계 한 줄 요약을 답변 앞에 붙인다.
     # provider 미제공(테스트 환경/기본값) 또는 stats None이면 기존 동작 그대로.
@@ -266,6 +289,8 @@ def chat_query(
         intent=intent,
         context_doctype=context_doctype,
     )
+    if requires_human_consult:
+        suggested_actions.insert(0, {"label": "노무사 상담", "url": "/hrms/consultation/new"})
 
     # 세션 컨텍스트 갱신
     session_ctx = _SESSION_STORE.get(session_id, {"history": []})
@@ -293,6 +318,8 @@ def chat_query(
         "ai_role": AI_ROLE,
         "no_mutation_performed": True,
         "tokens_used": 0,  # v1: no LLM call
+        "requires_human_consult": requires_human_consult,
+        "retrieval_confidence": round(fc["confidence"], 4),
     }
 
     # 감사 로그 기록 (v1 인메모리)

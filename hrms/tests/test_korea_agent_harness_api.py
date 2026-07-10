@@ -190,5 +190,50 @@ class TestSystemPromptInjection(unittest.TestCase):
 		self.assertEqual(msgs[1]["skill"], "hourly_closing_prep")
 
 
+class TestProviderError(unittest.TestCase):
+	"""provider 실행 중 예외 → 표준화된 provider_error(traceback 미노출) (US-2)."""
+
+	def _run_with_raising_provider(self, exc):
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"list_hourly_payroll_proposals",
+			lambda **kw: {"proposals": []},
+			{},
+			read_only=True,
+		)
+
+		def provider(convo):
+			raise exc
+
+		return mod.run_agent_skill(
+			"hourly_closing_prep", provider=provider, tool_registry=reg
+		)
+
+	def test_generic_exception_returns_provider_error(self):
+		result = self._run_with_raising_provider(RuntimeError("gateway 500 폭발"))
+		self.assertEqual(result["status"], "provider_error")
+		self.assertEqual(result["skill_name"], "hourly_closing_prep")
+		# traceback 미노출 + 300자 이하 요약.
+		self.assertNotIn("Traceback", result["error"])
+		self.assertLessEqual(len(result["error"]), 300)
+		self.assertIn("gateway 500 폭발", result["error"])
+
+	def test_hermes_provider_error_returns_provider_error(self):
+		hp = _load_core("hermes_provider")
+		result = self._run_with_raising_provider(
+			hp.HermesProviderError("gateway 연결 실패")
+		)
+		self.assertEqual(result["status"], "provider_error")
+		self.assertNotIn("Traceback", result["error"])
+		self.assertLessEqual(len(result["error"]), 300)
+
+	def test_error_summary_truncated_to_300(self):
+		result = self._run_with_raising_provider(RuntimeError("x" * 500))
+		self.assertEqual(result["status"], "provider_error")
+		self.assertLessEqual(len(result["error"]), 300)
+
+
 if __name__ == "__main__":
 	unittest.main()

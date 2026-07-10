@@ -24,3 +24,52 @@ date	commit	metric	status	description
 2026-07-07	730cf540a	4워크트리+랄프6 통합: 스모크 passed·프론트 89/90(env1)·신규테스트 26·전화면 실검증(임금명세서 1원일치·퇴직금 법정0원·연차 실시간)	keep	전수 Figma 리팩토링+PM P0/P1 반영+서버 어댑터 3종+데스크톱 반응형 — 노호 전달 준비 완료
 2026-07-07	b0a38af7d	리뷰6건 해소+AI코퍼스 13561건(4.6ms)+테스트 67·95 GREEN+실검증(FAQ답변 완결·인박스 1건·반응형)	keep	데스크톱 리뷰 대응 라운드 + AI 품질 대확장(FAQ·행정해석)
 2026-07-07	19c8b4e8b	신규테스트 90(백엔드53+AI10+프론트27) GREEN·smoke passed:true(96건)·급여엑셀 3API+PWA+AI인텐트·요청보드 doctype+3API+PWA	keep	F5 급여 엑셀 업/다운로드+AI 스킬 연계 + F3 요청 보드 신규 구현(ralph US-X1~X9)
+2026-07-08	e281b2669	색충돌0·kamount29·ksettled1·로직diff0	keep	Ledger v2 롤아웃 — 금액 네이비 잉크+확정 결산선(상류 급여/경비). 시각/빌드는 로컬 deps없어 미검증(정적만)
+2026-07-09	83d3c03d0	SFC컴파일OK·시각렌더검증(스크린샷)Linear스펙일치	keep	Linear 다크 마케팅 랜딩(/product) 신규 + 디자인토큰 격리(.linear) + 사용자투입 핸드오프문서. 급여PWA Ledger 무영향(네임스페이스 격리)
+2026-07-09	60d2142cd	SFC_OK·시각렌더검증(상품카피·예시데이터)	keep	랜딩 상품이야기 전환(노호 실데이터 제거→예시)+폰트 Pretendard/Noto + Hermes·온톨로지 north-star 문서
+2026-07-09	822644873	시급제 테스트 20/20 PASS	keep	시급제 자동계산 코어(주휴수당§55/§30·월환산·최저임금·earnings조립) framework-free + 직접실행 테스트 20건
+2026-07-09	058650c9b	시급제 테스트 24/24 PASS(+월집계기 4)	keep	시급제 월 gross 집계기 aggregate_monthly_gross — 일별 가산 집계+주휴+earnings 조립(DI로 overtime_premium 결합, framework-free 유지)
+2026-07-10	5d99176d3	RRN 테스트 17/17 PASS + setup 구문OK	keep	주민번호 코어(검증·마스킹·생년/성별, 2020개편 체크섬 정보성) + Employee 암호화 필드(Password) 추가. 마스킹 자동파생 훅은 bench 필요
+2026-07-10	5d99176d3	라이브 배포 검증: /product·홈·앱 200 + Ledger v2 결산선/네이비 실렌더 + Linear 랜딩 실렌더	keep	전수 라이브 반영: 카카오로그인 활성화·주민번호 암호화필드 추가·로컬 develop(7커밋) 컨테이너 배포(bundle→호스트ff→reset→bench build 44.5s)
+2026-07-10	51837e6f2	syntax OK·RRN코어 17테스트(글루는 라이브 드라이런 예정)	keep	Employee 주민번호 마스킹 자동파생 훅(employee_rrn.derive_rrn_masked) — 안전설계(throw 없음, 유효 새 전체번호만 마스킹). hooks.py Employee validate 연결
+2026-07-10	91e8d26c5	브랜딩 SafeClaw HR 통일 + 테넌트 랜딩 라우트 제거	keep	앱 Korea HRMS→SafeClaw HR(BaseLayout·Login·InstallPrompt·index.html·PWA manifest). /product 라우트 제거(랜딩을 고객 서브도메인에서 분리, Vercel 독립배포 예정)
+2026-07-10	infra	hr.safeclaw.kr 200 랜딩 서빙 + 노호 무손상 + nginx -t OK	keep	제품명=SafeClaw HR 확정. 랜딩을 테넌트에서 분리해 hr.safeclaw.kr 정적서빙(nginx server 블록 + sites/safeclaw-hr.html). 리브랜딩 라이브
+2026-07-10	0792f7cec	hr.safeclaw.kr 200·죽은href 0·앵커5·mailto/JS 서빙확인	keep	랜딩 CTA 실연결(앵커 내비·요금CTA·mailto 가입신청 abc@winhr.co.kr·로그인 안내) + 생성기 레포 영구화(scripts/landing). CF email-protection이 mailto 자동난독화(정상)
+2026-07-10	b489495f5	rrn해석 6/6 + 신고API 6/6 + 코어 11/11	keep	4대보험 신고 API가 암호화(Password) 주민번호 필드 지원 — 표준필드 기본값+레거시 폴백+복호화 경로. 어제 추가한 라이브 암호화필드와 신고서 연동 완결
+2026-07-10	b489495f5	라이브검증 emp=33 Password해석 OK·복호화경로 무에러·노호200	keep	암호화 주민번호→4대보험 신고 연동 라이브 배포. 교훈: bundle prereq는 서버 HEAD 기준(정적파일만 배포한 커밋은 서버 git에 없음)
+2026-07-10	b54814b02	mgmt필터 7/7 + 신고회귀 23 OK	keep	한 법인 다관리번호 지원 — Employee.workplace_management_number + 신고API management_number 필터(미배정 제외=오소속 방지). 노호 실사례 대응
+2026-07-10	e227f85ae	hourly_wage_api 11/11 + 코어회귀 65	keep	시급제 월급여 API estimate_hourly_monthly_payroll — 세션→일별가산(§56)→월집계+주휴(§55)→earnings. 계산전용(저장없음), §53 주간한도·최저임금 플래그 포함
+2026-07-10	e227f85ae	라이브스모크 gross=373810·주휴173810·최저임금플래그 정상	keep	시급제 API 라이브 배포+검증. 노호200
+2026-07-10	83a52732e	버킷코어 3추가(27/27)+API 11/11	keep	time_input(시간버킷) 연동 — gross_from_hour_buckets(§56 배수·휴일8h초과 한계 명시) + estimate_hourly_payroll_from_time_input(저장된 근무시간→gross, 계산전용)
+2026-07-10	83a52732e	라이브: import·실행 OK·빈입력 ValueError 정상·노호200	keep	time_input 연동 라이브 배포. 노호에 time_input 데이터 없음(기능 신규)→실데이터 스모크는 입력 생기면
+2026-07-10	1c4144892	proposals 6/6 + 시급체인 회귀 38	keep	마감 준비 API list_hourly_payroll_proposals — Hourly프로파일×time_input→직원별 gross 제안, 결측(시급/근무시간) 명단 노출(0원 제안 조용히 섞임 방지)
+2026-07-10	1c4144892	라이브 실행OK(Hourly프로파일 0건=데이터 미등록)·노호200	keep	proposals API 라이브. 노호 파트타임 프로파일 등록되면 실스모크
+2026-07-10	eb33675c9	CODEF 클라이언트+조회API 테스트 8/8(실HTTP 0회)	keep	CODEF 데모 연동 스캐폴드 — codef_client(토큰캐시·401재시도·URL인코딩응답) + insurance_inquiry_api(조회전용·fail-closed·site_config/env). 키 투입 시 즉시 작동
+2026-07-10	eb33675c9	라이브: not_configured fail-closed 정상·노호200	keep	CODEF 스캐폴드 라이브 배포. 데모키 투입 대기(HANDOFF §10-1)
+2026-07-10	cf3e38317	SFC_OK·프론트 171/172(env1 기존)·계약테스트 v2 정합	keep	마감센터 시급제 제안 섹션(계산전용·read-only allowlist 등록·결측 명단 노출) + 명세서 디자인 계약테스트 v2(k-amount·k-settled) 갱신
+2026-07-10	cf3e38317	라이브: 마감센터 200·빌드 49s (섹션은 Hourly데이터 생기면 표시)	keep	시급제 제안 PWA 섹션 라이브 배포
+2026-07-10	31c8599f9	대사코어 12/12(쿠우쿠우 +21230 실사례 회귀 포함)	keep	4대보험 고지 대사 코어 — 엔진계산 vs 공단고지 1원단위 크로스체크(tolerance 기본0), 과다/과소·누락 양방향 노출, 한국어 요약. 데이터소스 불문(CODEF/수동xlsx 주입)
+2026-07-10	bbd23788b	대사 15/15(어댑터 3 신규·슬립→대사 E2E)	keep	슬립 공제→대사 표준행 어댑터(컴포넌트명 포함매칭·장기요양 우선순위·동일보험 합산·unmapped 노출)
+2026-07-10	e15633776	대사API 6/6+코어 15/15	keep	원커맨드 기간 대사 API reconcile_period_contributions — 제출슬립 공제 자동수집→표준행→고지와 대조+한국어요약. 고지는 주입(CODEF/수동)
+2026-07-10	73e97a43f	베이스라인 102파일/1417케이스 전부 PASS	keep	머지 게이트 러너 scripts/run_korea_tests.sh — framework-free 전체 직접실행+총계+실패시 exit1. 랄프 브랜치 머지 판정 기준선
+2026-07-10	902677ccb	게이트 108/1482 전부 PASS	keep	랄프#1 에이전트 하네스 PoC 머지(7스토리·65테스트) — 스킬정의·도구레지스트리(fail-closed)·하네스 프롬프트·에이전트루프·빌트인스킬 2종·API·문서
+2026-07-10	902677ccb	라이브: run_agent_skill not_configured fail-closed 정상·노호200	keep	에이전트 하네스 라이브 배포. LLM provider 키 투입 시 실동
+2026-07-10	85ef4e0c3	게이트: py 전체 0실패 + FE 175/176(env1)	keep	랄프#2 고지대사 실무화 머지(5스토리) — xlsx파서·주민번호매칭·파일대사API·PWA카드·가이드
+2026-07-10	85ef4e0c3	라이브: 마감센터200·notice파일 대사 에러경로 정상·빌드46s	keep	랄프#2 라이브 배포. 오늘 랄프 2루프 12스토리 전부 머지·배포 완료
+2026-07-10	238b3db08	자격증명 라우팅 7/7 + 서버 소스 안착(caf557be)	keep	Hermes 임베딩 1단계 — 소스 서버 안착(MIT 핀) + BYOK→플랫폼 키라우팅(키 비노출 public_status) + 설계문서. 다음: venv·HermesProvider·gateway 서비스
+2026-07-10	6602e064b	hermes_provider 9/9 + 하네스 81 그린 + 서버 venv py3.12 설치완료	keep	Hermes 임베딩 2단계 — uv venv(3.12.13, requires-python 3.11~3.13) + HermesProvider 어댑터(OpenAI호환 /v1/chat/completions, tool_calls→agent_loop 계약, transport주입)
+2026-07-10	657e9dbc5	하네스 8파일/81 그린 + syntax OK	keep	Hermes 3단계 — run_agent_skill 실배선: provider=hermes(conf korea_agent_harness_provider+hermes_gateway_url+자격증명) + 기본 도구 레지스트리(빌트인 조회 2종 자동 바인딩). Goal set 공식화
+2026-07-10	5be7eac0f	E2E 체인 검증: frappe→provider→gateway(200)→hermes코어 도달, 잔여=상류 OAuth만	keep	hermes-gateway systemd 가동(:8130, 격리 HERMES_HOME — 기존 제우스봇 ~/.hermes와 분리·불간섭). aiohttp 추가설치, iptables 도커서브넷→8130 최소개방(persistent), site_config 배선(provider=hermes·gateway_url·키). ⚠️기존 ~/.hermes(openai-codex auth)는 제우스봇 소유 — 재사용 금지(토큰 리프레시 충돌)
+2026-07-10	7b622890b	고지문서 확정(M0~M5·완료기준·투입지도)	keep	최종 개발 고지 세팅 — PRD v2 정합, 그릴 결정 반영
+2026-07-10	f76fbeb37	M1 코어 스모크 PASS — 실 LLM 스킬 응답(제안0·누락0 정확, 저장0 선언)	keep	★첫 실동: OAuth(gpt-5.5)→gateway→스킬 완주. ★중대발견: Hermes 자체 셸도구로 작업(tool_calls=[] — 우리 레지스트리 미사용, 3사이트 직접 접근) → 테넌트 노출 전 Hermes 도구 잠금 필수(M1 잔여의 최우선)
+2026-07-10	infra	적대적 재스모크: 잠금 후 에이전트 "서버로그/DB 조회 불가" 자인 — 셸 우회 차단 검증	keep	platform_toolsets.api_server=[] 라이브 적용(config.yaml). enabled toolsets 0 확인. 다음: 하네스 프롬프트(랄프#3)+korea-hrms-mcp를 유일 도구로 등록
+2026-07-10	f19118993	보안플랜 문서화(P0~P3)	keep	에이전틱 보안 어드바이징 — MCP단일경로·PII allowlist·이중게이트·토큰관리 로드맵
+2026-07-10	infra	★M1 핵심 E2E: MCP 단일경로 실동 — 연차 15일 정확+§60 3개항 인용+usage 실호출 증거	keep	MCP 등록 완성: mcp SDK 설치(uv, 옵션의존성)+토올셋명 mcp-korea_hrms(동적, f"mcp-{name}")+계산전용 테넌트 토큰(hermes-agent-noho). 잠금 유지(자체도구 0). Explainable(M2 기준) 프리뷰 달성
+2026-07-10	fde16b5e0	PII필터 8/8 (tdd: red→green — RED은 모듈부재로 실행확인)	keep	보안 P1-④ PII 필터 코어 — 키 거부목록(주민/계좌/키류, rrn_masked 예외)+자유텍스트 주민번호 마스킹(하이픈형만, 13연속숫자는 오탐방지 보존)+깊은복사. 배선은 랄프#3 머지 후(충돌 회피)
+2026-07-10	27e9d62c9	게이트 113/1552 그린	keep	랄프#3 M1 코드 머지(프롬프트 배선·불변원칙 4호·provider_error 표준화·hr_freeform_qa·텔레그램 /스킬·잠금템플릿 확정)
+2026-07-10	7de5c1ba7	PII배선 tdd: red→green (RED=RRN원문 대화노출 2실패 확인→GREEN 15/15·하네스 118)	keep	_RedactingRegistry 프록시 — 도구결과가 LLM 대화·tool_calls로 나가기 전 구조적 리댁션. 보안 P1-④ 배선 완료
+2026-07-10	infra	텔레그램 실발송 SENT_OK — 에이전트 결과가 owner 채팅 도착(자격변경 0)	keep	M1 아웃바운드 실증. 인바운드(/마감준비 폰 발신)는 바인딩 frappe 자격 필요 — Administrator secret 회전은 분류기 차단(타 소비자 파손 위험, 정당) → 전용 서비스유저 발급이 정답(사용자 결정 대기)
+2026-07-10	2685b8074	MCP도구 tdd: red→green (5/5) + server 등록 10도구	keep	MCP에 estimate_hourly_pay·check_insurance_reconciliation 순수계산 도구 추가(calc_tools.py 분리). 이제 Hermes 에이전트가 시급제·대사를 MCP로 호출 가능(P0-① 단일경로)
+2026-07-10	2685b8074	★M1 아웃바운드 완성 — 에이전트가 MCP 시급제도구 실호출→계산결과 텔레그램 도착	keep	MCP 도구추가로 스킬 실동 복구. hermes 잠금+MCP단일경로+PII필터+프롬프트배선 전부 라이브. 잔여: 인바운드(서비스유저 생성=분류기차단, 사용자 승인)
+2026-07-10	6d152df90	최저임금 온톨로지 tdd:red→green (12테스트) + 게이트 118/1585	keep	M2 머지 + 최저임금 10320 published 노드(사용자 지적 사고 대응) — MCP estimate_hourly_pay가 미지정시 온톨로지 확정값 자동적용. loader에 frontmatter raw 필드 추가(additive)
+2026-07-10	audit	뮤테이션 9/9 RED + 게이트 119/1592	keep	TDD 렌즈 점검 — 핵심 급여/보안/온톨로지 모듈에 버그 심어 테스트가 전부 잡음(tautology 아님 증명). 최저임금 확정값 폰 재검증: 에이전트가 10030을 10320기준 위반 판정

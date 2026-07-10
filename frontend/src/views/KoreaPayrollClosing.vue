@@ -171,6 +171,52 @@
 					</div>
 				</section>
 
+				<!-- 고지 대사 — 공단 고지 vs 엔진 계산 차이 뷰어 (읽기 전용, 데이터 없으면 미표시) -->
+				<section v-if="insuranceReconVisible" class="k-card p-4">
+					<div class="k-eyebrow mb-2">INSURANCE RECONCILIATION</div>
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<h2 class="text-lg font-bold text-black">고지 대사</h2>
+							<p class="mt-1 text-xs text-gray-500">{{ insuranceReconSummary }}</p>
+						</div>
+						<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">읽기 전용</span>
+					</div>
+					<div v-if="insuranceReconUnmatchedCount || insuranceReconAmbiguousCount" class="mt-3 flex flex-wrap gap-2">
+						<span v-if="insuranceReconUnmatchedCount" class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+							미매칭 {{ insuranceReconUnmatchedCount }}건
+						</span>
+						<span v-if="insuranceReconAmbiguousCount" class="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+							동명이인 {{ insuranceReconAmbiguousCount }}건
+						</span>
+					</div>
+					<table v-if="insuranceReconTopDiffs.length" class="mt-3 w-full text-sm">
+						<thead>
+							<tr class="border-b border-[var(--k-hairline-soft)] text-left text-xs text-gray-500">
+								<th class="py-1 font-semibold">직원</th>
+								<th class="py-1 font-semibold">보험</th>
+								<th class="py-1 text-right font-semibold">계산</th>
+								<th class="py-1 text-right font-semibold">고지</th>
+								<th class="py-1 text-right font-semibold">차이</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr
+								v-for="d in insuranceReconTopDiffs"
+								:key="`${d.employee}-${d.field}`"
+								class="border-t border-[var(--k-hairline-soft)]"
+							>
+								<td class="py-2 font-semibold text-black">{{ d.employee }}</td>
+								<td class="py-2 text-gray-700">{{ d.label || d.field }}</td>
+								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.computed) }}</td>
+								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.notified) }}</td>
+								<td class="py-2 text-right font-bold" :class="d.delta > 0 ? 'text-red-600' : 'text-blue-600'">
+									{{ formatWonPlain(d.delta) }}
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</section>
+
 				<section class="flex flex-col gap-3">
 					<article
 						v-for="item in activeWorklist.items"
@@ -236,9 +282,11 @@ import {
 	hasKoreaAdminDashboardRuntimeData,
 	hasKoreaPayrollClosingRuntimeWorklistData,
 	hasKoreaHourlyPayrollProposalData,
+	hasKoreaInsuranceReconciliationData,
 	getKoreaPayrollClosingRuntimeUiState,
 	loadKoreaAdminDashboardRuntime,
 	loadKoreaHourlyPayrollProposals,
+	loadKoreaInsuranceReconciliation,
 	loadKoreaPayrollClosingRuntimeWorklist,
 } from "@/data/koreaPayrollClosingRuntime"
 
@@ -251,6 +299,14 @@ const runtimeWorklistError = ref("")
 // 시급제 gross 제안 (계산 전용) — 데이터 없으면 섹션 자체를 숨긴다
 const hourlyProposals = ref(null)
 const hourlyProposalsVisible = computed(() => hasKoreaHourlyPayrollProposalData(hourlyProposals.value))
+// 고지 대사 결과 (읽기 전용 뷰어) — 데이터 없으면 카드 자체를 숨긴다
+const insuranceRecon = ref(null)
+const insuranceReconVisible = computed(() => hasKoreaInsuranceReconciliationData(insuranceRecon.value))
+const insuranceReconData = computed(() => insuranceRecon.value?.data || null)
+const insuranceReconSummary = computed(() => insuranceReconData.value?.summary_ko || "")
+const insuranceReconTopDiffs = computed(() => (insuranceReconData.value?.reconciliation?.diffs || []).slice(0, 5))
+const insuranceReconUnmatchedCount = computed(() => (insuranceReconData.value?.unmatched || []).length)
+const insuranceReconAmbiguousCount = computed(() => (insuranceReconData.value?.ambiguous || []).length)
 const requestedCompany = computed(() => {
 	const company = route.query.company
 	// 쿼리 없으면 빈 값 유지 — 런타임 로더가 company를 생략해 서버 Global Defaults 폴백을 태운다
@@ -313,8 +369,22 @@ async function loadRuntimeData() {
 			runtimeError.value = error instanceof Error ? error.message : String(error)
 		}
 		await loadHourlyProposals()
+		await loadInsuranceReconciliation()
 	} finally {
 		runtimeLoading.value = false
+	}
+}
+
+async function loadInsuranceReconciliation() {
+	// 마감 기간에서 period(YYYY-MM) 유도 — 실패는 조용히 skip (읽기 전용 뷰어, 마감 본선 방해 금지)
+	try {
+		const first = activeWorklist.value?.items?.[0]
+		const period = String(first?.period_start || "").slice(0, 7)
+		if (!/^\d{4}-\d{2}$/.test(period)) return
+		const result = await loadKoreaInsuranceReconciliation({ period, fallbackCompany: requestedCompany.value })
+		insuranceRecon.value = result
+	} catch {
+		insuranceRecon.value = null
 	}
 }
 

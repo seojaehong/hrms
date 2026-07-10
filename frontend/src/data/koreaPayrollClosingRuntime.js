@@ -8,6 +8,10 @@ export const KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD =
 export const KOREA_HOURLY_PAYROLL_PROPOSALS_METHOD =
 	"hrms.regional.south_korea.hourly_wage_api.list_hourly_payroll_proposals"
 
+// 4대보험 고지 대사 결과 — 읽기 전용 뷰어(향후 서버 주입 구조). 프론트는 notified 없이 대사를 호출하지 않는다.
+export const KOREA_INSURANCE_RECONCILIATION_RUNTIME_METHOD =
+	"hrms.regional.south_korea.insurance_reconciliation_runtime_api.get_korea_insurance_reconciliation_runtime"
+
 import { KOREA_ATTENDANCE_READ_ONLY_METHODS } from "./koreaAttendanceRuntime.js"
 
 // 폴리필은 페이지 방문 순서에 따라 이 모듈이 먼저 설치할 수 있으므로,
@@ -16,6 +20,7 @@ const KOREA_PAYROLL_CLOSING_READ_ONLY_RUNTIME_METHODS = new Set([
 	KOREA_ADMIN_DASHBOARD_RUNTIME_METHOD,
 	KOREA_PAYROLL_CLOSING_WORKLIST_RUNTIME_METHOD,
 	KOREA_HOURLY_PAYROLL_PROPOSALS_METHOD,
+	KOREA_INSURANCE_RECONCILIATION_RUNTIME_METHOD,
 	...KOREA_ATTENDANCE_READ_ONLY_METHODS,
 ])
 
@@ -176,6 +181,41 @@ export function hasKoreaHourlyPayrollProposalData(result) {
 		(Array.isArray(data.proposals) && data.proposals.length > 0) ||
 		(Array.isArray(data.missing_time_input) && data.missing_time_input.length > 0) ||
 		(Array.isArray(data.missing_rate) && data.missing_rate.length > 0)
+	)
+}
+
+// 고지 대사 결과 로더 — 읽기 전용. 서버에 저장된 대사 결과가 없으면 호출 실패/빈 응답이며 카드는 숨겨진다.
+export async function loadKoreaInsuranceReconciliation({
+	win = globalThis.window,
+	period,
+	fallbackCompany,
+} = {}) {
+	ensureKoreaPayrollClosingFrappeCallRuntime(win)
+	if (!isFrappeRuntimeAvailable(win)) {
+		throw new Error("Frappe runtime is not available for Korea insurance reconciliation reads")
+	}
+
+	const company = getKoreaPayrollClosingRuntimeCompany(win, fallbackCompany)
+	const args = {}
+	if (period && String(period).trim()) args.period = String(period).trim()
+	if (company) args.company = company
+
+	const response = await win.frappe.call({ method: KOREA_INSURANCE_RECONCILIATION_RUNTIME_METHOD, args })
+	const data = response?.message ?? response
+	if (!data || typeof data !== "object") {
+		throw new Error("Unexpected Korea insurance reconciliation response")
+	}
+	return { source: "runtime_read_only", data }
+}
+
+export function hasKoreaInsuranceReconciliationData(result) {
+	const data = result?.data
+	const reconciliation = data?.reconciliation
+	if (!reconciliation || typeof reconciliation !== "object") return false
+	return (
+		Array.isArray(reconciliation.diffs) ||
+		Array.isArray(data.unmatched) ||
+		Array.isArray(data.ambiguous)
 	)
 }
 

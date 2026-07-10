@@ -44,6 +44,7 @@ def _load_core(name: str):
 
 
 _recon = _load_core("insurance_reconciliation")
+_notice = _load_core("insurance_notice_parser")
 
 
 def _month_bounds(year: int, month: int) -> tuple[str, str]:
@@ -132,3 +133,71 @@ def reconcile_period_contributions(
 		"summary_ko": _recon.summarize_reconciliation_ko(result),
 		"unmapped_deductions": extracted["unmapped"],
 	}
+
+
+def _get_employees(company: str | None) -> list[dict[str, Any]]:
+	"""매칭용 직원 레코드 조회. Employee.name → 표준 매칭 키 employee 로 변환."""
+	filters: dict[str, Any] = {}
+	if company:
+		filters["company"] = company
+	rows = _frappe.get_all(  # type: ignore[union-attr]
+		"Employee",
+		filters=filters,
+		fields=["name", "employee_name", "rrn_masked"],
+	)
+	return [
+		{
+			"employee": e["name"],
+			"employee_name": e.get("employee_name"),
+			"rrn_masked": e.get("rrn_masked"),
+		}
+		for e in rows
+	]
+
+
+@_whitelist
+def reconcile_period_from_notice_file(
+	year: int | str,
+	month: int | str,
+	file_path: str,
+	column_map: Any,
+	company: str | None = None,
+	tolerance: int | str = 0,
+) -> dict[str, Any]:
+	"""공단 고지 xlsx 파일 경로 원커맨드 대사 (조회·계산 전용).
+
+	parse_notice_xlsx로 파싱 → Employee 조회 → match_notice_to_employees로 매칭 →
+	매칭된 rows를 notified로 하여 reconcile_period_contributions 재사용.
+
+	Args:
+		year, month: 귀속월.
+		file_path: 공단 고지 xlsx 파일 경로.
+		column_map: parse_notice_xlsx의 컬럼 매핑({"match_key": <레터>, ...}).
+			JSON 문자열도 수용. 금액 키는 reconcile와 맞도록 표준 필드명 사용
+			(national_pension / health_insurance / long_term_care_insurance / employment_insurance).
+		company: Employee·Salary Slip 필터(선택).
+		tolerance: 허용 오차(원, 기본 0).
+
+	Returns:
+		reconcile_period_contributions 결과에 파서 errors·매칭 unmatched/ambiguous 추가:
+		{"period", "employee_count", "reconciliation", "summary_ko", "unmapped_deductions",
+		 "parse_errors", "unmatched", "ambiguous"}
+	"""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		raise RuntimeError("frappe 환경에서만 호출 가능합니다 (Employee/Salary Slip 조회 필요)")
+	if isinstance(column_map, str):
+		column_map = _json.loads(column_map)
+	if not isinstance(column_map, dict):
+		raise ValueError("column_map은 dict여야 합니다")
+
+	parsed = _notice.parse_notice_xlsx(file_path, column_map)
+	employees = _get_employees(company)
+	matched = _notice.match_notice_to_employees(parsed["rows"], employees)
+
+	out = reconcile_period_contributions(
+		year, month, matched["rows"], company=company, tolerance=tolerance
+	)
+	out["parse_errors"] = parsed["errors"]
+	out["unmatched"] = matched["unmatched"]
+	out["ambiguous"] = matched["ambiguous"]
+	return out

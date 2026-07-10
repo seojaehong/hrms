@@ -57,9 +57,14 @@ def _load_core(name: str):
 _skill_registry = _load_core("skill_registry")
 _builtin_skills = _load_core("builtin_skills")
 _agent_loop = _load_core("agent_loop")
+_tool_registry_mod = _load_core("tool_registry")
+_llm_credentials = _load_core("llm_credentials")
+_hermes_provider = _load_core("hermes_provider")
 
 # site config 키 — 이 키가 있어야 provider가 설정된 것으로 본다(값 읽기만, 네트워크 없음).
 PROVIDER_CONFIG_KEY = "korea_agent_harness_provider"
+# hermes provider일 때 gateway 주소 (예: http://172.17.0.1:8130 — 컨테이너→호스트)
+HERMES_GATEWAY_URL_KEY = "hermes_gateway_url"
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +126,8 @@ def run_agent_skill(
 
 	# --- 3) 실행 (provider 주입됨) — 코어 tool_registry가 승인 게이트 담당 ---
 	if tool_registry is None:
-		# 사이트 실행 시 도구 바인딩은 별도 배선이 필요하다(PoC 범위 밖).
+		tool_registry = _build_default_tool_registry()  # 빌트인 조회 도구 바인딩
+	if tool_registry is None:
 		return {
 			"status": "no_tools",
 			"skill_name": skill_name,
@@ -148,17 +154,63 @@ def run_agent_skill(
 
 
 def _resolve_provider() -> Callable[[list], dict] | None:
-	"""site config에서 provider 설정을 읽는다(값 읽기만 — 클라이언트 생성·네트워크 없음).
+	"""site config에서 provider를 해석한다.
 
-	PoC 단계에서는 실제 LLM 클라이언트를 배선하지 않는다. config에 provider 키가
-	없으면 None을 반환해 호출부가 not_configured로 거부하도록 한다.
+	- `korea_agent_harness_provider` == "hermes":
+	  llm_credentials(BYOK→플랫폼) + `hermes_gateway_url`로 HermesProvider 생성.
+	  provider 객체 생성은 네트워크 0회 — 실제 호출은 스킬 실행 시.
+	- 그 외 값/미설정/자격증명 불충분 → None (호출부가 not_configured fail-closed).
 	"""
 	if not (_FRAPPE_AVAILABLE and _frappe is not None):
 		return None
 	conf = getattr(_frappe, "conf", None)
 	if not conf:
 		return None
-	# config 값 존재만 확인 — 실제 클라이언트 배선은 Hermes 내재화 단계로 미룬다.
-	if not conf.get(PROVIDER_CONFIG_KEY):
+	provider_name = str(conf.get(PROVIDER_CONFIG_KEY) or "").strip().lower()
+	if provider_name != "hermes":
 		return None
-	return None
+	base_url = str(conf.get(HERMES_GATEWAY_URL_KEY) or "").strip()
+	if not base_url:
+		return None
+	import os as _os  # noqa: PLC0415
+
+	creds = _llm_credentials.resolve_llm_credentials(conf, _os.environ)
+	if creds.get("status") != "ok":
+		return None
+	try:
+		return _hermes_provider.make_hermes_provider(base_url=base_url, credentials=creds)
+	except _hermes_provider.HermesProviderError:
+		return None
+
+
+def _build_default_tool_registry():
+	"""빌트인 스킬용 기본 도구 바인딩 — 전부 조회·계산 전용(read_only=True).
+
+	frappe 환경에서만 유효(각 도구가 사이트 조회를 씀). 확정 행위 도구는
+	여기 없다 — 추가하려면 read_only=False로 등록해 승인 게이트를 태울 것.
+	"""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		return None
+	from hrms.regional.south_korea import hourly_wage_api as _hw  # noqa: PLC0415
+	from hrms.regional.south_korea import insurance_reconciliation_api as _ir  # noqa: PLC0415
+
+	registry = _tool_registry_mod.ToolRegistry()
+	registry.register_tool(
+		"list_hourly_payroll_proposals",
+		_hw.list_hourly_payroll_proposals,
+		{
+			"description": "기간의 시급제 직원 전원 gross 계산 제안 (계산 전용)",
+			"args": {"period": "YYYY-MM (필수)", "company": "선택", "minimum_wage": "선택(원)"},
+		},
+		True,  # read_only
+	)
+	registry.register_tool(
+		"reconcile_period_contributions",
+		_ir.reconcile_period_contributions,
+		{
+			"description": "해당 월 제출 슬립 4대보험 공제 vs 공단 고지 대사 (계산 전용)",
+			"args": {"year": "필수", "month": "필수", "notified": "고지 표준행 리스트(필수)", "company": "선택", "tolerance": "선택(원)"},
+		},
+		True,  # read_only
+	)
+	return registry

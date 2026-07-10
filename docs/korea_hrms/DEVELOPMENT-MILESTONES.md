@@ -51,10 +51,17 @@ hr.safeclaw.kr 랜딩 · 테스트 게이트(108파일/1,482+케이스).
 - **완료 기준**: 에이전트가 상신한 건이 사람 승인 없이는 절대 반영되지 않음을
   적대적 테스트(모델이 human_approved 위조)로 증명 + 승인 후 반영 E2E 1건.
 
-## M5 — 중대재해처벌법 확장 (북극성, PRD Phase 3)
-compliance_checklist 온톨로지 매핑 · 정기 점검 에이전트 · 다국어 안전문서 전파
-(번역도 승인 게이트 통과 — 오역=중대 리스크) · Read Receipt 증빙.
-- **완료 기준**: PRD Phase 3 기준(중처법 §4 체크리스트 자동 실행→보완 초안→노무사 승인 큐).
+## M5 — 중대재해처벌법: SafeClaw 모듈 통합 (북극성, PRD Phase 3)
+⚠️ **신규 구축 아님** — 중처법 도메인은 **별도 모듈 SafeClaw**(safeguard-contest-mvp,
+www.safeclaw.kr)에서 이미 진행 중: 안전 온톨로지(Task·Hazard·Control·Article 노드,
+core-triples.json, graph-store published 게이트)와 문서 생성 파이프라인 보유.
+따라서 M5 = **두 제품의 통합**:
+1. SafeClaw 온톨로지 스키마를 M2 온톨로지 형식과 정렬(동일 draft/published HITL)
+2. HR 테넌트 데이터(직원·국적·근태) ↔ SafeClaw 안전문서 파이프라인 연결
+3. hrms의 compliance_checklist를 SafeClaw 온톨로지 노드로 매핑(중복 구현 금지)
+4. 다국어 안전문서 전파(번역도 승인 게이트 — 오역=중대 리스크) + Read Receipt 증빙
+- **완료 기준**: PRD Phase 3 기준(중처법 §4 체크리스트 자동 실행→보완 초안→노무사
+  승인 큐) — 단 실행 엔진은 SafeClaw 모듈, HR 데이터는 hrms가 공급.
 
 ---
 

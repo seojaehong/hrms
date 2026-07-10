@@ -232,3 +232,99 @@ def estimate_hourly_payroll_from_time_input(
 		"below_minimum_wage": below_min,
 		"time_input": row,
 	}
+
+
+@_whitelist
+def list_hourly_payroll_proposals(
+	period: str,
+	company: str | None = None,
+	minimum_wage: Any = None,
+) -> dict[str, Any]:
+	"""기간(period)의 시급제 직원 전원 gross 계산 제안 — 급여 마감 준비용 (계산 전용).
+
+	Korea Employment Profile(wage_type=Hourly)의 base_wage(시급)·
+	scheduled_work_hours_per_week(주 소정근로)와 해당 period의
+	Korea Payroll Time Input(시간 버킷)을 결합해 직원별 earnings 제안을 만든다.
+
+	어떤 저장도 하지 않는다 — 반환값을 마감 드래프트에 채우는 것은
+	승인 게이트가 있는 호출부의 몫. 결측은 숨기지 않고 명단으로 노출한다
+	(0원 제안이 조용히 마감에 섞이는 것을 막는다).
+
+	Returns:
+		{
+			"period": str,
+			"proposals": [ {employee, employee_name, hourly_rate, weekly_hours,
+			                 gross_pay, earnings, below_minimum_wage, time_input} ... ],
+			"missing_time_input": [employee...],   # Hourly 프로파일인데 근무시간 입력 없음
+			"missing_rate": [employee...],         # base_wage(시급) 미입력
+		}
+	"""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		raise RuntimeError("frappe 환경에서만 호출 가능합니다")
+	period = str(period).strip()
+	if not period:
+		raise ValueError("period는 필수입니다")
+
+	profile_filters: dict[str, Any] = {"wage_type": "Hourly"}
+	if company:
+		profile_filters["company"] = company
+	profiles = _frappe.get_all(
+		"Korea Employment Profile",
+		filters=profile_filters,
+		fields=["employee", "base_wage", "scheduled_work_hours_per_week"],
+	)
+
+	ti_filters: dict[str, Any] = {"period": period}
+	if company:
+		ti_filters["company"] = company
+	time_inputs = {
+		r["employee"]: dict(r)
+		for r in _frappe.get_all(
+			"Korea Payroll Time Input",
+			filters=ti_filters,
+			fields=["employee", "employee_name", "part_time_hours", "overtime_hours", "night_hours", "holiday_hours"],
+		)
+	}
+
+	proposals: list[dict[str, Any]] = []
+	missing_time_input: list[str] = []
+	missing_rate: list[str] = []
+	for prof in profiles:
+		emp = prof.get("employee")
+		rate = prof.get("base_wage") or 0
+		weekly = prof.get("scheduled_work_hours_per_week") or 0
+		if not rate or float(rate) <= 0:
+			missing_rate.append(emp)
+			continue
+		row = time_inputs.get(emp)
+		if row is None:
+			missing_time_input.append(emp)
+			continue
+		monthly = _hourly.gross_from_hour_buckets(
+			regular_hours=row.get("part_time_hours") or 0,
+			overtime_hours=row.get("overtime_hours") or 0,
+			night_hours=row.get("night_hours") or 0,
+			holiday_hours=row.get("holiday_hours") or 0,
+			hourly_rate=rate,
+			contracted_weekly_hours=weekly,
+		)
+		below_min = None
+		if minimum_wage not in (None, "", 0):
+			below_min = _hourly.is_below_minimum_wage(rate, minimum_wage)
+		proposals.append({
+			"employee": emp,
+			"employee_name": row.get("employee_name"),
+			"hourly_rate": rate,
+			"weekly_hours": weekly,
+			"gross_pay": monthly["gross_pay"],
+			"earnings": monthly["earnings"],
+			"below_minimum_wage": below_min,
+			"time_input": {k: row.get(k) for k in ("part_time_hours", "overtime_hours", "night_hours", "holiday_hours")},
+		})
+
+	return {
+		"period": period,
+		"proposals": proposals,
+		"missing_time_input": missing_time_input,
+		"missing_rate": missing_rate,
+	}

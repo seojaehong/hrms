@@ -146,6 +146,16 @@ class TestBuildRetrieval(unittest.TestCase):
         self.assertEqual(out[0]["source"], "상담 FAQ")
         self.assertEqual(out[1]["source"], "최영우 레퍼런스")
 
+    def test_semantic_rpcs_pass_low_min_similarity(self):
+        # 검색은 낮은 min_similarity로 넓게 뽑는다(판정은 팩트체크 τ가). 3-small 인도메인~0.35라 필수.
+        embedder, rpc_caller, _, rpc_calls = self._fakes()
+        build_retrieval("주휴수당?", ["interpretation"], embedder=embedder,
+                        rpc_caller=rpc_caller, top_k=5)
+        rpc, params = rpc_calls[0]
+        self.assertEqual(rpc, "search_interpretation_semantic")
+        self.assertIn("min_similarity", params)
+        self.assertLessEqual(params["min_similarity"], 0.25)
+
     def test_nlrc_text_source_gets_query_not_embedding(self):
         embedder, rpc_caller, embed_calls, rpc_calls = self._fakes()
         build_retrieval("부당해고", ["nlrc"], embedder=embedder,

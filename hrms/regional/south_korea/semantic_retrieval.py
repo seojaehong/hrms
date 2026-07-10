@@ -21,6 +21,10 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+# 검색 단계 최소 유사도 — 낮게 뽑고 판정은 팩트체크 게이트(ai_chat_factcheck τ)가 한다.
+# text-embedding-3-small은 인도메인 top 유사도도 ~0.35라 RPC 기본값(0.4)이면 다 걸러짐.
+_SEMANTIC_MIN_SIMILARITY = 0.2
+
 # ── 소스 레지스트리 ──────────────────────────────────────────────────────────
 # 각 소스: label, rpc, model(None이면 텍스트검색), semantic 여부,
 # params(vec_or_query, cap)→dict, normalize(row)→공통dict
@@ -51,7 +55,10 @@ SOURCES: dict[str, dict[str, Any]] = {
         "label": "행정해석",
         "rpc": "search_interpretation_semantic",
         "model": "openai-1536",
-        "params": lambda vec, cap: {"query_embedding": vec, "max_results": cap},
+        "params": lambda vec, cap: {
+            "query_embedding": vec, "max_results": cap,
+            "min_similarity": _SEMANTIC_MIN_SIMILARITY,
+        },
         "normalize": lambda r: {
             "title": r.get("title") or "",
             "text": _first(r.get("answer_summary"), r.get("inquiry_summary")),
@@ -64,7 +71,10 @@ SOURCES: dict[str, dict[str, Any]] = {
         "label": "판례",
         "rpc": "search_cases_semantic",
         "model": "openai-1536",
-        "params": lambda vec, cap: {"query_embedding": vec, "max_results": cap},
+        "params": lambda vec, cap: {
+            "query_embedding": vec, "max_results": cap,
+            "min_similarity": _SEMANTIC_MIN_SIMILARITY,
+        },
         "normalize": lambda r: {
             "title": _first(r.get("title"), r.get("case_number")),
             "text": r.get("summary") or "",
@@ -77,7 +87,10 @@ SOURCES: dict[str, dict[str, Any]] = {
         "label": "상담 FAQ",
         "rpc": "search_faq_semantic",
         "model": "openai-1536",
-        "params": lambda vec, cap: {"query_embedding": vec, "max_results": cap},
+        "params": lambda vec, cap: {
+            "query_embedding": vec, "max_results": cap,
+            "min_similarity": _SEMANTIC_MIN_SIMILARITY,
+        },
         "normalize": lambda r: {
             "title": r.get("question") or "",
             "text": r.get("answer") or "",

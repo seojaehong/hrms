@@ -37,6 +37,7 @@ hr.safeclaw.kr 랜딩 · 테스트 게이트(108파일/1,482+케이스).
 4. 에이전트 연차 응답에 근거 조항 자동 인용
 - **완료 기준**: 연차 계산 응답에 "근로기준법 제60조 제1항" 인용 + 노드 수정은
   draft→사람 승인→published로만 반영(테스트로 증명). PRD Phase 2 완료 기준 충족.
+- 노드 작성법: `docs/korea_hrms/ontology-guide.md` (frontmatter 스키마·[[엣지]]·HITL 절차·로더/검증기 실행)
 
 ## M3 — 고지 대사 실전 + CODEF (병행 가능)
 1. 노호 6월 실데이터 대사 1회(공단 xlsx + column_map) — 차이 0 또는 전건 규명

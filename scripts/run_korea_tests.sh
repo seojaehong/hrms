@@ -30,9 +30,57 @@ for t in $FILES; do
   fi
 done
 
+# ── 온톨로지 그래프 검증 단계 ──
+# 깨진 그래프(고아 엣지/중복 node_id/무출처 published)가 머지되지 않게 게이트.
+# draft 포함 전체 로드. wiki/ontology 부재/빈 경우도 통과(신규 클론 무해).
+# FILTER 없거나 "ontology" 계열이면 실행.
+GRAPH_FAIL=0
+if [ -z "$FILTER" ] || echo "ontology" | grep -qi "$FILTER"; then
+  GOUT=$(python3 - <<'PY'
+import importlib.util, pathlib, sys
+try:
+	sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+	pass
+ROOT = pathlib.Path.cwd()  # 러너가 repo 루트로 cd 후 호출
+ONT = ROOT / "hrms" / "regional" / "south_korea" / "ontology"
+WIKI = ROOT / "wiki" / "ontology"
+
+
+def _load(name, path):
+	spec = importlib.util.spec_from_file_location(name, path)
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+loader = _load("korea_ontology_loader", ONT / "loader.py")
+validate = _load("korea_ontology_validate", ONT / "validate.py")
+nodes, errors = loader.load_nodes(WIKI, review_state=None)
+problems = ["frontmatter %s: %s" % (e.get("path"), e.get("error")) for e in errors]
+problems += list(validate.validate_graph(nodes))
+if problems:
+	for p in problems:
+		print(p)
+	sys.exit(1)
+print("nodes=%d graph OK" % len(nodes))
+sys.exit(0)
+PY
+)
+  GRC=$?
+  if [ $GRC -eq 0 ]; then
+    echo "  ✓ ontology graph ($GOUT)"
+  else
+    GRAPH_FAIL=1
+    echo "  ✗ ontology graph"
+    echo "$GOUT" | tail -10 | sed 's/^/      /'
+  fi
+fi
+
 echo ""
 echo "════ 결과: 파일 PASS $PASS / FAIL $FAIL · 케이스 $TOTAL_CASES ════"
-if [ $FAIL -gt 0 ]; then
-  printf '실패: %s\n' "${FAILED_FILES[@]}"
+if [ $FAIL -gt 0 ] || [ $GRAPH_FAIL -gt 0 ]; then
+  [ $FAIL -gt 0 ] && printf '실패: %s\n' "${FAILED_FILES[@]}"
+  [ $GRAPH_FAIL -gt 0 ] && echo "실패: ontology graph validation"
   exit 1
 fi

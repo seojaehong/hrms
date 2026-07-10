@@ -11,9 +11,15 @@ engine into Leave Allocation and Korea Employment Profile records.
 from __future__ import annotations
 
 import datetime as dt
+import pathlib
 from calendar import monthrange
 
 SUPPORTED_BASES = {"Hire Date", "Fiscal Year"}
+
+# Fallback citation base used when no published ontology node is available.
+# All §60 ontology nodes are draft today (HITL gate), so this constant is the
+# live source of the ``legal_basis`` citation until a 노무사 publishes them.
+_LEGAL_BASIS_BASE_FALLBACK = "근로기준법 제60조"
 
 
 def calculate_annual_leave_entitlement(
@@ -75,7 +81,63 @@ def calculate_annual_leave_entitlement(
 		"monthly_accrual_days": monthly_accrual,
 		"annual_entitlement_days": annual_entitlement,
 		"total_entitlement_days": total,
+		"legal_basis": legal_basis_for(service_years),
 	}
+
+
+def legal_basis_for(service_years: int) -> list:
+	"""Return Korean Labor Standards Act §60 citations for the entitlement case.
+
+	- first service year (``service_years < 1``): §60② monthly accrual;
+	- from the first anniversary (``service_years >= 1``): §60① fifteen days;
+	- long service (``service_years >= 3``): additionally §60④ carried days.
+
+	The citation base is loaded from a published ontology node when available and
+	otherwise falls back to :data:`_LEGAL_BASIS_BASE_FALLBACK`. All §60 nodes are
+	draft today, so the fallback path is the live one.
+	"""
+
+	base = _legal_basis_base()
+	citations = []
+	if service_years < 1:
+		citations.append(base + "제2항")
+		return citations
+	citations.append(base + "제1항")
+	if service_years >= 3 and (service_years - 1) // 2 >= 1:
+		citations.append(base + "제4항")
+	return citations
+
+
+def _legal_basis_base() -> str:
+	"""Citation base from a published ontology node, or the fallback constant."""
+
+	ontology_base = _legal_basis_base_from_ontology()
+	if ontology_base:
+		return ontology_base
+	return _LEGAL_BASIS_BASE_FALLBACK
+
+
+def _legal_basis_base_from_ontology():
+	"""Best-effort lookup of the published §60 node's source citation.
+
+	Deliberately import- and failure-tolerant: the ontology loader lives in a
+	sibling package and may be absent or empty in some deployments, so any error
+	simply yields ``None`` and the caller falls back to the module constant.
+	"""
+
+	try:
+		from hrms.regional.south_korea.ontology.loader import load_nodes
+
+		root = pathlib.Path(__file__).resolve().parents[3] / "wiki" / "ontology"
+		nodes, _errors = load_nodes(root, review_state="published")
+		for node in nodes:
+			if getattr(node, "node_id", None) == "근로기준법_제60조":
+				sources = getattr(node, "sources", None) or []
+				if sources:
+					return sources[0]
+	except Exception:
+		return None
+	return None
 
 
 def first_year_monthly_accrual(hire_date: dt.date, as_of_date: dt.date) -> int:
@@ -212,6 +274,7 @@ __all__ = [
 	"first_year_monthly_accrual",
 	"anniversary_annual_entitlement",
 	"fiscal_year_annual_entitlement",
+	"legal_basis_for",
 	"completed_years",
 	"completed_months",
 	"fiscal_period_for",

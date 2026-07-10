@@ -25,6 +25,13 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CORE_DIR = REPO_ROOT / "hrms" / "regional" / "south_korea"
 
 
+def _load_core_local(name: str):
+    spec = importlib.util.spec_from_file_location(f"mcp_{name}", pathlib.Path(__file__).resolve().parent / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _load_core(name: str):
     spec = importlib.util.spec_from_file_location(f"korea_{name}", CORE_DIR / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
@@ -38,6 +45,7 @@ statutory_payroll = _load_core("statutory_payroll")
 compliance_checklist = _load_core("compliance_checklist")
 severance_pay = _load_core("severance_pay")
 ai_chat = _load_core("ai_chat")
+_calc_tools = _load_core_local("calc_tools")
 
 
 def _date(value: str, field: str) -> dt.date:
@@ -112,6 +120,40 @@ def calculate_severance(
         exclusions=exclusions,
     )
     return _jsonable(result)
+
+
+@mcp.tool()
+def estimate_hourly_pay(
+    regular_hours: float,
+    hourly_rate: float,
+    contracted_weekly_hours: float,
+    overtime_hours: float = 0,
+    night_hours: float = 0,
+    holiday_hours: float = 0,
+    perfect_attendance: bool = True,
+    minimum_wage: float | None = None,
+) -> dict:
+    """시급제(파트타임) 월 급여 계산. 근기법 §55 주휴수당·§56 가산(연장1.5·야간0.5·휴일1.5).
+    월 시간 버킷(정상/연장/야간/휴일 시간)과 시급으로 기본급+주휴+가산 gross earnings 산출.
+    minimum_wage 주면 최저임금 미달 플래그. 조회·저장 없음."""
+    return _jsonable(_calc_tools.estimate_hourly_pay(
+        regular_hours=regular_hours, hourly_rate=hourly_rate,
+        contracted_weekly_hours=contracted_weekly_hours, overtime_hours=overtime_hours,
+        night_hours=night_hours, holiday_hours=holiday_hours,
+        perfect_attendance=perfect_attendance, minimum_wage=minimum_wage,
+    ))
+
+
+@mcp.tool()
+def check_insurance_reconciliation(
+    computed: list[dict],
+    notified: list[dict],
+    tolerance: int = 0,
+) -> dict:
+    """4대보험 공제 대사. 우리 계산(computed) vs 공단 고지(notified)를 1원 단위로 대조해
+    차이·양방향 누락·한국어 요약을 반환. 각 행 {employee, national_pension?, health_insurance?,
+    long_term_care_insurance?, employment_insurance?}. 조회·저장 없음."""
+    return _jsonable(_calc_tools.check_insurance_reconciliation(computed, notified, tolerance))
 
 
 def _to_attendance_records(records: list[dict]) -> list:

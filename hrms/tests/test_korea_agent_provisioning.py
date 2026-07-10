@@ -183,5 +183,51 @@ class TestMaskBinding(unittest.TestCase):
 		self.assertEqual(masked["api_key"], "k")
 
 
+# --- US-3: check_agent_provisioning (순수·주입식) ---
+
+_FULL_BINDING = {
+	"api_key": "k",
+	"api_secret": "s",
+	"frappe_url": "https://noho.safeclaw.kr",
+}
+_FULL_CONFIG = {
+	"korea_agent_harness_provider": "hermes",
+	"hermes_gateway_url": "https://hermes.example.com",
+}
+
+
+class TestCheckAgentProvisioning(unittest.TestCase):
+	def test_ready_when_complete(self):
+		out = ap.check_agent_provisioning(_FULL_BINDING, _FULL_CONFIG)
+		self.assertTrue(out["ready"])
+		self.assertEqual(out["missing"], [])
+
+	def test_partial_binding_missing_secret(self):
+		binding = {"api_key": "k", "frappe_url": "https://noho.safeclaw.kr"}
+		out = ap.check_agent_provisioning(binding, _FULL_CONFIG)
+		self.assertFalse(out["ready"])
+		self.assertIn("api_secret", out["missing"])
+		self.assertNotIn("api_key", out["missing"])
+
+	def test_partial_config_missing_gateway(self):
+		config = {"korea_agent_harness_provider": "hermes"}
+		out = ap.check_agent_provisioning(_FULL_BINDING, config)
+		self.assertFalse(out["ready"])
+		self.assertIn("gateway_url", out["missing"])
+		self.assertNotIn("provider", out["missing"])
+
+	def test_all_missing(self):
+		out = ap.check_agent_provisioning({}, {})
+		self.assertFalse(out["ready"])
+		for item in ("api_key", "api_secret", "frappe_url", "provider", "gateway_url"):
+			self.assertIn(item, out["missing"])
+
+	def test_no_live_lookup_pure(self):
+		# 같은 입력 두 번 → 동일 결과(주입식·순수)
+		a = ap.check_agent_provisioning(_FULL_BINDING, _FULL_CONFIG)
+		b = ap.check_agent_provisioning(_FULL_BINDING, _FULL_CONFIG)
+		self.assertEqual(a, b)
+
+
 if __name__ == "__main__":
 	unittest.main()

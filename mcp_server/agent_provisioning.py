@@ -95,3 +95,22 @@ def mask_binding(b):
 	if "api_secret" in masked:
 		masked["api_secret"] = "***"
 	return masked
+
+
+def check_agent_provisioning(binding, site_config):
+	"""바인딩·site_config 만으로 개통 완비 여부를 판정(순수·주입식, 라이브 조회 없음).
+
+	반환 {'ready': bool, 'missing': [...]}. 부족한 것을 missing 에 나열한다:
+	binding 의 api_key/api_secret/frappe_url, site_config 의 provider/gateway_url.
+	"""
+	binding = binding or {}
+	site_config = site_config or {}
+	missing = []
+	for field in ("api_key", "api_secret", "frappe_url"):
+		if not binding.get(field):
+			missing.append(field)
+	if not site_config.get(PROVIDER_CONFIG_KEY):
+		missing.append("provider")
+	if not site_config.get(HERMES_GATEWAY_URL_KEY):
+		missing.append("gateway_url")
+	return {"ready": not missing, "missing": missing}

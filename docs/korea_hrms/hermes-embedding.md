@@ -70,9 +70,12 @@ PWA/채널 → agent_harness_api.run_agent_skill (승인게이트·도구 화이
    `cli-config.yaml.example`을 조사해 셸/파일/브라우저 툴셋 키와 비활성화 설정을 확정해야
    (2)의 `TODO`를 채울 수 있다.
 
-**TODO (미확정 — 서버 조사 필요)**
-- gateway 기본 활성 툴셋의 정확한 키 이름과 비활성화(또는 allowlist) 설정 형식.
-- Hermes 소스는 이 레포에 없음(vendor/HERMES_PIN 참조만) — 레포 내 조사 불가, 서버에서만 확인.
+**✅ 확정·라이브 적용 완료 (2026-07-10 서버 조사)**
+- 잠금 키: `platform_toolsets:` → `api_server: []`(완전 잠금) 또는 `[mcp-korea_hrms]`(MCP만).
+  MCP 동적 토올셋명 = `mcp-{서버명}`. mcp SDK는 옵션 의존성(`uv pip install mcp`).
+- 적대적 검증: 잠금 후 에이전트가 "서버 로그/DB 조회 불가" 자인 → MCP 등록 후
+  연차 15일+§60 3개항 인용을 테넌트 스코프 도구로만 산출(usage.jsonl 실호출 증거).
+- 템플릿에 확정값 반영: `scripts/hermes/gateway-config.template.yaml`.
 
 > **테넌트 노출 전제조건**: 위 (2)(3)의 Hermes 자체 도구 하드 잠금 완료가 테넌트에
 > 에이전트를 노출하기 위한 필수 선행 조건이다.

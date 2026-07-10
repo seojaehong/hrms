@@ -38,3 +38,16 @@ tools:
 #       agent_harness/prompt_builder.py IMMUTABLE_DOMAIN_PRINCIPLES).
 #   (2) 본 gateway 설정의 도구 잠금 (본 템플릿 — 서버 조사 후 확정).
 #   (3) 서버 조사 TODO 완료 (toolsets.py / cli-config.yaml.example).
+
+# ── 확정된 잠금 설정 (2026-07-10 라이브 검증) ───────────────────────────
+# 동적 MCP 토올셋명 = "mcp-{서버명}" (tools/mcp_tool.py:4750)
+# 검증: /v1/toolsets enabled=[] → mcp 등록 후 [mcp-korea_hrms]만.
+# ⚠️ mcp SDK는 uv sync에 빠지는 옵션 의존성: uv pip install mcp 필요.
+platform_toolsets:
+  api_server: [mcp-korea_hrms]
+
+mcp_servers:
+  korea_hrms:
+    url: http://127.0.0.1:8100/mcp
+    headers:
+      Authorization: "Bearer <issue_token.py로 발급한 계산전용 테넌트 토큰>"

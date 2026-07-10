@@ -82,6 +82,21 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 
 ---
 
+### 10-1. CODEF 데모 키 — 4대보험 조회 연동 (⏱️15분, 결정됨 2026-07-10)
+- **어디서**: https://codef.io → 회원가입 → 대시보드 → **데모 신청**(무료, 심사 없음) → 데모 client_id/client_secret 발급
+- **적용값**: 서버 site_config 또는 env — `codef_client_id`, `codef_client_secret` (데모는 `codef_demo` 생략, 정식 전환 시 `codef_demo=false`)
+  ```bash
+  # 서버에서: docker exec -w /home/frappe/frappe-bench docker-frappe-1 \
+  #   bench --site noho.safeclaw.kr set-config codef_client_id "..." 
+  #   bench --site noho.safeclaw.kr set-config codef_client_secret "..."
+  ```
+- **연동 코드 준비 완료**: `insurance_inquiry_api.py`(조회 전용·fail-closed) + `codef_client.py` — 키만 넣으면 `fetch_insured_roster(관리번호)` 작동
+- **★ 정식 계약 전 영업문의로 반드시 확인할 것**:
+  1. **보험사무대행기관 계정으로 수임 사업장 일괄 조회가 되는가?** (우리는 대행기관 — 되면 사업장별 인증서 없이 우리 계정 하나로 전 고객 조회. 이게 안 되면 사업장별 인증 위임 구조 필요)
+  2. 4대보험 상품별 건당 단가·월 최소약정
+  3. 상품 경로/파라미터 스펙 (현재 코드의 PRODUCT_INSURED_ROSTER는 확정 전 가정값)
+- **Claude 불가 이유**: 회원가입=계정 생성(보안 규칙상 사용자 직접). 가입 후 키만 주시면 연동·검증은 자동
+
 ## 🟢 TIER 3 — S2 확장·셀프서브 (Phase 3, 9~10월)
 
 ### 11. 중앙 인증 브로커 `auth.safeclaw.kr`

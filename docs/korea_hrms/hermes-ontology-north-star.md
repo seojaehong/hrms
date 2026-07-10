@@ -37,6 +37,7 @@ SafeClaw·Korea HRMS의 AI 플레인을 **Hermes Agent(NousResearch, MIT, Python
 - 급여 숫자 1원 단위 크로스체크(엑셀 권위) — AI가 개입해도 불변.
 
 ## 관련 문서
+- Agent Harness PoC: `docs/korea_hrms/agent-harness-poc.md` (하네스 코어 — Hermes 내재화 시 이 인터페이스 유지, provider·루프만 교체)
 - 장기 로드맵: `docs/korea_hrms/long-term-roadmap.md` (이 north-star는 Phase 2 'AI v2' + Phase 3~4 확장과 접점)
 - 채널 구조: `docs/korea_hrms/ai-hr-channels.md`
 - SafeClaw 원문 2건(Downloads) — 세부 코드 경로·비교표 포함

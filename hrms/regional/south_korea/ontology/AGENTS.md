@@ -18,6 +18,11 @@
 - `errors`: `[{"path": str, "error": str}]` — 불량 frontmatter는 죽지 않고 여기로.
 - 없는/빈 루트 → `([], [])` (예외 없음).
 
+## validate.validate_graph 계약
+- `validate_graph(nodes) -> [오류 문자열, ...]` (빈 리스트 = 정상 → truthiness 게이트).
+- 입력 `nodes`는 loader `OntologyNode` 리스트 또는 동일 필드 duck-type(`node_id/edges/sources/review_state`만 접근).
+- 검출 3종: 중복 `node_id`, 고아 엣지(`[[target]]`이 로드된 node_id 집합에 없음), 무출처 `published`(sources 빈 published 금지 — draft는 허용).
+
 ## 테스트
 `python3 hrms/tests/test_korea_ontology_*.py` 직접 실행. 전체 게이트:
 `bash scripts/run_korea_tests.sh ontology`.

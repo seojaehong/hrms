@@ -40,8 +40,8 @@ def _first(*vals):
 SOURCES: dict[str, dict[str, Any]] = {
     "pkb": {
         "label": "최영우 레퍼런스",
-        "rpc": "pkb_search",
-        "model": "gemini-768",
+        "rpc": "pkb_search_1536",  # OpenAI 1536으로 통일 재임베딩(Gemini 768 pkb_search 폐기)
+        "model": "openai-1536",
         "params": lambda vec, cap: {"query_embedding": vec, "match_count": cap},
         "normalize": lambda r: {
             "title": _first(r.get("title"), r.get("section"), r.get("folder")),

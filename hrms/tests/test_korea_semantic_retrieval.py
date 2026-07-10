@@ -28,8 +28,9 @@ SOURCES = _mod.SOURCES
 
 
 class TestSelectModel(unittest.TestCase):
-    def test_pkb_uses_gemini_768(self):
-        self.assertEqual(select_model("pkb"), "gemini-768")
+    def test_pkb_uses_openai_1536_after_reembed(self):
+        # 최영우 pkb는 OpenAI 1536으로 통일 재임베딩됨(Gemini 폐기).
+        self.assertEqual(select_model("pkb"), "openai-1536")
 
     def test_interpretation_cases_faq_use_openai_1536(self):
         self.assertEqual(select_model("interpretation"), "openai-1536")
@@ -121,7 +122,7 @@ class TestBuildRetrieval(unittest.TestCase):
 
         def rpc_caller(rpc, params):
             rpc_calls.append((rpc, params))
-            if rpc == "pkb_search":
+            if rpc == "pkb_search_1536":
                 return [{"title": "최영우", "content": "통상임금...", "source_path": "ref/1",
                          "similarity": 0.8}]
             if rpc == "search_faq_semantic":
@@ -131,12 +132,12 @@ class TestBuildRetrieval(unittest.TestCase):
 
         return embedder, rpc_caller, embed_calls, rpc_calls
 
-    def test_embeds_each_semantic_source_with_correct_model(self):
+    def test_embeds_semantic_sources_and_caches_shared_model(self):
         embedder, rpc_caller, embed_calls, rpc_calls = self._fakes()
         build_retrieval("주휴수당?", ["pkb", "faq"], embedder=embedder,
                         rpc_caller=rpc_caller, top_k=5)
-        models = {m for m, _ in embed_calls}
-        self.assertEqual(models, {"gemini-768", "openai-1536"})
+        # pkb·faq 모두 openai-1536 → 모델 캐시로 임베딩 1회만
+        self.assertEqual([m for m, _ in embed_calls], ["openai-1536"])
 
     def test_returns_merged_normalized_ranked(self):
         embedder, rpc_caller, _, _ = self._fakes()
@@ -177,7 +178,7 @@ class TestBuildRetrieval(unittest.TestCase):
         embedder, _, _, _ = self._fakes()
 
         def flaky_rpc(rpc, params):
-            if rpc == "pkb_search":
+            if rpc == "pkb_search_1536":
                 raise RuntimeError("supabase down")
             return [{"question": "q", "answer": "a", "unified_category": "임금", "similarity": 0.9}]
 

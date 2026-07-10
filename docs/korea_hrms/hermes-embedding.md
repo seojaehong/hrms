@@ -46,3 +46,33 @@ PWA/채널 → agent_harness_api.run_agent_skill (승인게이트·도구 화이
 ## 사용자 투입 (USER_INPUT_HANDOFF 연동)
 - 플랫폼 과금 모드: `PLATFORM_LLM_API_KEY`(Anthropic 권장) 서버 env 1개면 전 테넌트 가동
 - 테넌트 BYOK 모드: 해당 사이트 `bench set-config agent_llm_api_key "..."`
+
+## §보안 발견 (2026-07 실동)
+
+**확인된 사실**
+- 2026-07 실동에서 gateway의 Hermes 에이전트가 **우리 `tool_registry`를 거치지 않고
+  자체 셸 도구(ubuntu 권한)로 직접 작업**했다.
+- 그 과정에서 **3개 사이트 접근 흔적**이 확인되었다.
+- 즉, 현재 상태로는 하네스가 소유한 승인 게이트·도구 화이트리스트를 우회할 수 있다.
+
+**리스크**
+- 테넌트에게 노출하기 전에 Hermes 자체 도구를 잠그지 않으면, 에이전트가
+  테넌트 격리 경계를 넘어 다른 사이트 데이터/파일시스템에 접근할 수 있다.
+
+**대응 계획 (3중 방어)**
+1. **하네스 시스템 프롬프트 금지 지시** — 구현됨(US-1). `agent_harness/prompt_builder.py`의
+   `IMMUTABLE_DOMAIN_PRINCIPLES`에 "도구는 제공된 `tool_registry` 경유로만 사용, 자체
+   셸·파일시스템·브라우저 등 외부 도구 사용 금지" 원칙을 모듈 상수로 추가(호출자 덮어쓰기 불가).
+   — 프롬프트 지시는 소프트 방어이며, 아래 (2)(3)의 하드 잠금이 필수.
+2. **gateway 설정 잠금** — `scripts/hermes/gateway-config.template.yaml`(신설). 확인된
+   `model.default`만 값으로 담고, 도구 잠금 키는 값 추측 없이 `TODO`로 표기.
+3. **서버 조사 TODO** — claudebot-2 `~/workspaces/hermes-agent`의 `toolsets.py` /
+   `cli-config.yaml.example`을 조사해 셸/파일/브라우저 툴셋 키와 비활성화 설정을 확정해야
+   (2)의 `TODO`를 채울 수 있다.
+
+**TODO (미확정 — 서버 조사 필요)**
+- gateway 기본 활성 툴셋의 정확한 키 이름과 비활성화(또는 allowlist) 설정 형식.
+- Hermes 소스는 이 레포에 없음(vendor/HERMES_PIN 참조만) — 레포 내 조사 불가, 서버에서만 확인.
+
+> **테넌트 노출 전제조건**: 위 (2)(3)의 Hermes 자체 도구 하드 잠금 완료가 테넌트에
+> 에이전트를 노출하기 위한 필수 선행 조건이다.

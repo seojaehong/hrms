@@ -60,6 +60,7 @@ _agent_loop = _load_core("agent_loop")
 _tool_registry_mod = _load_core("tool_registry")
 _llm_credentials = _load_core("llm_credentials")
 _hermes_provider = _load_core("hermes_provider")
+_prompt_builder = _load_core("prompt_builder")
 
 # site config 키 — 이 키가 있어야 provider가 설정된 것으로 본다(값 읽기만, 네트워크 없음).
 PROVIDER_CONFIG_KEY = "korea_agent_harness_provider"
@@ -135,10 +136,30 @@ def run_agent_skill(
 		}
 
 	skill = registry.get(skill_name)
-	messages = [{"role": "user", "skill": skill_name, "args": args}]
-	loop_result = _agent_loop.run_agent_loop(
-		provider, messages, tool_registry, max_steps=max_steps
-	)
+	# 하네스가 시스템 프롬프트를 소유한다 — provider(Hermes 등)가 자체 셸 도구로
+	# 이탈하지 못하도록 불변 원칙·스킬·등록 도구 스펙을 조립해 messages[0]에 주입한다.
+	tool_specs = {
+		name: tool_registry.get_spec(name) for name in tool_registry.list_tools()
+	}
+	system_prompt = _prompt_builder.build_system_prompt(skill, tool_specs, {})
+	messages = [
+		{"role": "system", "content": system_prompt},
+		{"role": "user", "skill": skill_name, "args": args},
+	]
+	try:
+		loop_result = _agent_loop.run_agent_loop(
+			provider, messages, tool_registry, max_steps=max_steps
+		)
+	except Exception as exc:  # provider/네트워크/기타 실행 실패 표준화
+		# 원문 traceback은 frappe.log_error로만 시도(실패·부재해도 무시).
+		# 응답에는 절대 traceback을 노출하지 않는다 — 클래스명+메시지 요약(300자).
+		_log_error_best_effort(exc, skill_name)
+		summary = f"{type(exc).__name__}: {exc}"
+		return {
+			"status": "provider_error",
+			"skill_name": skill_name,
+			"error": summary[:300],
+		}
 	return {
 		"status": loop_result["status"],
 		"skill_name": skill_name,
@@ -151,6 +172,25 @@ def run_agent_skill(
 # ---------------------------------------------------------------------------
 # 내부 헬퍼
 # ---------------------------------------------------------------------------
+
+
+def _log_error_best_effort(exc: BaseException, skill_name: str) -> None:
+	"""원문 traceback을 frappe.log_error로만 기록 시도한다(best-effort).
+
+	frappe가 없거나 log_error 자체가 실패해도 조용히 무시한다 — 응답 경로에는
+	절대 영향을 주지 않는다(traceback은 클라이언트에 노출하지 않는다).
+	"""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		return
+	try:
+		import traceback as _tb  # noqa: PLC0415
+
+		_frappe.log_error(
+			message=_tb.format_exc(),
+			title=f"run_agent_skill provider_error: {skill_name}",
+		)
+	except Exception:  # 로깅 실패는 무시(응답 불변)
+		pass
 
 
 def _resolve_provider() -> Callable[[list], dict] | None:

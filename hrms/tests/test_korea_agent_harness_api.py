@@ -149,5 +149,151 @@ class TestInjectedRun(unittest.TestCase):
 		self.assertIn("제안 2명", result["final_text"])
 
 
+class TestFreeformQA(unittest.TestCase):
+	"""자유 질의 빌트인 스킬 hr_freeform_qa — 도구 필요시에만 호출(US-3)."""
+
+	def test_freeform_no_tool_call_completes(self):
+		# (a) 도구 0회, 바로 텍스트 응답 → completed, tool_calls 0건.
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()  # 빈 레지스트리 — no_tools 회피용(None 아님)
+
+		captured = {}
+
+		def provider(convo):
+			captured["messages"] = [dict(m) for m in convo]
+			return {"text": "연차는 1년 만근 시 15일 발생합니다."}
+
+		result = mod.run_agent_skill(
+			"hr_freeform_qa", {"question": "연차 며칠?"}, provider=provider, tool_registry=reg
+		)
+		self.assertNotEqual(result["status"], "unknown_skill")
+		self.assertEqual(result["status"], "completed")
+		self.assertEqual(result["skill_name"], "hr_freeform_qa")
+		self.assertEqual(result["tool_calls"], [])
+		self.assertIn("15일", result["final_text"])
+		# question이 user 메시지 args로 전달되는지 확인.
+		msgs = captured["messages"]
+		self.assertEqual(msgs[1]["role"], "user")
+		self.assertEqual(msgs[1]["args"]["question"], "연차 며칠?")
+
+	def test_freeform_one_tool_call_then_answer(self):
+		# (b) tool_call 1회(list_hourly_payroll_proposals) 후 텍스트 → tool_calls 1건, completed.
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"list_hourly_payroll_proposals",
+			lambda **kw: {"proposals": [{"emp": "A"}, {"emp": "B"}]},
+			{"description": "시급 제안 조회"},
+			read_only=True,
+		)
+
+		def provider(convo):
+			for m in convo:
+				if m.get("role") == "tool" and m.get("tool") == "list_hourly_payroll_proposals":
+					count = len(m["result"]["result"]["proposals"])
+					return {"text": f"현재 시급 제안 대상은 {count}명입니다."}
+			return {"tool_call": {"name": "list_hourly_payroll_proposals", "args": {}}}
+
+		result = mod.run_agent_skill(
+			"hr_freeform_qa",
+			{"question": "이번 달 시급 대상 몇 명?"},
+			provider=provider,
+			tool_registry=reg,
+		)
+		self.assertEqual(result["status"], "completed")
+		self.assertEqual(
+			[c["tool"] for c in result["tool_calls"]], ["list_hourly_payroll_proposals"]
+		)
+		self.assertIn("2명", result["final_text"])
+
+
+class TestSystemPromptInjection(unittest.TestCase):
+	"""하네스가 messages[0]에 시스템 프롬프트를 소유·주입하는지(US-1)."""
+
+	def test_system_prompt_is_first_message(self):
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"list_hourly_payroll_proposals",
+			lambda **kw: {"proposals": []},
+			{"description": "시급 제안 조회"},
+			read_only=True,
+		)
+
+		captured = {}
+
+		def provider(convo):
+			# 최초 호출 시점의 대화를 기록하고 바로 종료(도구 호출 없음).
+			captured["messages"] = [dict(m) for m in convo]
+			return {"text": "완료"}
+
+		result = mod.run_agent_skill(
+			"hourly_closing_prep", provider=provider, tool_registry=reg
+		)
+		self.assertEqual(result["status"], "completed")
+
+		msgs = captured["messages"]
+		self.assertEqual(msgs[0]["role"], "system")
+		content = msgs[0]["content"]
+		# (a) 스킬명
+		self.assertIn("hourly_closing_prep", content)
+		# (b) 등록 도구명
+		self.assertIn("list_hourly_payroll_proposals", content)
+		# (c) 자체 셸/외부 도구 금지 지시
+		self.assertIn("tool_registry", content)
+		self.assertIn("외부 도구 사용 금지", content)
+		# 기존 user 메시지는 시스템 프롬프트 뒤에 온다.
+		self.assertEqual(msgs[1]["role"], "user")
+		self.assertEqual(msgs[1]["skill"], "hourly_closing_prep")
+
+
+class TestProviderError(unittest.TestCase):
+	"""provider 실행 중 예외 → 표준화된 provider_error(traceback 미노출) (US-2)."""
+
+	def _run_with_raising_provider(self, exc):
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"list_hourly_payroll_proposals",
+			lambda **kw: {"proposals": []},
+			{},
+			read_only=True,
+		)
+
+		def provider(convo):
+			raise exc
+
+		return mod.run_agent_skill(
+			"hourly_closing_prep", provider=provider, tool_registry=reg
+		)
+
+	def test_generic_exception_returns_provider_error(self):
+		result = self._run_with_raising_provider(RuntimeError("gateway 500 폭발"))
+		self.assertEqual(result["status"], "provider_error")
+		self.assertEqual(result["skill_name"], "hourly_closing_prep")
+		# traceback 미노출 + 300자 이하 요약.
+		self.assertNotIn("Traceback", result["error"])
+		self.assertLessEqual(len(result["error"]), 300)
+		self.assertIn("gateway 500 폭발", result["error"])
+
+	def test_hermes_provider_error_returns_provider_error(self):
+		hp = _load_core("hermes_provider")
+		result = self._run_with_raising_provider(
+			hp.HermesProviderError("gateway 연결 실패")
+		)
+		self.assertEqual(result["status"], "provider_error")
+		self.assertNotIn("Traceback", result["error"])
+		self.assertLessEqual(len(result["error"]), 300)
+
+	def test_error_summary_truncated_to_300(self):
+		result = self._run_with_raising_provider(RuntimeError("x" * 500))
+		self.assertEqual(result["status"], "provider_error")
+		self.assertLessEqual(len(result["error"]), 300)
+
+
 if __name__ == "__main__":
 	unittest.main()

@@ -64,6 +64,12 @@ core-triples.json, graph-store published 게이트)와 문서 생성 파이프�
 - **완료 기준**: PRD Phase 3 기준(중처법 §4 체크리스트 자동 실행→보완 초안→노무사
   승인 큐) — 단 실행 엔진은 SafeClaw 모듈, HR 데이터는 hrms가 공급.
 
+## M-provisioning — 에이전트 자동 개통 (10만 상용 토대, 코드 파트)
+가입 시 서비스유저·계산전용 토큰·site_config·채널 바인딩을 무인 개통하는 순수·검증가능
+코드(플랜 빌더·바인딩 병합 멱등·상태 점검·fail-safe dry-run CLI). 실행은 사람/크론 몫.
+- 작성법·흐름·보안(calc_only 스코프·시크릿 마스킹)·셀프서브/크론 연결점:
+  `docs/korea_hrms/agent-provisioning.md`
+
 ---
 
 ## 사용자 투입 지도 (고지별)

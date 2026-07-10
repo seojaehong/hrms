@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+"""에이전트 자동 프로비저닝 — 순수 코어.
+
+가입 시 에이전트 개통(서비스유저·계산전용토큰·site_config·채널바인딩)을
+'실행할 스텝을 데이터로 표현'하는 순수 함수 모음. frappe 를 import 하지 않고
+부수효과가 없으므로 spec_from_file_location 으로 직접 로드해 테스트한다.
+
+site_config 키는 hrms/regional/south_korea/agent_harness_api.py 와 일치:
+  korea_agent_harness_provider / hermes_gateway_url.
+"""
+
+from __future__ import annotations
+
+# agent_harness_api.PROVIDER_CONFIG_KEY / HERMES_GATEWAY_URL_KEY 와 동일 값.
+# (해당 모듈은 frappe 연쇄 import 라 여기서 import 하지 않고 상수만 복제.)
+PROVIDER_CONFIG_KEY = "korea_agent_harness_provider"
+HERMES_GATEWAY_URL_KEY = "hermes_gateway_url"
+
+
+def build_agent_provisioning_plan(
+	site,
+	*,
+	telegram_chat_id=None,
+	provider="hermes",
+	gateway_url=None,
+):
+	"""프로비저닝 실행 스텝을 dict 리스트로 반환하는 순수 함수(부수효과 0).
+
+	스텝 순서: ensure_service_user → issue_mcp_token → set_site_config
+	(+ telegram_chat_id 있으면 bind_channel).
+	잘못된 인자(빈 site / gateway_url 누락)는 ValueError.
+	"""
+	site = (site or "").strip()
+	if not site:
+		raise ValueError("site 는 비어 있을 수 없습니다.")
+	gateway_url = (gateway_url or "").strip()
+	if not gateway_url:
+		raise ValueError("gateway_url 은 필수입니다.")
+
+	plan = [
+		{
+			"action": "ensure_service_user",
+			"email": f"agent-bot@{site}",
+			"roles": ["System Manager"],
+		},
+		{
+			"action": "issue_mcp_token",
+			"site": site,
+			"scope": "calc_only",
+			"label": f"agent-bot@{site}",
+		},
+		{
+			"action": "set_site_config",
+			"keys": {
+				PROVIDER_CONFIG_KEY: provider,
+				HERMES_GATEWAY_URL_KEY: gateway_url,
+			},
+		},
+	]
+	if telegram_chat_id is not None:
+		plan.append(
+			{
+				"action": "bind_channel",
+				"channel": "telegram",
+				"chat_id": telegram_chat_id,
+			}
+		)
+	return plan

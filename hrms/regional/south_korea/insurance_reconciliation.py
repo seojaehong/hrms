@@ -148,6 +148,56 @@ def reconcile_contributions(
 	}
 
 
+# 공제 컴포넌트명 → 표준행 키 (포함 매칭, 순서 중요: "장기요양"이 "건강보험"보다 먼저 —
+# wage_statement._DEDUCTION_KEY_RULES와 동일 원칙, 4대보험 부분만)
+_COMPONENT_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+	("national_pension", ("국민연금",)),
+	("long_term_care_insurance", ("장기요양",)),
+	("health_insurance", ("건강보험",)),
+	("employment_insurance", ("고용보험",)),
+)
+
+
+def contribution_rows_from_slips(slips: list[dict[str, Any]]) -> dict[str, Any]:
+	"""급여 슬립(공제 목록 포함) → 대사 표준행.
+
+	Args:
+		slips: [{"employee": str, "deductions": [{"salary_component"|"label": str, "amount": 원}...]}]
+			동일 직원의 같은 보험 컴포넌트가 여러 줄이면 합산.
+
+	Returns:
+		{"rows": [표준행...], "unmapped": [{"employee", "component", "amount"}...]}
+		unmapped = 4대보험으로 분류되지 않은 공제(소득세 등은 정상적으로 여기 옴 — 정보용).
+	"""
+	rows: list[dict[str, Any]] = []
+	unmapped: list[dict[str, Any]] = []
+	for slip in slips:
+		key = _key_of(slip)
+		row: dict[str, Any] = {"employee": key}
+		for ded in slip.get("deductions") or []:
+			name = ""
+			for k in ("salary_component", "label", "component"):
+				v = ded.get(k)
+				if isinstance(v, str) and v.strip():
+					name = v.strip()
+					break
+			amount = ded.get("amount")
+			if amount in (None, ""):
+				continue
+			won = int(round(float(amount)))
+			matched = None
+			for field, patterns in _COMPONENT_RULES:
+				if any(p in name for p in patterns):
+					matched = field
+					break
+			if matched:
+				row[matched] = row.get(matched, 0) + won
+			else:
+				unmapped.append({"employee": key, "component": name, "amount": won})
+		rows.append(row)
+	return {"rows": rows, "unmapped": unmapped}
+
+
 def summarize_reconciliation_ko(result: dict[str, Any]) -> str:
 	"""사람용 1줄 요약 (텔레그램/보고서용)."""
 	if result["ok"]:

@@ -137,5 +137,39 @@ class TestValidation(unittest.TestCase):
 		self.assertEqual([d["employee"] for d in out["diffs"]], ["B", "A"])  # |100| > |5|
 
 
+class TestContributionRowsFromSlips(unittest.TestCase):
+	def test_basic_mapping_and_sum(self):
+		slips = [{
+			"employee": "E1",
+			"deductions": [
+				{"salary_component": "국민연금", "amount": 166500},
+				{"salary_component": "건강보험", "amount": 131160},
+				{"salary_component": "장기요양보험", "amount": 16980},
+				{"salary_component": "고용보험", "amount": 33300},
+				{"salary_component": "소득세", "amount": 84850},          # 4대 아님 → unmapped
+				{"salary_component": "국민연금 정산", "amount": 1000},     # 같은 보험 합산
+			],
+		}]
+		out = _mod.contribution_rows_from_slips(slips)
+		row = out["rows"][0]
+		self.assertEqual(row["national_pension"], 167500)   # 166500 + 1000
+		self.assertEqual(row["health_insurance"], 131160)
+		self.assertEqual(row["long_term_care_insurance"], 16980)  # "장기요양"이 "건강보험"보다 먼저 매칭
+		self.assertEqual(row["employment_insurance"], 33300)
+		self.assertEqual(out["unmapped"], [{"employee": "E1", "component": "소득세", "amount": 84850}])
+
+	def test_label_fallback_and_float_rounding(self):
+		slips = [{"employee": "E2", "deductions": [{"label": "건강보험료", "amount": 100.4}]}]
+		out = _mod.contribution_rows_from_slips(slips)
+		self.assertEqual(out["rows"][0]["health_insurance"], 100)
+
+	def test_slips_to_reconcile_end_to_end(self):
+		slips = [{"employee": "천시원", "deductions": [{"salary_component": "국민연금", "amount": 187730}]}]
+		computed = _mod.contribution_rows_from_slips(slips)["rows"]
+		notified = [{"employee": "천시원", "national_pension": 166500}]
+		out = reconcile(computed, notified)
+		self.assertEqual(out["diffs"][0]["delta"], 21230)
+
+
 if __name__ == "__main__":
 	unittest.main()

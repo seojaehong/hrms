@@ -61,6 +61,26 @@ _tool_registry_mod = _load_core("tool_registry")
 _llm_credentials = _load_core("llm_credentials")
 _hermes_provider = _load_core("hermes_provider")
 _prompt_builder = _load_core("prompt_builder")
+_pii_filter = _load_core("pii_filter")
+
+
+class _RedactingRegistry:
+	"""tool_registry 프록시 — 도구 결과가 대화(→LLM)로 나가기 전 PII를 구조적으로 제거.
+
+	보안플랜 P1-④: 지시문이 아니라 코드로 차단. call() 반환(agent_loop이 대화와
+	tool_calls에 그대로 싣는 구조화 dict)을 redact_sensitive로 통과시킨다.
+	나머지 메서드는 위임.
+	"""
+
+	def __init__(self, inner: Any):
+		self._inner = inner
+
+	def call(self, name: str, args: dict | None = None, *, human_approved: bool = False) -> dict:
+		result = self._inner.call(name, args, human_approved=human_approved)
+		return _pii_filter.redact_sensitive(result)
+
+	def __getattr__(self, attr: str) -> Any:
+		return getattr(self._inner, attr)
 
 # site config 키 — 이 키가 있어야 provider가 설정된 것으로 본다(값 읽기만, 네트워크 없음).
 PROVIDER_CONFIG_KEY = "korea_agent_harness_provider"
@@ -134,6 +154,9 @@ def run_agent_skill(
 			"skill_name": skill_name,
 			"reason": "tool_registry 미주입 — 도구 바인딩 없이는 스킬을 실행하지 않습니다.",
 		}
+
+	# PII 방어선: 도구 결과가 대화(→LLM)로 나가기 전 구조적으로 리댁션 (P1-④)
+	tool_registry = _RedactingRegistry(tool_registry)
 
 	skill = registry.get(skill_name)
 	# 하네스가 시스템 프롬프트를 소유한다 — provider(Hermes 등)가 자체 셸 도구로

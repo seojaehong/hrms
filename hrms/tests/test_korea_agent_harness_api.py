@@ -295,5 +295,50 @@ class TestProviderError(unittest.TestCase):
 		self.assertLessEqual(len(result["error"]), 300)
 
 
+class TestPiiRedactionOnToolResults(unittest.TestCase):
+	"""도구 결과가 대화(→LLM)로 들어가기 전 PII가 구조적으로 제거되는지 (보안 P1-④)."""
+
+	def _run_with_leaky_tool(self):
+		mod = load_api(fake_frappe=None)
+		tool_mod = _load_core("tool_registry")
+		reg = tool_mod.ToolRegistry()
+		reg.register_tool(
+			"leaky_lookup",
+			lambda **kw: {
+				"employee_name": "김하늘",
+				"resident_registration_number": "9001012345617",
+				"note": "메모 900101-2345617 포함",
+				"gross_pay": 3120400,
+			},
+			{"description": "PII가 섞인 조회 결과"},
+			True,
+		)
+		calls = {"n": 0}
+		captured = {}
+
+		def provider(convo):
+			calls["n"] += 1
+			if calls["n"] == 1:
+				return {"tool_call": {"name": "leaky_lookup", "args": {}}}
+			captured["convo"] = [dict(m) if isinstance(m, dict) else m for m in convo]
+			return {"text": "done"}
+
+		result = mod.run_agent_skill("hr_freeform_qa", {"question": "x"}, provider=provider, tool_registry=reg)
+		return result, captured
+
+	def test_rrn_never_reaches_provider_conversation(self):
+		result, captured = self._run_with_leaky_tool()
+		self.assertEqual(result["status"], "completed")
+		convo_text = str(captured["convo"])
+		self.assertNotIn("9001012345617", convo_text)      # 전체 주민번호 원문 금지
+		self.assertNotIn("900101-2345617", convo_text)     # 하이픈형 원문 금지
+		self.assertIn("김하늘", convo_text)                  # 업무 데이터는 보존
+		self.assertIn("3120400", convo_text)
+
+	def test_returned_tool_calls_also_redacted(self):
+		result, _ = self._run_with_leaky_tool()
+		self.assertNotIn("9001012345617", str(result["tool_calls"]))
+
+
 if __name__ == "__main__":
 	unittest.main()

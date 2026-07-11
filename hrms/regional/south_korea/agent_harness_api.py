@@ -272,6 +272,90 @@ def _resolve_provider(tool_specs: dict | None = None) -> Callable[[list], dict] 
 		return None
 
 
+def _register_calc_tools(registry) -> None:
+	"""framework-free 계산·지식검색 도구 등록 — frappe 불필요, 전부 read_only.
+
+	계산 도구는 statutory 2026 정렬 엔진(daily_worker/hourly_wage)을 그대로 노출하고,
+	지식검색은 v2 시맨틱 retriever(env 게이트 — 미설정 시 fail-closed 빈 결과)를 쓴다.
+	"""
+	import importlib.util as _ilu
+	import pathlib as _pl
+
+	base = _pl.Path(__file__).resolve().parent
+
+	def _load(name):
+		spec = _ilu.spec_from_file_location(f"korea_calc_{name}", base / f"{name}.py")
+		mod = _ilu.module_from_spec(spec)
+		spec.loader.exec_module(mod)
+		return mod
+
+	hourly = _load("hourly_wage")
+	daily = _load("daily_worker")
+
+	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
+		allowance = hourly.weekly_holiday_allowance(
+			contracted_weekly_hours=contracted_weekly_hours,
+			hourly_rate=hourly_rate,
+			perfect_attendance=bool(perfect_attendance),
+		)
+		return {"allowance": allowance, "legal_basis": hourly.legal_basis_base()}
+
+	def calc_daily_worker_payroll(*, daily_wage, days_worked, additional_wages=0, employment_period_months=0):
+		return daily.calculate_daily_worker_payroll(
+			daily_wage=float(daily_wage),
+			days_worked=int(days_worked),
+			additional_wages=float(additional_wages),
+			employment_period_months=int(employment_period_months),
+		)
+
+	def calc_ordinary_hourly_wage(*, monthly_base_salary):
+		return {"ordinary_hourly_wage": float(hourly.ordinary_hourly_wage(monthly_base_salary))}
+
+	def calc_unused_leave_allowance(*, monthly_base_salary, unused_days):
+		return {"allowance": float(hourly.unused_leave_allowance(monthly_base_salary, unused_days))}
+
+	def search_labor_knowledge(*, query, top_k=5):
+		try:
+			sc = _load("semantic_config")
+			retriever = sc.build_semantic_retriever_from_env()
+		except Exception:
+			retriever = None
+		if retriever is None:
+			return {"configured": False, "documents": [],
+				"note": "시맨틱 검색 미설정(env) — 근거 검색 없이 답하지 말고 미설정임을 알릴 것"}
+		docs = retriever(str(query))[: int(top_k)]
+		return {"configured": True, "documents": docs}
+
+	registry.register_tool(
+		"calc_weekly_holiday_allowance", calc_weekly_holiday_allowance,
+		{"description": "1주 주휴수당 계산 (주 15h+개근 요건, min(주소정,40)/40x8 x 시급)",
+		 "args": {"contracted_weekly_hours": "필수", "hourly_rate": "필수(원)", "perfect_attendance": "선택(기본 true)"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_daily_worker_payroll", calc_daily_worker_payroll,
+		{"description": "일용직 급여·원천징수 계산 (소액부징수 지급합산·납부 10원 절사·고용보험 0.9% — 국세청 정렬)",
+		 "args": {"daily_wage": "필수(원)", "days_worked": "필수", "additional_wages": "선택(비과세)", "employment_period_months": "선택"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_ordinary_hourly_wage", calc_ordinary_hourly_wage,
+		{"description": "통상시급 = 기본급 / 209 (포괄임금 실무)", "args": {"monthly_base_salary": "필수(원)"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_unused_leave_allowance", calc_unused_leave_allowance,
+		{"description": "미사용 연차수당 = 기본급/209 x 8 x 미사용일수", "args": {"monthly_base_salary": "필수(원)", "unused_days": "필수"}},
+		True,
+	)
+	registry.register_tool(
+		"search_labor_knowledge", search_labor_knowledge,
+		{"description": "노동법 지식 시맨틱 검색 (행정해석·판례·판정례·상담FAQ·최영우) — 답변 근거 인용용",
+		 "args": {"query": "필수(자연어)", "top_k": "선택(기본 5)"}},
+		True,
+	)
+
+
 def _build_default_tool_registry():
 	"""빌트인 스킬용 기본 도구 바인딩 — 전부 조회·계산 전용(read_only=True).
 
@@ -302,4 +386,5 @@ def _build_default_tool_registry():
 		},
 		True,  # read_only
 	)
+	_register_calc_tools(registry)  # framework-free 계산·지식검색 도구 동봉
 	return registry

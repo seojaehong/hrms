@@ -209,6 +209,59 @@ class TestFreeformQA(unittest.TestCase):
 		self.assertIn("2명", result["final_text"])
 
 
+class TestCalcTools(unittest.TestCase):
+	"""framework-free 계산·지식검색 도구 — frappe 없이도 등록·호출 가능해야 한다."""
+
+	def _registry(self):
+		mod = load_api(fake_frappe=None)
+		reg = _load_core("tool_registry").ToolRegistry()
+		mod._register_calc_tools(reg)
+		return reg
+
+	def test_calc_tools_registered(self):
+		reg = self._registry()
+		names = set(reg.list_tools())
+		for expected in (
+			"calc_weekly_holiday_allowance",
+			"calc_daily_worker_payroll",
+			"calc_ordinary_hourly_wage",
+			"calc_unused_leave_allowance",
+			"search_labor_knowledge",
+		):
+			self.assertIn(expected, names)
+
+	def test_weekly_holiday_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_weekly_holiday_allowance",
+			{"contracted_weekly_hours": 20, "hourly_rate": 10320},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["allowance"], 41280)
+
+	def test_daily_worker_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_daily_worker_payroll",
+			{"daily_wage": 160000, "days_worked": 4},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["income_tax_total"], 1080.0)
+
+	def test_ordinary_and_unused_leave(self):
+		reg = self._registry()
+		r1 = reg.call("calc_ordinary_hourly_wage", {"monthly_base_salary": 2156880}, human_approved=False)
+		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
+		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
+		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_knowledge_search_unconfigured_fails_closed(self):
+		reg = self._registry()
+		result = reg.call("search_labor_knowledge", {"query": "주휴수당 발생 요건"}, human_approved=False)
+		self.assertFalse(result["result"]["configured"])
+		self.assertEqual(result["result"]["documents"], [])
+
+
 class TestResolveProviderToolSpecs(unittest.TestCase):
 	"""config 경로(hermes)에서 provider 생성 시 tool_specs가 전달되어
 	프롬프트 프로토콜 툴콜링이 활성화되어야 한다."""

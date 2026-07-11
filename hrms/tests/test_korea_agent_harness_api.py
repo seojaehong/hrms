@@ -229,6 +229,7 @@ class TestCalcTools(unittest.TestCase):
 			"build_employment_contract",
 			"calc_design_inclusive_wage",
 			"calc_audit_inclusive_wage",
+			"calc_annual_leave_promotion",
 			"search_labor_knowledge",
 			"check_work_rules_required_items",
 			"work_rules_amendment_procedure",
@@ -335,6 +336,16 @@ class TestCalcTools(unittest.TestCase):
 		)
 		self.assertEqual(result["result"]["requirement"], "consent")
 		self.assertIn("근로자 과반수", result["result"]["subject"])
+	def test_annual_leave_promotion_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_annual_leave_promotion",
+			{"hire_date": "2020-01-01", "as_of": "2026-07-05", "is_first_year": False},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["expiry_date"], "2027-01-01")
+		self.assertEqual(result["result"]["stage"], "1차_촉구_기간")
+		self.assertTrue(any("제61조" in c for c in result["result"]["legal_basis"]))
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

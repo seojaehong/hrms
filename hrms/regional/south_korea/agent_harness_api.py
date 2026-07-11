@@ -294,6 +294,7 @@ def _register_calc_tools(registry) -> None:
 	contract_doc = _load("employment_contract_doc")
 	inclusive = _load("inclusive_wage")
 	wr = _load("work_rules")
+	promotion = _load("annual_leave_promotion")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -381,6 +382,21 @@ def _register_calc_tools(registry) -> None:
 			bool(is_disadvantageous),
 			has_majority_union=None if has_majority_union is None else bool(has_majority_union),
 		)
+	def calc_annual_leave_promotion(*, hire_date, as_of, is_first_year=False):
+		import datetime as _dt
+
+		def _to_date(value):
+			if isinstance(value, _dt.date):
+				return value
+			return _dt.date.fromisoformat(str(value))
+
+		result = promotion.promotion_schedule(
+			_to_date(hire_date), _to_date(as_of), is_first_year=bool(is_first_year)
+		)
+		return {
+			key: (value.isoformat() if isinstance(value, _dt.date) else value)
+			for key, value in result.items()
+		}
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -452,6 +468,12 @@ def _register_calc_tools(registry) -> None:
 		{"description": "취업규칙 작성·변경 절차 판정 (근기법 §94 — 의견청취 vs 동의, 신고 첨부·게시 단계)",
 		 "args": {"is_disadvantageous": "필수(불이익변경 여부, 판정은 호출측 책임)",
 			  "has_majority_union": "선택(과반수 노조 유무, 미상이면 생략)"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_annual_leave_promotion", calc_annual_leave_promotion,
+		{"description": "근기법 §61 연차 사용촉진 기한표 + 현재 단계 판정 (1년미만 특칙 포함)",
+		 "args": {"hire_date": "필수(YYYY-MM-DD)", "as_of": "필수(YYYY-MM-DD)", "is_first_year": "선택(기본 false)"}},
 		True,
 	)
 	registry.register_tool(

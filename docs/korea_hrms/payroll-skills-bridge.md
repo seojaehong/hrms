@@ -31,6 +31,7 @@
 | `~/.claude/skills/취업규칙검토`, `~/.claude/skills/취업규칙의견서` | 작성·변경 절차: 과반수 노조(없으면 근로자 과반수) 의견청취, 불이익변경 시 **동의**, 신고 시 의견서 첨부(근기법 §94), 게시(§14) | `work_rules.py:amendment_procedure` | **일치** — 절차 단계 리스트·주체 판정만 엔진 담당. 불이익변경 **해당 여부 자체**는 여전히 사람(노무사) 판단(스킬 diff-engine-규칙.md §5, 엔진도 입력값으로만 받고 단정하지 않음). |
 | `~/.claude/skills/취업규칙검토` | 불이익변경 후보 판정: 수치형 항목(임금·휴가일수 등)은 방향 비교로 플래그, 단정 금지 | `work_rules.py:classify_amendment` | **역할분리** — 엔진은 `candidate` 라벨(favorable/unfavorable/neutral/indeterminate) + `requires_labor_attorney_review=True` 고정 반환. 최종 불이익변경 확정·`변경지시.json`의 `disadvantage_risk` 필드 작성은 스킬(사람) 몫. |
 | `~/.claude/skills/취업규칙개정` | HWP 원본에 변경지시(before/after) 적용, 한글 COM ReplaceAll | (엔진 대응 없음 — HWP 렌더링은 스킬 전담) | **역할분리(엔진 미개입)** — `work_rules.py`는 판정 로직만 제공하고 실제 HWP 개정·문서 렌더는 다루지 않는다. |
+| `~/.claude/skills/급여관리`, `~/.claude/skills/퇴직정산` | §61 연차 사용촉진: 일반은 소멸 6개월 전 기준 10일 내 1차 서면촉구 → 미통보 시 2개월 전까지 2차 서면통보. 1년 미만자(§60②)는 3개월 전 기준 10일 촉구(단서: 촉구 후 발생분은 1개월 전 기준 5일) → 1개월 전까지 2차 통보(단서분은 10일 전까지). 촉진 조치를 모두 이행하면 미사용 휴가 보상 의무 면제 | `annual_leave_promotion.py:promotion_schedule`, `promotion_notice_draft`, `settle_unused_leave` | **일치 (2026-07-11 엔진 신설)** — 1차 근거는 published 온톨로지 노드 `wiki/ontology/급여규칙/연차_사용촉진.md`(노무사 승인, 근거 근로기준법 제61조). 기한 판정은 `annual_leave.py`의 `add_years`/`add_months`/`completed_years`를 재사용하고, 수당 금액은 `hourly_wage.unused_leave_allowance`를 재사용해 원 단위로 반올림한다. 에이전트 도구 `calc_annual_leave_promotion`(read_only)로도 노출됨(`agent_harness_api.py`). |
 
 ## 2. 활용 가이드
 

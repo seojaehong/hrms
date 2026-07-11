@@ -60,6 +60,32 @@ WEEKLY_HOLIDAY_BASE_HOURS = Decimal("8")  # 통상근로자 1일 소정근로시
 MIN_WEEKLY_HOURS_FOR_HOLIDAY = Decimal("15")  # 주휴 발생 하한 (§18③)
 # 월 평균 주 수 = 365 ÷ 12 ÷ 7
 AVG_WEEKS_PER_MONTH = Decimal("365") / Decimal("12") / Decimal("7")
+# 월 소정근로시간 209h = (주 40h + 유급주휴 8h) × 월평균 주수(≈4.345) 관행 확정값
+# (통상시급 산정 분모 — 포괄임금 실무 규칙, 근로기준법 시행령 §6 취지)
+MONTHLY_ORDINARY_HOURS = Decimal("209")
+
+
+def ordinary_hourly_wage(monthly_base_salary: Any) -> Decimal:
+	"""통상시급 = 기본급 ÷ 209 (포괄임금 실무 규칙 — 2026-07-11 스킬 브리지 이식).
+
+	분모는 계약 시간이 아니라 월 소정 209h 고정. 반올림하지 않은 Decimal을 반환하며
+	원 단위 확정은 호출자(수당 계산부)에서 한다.
+	"""
+	base = _dec(monthly_base_salary, "monthly_base_salary")
+	if base < 0:
+		raise ValueError("monthly_base_salary must be >= 0")
+	return base / MONTHLY_ORDINARY_HOURS
+
+
+def unused_leave_allowance(monthly_base_salary: Any, unused_days: Any) -> Decimal:
+	"""미사용 연차수당 = 기본급 ÷ 209 × 8시간 × 미사용일수 (퇴직정산 실무 수식).
+
+	Decimal 그대로 반환 — 원 단위 확정(절사/반올림)은 호출자 몫.
+	"""
+	days = _dec(unused_days, "unused_days")
+	if days < 0:
+		raise ValueError("unused_days must be >= 0")
+	return ordinary_hourly_wage(monthly_base_salary) * Decimal("8") * days
 
 
 def _dec(value: Any, name: str) -> Decimal:

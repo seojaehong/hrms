@@ -100,7 +100,8 @@ class TestCase1_FullyExempt(unittest.TestCase):
         self.assertEqual(self.result["local_income_tax_total"], 0.0)
 
     def test_net_pay_equals_gross(self):
-        self.assertEqual(self.result["net_pay"], 1_500_000.0)
+        # 실지급 = 총지급 1,500,000 − 고용보험 13,500 (0.9%, 10원 절사) — 세금 0
+        self.assertEqual(self.result["net_pay"], 1_486_500.0)
 
     def test_employment_insurance_always_applies(self):
         self.assertTrue(self.result["applies_employment_insurance"])
@@ -158,7 +159,8 @@ class TestCase2_PartiallyTaxable(unittest.TestCase):
 
     def test_net_pay(self):
         # 1,000,000 − 6,750 − 670 = 992,580
-        self.assertEqual(self.result["net_pay"], 992_580.0)
+        # 992,580 − 고용보험 9,000 (1,000,000×0.9%)
+        self.assertEqual(self.result["net_pay"], 983_580.0)
 
     def test_daily_deduction(self):
         self.assertEqual(self.result["daily_deduction"], 750_000.0)
@@ -213,7 +215,8 @@ class TestCase3_OneMonth_AllInsuranceApplied(unittest.TestCase):
 
     def test_net_pay(self):
         # 7,500,000 − 81,000 − 8,100 = 7,410,900
-        self.assertEqual(self.result["net_pay"], 7_410_900.0)
+        # 7,410,900 − 고용보험 67,500 (7,500,000×0.9%)
+        self.assertEqual(self.result["net_pay"], 7_343_400.0)
 
     def test_pension_applies(self):
         # 1개월 이상 → 국민연금 적용
@@ -266,8 +269,8 @@ class TestCase4_ShortTerm_LimitedInsurance(unittest.TestCase):
         self.assertEqual(self.result["local_income_tax_total"], 6_750.0)
 
     def test_net_pay(self):
-        # 6,250,000 − 67,500 − 6,750 = 6,175,750
-        self.assertEqual(self.result["net_pay"], 6_175_750.0)
+        # 6,250,000 − 67,500 − 6,750 − 고용보험 56,250 (0.9%) = 6,119,500
+        self.assertEqual(self.result["net_pay"], 6_119_500.0)
 
     def test_pension_not_applies(self):
         # 1개월 미만 → 국민연금 미적용

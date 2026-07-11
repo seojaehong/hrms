@@ -137,14 +137,28 @@ class TestDailyWorkerLocalTaxRounding(unittest.TestCase):
         expected_local = self._skill_local_tax_floor10(result["income_tax_total"])
         self.assertEqual(result["local_income_tax_total"], float(expected_local))
 
-    def test_고용보험_금액계산_엔진미구현_bool만_반환(self):
-        """docs §1 "엔진 미구현" 항목 — 고용보험 0.9% 금액 계산 없음, bool만 존재.
+    def test_고용보험_금액_총지급액_0_9퍼센트_10원절사(self):
+        """고용보험 = ROUNDDOWN(총지급액 × 0.9%, -1) — 2026-07-11 엔진 구현 완료.
 
-        스킬 규칙(~/.claude/skills/일용직세금/SKILL.md §2):
-            고용보험 = ROUNDDOWN(총지급액 × 0.9%, -1)
-        엔진(daily_worker.py): applies_employment_insurance는 bool(항상 True)만 반환하고
-        금액 계산 필드가 없다. 존재성만 기록(구현 추가는 이 태스크 범위 밖).
+        스킬 규칙(~/.claude/skills/일용직세금/SKILL.md §2)과 동일.
+        200,000 × 5일 = 1,000,000 × 0.9% = 9,000원(10원 배수 그대로).
+        211,111 × 1일 = 1,899.999 → 10원 절사 1,890원.
         """
+        r5 = _daily.calculate_daily_worker_payroll(daily_wage=200_000, days_worked=5)
+        self.assertEqual(r5["employment_insurance_employee"], 9_000.0)
+        r1 = _daily.calculate_daily_worker_payroll(daily_wage=211_111, days_worked=1)
+        self.assertEqual(r1["employment_insurance_employee"], 1_890.0)
+
+    def test_신고근무일_7일캡_일급역산(self):
+        """신고근무일 = MIN(실근무일, 7), 일급 = 총지급액 ÷ 신고근무일 (스킬 §2 Step 1, 2026.04 확정)."""
+        basis = _daily.reporting_basis(total_payment=1_400_000, actual_days=10)
+        self.assertEqual(basis["reported_days"], 7)
+        self.assertEqual(basis["daily_wage"], 200_000.0)
+        under = _daily.reporting_basis(total_payment=600_000, actual_days=4)
+        self.assertEqual(under["reported_days"], 4)
+        self.assertEqual(under["daily_wage"], 150_000.0)
+
+    def test_고용보험_bool_필드_유지(self):
         result = _daily.calculate_daily_worker_payroll(daily_wage=200_000, days_worked=1)
         self.assertIn("applies_employment_insurance", result)
         self.assertIsInstance(result["applies_employment_insurance"], bool)
@@ -242,6 +256,15 @@ class TestStatutoryRatesSkillView(unittest.TestCase):
 #    순수 참조 구현만 두고, 향후 엔진 구현 시 이 값과 대조할 지점으로 고정한다.
 # =============================================================================
 class TestOrdinaryHourlyWageReference(unittest.TestCase):
+    def test_엔진_ordinary_hourly_wage_209(self):
+        # 2026-07-11 엔진 구현: hourly_wage.ordinary_hourly_wage(기본급) = 기본급 ÷ 209
+        self.assertEqual(float(_hourly.ordinary_hourly_wage(2_156_880)), 10_320.0)
+
+    def test_엔진_unused_leave_allowance(self):
+        # 미사용 연차수당 = 기본급 ÷ 209 × 8 × 미사용일수 (퇴직정산 P열 수식)
+        # 2,156,880 ÷ 209 × 8 × 5 = 412,800
+        self.assertEqual(float(_hourly.unused_leave_allowance(2_156_880, 5)), 412_800.0)
+
     def _skill_ordinary_hourly_wage(self, monthly_base: float) -> float:
         """스킬 공식의 순수 참조 구현 (엔진에 대응 함수 없음 — 문서 규칙 고정용)."""
         return monthly_base / 209
@@ -250,11 +273,12 @@ class TestOrdinaryHourlyWageReference(unittest.TestCase):
         # 2026 최저임금 월환산(209h) 예시: 2,156,880 ÷ 209 = 10,320 (정확히 최저임금 시급)
         self.assertAlmostEqual(self._skill_ordinary_hourly_wage(2_156_880), 10_320.0)
 
-    def test_엔진에_대응함수_없음_확인(self):
-        # daily_worker/hourly_wage/severance_pay/statutory_2026 어디에도 209 나눗셈 함수 없음
-        for mod in (_daily, _hourly, _severance, _stat):
-            names = [n for n in dir(mod) if "209" in n or "ordinary_hourly" in n.lower()]
-            self.assertEqual(names, [])
+    def test_엔진_참조구현_일치(self):
+        # 순수 참조 구현과 엔진 함수가 동일한 값 (임의 기본급 표본)
+        for base in (2_156_880, 3_000_000, 2_090_000):
+            self.assertAlmostEqual(
+                float(_hourly.ordinary_hourly_wage(base)), self._skill_ordinary_hourly_wage(base), places=4
+            )
 
 
 if __name__ == "__main__":

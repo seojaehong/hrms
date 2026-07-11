@@ -33,6 +33,7 @@ DAILY_WORKING_DEDUCTION_AMOUNT = 150_000  # 일용근로소득공제 (원/일)
 _SEPARATION_TAX_RATE = 0.06             # 분리과세율 6%
 _TAX_CREDIT_RATE = 0.55                 # 세액공제율 55%
 _EFFECTIVE_TAX_RATE = _SEPARATION_TAX_RATE * (1 - _TAX_CREDIT_RATE)  # = 0.027
+_EMPLOYMENT_INSURANCE_RATE = 0.009               # 고용보험 근로자 실업급여 0.9%
 _LOCAL_INCOME_TAX_RATE = 0.10           # 지방소득세율 (소득세의 10%)
 _TEN_WON_UNIT = 10                      # 10원 절사 단위
 
@@ -138,9 +139,17 @@ def calculate_daily_worker_payroll(
     applies_industrial_accident = True
 
     # -----------------------------------------------------------------------
-    # 6. 실수령액
+    # 5-1. 고용보험 (근로자 부담 0.9%, 총지급액 기준 10원 절사 — 스킬 브리지 이식)
     # -----------------------------------------------------------------------
-    net_pay = total_gross - income_tax_total - local_income_tax_total
+    # ROUNDDOWN(보수총액×0.9%, -1) — 보수 = 비과세 수당(additional_wages, 식대 등) 제외분.
+    # 정확한 소수(예: 1,899.999)는 내림이 맞으므로 선반올림하는 _floor10 대신
+    # 미세오차(1e-4)만 방어하는 순수 내림을 쓴다.
+    employment_insurance_employee = float(int(round(wage_total * _EMPLOYMENT_INSURANCE_RATE, 4) // 10) * 10)
+
+    # -----------------------------------------------------------------------
+    # 6. 실수령액 = 총지급액 − 소득세 − 지방소득세 − 고용보험
+    # -----------------------------------------------------------------------
+    net_pay = total_gross - income_tax_total - local_income_tax_total - employment_insurance_employee
 
     return {
         "contract_type": "korea_daily_worker_payroll_v1",
@@ -153,6 +162,7 @@ def calculate_daily_worker_payroll(
         "income_tax_per_day": income_tax_per_day,
         "income_tax_total": income_tax_total,
         "local_income_tax_total": local_income_tax_total,
+        "employment_insurance_employee": employment_insurance_employee,
         "applies_pension": applies_pension,
         "applies_health_insurance": applies_health_insurance,
         "applies_employment_insurance": applies_employment_insurance,
@@ -206,3 +216,20 @@ def _floor10(amount: float) -> float:
     """
     rounded_won = round(amount)  # 원 단위 반올림 (부동소수점 오차 제거)
     return float((rounded_won // _TEN_WON_UNIT) * _TEN_WON_UNIT)
+
+
+def reporting_basis(total_payment: float, actual_days: int) -> dict:
+    """신고 기준 산출 — 신고근무일 = MIN(실근무일, 7), 일급 = 총지급액 ÷ 신고근무일.
+
+    일용근로 지급명세서/근로내용확인신고 실무 규칙(2026-04 확정, 스킬 브리지 이식).
+    총지급액은 비과세 제외 금액. 일급은 반올림하지 않은 원값을 반환한다.
+    """
+    if actual_days <= 0:
+        raise ValueError("actual_days must be >= 1")
+    if total_payment < 0:
+        raise ValueError("total_payment must be >= 0")
+    reported_days = min(int(actual_days), 7)
+    return {
+        "reported_days": reported_days,
+        "daily_wage": float(total_payment) / reported_days,
+    }

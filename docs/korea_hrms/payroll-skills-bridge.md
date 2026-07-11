@@ -11,17 +11,17 @@
 
 | 스킬 | 규칙(공식 원문) | HRMS 엔진 대응(파일:함수) | 정합 상태 |
 |---|---|---|---|
-| `~/.claude/skills/일용직세금` | 신고근무일 = MIN(실근무일, 7) — 7일 캡 후 일급 역산(`총지급액 ÷ 신고근무일`) | `daily_worker.py:calculate_daily_worker_payroll` | **엔진 미구현** — 함수는 `daily_wage`(일급)를 인자로 직접 받는다. "실근무일→7일 캡→역산"은 호출자 책임이며 엔진 내부에 캡·역산 로직이 없다. |
+| `~/.claude/skills/일용직세금` | 신고근무일 = MIN(실근무일, 7) — 7일 캡 후 일급 역산(`총지급액 ÷ 신고근무일`) | `daily_worker.py:reporting_basis` | **일치 (2026-07-11 엔진 구현)** — `reporting_basis(total_payment, actual_days)`가 캡·역산을 수행. `calculate_daily_worker_payroll`은 여전히 일급을 직접 받으므로 신고 플로우에서 이 함수로 선처리. |
 | `~/.claude/skills/일용직세금` | 과세표준 = MAX(일급 − 150,000, 0) | `daily_worker.py:_calc_daily_income_tax` (`taxable_base = daily_wage - DAILY_WORKING_DEDUCTION_AMOUNT`, `DAILY_WORKING_DEDUCTION_AMOUNT = 150_000`) | **일치** |
 | `~/.claude/skills/일용직세금` | 결정세액 = 과세표준 × 2.7% (분리과세 6% × (1−55%)) | `daily_worker.py:_calc_daily_income_tax` (`_EFFECTIVE_TAX_RATE = 0.06 * (1-0.55) = 0.027`) | **일치** (요율·절사 순서 — 2026-07-11 정정 완료) |
 | `~/.claude/skills/일용직세금` | 절사 순서: 일별 결정세액은 **1원 단위**로만 truncate 후 신고근무일만큼 합산, **최종 납부세액을 10원 단위 절사**(`ROUNDDOWN(합계, -1)`) | `daily_worker.py:_calc_daily_income_tax`(1원 절사) → `calculate_daily_worker_payroll`(합산 후 `_floor10`) | **일치 (2026-07-11 엔진 정정)** — 근거: 국고금관리법 §47①(10원 절사는 납부 단계 총액) + 국세청 계산례(매일 세액 합산 후 납부 시 절사). 실측 고정: 일급 215,000×4일 = 7,020원 (`test_korea_skill_consistency.py::test_일급_215000원_4일_절사순서_납부시_10원절사`). 정정 전 엔진은 일별 선(先)절사로 7,000원(20원 차이)이었음. |
 | `~/.claude/skills/일용직세금` | 소액부징수: 원천징수세액(신고근무일 합산) < 1,000원 → 소득세 0 | `daily_worker.py:calculate_daily_worker_payroll` (지급분 합산 세액 < `SMALL_AMOUNT_WITHHOLDING_THRESHOLD`(1,000) → 0) | **일치 (2026-07-11 엔진 정정)** — 근거: 소득세법 §86(원천징수**세액** 1천원 미만) + 행정해석(일괄 지급 시 일별 징수세액 **합계** 기준). 일급 187,000원 이하라도 다일 일괄지급 합산 ≥ 1,000원이면 과세 (예: 160,000×4일 = 1,080원 과세, ×3일 = 810원 부징수). 정정 전 엔진은 일급≤187,000 무조건 0이었음. |
-| `~/.claude/skills/일용직세금` | 고용보험 = ROUNDDOWN(총지급액 × 0.9%, -1) | `daily_worker.py:calculate_daily_worker_payroll` (`applies_employment_insurance: bool`) | **엔진 미구현** — 엔진은 고용보험 **적용 여부(bool)**만 반환하고 보험료 금액 계산이 없다. 요율 0.9%는 `statutory_2026.py:EMPLOYMENT_INSURANCE_RATE_EMPLOYEE`에 별도로 존재(월급제 공용 상수)하나 `daily_worker.py`가 이를 호출하지 않는다. |
+| `~/.claude/skills/일용직세금` | 고용보험 = ROUNDDOWN(보수총액 × 0.9%, -1) | `daily_worker.py:calculate_daily_worker_payroll` (`employment_insurance_employee` 필드) | **일치 (2026-07-11 엔진 구현)** — 보수(비과세 수당 제외분)×0.9% 10원 내림. 실지급액도 고용보험 공제 반영(`net_pay = 총지급 − 소득세 − 지방세 − 고용보험`, 스킬 Step 6과 동일). |
 | `~/.claude/skills/일용직세금` | 지방소득세 = ROUNDDOWN(소득세 × 10%, -1) | `daily_worker.py:calculate_daily_worker_payroll` (`local_income_tax_total = _floor10(income_tax_total * _LOCAL_INCOME_TAX_RATE)`) | **일치** (요율·10원 절사 방식 동일) |
 | `~/.claude/skills/급여관리`, `~/.claude/skills/급여검증` | 주휴수당 = 주 15h 이상 + 개근 시 `min(주소정근로시간, 40) ÷ 40 × 8` | `hourly_wage.py:weekly_holiday_allowance`, `hourly_wage.py:weekly_holiday_hours` | **일치** |
 | `~/.claude/skills/퇴직정산` | 퇴직금 = max(평균임금, 통상임금) × 30 × (재직일수 / 365), 평균임금 = 3개월 임금총액 ÷ 3개월 총일수 | `severance_pay.py:calculate_severance_pay`, `severance_pay.py:calculate_average_wage` | **일치** |
-| `~/.claude/skills/퇴직정산` | 통상시급 = 기본급 ÷ 209 (포괄임금 실무 규칙, 계약임금 아님) | 대응 함수 없음 | **엔진 미구현** — `hourly_wage.py`는 `hourly_rate`를 항상 외부 인자로 주입받으며, "기본급 ÷ 209"로 통상시급을 역산하는 로직이 south_korea 모듈 전체(`daily_worker.py`, `hourly_wage.py`, `severance_pay.py`, `statutory_2026.py`, `annual_leave.py`)에 없다(`grep 209` 결과 데이터 카탈로그 JSON만 매칭, 계산 코드 매칭 0건). `severance_pay.py:calculate_severance_pay`는 `ordinary_wage_per_day`를 호출자가 이미 계산해서 넘기는 구조라, 209 나눗셈 자체는 여전히 호출자(사업장별 스킬/운영) 책임으로 남는다. |
-| `~/.claude/skills/퇴직정산` | 미사용연차수당 = 기본급 ÷ 209 × 8 × 미사용일수 (통상일급 × 일수) | 대응 함수 없음 (연차 **부여일수** 계산만 존재) | **엔진 미구현** — `annual_leave.py:calculate_annual_leave_entitlement`는 부여 연차 **일수**(entitlement days)만 계산하고, 미사용 연차를 금액으로 환산하는 로직(통상일급 곱셈)은 없다. |
+| `~/.claude/skills/퇴직정산` | 통상시급 = 기본급 ÷ 209 (포괄임금 실무 규칙, 계약임금 아님) | `hourly_wage.py:ordinary_hourly_wage` (`MONTHLY_ORDINARY_HOURS = 209`) | **일치 (2026-07-11 엔진 구현)** — Decimal 원값 반환, 원 단위 확정은 호출자. `severance_pay.py`의 `ordinary_wage_per_day` 계산에 이 함수 × 8h 사용 가능. |
+| `~/.claude/skills/퇴직정산` | 미사용연차수당 = 기본급 ÷ 209 × 8 × 미사용일수 (통상일급 × 일수) | `hourly_wage.py:unused_leave_allowance` | **일치 (2026-07-11 엔진 구현)** — 부여 일수는 기존 `annual_leave.py`, 금액 환산은 이 함수. |
 | `~/.claude/skills/4대보험신고`, `~/.claude/skills/급여검증`(검증17/18) | 4대보험 요율(2026): 국민연금 4.75%, 건강보험 3.595%, 장기요양 13.14%(건강보험료 대비), 고용보험 0.9%, 만60세↑ 국민연금 면제 | `statutory_2026.py:calculate_pension`/`calculate_health_insurance`/`calculate_employment_insurance`, `PENSION_RATE_EMPLOYEE`/`HEALTH_RATE_EMPLOYEE`/`LONGTERM_CARE_RATE`/`EMPLOYMENT_INSURANCE_RATE_EMPLOYEE` | **일치** — 요율 값이 스킬 기술과 동일. 장기요양은 엔진이 `0.009448/0.0719 ≈ 13.1405%`로 계산(스킬 표기 13.14%와 반올림 차이만, 실질 동일). 이 상수들은 이미 `hrms/tests/test_korea_rate_single_source.py`가 `foreign_worker.py`·`leave_of_absence.py`와 어긋나지 않도록 단일소스 가드를 걸어 회귀를 방지한다. |
 | `~/.claude/skills/급여관리`, `~/.claude/skills/퇴직정산` | 연차 산정: 1년 미만 매월 개근 1일(최대 11일), 1년 이상 15일, 3년 이상부터 2년마다 1일 가산(최대 25일) | `annual_leave.py:calculate_annual_leave_entitlement`, `first_year_monthly_accrual`, `anniversary_annual_entitlement` | **일치** |
 
@@ -55,10 +55,10 @@ python3 hrms/tests/test_korea_skill_consistency.py
 
   (일급 215,000원 × 4일: 스킬 7,020원 vs 엔진 7,000원, 20원 차이)
   (일급 160,000원 × 4일: 스킬 1,080원 vs 엔진 0원)
-- 고용보험 금액 계산 엔진 미구현 — `TestDailyWorkerLocalTaxRounding::test_고용보험_금액계산_엔진미구현_bool만_반환`
+- (해소) 고용보험 금액·7일 캡·통상시급÷209·미사용연차수당 — 2026-07-11 엔진 구현으로 전부 "일치" 전환, 테스트가 직접 대조
   (존재성만 기록: bool 필드만 있고 금액 필드 없음)
 
-위 표의 나머지 "엔진 미구현" 항목 — **신고근무일 7일 캡 후 일급 역산**, **미사용연차수당(통상일급 환산)**
+(2026-07-11 기준 "엔진 미구현" 항목 없음 — 전 규칙 일치)
 — 은 대응하는 기록 테스트가 없다(**기록 테스트 없음 — 표만**). 이 두 항목은 엔진에 대응 함수 자체가
 없어 "엔진값 assert"가 성립하지 않으므로, 위 규칙 매핑 표에만 서술로 남기고 테스트로는 고정하지 않았다.
 (단, "통상시급=기본급÷209 엔진 미구현"은 예외로 `TestOrdinaryHourlyWageReference`가 순수 참조

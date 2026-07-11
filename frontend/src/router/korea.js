@@ -60,6 +60,11 @@ const routes = [
 		path: "/dashboard/korea-employment-contract-doc",
 		component: () => import("@/views/korea/KoreaEmploymentContractDoc.vue"),
 	},
+	{
+		name: "KoreaWorkRules",
+		path: "/dashboard/korea-work-rules",
+		component: () => import("@/views/korea/KoreaWorkRules.vue"),
+	},
 ]
 
 export default routes

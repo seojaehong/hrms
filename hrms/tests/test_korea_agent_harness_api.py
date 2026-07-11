@@ -234,6 +234,7 @@ class TestCalcTools(unittest.TestCase):
 			"search_labor_knowledge",
 			"check_work_rules_required_items",
 			"work_rules_amendment_procedure",
+			"calc_severance_settlement",
 		):
 			self.assertIn(expected, names)
 
@@ -364,6 +365,14 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(payload["gross_pay"], 2156880)
 		self.assertIn("209h", payload["earnings"][0]["basis"])
 		self.assertTrue(payload["compliance"]["compliant"])
+	def test_severance_settlement_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_severance_settlement",
+			{"severance_pay": 500_000, "service_years": 1},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["income_tax"], 0)
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

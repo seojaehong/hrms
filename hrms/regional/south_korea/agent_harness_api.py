@@ -296,6 +296,7 @@ def _register_calc_tools(registry) -> None:
 	wr = _load("work_rules")
 	promotion = _load("annual_leave_promotion")
 	breakdown = _load("payslip_breakdown")
+	severance_settlement = _load("severance_settlement")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -400,6 +401,10 @@ def _register_calc_tools(registry) -> None:
 		}
 	def calc_payslip_breakdown(**kwargs):
 		return breakdown.build_payslip_breakdown(**kwargs)
+	def calc_severance_settlement(*, severance_pay, service_years):
+		return severance_settlement.calculate_severance_income_tax(
+			severance_pay=severance_pay, service_years=service_years,
+		)
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -493,6 +498,12 @@ def _register_calc_tools(registry) -> None:
 		"search_labor_knowledge", search_labor_knowledge,
 		{"description": "노동법 지식 시맨틱 검색 (행정해석·판례·판정례·상담FAQ·최영우) — 답변 근거 인용용",
 		 "args": {"query": "필수(자연어)", "top_k": "선택(기본 5)"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_severance_settlement", calc_severance_settlement,
+		{"description": "퇴직소득세 계산 (소득세법 §48 근속연수공제·환산급여공제 + §55② 산출세액, 10원 절사)",
+		 "args": {"severance_pay": "필수(원, 퇴직소득금액)", "service_years": "필수(근속연수, 1년 미만 잔여는 올림)"}},
 		True,
 	)
 

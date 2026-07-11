@@ -292,6 +292,7 @@ def _register_calc_tools(registry) -> None:
 	hourly = _load("hourly_wage")
 	daily = _load("daily_worker")
 	contract_doc = _load("employment_contract_doc")
+	inclusive = _load("inclusive_wage")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -317,6 +318,60 @@ def _register_calc_tools(registry) -> None:
 
 	def build_employment_contract(*, data):
 		return contract_doc.build_employment_contract(data)
+	def calc_design_inclusive_wage(
+		*, total_monthly, fixed_ot_hours, fixed_night_hours=0, fixed_holiday_hours=0, minimum_hourly_wage
+	):
+		r = inclusive.design_inclusive_wage(
+			total_monthly,
+			fixed_ot_hours,
+			fixed_night_hours=fixed_night_hours,
+			fixed_holiday_hours=fixed_holiday_hours,
+			minimum_hourly_wage=minimum_hourly_wage,
+		)
+		return {
+			"ordinary_hourly_wage": float(r["ordinary_hourly_wage"]),
+			"base_pay": r["base_pay"],
+			"fixed_ot_pay": r["fixed_ot_pay"],
+			"night_pay": r["night_pay"],
+			"holiday_pay": r["holiday_pay"],
+			"total": r["total"],
+			"legal_floor_ok": r["legal_floor_ok"],
+			"warnings": r["warnings"],
+		}
+
+	def calc_audit_inclusive_wage(
+		*,
+		base_pay,
+		fixed_ot_pay=0,
+		fixed_ot_hours=0,
+		fixed_night_pay=0,
+		fixed_night_hours=0,
+		fixed_holiday_pay=0,
+		fixed_holiday_hours=0,
+		minimum_hourly_wage,
+	):
+		r = inclusive.audit_inclusive_wage(
+			base_pay=base_pay,
+			fixed_ot_pay=fixed_ot_pay,
+			fixed_ot_hours=fixed_ot_hours,
+			fixed_night_pay=fixed_night_pay,
+			fixed_night_hours=fixed_night_hours,
+			fixed_holiday_pay=fixed_holiday_pay,
+			fixed_holiday_hours=fixed_holiday_hours,
+			minimum_hourly_wage=minimum_hourly_wage,
+		)
+		return {
+			"ordinary_hourly_wage": float(r["ordinary_hourly_wage"]),
+			"expected_ot_pay": r["expected_ot_pay"],
+			"expected_night_pay": r["expected_night_pay"],
+			"expected_holiday_pay": r["expected_holiday_pay"],
+			"ot_shortfall": r["ot_shortfall"],
+			"night_shortfall": r["night_shortfall"],
+			"holiday_shortfall": r["holiday_shortfall"],
+			"legal_floor_ok": r["legal_floor_ok"],
+			"overtime_limit_ok": r["overtime_limit_ok"],
+			"warnings": r["warnings"],
+		}
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -357,6 +412,24 @@ def _register_calc_tools(registry) -> None:
 		{"description": "근로계약서 데이터 빌더 (근기법 §17 필수기재 누락 검출, raise 아님 — missing[] 반환)",
 		 "args": {"data": "필수(dict) — company/employee/workplace/job_description/contract_period/"
 					"scheduled_work/holidays/annual_leave/wage_components/wage_payment_date/wage_payment_method"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_design_inclusive_wage", calc_design_inclusive_wage,
+		{"description": "포괄임금 설계: 총액→통상시급 기준 기본급/고정연장/고정야간/고정휴일수당 분해"
+			" (t=total/(209+1.5xH_ot+0.5xH_night+1.5xH_hol), 근로기준법 §56)",
+		 "args": {"total_monthly": "필수(원)", "fixed_ot_hours": "필수", "fixed_night_hours": "선택(기본 0)",
+			"fixed_holiday_hours": "선택(기본 0)", "minimum_hourly_wage": "필수(원, 하드코딩 금지 — ontology 조회값 주입)"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_audit_inclusive_wage", calc_audit_inclusive_wage,
+		{"description": "포괄임금 역산 감사: 기존 계약(기본급+고정수당 기재액)의 적정 최소지급액 대비"
+			" 부족분·최저임금 미달·주12h 한도 초과 검출 (경고 반환, raise 아님)",
+		 "args": {"base_pay": "필수(원)", "fixed_ot_pay": "선택(기본 0)", "fixed_ot_hours": "선택(기본 0)",
+			"fixed_night_pay": "선택(기본 0)", "fixed_night_hours": "선택(기본 0)",
+			"fixed_holiday_pay": "선택(기본 0)", "fixed_holiday_hours": "선택(기본 0)",
+			"minimum_hourly_wage": "필수(원, 하드코딩 금지 — ontology 조회값 주입)"}},
 		True,
 	)
 	registry.register_tool(

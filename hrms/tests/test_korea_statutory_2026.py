@@ -3,8 +3,8 @@
 검증 케이스:
   1. 월 200만원: 국민연금 9만, 건강보험 70,900, 장기요양 9,180, 고용 18,000, 소득세 ~5만, 지방세 약 5,000
   2. 월 500만원: 모든 항목 정확 검증
-  3. 월 600만원: 국민연금 상한(5,950,000) 적용 확인
-  4. 월 30만원: 국민연금 하한(380,000) 적용 확인
+  3. 월 700만원: 국민연금 상한(6,590,000, 고시 제2026-31호) 적용 확인
+  4. 월 30만원: 국민연금 하한(410,000) 적용 확인
 
 계산 기준:
   - 국민연금: 원단위 절사
@@ -57,30 +57,36 @@ class TestPension(unittest.TestCase):
         self.assertEqual(result["employer"], 237_500)
         self.assertEqual(result["base"], 5_000_000)
 
-    def test_600만원_상한_5950000_적용(self):
+    def test_600만원_상한미달_클리핑없음(self):
+        # 2026.7 상한 6,590,000 인상으로 600만원은 더 이상 클리핑되지 않는다
         result = _mod.calculate_pension(6_000_000)
-        # 상한 5,950,000 적용: 5,950,000 × 4.75% = 282,625
-        self.assertEqual(result["base"], 5_950_000)
-        self.assertEqual(result["employee"], 282_625)
-        self.assertEqual(result["employer"], 282_625)
+        self.assertEqual(result["base"], 6_000_000)
+        self.assertEqual(result["employee"], 285_000)
+
+    def test_700만원_상한_6590000_적용(self):
+        result = _mod.calculate_pension(7_000_000)
+        # 상한 6,590,000 적용(고시 제2026-31호): 6,590,000 × 4.75% = 313,025
+        self.assertEqual(result["base"], 6_590_000)
+        self.assertEqual(result["employee"], 313_025)
+        self.assertEqual(result["employer"], 313_025)
 
     def test_30만원_하한_380000_적용(self):
         result = _mod.calculate_pension(300_000)
-        # 하한 380,000 적용: 380,000 × 4.75% = 18,050
-        self.assertEqual(result["base"], 380_000)
-        self.assertEqual(result["employee"], 18_050)
-        self.assertEqual(result["employer"], 18_050)
+        # 하한 410,000 적용(고시 제2026-31호): 410,000 × 4.75% = 19,475
+        self.assertEqual(result["base"], 410_000)
+        self.assertEqual(result["employee"], 19_475)
+        self.assertEqual(result["employer"], 19_475)
 
     def test_상한_경계값(self):
         # 정확히 상한과 같을 때 — 클리핑 없음
-        result = _mod.calculate_pension(5_950_000)
-        self.assertEqual(result["base"], 5_950_000)
-        self.assertEqual(result["employee"], 282_625)
+        result = _mod.calculate_pension(6_590_000)
+        self.assertEqual(result["base"], 6_590_000)
+        self.assertEqual(result["employee"], 313_025)
 
     def test_하한_경계값(self):
-        result = _mod.calculate_pension(380_000)
-        self.assertEqual(result["base"], 380_000)
-        self.assertEqual(result["employee"], 18_050)
+        result = _mod.calculate_pension(410_000)
+        self.assertEqual(result["base"], 410_000)
+        self.assertEqual(result["employee"], 19_475)
 
     def test_절사_검증(self):
         # 기준소득이 절사가 발생하는 값: 1,111,111 × 0.0475 = 52,777.7725 → 52,777
@@ -337,9 +343,9 @@ class TestCalculateAllStatutory(unittest.TestCase):
             monthly_base=6_000_000,
             dependents=1,
         )
-        # 상한 5,950,000 적용 → 267,750 (270,000이 아님)
-        self.assertEqual(result["pension"]["base"], 5_950_000)
-        self.assertEqual(result["pension"]["employee"], 282_625)
+        # 2026.7 상한 6,590,000 (고시 제2026-31호) — 600만원은 클리핑 없음
+        self.assertEqual(result["pension"]["base"], 6_000_000)
+        self.assertEqual(result["pension"]["employee"], 285_000)
         # 건강보험은 실제 6,000,000 기준
         self.assertEqual(result["health"]["health_employee"], 215_700)
         self.assertEqual(result["health"]["longterm_care_employee"], 28_340)
@@ -349,9 +355,9 @@ class TestCalculateAllStatutory(unittest.TestCase):
             monthly_base=300_000,
             dependents=1,
         )
-        # 하한 380,000 적용 → 17,100 (13,500이 아님)
-        self.assertEqual(result["pension"]["base"], 380_000)
-        self.assertEqual(result["pension"]["employee"], 18_050)
+        # 하한 410,000 적용 (고시 제2026-31호): 410,000 × 4.75% = 19,475
+        self.assertEqual(result["pension"]["base"], 410_000)
+        self.assertEqual(result["pension"]["employee"], 19_475)
         # 건강보험은 실제 300,000 기준
         self.assertEqual(result["health"]["health_employee"], 10_785)
 
@@ -417,8 +423,8 @@ class TestRateConstants(unittest.TestCase):
         self.assertAlmostEqual(_mod.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE, 0.009)
 
     def test_국민연금_상하한(self):
-        self.assertEqual(_mod.PENSION_MIN_BASE, 380_000)
-        self.assertEqual(_mod.PENSION_MAX_BASE, 5_950_000)
+        self.assertEqual(_mod.PENSION_MIN_BASE, 410_000)
+        self.assertEqual(_mod.PENSION_MAX_BASE, 6_590_000)
 
     def test_지방세_요율(self):
         self.assertAlmostEqual(_mod.LOCAL_INCOME_TAX_RATE, 0.10)
@@ -459,6 +465,15 @@ class TestOntologyConsistency(unittest.TestCase):
         node_val = self._published_value("고용보험요율_2026")
         self.assertIsNotNone(node_val, "고용보험요율_2026 published 노드가 없음")
         self.assertAlmostEqual(_mod.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE, node_val, places=6)
+
+    def test_pension_base_bounds_match_published_nodes(self):
+        # 기준소득월액 상·하한 — 보건복지부 고시 제2026-31호 (2026.7분~2027.6분)
+        low = self._published_value("국민연금하한_2026")
+        high = self._published_value("국민연금상한_2026")
+        self.assertIsNotNone(low, "국민연금하한_2026 published 노드가 없음")
+        self.assertIsNotNone(high, "국민연금상한_2026 published 노드가 없음")
+        self.assertEqual(_mod.PENSION_MIN_BASE, int(low))
+        self.assertEqual(_mod.PENSION_MAX_BASE, int(high))
 
     def test_longterm_rate_matches_published_nodes(self):
         # 장기요양 환산율 = 법정 장기요양요율(보수 대비) ÷ 건강보험료율 (2026: 0.9448%/7.19% = 13.1405%)

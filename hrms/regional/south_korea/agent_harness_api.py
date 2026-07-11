@@ -291,6 +291,7 @@ def _register_calc_tools(registry) -> None:
 
 	hourly = _load("hourly_wage")
 	daily = _load("daily_worker")
+	contract_doc = _load("employment_contract_doc")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -313,6 +314,9 @@ def _register_calc_tools(registry) -> None:
 
 	def calc_unused_leave_allowance(*, monthly_base_salary, unused_days):
 		return {"allowance": float(hourly.unused_leave_allowance(monthly_base_salary, unused_days))}
+
+	def build_employment_contract(*, data):
+		return contract_doc.build_employment_contract(data)
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -346,6 +350,13 @@ def _register_calc_tools(registry) -> None:
 	registry.register_tool(
 		"calc_unused_leave_allowance", calc_unused_leave_allowance,
 		{"description": "미사용 연차수당 = 기본급/209 x 8 x 미사용일수", "args": {"monthly_base_salary": "필수(원)", "unused_days": "필수"}},
+		True,
+	)
+	registry.register_tool(
+		"build_employment_contract", build_employment_contract,
+		{"description": "근로계약서 데이터 빌더 (근기법 §17 필수기재 누락 검출, raise 아님 — missing[] 반환)",
+		 "args": {"data": "필수(dict) — company/employee/workplace/job_description/contract_period/"
+					"scheduled_work/holidays/annual_leave/wage_components/wage_payment_date/wage_payment_method"}},
 		True,
 	)
 	registry.register_tool(

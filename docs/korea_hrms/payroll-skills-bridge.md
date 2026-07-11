@@ -24,6 +24,8 @@
 | `~/.claude/skills/퇴직정산` | 미사용연차수당 = 기본급 ÷ 209 × 8 × 미사용일수 (통상일급 × 일수) | `hourly_wage.py:unused_leave_allowance` | **일치 (2026-07-11 엔진 구현)** — 부여 일수는 기존 `annual_leave.py`, 금액 환산은 이 함수. |
 | `~/.claude/skills/4대보험신고`, `~/.claude/skills/급여검증`(검증17/18) | 4대보험 요율(2026): 국민연금 4.75%, 건강보험 3.595%, 장기요양 13.14%(건강보험료 대비), 고용보험 0.9%, 만60세↑ 국민연금 면제 | `statutory_2026.py:calculate_pension`/`calculate_health_insurance`/`calculate_employment_insurance`, `PENSION_RATE_EMPLOYEE`/`HEALTH_RATE_EMPLOYEE`/`LONGTERM_CARE_RATE`/`EMPLOYMENT_INSURANCE_RATE_EMPLOYEE` | **일치** — 요율 값이 스킬 기술과 동일. 장기요양은 엔진이 `0.009448/0.0719 ≈ 13.1405%`로 계산(스킬 표기 13.14%와 반올림 차이만, 실질 동일). 이 상수들은 이미 `hrms/tests/test_korea_rate_single_source.py`가 `foreign_worker.py`·`leave_of_absence.py`와 어긋나지 않도록 단일소스 가드를 걸어 회귀를 방지한다. |
 | `~/.claude/skills/급여관리`, `~/.claude/skills/퇴직정산` | 연차 산정: 1년 미만 매월 개근 1일(최대 11일), 1년 이상 15일, 3년 이상부터 2년마다 1일 가산(최대 25일) | `annual_leave.py:calculate_annual_leave_entitlement`, `first_year_monthly_accrual`, `anniversary_annual_entitlement` | **일치** |
+| `~/.claude/skills/명세서생성` | 포괄임금 설계: 총액을 통상시급 기준 기본급(÷209)·고정연장(×1.5)·고정야간(×0.5 가산분)·고정휴일(×1.5)로 분해(산정내역 구성항목 표시용) | `inclusive_wage.py:design_inclusive_wage` | **일치 (2026-07-11 엔진 신규 구현)** — `t = total ÷ (209 + 1.5×H_ot + 0.5×H_night + 1.5×H_hol)`, 끝수는 기본급이 흡수(검산 항등 `base+ot+night+holiday == 입력총액` 보장). 명세서생성 스킬의 산정내역 분해는 이 함수의 출력 매핑을 참조만 한다(스킬 파일 자체는 미수정, 읽기 전용). |
+| `~/.claude/skills/명세서생성` | 포괄임금 역산 감사: 기존 계약 기재액(기본급+고정수당)이 통상시급(기본급÷209) 기준 적정 최소지급액을 충족하는지 검증, 부족분·최저임금·주12h 한도 초과는 경고(확정 아님) | `inclusive_wage.py:audit_inclusive_wage` | **일치 (2026-07-11 엔진 신규 구현)** — 경고는 raise가 아닌 `warnings` 리스트로 반환(판단은 노무사). 최저임금 값은 하드코딩 없이 인자로 주입(`ontology/statutory_ontology.get_minimum_hourly_wage`). |
 
 ## 2. 활용 가이드
 

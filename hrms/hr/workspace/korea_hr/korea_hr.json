@@ -220,6 +220,55 @@
    "label": "고용 프로필",
    "link_to": "Korea Employment Profile",
    "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "포괄임금 설계",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-inclusive-wage"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "label": "퇴직정산",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-severance-settlement"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "label": "연차 촉진",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-leave-promotion"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "",
+   "label": "명세서 생성",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-payslip-breakdown"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "label": "근로계약서",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-employment-contract-doc"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "",
+   "label": "취업규칙 점검",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-work-rules"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "label": "근로감독 대비",
+   "type": "URL",
+   "url": "/hrms/dashboard/korea-labor-inspection"
   }
  ],
  "title": "HR 홈",

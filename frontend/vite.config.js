@@ -121,6 +121,16 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),
+			// bench 밖(standalone checkout) 빌드: socket.js의 bench 상대경로 json이 없으면
+			// 폴백 스텁으로 alias (bench 안에서는 실제 파일이 있어 alias가 추가되지 않음)
+			...(fs.existsSync(path.resolve(__dirname, "../../../sites/common_site_config.json"))
+				? {}
+				: {
+						"../../../../sites/common_site_config.json": path.resolve(
+							__dirname,
+							"src/common_site_config.fallback.json"
+						),
+					}),
 		},
 	},
 	build: {
@@ -173,7 +183,8 @@ function getProxyOptions() {
 function getCommonSiteConfig() {
 	let currentDir = path.resolve(".")
 	// traverse up till we find frappe-bench with sites directory
-	while (currentDir !== "/") {
+	// (루트 판정은 "/" 비교가 아니라 부모==자기 — Windows 드라이브 루트(C:\)에서 무한루프 방지)
+	while (true) {
 		if (
 			fs.existsSync(path.join(currentDir, "sites")) &&
 			fs.existsSync(path.join(currentDir, "apps"))
@@ -184,7 +195,8 @@ function getCommonSiteConfig() {
 			}
 			return null
 		}
-		currentDir = path.resolve(currentDir, "..")
+		const parentDir = path.resolve(currentDir, "..")
+		if (parentDir === currentDir) return null
+		currentDir = parentDir
 	}
-	return null
 }

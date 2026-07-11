@@ -31,9 +31,44 @@ const routes = [
 		component: () => import("@/views/korea/KoreaPayrollExcel.vue"),
 	},
 	{
+		name: "KoreaSeveranceSettlement",
+		path: "/dashboard/korea-severance-settlement",
+		component: () => import("@/views/korea/KoreaSeveranceSettlement.vue"),
+	},
+	{
+		name: "KoreaInclusiveWage",
+		path: "/dashboard/korea-inclusive-wage",
+		component: () => import("@/views/korea/KoreaInclusiveWage.vue"),
+	},
+	{
+		name: "KoreaLeavePromotion",
+		path: "/dashboard/korea-leave-promotion",
+		component: () => import("@/views/korea/KoreaLeavePromotion.vue"),
+	},
+	{
+		name: "KoreaPayslipBreakdown",
+		path: "/dashboard/korea-payslip-breakdown",
+		component: () => import("@/views/korea/KoreaPayslipBreakdown.vue"),
+	},
+	{
 		name: "KoreaServiceRequests",
 		path: "/dashboard/korea-service-requests",
 		component: () => import("@/views/korea/KoreaServiceRequests.vue"),
+	},
+	{
+		name: "KoreaEmploymentContractDoc",
+		path: "/dashboard/korea-employment-contract-doc",
+		component: () => import("@/views/korea/KoreaEmploymentContractDoc.vue"),
+	},
+	{
+		name: "KoreaWorkRules",
+		path: "/dashboard/korea-work-rules",
+		component: () => import("@/views/korea/KoreaWorkRules.vue"),
+	},
+	{
+		name: "KoreaLaborInspection",
+		path: "/dashboard/korea-labor-inspection",
+		component: () => import("@/views/korea/KoreaLaborInspection.vue"),
 	},
 ]
 

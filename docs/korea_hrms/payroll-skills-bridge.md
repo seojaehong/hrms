@@ -14,7 +14,7 @@
 | `~/.claude/skills/일용직세금` | 신고근무일 = MIN(실근무일, 7) — 7일 캡 후 일급 역산(`총지급액 ÷ 신고근무일`) | `daily_worker.py:calculate_daily_worker_payroll` | **엔진 미구현** — 함수는 `daily_wage`(일급)를 인자로 직접 받는다. "실근무일→7일 캡→역산"은 호출자 책임이며 엔진 내부에 캡·역산 로직이 없다. |
 | `~/.claude/skills/일용직세금` | 과세표준 = MAX(일급 − 150,000, 0) | `daily_worker.py:_calc_daily_income_tax` (`taxable_base = daily_wage - DAILY_WORKING_DEDUCTION_AMOUNT`, `DAILY_WORKING_DEDUCTION_AMOUNT = 150_000`) | **일치** |
 | `~/.claude/skills/일용직세금` | 결정세액 = 과세표준 × 2.7% (분리과세 6% × (1−55%)) | `daily_worker.py:_calc_daily_income_tax` (`_EFFECTIVE_TAX_RATE = 0.06 * (1-0.55) = 0.027`) | **일치** (요율) / **불일치**(절사 순서, 아래 참조) |
-| `~/.claude/skills/일용직세금` | 절사 순서: 일별 결정세액은 **1원 단위**로만 truncate 후 신고근무일만큼 합산, **최종 납부세액을 10원 단위 절사**(`ROUNDDOWN(합계, -1)`) | `daily_worker.py:_calc_daily_income_tax` → `_floor10`, `calculate_daily_worker_payroll`(`income_tax_total = income_tax_per_day * days_worked`) | **불일치(기록)** — 엔진은 **일별 세액을 먼저 10원 단위로 절사**(`_floor10`)한 뒤 일수를 곱해 합계를 낸다. 스킬은 일별 세액을 1원 단위로 남겨 여러 날을 합산한 다음 총액만 10원 절사한다. 예: 일급 160,000원(일별 원 단위 세액 270원) × 4일 — 스킬 방식: 270×4=1,080 → 10원 절사 1,080. 엔진 방식: `_floor10(270)=270`(이미 10원 단위라 동일) → 재확인 필요한 예: 일급 173,700원이면 원단위 세액 = (173,700−150,000)×0.027=639.9→640(1원 truncate), 4일 합계 2,560→10원절사 2,560(스킬) vs 엔진 `_floor10(640)=640`×4=2,560(우연히 동일). 절사가 갈리는 사례는 일별세액의 1의 자리가 5 이상일 때 발생(예: 세액 645 → 스킬 1원단위 645 vs 엔진 10원단위 640) — 여러 날 누적 시 최종 합계가 달라질 수 있음. 어느 쪽이 맞는지는 노무사 판단 사항. |
+| `~/.claude/skills/일용직세금` | 절사 순서: 일별 결정세액은 **1원 단위**로만 truncate 후 신고근무일만큼 합산, **최종 납부세액을 10원 단위 절사**(`ROUNDDOWN(합계, -1)`) | `daily_worker.py:_calc_daily_income_tax` → `_floor10`, `calculate_daily_worker_payroll`(`income_tax_total = income_tax_per_day * days_worked`) | **불일치(기록, 테스트로 확정)** — 엔진은 **일별 세액을 먼저 10원 단위로 절사**(`_floor10`)한 뒤 일수를 곱해 합계를 낸다. 스킬은 일별 세액을 1원 단위로 남겨 여러 날을 합산한 다음 총액만 10원 절사한다. 실측 예(`hrms/tests/test_korea_skill_consistency.py::TestDailyWorkerDecidedTax::test_일급_215000원_4일_절사순서_불일치기록`로 값 고정): 일급 215,000원 — 과세표준 65,000 × 2.7% = 1,755원/일(정수, 부동소수점 오차 없음) × 4일. 스킬 방식: 1,755×4=7,020 → 최종 10원 절사 7,020원(이미 10원 배수). 엔진 방식: `_floor10(1,755.0)`은 `round(1755.0)=1755` → 10원 절사 1,750원(일별) × 4일 = 7,000원. **실제로 20원 차이**(스킬 7,020원 vs 엔진 7,000원). 절사가 갈리는 조건은 일별 세액(원단위)의 1의 자리가 5 이상일 때(예: 1,755 → 엔진은 1,750으로 내림) 발생하며, 여러 날 누적 시 최종 합계 차이가 배가된다. 참고로 일급 173,900원 × 4일은 173,900 ≤ 187,000 소액부징수 경계 이하라 양쪽 모두 0원으로 우연히 일치해 이 쟁점을 드러내지 못한다(테스트도 경계 위 일급으로 대체해 값을 확정). 어느 쪽이 맞는지는 노무사 판단 사항. |
 | `~/.claude/skills/일용직세금` | 소액부징수: 원천징수세액(신고근무일 합산) < 1,000원 → 소득세 0 | `daily_worker.py:_calc_daily_income_tax` (`if daily_wage <= DAILY_TAX_EXEMPT_LIMIT(187_000): return 0.0`) | **불일치(기록)** — 엔진은 **일급 단위**로 187,000원 이하면 그 날의 세액을 무조건 0으로 처리한다. 스킬 규칙은 "여러 날 지급을 **합산**했을 때 1,000원 미만이면 0"이라, 일급이 160,000~186,999원인 날이 여러 날(예: 4일 이상) 누적되어 합계가 1,000원을 넘는 경우를 엔진은 포착하지 못한다(스킬: 4일째부터 과세 vs 엔진: 항상 0). |
 | `~/.claude/skills/일용직세금` | 고용보험 = ROUNDDOWN(총지급액 × 0.9%, -1) | `daily_worker.py:calculate_daily_worker_payroll` (`applies_employment_insurance: bool`) | **엔진 미구현** — 엔진은 고용보험 **적용 여부(bool)**만 반환하고 보험료 금액 계산이 없다. 요율 0.9%는 `statutory_2026.py:EMPLOYMENT_INSURANCE_RATE_EMPLOYEE`에 별도로 존재(월급제 공용 상수)하나 `daily_worker.py`가 이를 호출하지 않는다. |
 | `~/.claude/skills/일용직세금` | 지방소득세 = ROUNDDOWN(소득세 × 10%, -1) | `daily_worker.py:calculate_daily_worker_payroll` (`local_income_tax_total = _floor10(income_tax_total * _LOCAL_INCOME_TAX_RATE)`) | **일치** (요율·10원 절사 방식 동일; 단 `income_tax_total` 자체가 위 절사 순서 불일치의 영향을 받음) |
@@ -49,7 +49,24 @@ python3 hrms/tests/test_korea_skill_consistency.py
 
 이 테스트는 위 표의 "일치" 항목을 각각 assert하는 회귀 테스트이며, "불일치(기록)" 항목은
 `Global Constraints`에 따라 두 값(엔진값 vs 스킬값)을 모두 명시한 채 **현재 엔진값을 assert**하고
-주석으로 스킬값을 병기하는 방식으로 표현한다(`expectedFailure`나 조용한 skip이 아니다). 따라서:
+주석으로 스킬값을 병기하는 방식으로 표현한다(`expectedFailure`나 조용한 skip이 아니다).
+
+실제로 "불일치 기록 테스트"(엔진값 assert + 스킬값 주석 병기)가 있는 항목은 다음 3건뿐이다:
+
+- 절사 순서 불일치 — `TestDailyWorkerDecidedTax::test_일급_215000원_4일_절사순서_불일치기록`
+  (일급 215,000원 × 4일: 스킬 7,020원 vs 엔진 7,000원, 20원 차이)
+- 소액부징수 판단 단위 불일치 — `TestDailyWorkerDecidedTax::test_일급_160000원_4일_합산_스킬규칙이면_과세_엔진은_0원_불일치기록`
+  (일급 160,000원 × 4일: 스킬 1,080원 vs 엔진 0원)
+- 고용보험 금액 계산 엔진 미구현 — `TestDailyWorkerLocalTaxRounding::test_고용보험_금액계산_엔진미구현_bool만_반환`
+  (존재성만 기록: bool 필드만 있고 금액 필드 없음)
+
+위 표의 나머지 "엔진 미구현" 항목 — **신고근무일 7일 캡 후 일급 역산**, **미사용연차수당(통상일급 환산)**
+— 은 대응하는 기록 테스트가 없다(**기록 테스트 없음 — 표만**). 이 두 항목은 엔진에 대응 함수 자체가
+없어 "엔진값 assert"가 성립하지 않으므로, 위 규칙 매핑 표에만 서술로 남기고 테스트로는 고정하지 않았다.
+(단, "통상시급=기본급÷209 엔진 미구현"은 예외로 `TestOrdinaryHourlyWageReference`가 순수 참조
+구현 + "대응 함수 없음" 확인 테스트를 갖고 있다.)
+
+따라서:
 
 - 엔진 계산 로직이 바뀌면 → assert가 깨져 "엔진이 스킬 규칙에서 이탈했다"는 신호가 된다.
 - 개인 스킬(운영 규칙)이 바뀌면 → 사람이 이 문서·테스트의 주석을 갱신해야 계약이 다시 맞는다.

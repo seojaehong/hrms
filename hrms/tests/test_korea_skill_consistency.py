@@ -15,8 +15,8 @@ test_korea_rate_single_source.py — 모듈 간 요율 하드코딩 가드)와 �
   (엔진 로직 변경은 이 태스크 범위 밖 — 노무사 판단 사항, docs/korea_hrms/payroll-skills-bridge.md
   §1 표 참고.)
 
-출처: docs/korea_hrms/payroll-skills-bridge.md §1, .superpowers/sdd/task-1-report.md,
-      .superpowers/sdd/research-official-rates.md (공식 출처 판정 기준)
+출처: docs/korea_hrms/payroll-skills-bridge.md §1·§3 (규칙 매핑 표·정합성 게이트 서술).
+      공식 출처(국세청·보건복지부 고시 등 실명 인용)는 각 테스트 케이스 docstring/주석에 병기.
 """
 
 import importlib.util
@@ -90,6 +90,36 @@ class TestDailyWorkerDecidedTax(unittest.TestCase):
         self.assertEqual(result["income_tax_per_day"], 0.0)
         self.assertEqual(result["income_tax_total"], 0.0)
         self.assertNotEqual(result["income_tax_total"], skill_expected_if_summed)
+
+    def test_일급_215000원_4일_절사순서_불일치기록(self):
+        """불일치 기록 테스트 (docs §1 "절사 순서" 불일치, docs §3 갱신분).
+
+        스킬 규칙(~/.claude/skills/일용직세금/SKILL.md §2): 일별 결정세액은 **1원 단위**로만
+        truncate 후 신고근무일만큼 합산하고, **최종 납부세액만 10원 단위 절사**한다.
+        일급 215,000원(과세표준 65,000 × 2.7% = 1,755원/일, 정수라 부동소수점 오차 없음) × 4일
+        → 스킬 규칙: 1,755 × 4 = 7,020 → 최종 10원 절사 = 7,020원(이미 10원 배수).
+
+        엔진(daily_worker.py:_calc_daily_income_tax → _floor10): **일별 세액을 먼저
+        10원 단위로 절사**한 뒤 일수를 곱한다. 1,755원 → round(1,755.0)=1,755 → floor10 = 1,750원
+        → 4일 합계 = 1,750 × 4 = 7,000원.
+
+        따라서 스킬 규칙(7,020원)과 엔진(7,000원)이 20원 차이로 실제로 갈린다.
+        (참고: 일급 173,900원 × 4일은 173,900 ≤ 187,000 소액부징수 경계 이하라 양쪽 모두
+        0원으로 일치해 이 절사순서 불일치를 드러내지 못한다 — 경계 위 일급으로 교체해
+        값이 실제로 갈리는 사례를 기록했다.)
+
+        노무사 판단 필요(Task 1 인계). 엔진 로직 변경 금지 — 현재 엔진값만 assert.
+        """
+        skill_per_day_truncated = int((215_000 - 150_000) * 0.027)  # = 1,755 (정수, truncate no-op)
+        self.assertEqual(skill_per_day_truncated, 1_755)
+        skill_expected_total = (skill_per_day_truncated * 4 // 10) * 10  # 최종 10원 절사 = 7,020
+        self.assertEqual(skill_expected_total, 7_020)
+
+        result = _daily.calculate_daily_worker_payroll(daily_wage=215_000, days_worked=4)
+        # 현재 엔진값: 일별 절사(1,755→1,750) 후 합산 = 7,000 (스킬 규칙과 20원 차이, 기록만)
+        self.assertEqual(result["income_tax_per_day"], 1_750.0)
+        self.assertEqual(result["income_tax_total"], 7_000.0)
+        self.assertNotEqual(result["income_tax_total"], skill_expected_total)
 
 
 # =============================================================================

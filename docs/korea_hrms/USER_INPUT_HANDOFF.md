@@ -52,6 +52,30 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 
 ---
 
+## 🔵 북극성 트랙 잔여 4건 (2026-07-11 배정 — 코드/배포는 전부 완료 상태)
+
+배경: v2 시맨틱 RAG 배포 완료(develop 8dc039d53, noho 200)·온톨로지 12노드 게이트 그린·compose env_file 사전배선 완료. 아래 4건만 사람 몫.
+
+### N1. 온톨로지 draft 12노드 → published 승격 — 노무사 검수 (HITL, 에이전트 금지)
+- **어디서**: `wiki/ontology/` (법령조항 4·급여규칙 4·법정수치 4)
+- **어떻게**: 내용 검토 후 frontmatter `review_state: draft` → `published` 로 바꿔 커밋
+- **⚠ 우선 검수**: `국민연금요율_2026`(4.75%)·`건강보험요율_2026`(3.595%) — 승격 시 Claude가 `statutory_2026.py` 2025요율 잔존(노호 트래커 #6) 정정 + 검증18 재대조 수행
+
+### N2. v2 시맨틱 활성화 — 키 파일 1개 (⏱️2분)
+- **어떻게**: 로컬에서 `scp C:/Users/iceam/dev/hrms/.env.smoke claudebot-2:~/workspaces/seojaehong-hrms-100h/docker/frappe.env`
+  (또는 Claude 세션에서 "키 전송 승인" — 화면 비노출 전송)
+- **후처리**: Claude가 GEMINI/SERVICE_KEY 줄 제거 + chmod 600 + `docker compose up -d frappe` + configured 검증. 파일 없으면 v1 폴백 무해
+- **적용값**: `YELLOW_ENVELOPE_SUPABASE_URL`, `YELLOW_ENVELOPE_SUPABASE_KEY`(anon), `OPENAI_API_KEY`
+
+### N3. Hermes gateway LLM 키 — GPT OAuth 또는 플랫폼 키
+- **어디서**: claudebot-2 `~/workspaces/hermes-agent` — `hermes auth`(OAuth) 또는 서버 env `PLATFORM_LLM_API_KEY`(Anthropic 권장)
+- **전제 충족됨**: 자체 도구 하드 잠금(`platform_toolsets: [mcp-korea_hrms]`) 확정·라이브 적용 완료
+
+### N4. 실 LLM 스모크 — N3 후 Claude가 수행
+- `hourly_closing_prep` 스킬 1회 실 LLM 실행 → 요약 품질 확인 (hermes-embedding.md §4-4)
+
+---
+
 ## 🟡 TIER 2 — 제품 완성·2호 고객 (Phase 2, 7월 하반~8월)
 
 ### 6. SMTP 이메일 계정 — 명세서 자동발송 + 메일 AI 채널

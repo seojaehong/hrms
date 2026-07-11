@@ -80,6 +80,69 @@ class TestResponseMapping(unittest.TestCase):
 		self.assertEqual(p([])["tool_call"]["args"], {"_raw_arguments": "{broken"})
 
 
+class TestPromptProtocolToolCalling(unittest.TestCase):
+	"""프롬프트 프로토콜 툴콜링 — gateway가 에이전트 엔드포인트(클라이언트 tools 미전달)라
+	모델이 텍스트로 {"tool_call": …} JSON을 선언하고 provider가 파싱한다."""
+
+	SPECS = {"get_payroll_calculations": {"description": "급여 확정값 조회", "args": {}}}
+
+	def _resp(self, content):
+		return {"choices": [{"message": {"content": content}}]}
+
+	def test_tool_specs_inject_protocol_instruction(self):
+		calls = []
+		p = make(base_url="http://x", credentials=CREDS, tool_specs=self.SPECS,
+			transport=transport_returning(self._resp("ok"), capture=calls))
+		p([{"role": "system", "content": "S"}, {"role": "user", "content": "Q"}])
+		body = calls[0]["body"]
+		joined = json.dumps(body["messages"], ensure_ascii=False)
+		self.assertIn("tool_call", joined)
+		self.assertIn("get_payroll_calculations", joined)
+		# 기존 system이 첫 메시지로 유지되고 프로토콜 지시는 그 뒤에 system으로 삽입
+		self.assertEqual(body["messages"][0]["content"], "S")
+		self.assertEqual(body["messages"][1]["role"], "system")
+
+	def test_text_tool_call_parsed(self):
+		p = make(base_url="http://x", credentials=CREDS, tool_specs=self.SPECS,
+			transport=transport_returning(self._resp('{"tool_call": {"name": "get_payroll_calculations", "args": {}}}')))
+		out = p([{"role": "user", "content": "Q"}])
+		self.assertEqual(out, {"tool_call": {"name": "get_payroll_calculations", "args": {}}})
+
+	def test_fenced_tool_call_with_prose_parsed(self):
+		content = (
+			"도구를 호출하겠습니다.\n```json\n"
+			'{"tool_call": {"name": "get_payroll_calculations", "args": {"month": "2026-07"}}}'
+			"\n```"
+		)
+		p = make(base_url="http://x", credentials=CREDS, tool_specs=self.SPECS,
+			transport=transport_returning(self._resp(content)))
+		out = p([{"role": "user", "content": "Q"}])
+		self.assertEqual(out["tool_call"]["name"], "get_payroll_calculations")
+		self.assertEqual(out["tool_call"]["args"], {"month": "2026-07"})
+
+	def test_unknown_tool_name_returns_text(self):
+		# 스펙에 없는 도구 선언은 파싱하지 않고 텍스트로 통과 (화이트리스트는 registry가 최종 방어)
+		content = '{"tool_call": {"name": "shell_exec", "args": {}}}'
+		p = make(base_url="http://x", credentials=CREDS, tool_specs=self.SPECS,
+			transport=transport_returning(self._resp(content)))
+		out = p([{"role": "user", "content": "Q"}])
+		self.assertIn("text", out)
+
+	def test_plain_text_still_text(self):
+		p = make(base_url="http://x", credentials=CREDS, tool_specs=self.SPECS,
+			transport=transport_returning(self._resp("최종 답변입니다")))
+		out = p([{"role": "user", "content": "Q"}])
+		self.assertEqual(out, {"text": "최종 답변입니다"})
+
+	def test_without_tool_specs_json_is_text(self):
+		# 기능 미사용 시 기존 동작 불변 — JSON처럼 보여도 텍스트
+		content = '{"tool_call": {"name": "get_payroll_calculations", "args": {}}}'
+		p = make(base_url="http://x", credentials=CREDS,
+			transport=transport_returning(self._resp(content)))
+		out = p([{"role": "user", "content": "Q"}])
+		self.assertEqual(out, {"text": content})
+
+
 class TestErrors(unittest.TestCase):
 	def test_http_error(self):
 		p = make(base_url="http://x", credentials=CREDS, transport=transport_returning({}, status=500))

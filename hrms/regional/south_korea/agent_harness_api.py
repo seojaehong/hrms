@@ -130,11 +130,8 @@ def run_agent_skill(
 			"reason": f"미등록 스킬: '{skill_name}' (빌트인 스킬만 실행 가능).",
 		}
 
-	# --- 2) provider 해석 (config 읽기만 — 클라이언트 생성·네트워크 없음) ---
-	if provider is None:
-		provider = _resolve_provider()
-	if provider is None:
-		# fail-closed: provider 미설정이면 어떤 LLM/네트워크 호출도 하지 않는다.
+	# --- 2) provider 설정 게이트 (config 읽기만 — 네트워크 0회, fail-closed 유지) ---
+	if provider is None and not _provider_configured():
 		return {
 			"status": "not_configured",
 			"skill_name": skill_name,
@@ -145,7 +142,8 @@ def run_agent_skill(
 			"requires_provider_config": True,
 		}
 
-	# --- 3) 실행 (provider 주입됨) — 코어 tool_registry가 승인 게이트 담당 ---
+	# --- 3) 도구 바인딩 (provider 생성보다 먼저 — config 경로 provider가 도구 스펙으로
+	#        프롬프트 프로토콜 툴콜링을 켜려면 스펙이 필요하다) ---
 	if tool_registry is None:
 		tool_registry = _build_default_tool_registry()  # 빌트인 조회 도구 바인딩
 	if tool_registry is None:
@@ -153,6 +151,20 @@ def run_agent_skill(
 			"status": "no_tools",
 			"skill_name": skill_name,
 			"reason": "tool_registry 미주입 — 도구 바인딩 없이는 스킬을 실행하지 않습니다.",
+		}
+
+	# --- 3-1) provider 생성 (설정 게이트 통과분만 — 생성 실패 시 fail-closed) ---
+	if provider is None:
+		specs_for_provider = {
+			name: tool_registry.get_spec(name) for name in tool_registry.list_tools()
+		}
+		provider = _resolve_provider(tool_specs=specs_for_provider)
+	if provider is None:
+		return {
+			"status": "not_configured",
+			"skill_name": skill_name,
+			"reason": "provider 생성 실패 — 자격증명/게이트웨이 설정을 확인하세요.",
+			"requires_provider_config": True,
 		}
 
 	# PII 방어선: 도구 결과가 대화(→LLM)로 나가기 전 구조적으로 리댁션 (P1-④)
@@ -216,7 +228,19 @@ def _log_error_best_effort(exc: BaseException, skill_name: str) -> None:
 		pass
 
 
-def _resolve_provider() -> Callable[[list], dict] | None:
+def _provider_configured() -> bool:
+	"""provider 설정 존재 여부만 판정 (client 생성·네트워크 없음 — fail-closed 게이트용)."""
+	if not (_FRAPPE_AVAILABLE and _frappe is not None):
+		return False
+	conf = getattr(_frappe, "conf", None)
+	if not conf:
+		return False
+	if str(conf.get(PROVIDER_CONFIG_KEY) or "").strip().lower() != "hermes":
+		return False
+	return bool(str(conf.get(HERMES_GATEWAY_URL_KEY) or "").strip())
+
+
+def _resolve_provider(tool_specs: dict | None = None) -> Callable[[list], dict] | None:
 	"""site config에서 provider를 해석한다.
 
 	- `korea_agent_harness_provider` == "hermes":
@@ -241,7 +265,9 @@ def _resolve_provider() -> Callable[[list], dict] | None:
 	if creds.get("status") != "ok":
 		return None
 	try:
-		return _hermes_provider.make_hermes_provider(base_url=base_url, credentials=creds)
+		return _hermes_provider.make_hermes_provider(
+			base_url=base_url, credentials=creds, tool_specs=tool_specs
+		)
 	except _hermes_provider.HermesProviderError:
 		return None
 

@@ -43,6 +43,45 @@ def _to_openai_messages(messages: list) -> list[dict[str, Any]]:
 	return out
 
 
+def _protocol_instruction(tool_specs: dict[str, dict]) -> str:
+	"""프롬프트 프로토콜 툴콜링 지시문 — gateway가 에이전트 엔드포인트라 OpenAI
+	tools 파라미터가 모델에 전달되지 않으므로, 텍스트 프로토콜로 도구 호출을 선언시킨다."""
+	lines = [
+		"[도구 호출 프로토콜] 아래 도구가 필요하면 다른 텍스트 없이 오직 한 줄의 JSON만 출력하라:",
+		'{"tool_call": {"name": "<도구명>", "args": {<인자>}}}',
+		"도구 결과는 다음 메시지로 돌아온다. 더 이상 도구가 필요 없으면 일반 텍스트로 최종 답변하라.",
+		"사용 가능 도구:",
+	]
+	for name, spec in tool_specs.items():
+		desc = str((spec or {}).get("description", "")).strip()
+		lines.append(f"- {name}: {desc}")
+	return "\n".join(lines)
+
+
+def _extract_tool_call(text: str, allowed: set[str]) -> dict | None:
+	"""텍스트에서 {"tool_call": …} JSON을 관대하게 추출한다 (코드펜스·전후 산문 허용).
+
+	allowed 밖의 도구명은 파싱하지 않고 None을 반환한다 — 화이트리스트의 최종 방어는
+	tool_registry지만, 프로토콜 오염(모델이 임의 도구명을 지어내는 경우)을 여기서 차단한다.
+	"""
+	marker = '{"tool_call"'
+	idx = text.find(marker)
+	if idx < 0:
+		return None
+	decoder = json.JSONDecoder()
+	try:
+		obj, _end = decoder.raw_decode(text[idx:])
+	except json.JSONDecodeError:
+		return None
+	call = obj.get("tool_call") if isinstance(obj, dict) else None
+	if not isinstance(call, dict) or not call.get("name"):
+		return None
+	if str(call["name"]) not in allowed:
+		return None
+	args = call.get("args")
+	return {"name": str(call["name"]), "args": args if isinstance(args, dict) else {}}
+
+
 def make_hermes_provider(
 	*,
 	base_url: str,
@@ -50,6 +89,7 @@ def make_hermes_provider(
 	transport: Callable[..., tuple[int, bytes]] | None = None,
 	timeout: int = DEFAULT_TIMEOUT,
 	session_id: str | None = None,
+	tool_specs: dict[str, dict] | None = None,
 ) -> Callable[[list], dict]:
 	"""agent_loop provider 생성.
 
@@ -58,6 +98,10 @@ def make_hermes_provider(
 		credentials: resolve_llm_credentials() 결과 — status=="ok" 필수(api_key/model 사용).
 		transport: 테스트 주입용. (method, url, headers, body, timeout) -> (status, content).
 		session_id: 지정 시 X-Hermes-Session-Id로 세션 연속성(선택).
+		tool_specs: 지정 시 프롬프트 프로토콜 툴콜링 활성화 — 모델이 텍스트로
+			{"tool_call": …} JSON을 선언하면 파싱해 agent_loop 계약으로 반환.
+			(gateway /v1/chat/completions는 에이전트 엔드포인트라 OpenAI tools
+			파라미터가 모델에 닿지 않는다 — 2026-07-11 실측.)
 	"""
 	if credentials.get("status") != "ok" or not credentials.get("api_key"):
 		raise HermesProviderError("자격증명 미설정 — resolve_llm_credentials status가 ok여야 함")
@@ -67,6 +111,8 @@ def make_hermes_provider(
 	send = transport or _default_transport
 	model = credentials.get("model") or "hermes-agent"
 	api_key = credentials["api_key"]
+	protocol = _protocol_instruction(tool_specs) if tool_specs else None
+	allowed_tools = set(tool_specs.keys()) if tool_specs else set()
 
 	def provider(messages: list) -> dict:
 		headers = {
@@ -75,7 +121,12 @@ def make_hermes_provider(
 		}
 		if session_id:
 			headers["X-Hermes-Session-Id"] = str(session_id)
-		payload = {"model": model, "messages": _to_openai_messages(messages)}
+		openai_messages = _to_openai_messages(messages)
+		if protocol:
+			# 기존 system(하네스 소유 프롬프트) 바로 뒤에 프로토콜 지시를 system으로 삽입
+			insert_at = 1 if openai_messages and openai_messages[0].get("role") == "system" else 0
+			openai_messages.insert(insert_at, {"role": "system", "content": protocol})
+		payload = {"model": model, "messages": openai_messages}
 		status, content = send("POST", f"{base}/v1/chat/completions", headers, json.dumps(payload, ensure_ascii=False).encode(), timeout)
 		if status != 200:
 			raise HermesProviderError(f"gateway HTTP {status}: {content[:300]!r}")
@@ -98,6 +149,11 @@ def make_hermes_provider(
 				args = {"_raw_arguments": fn.get("arguments")}
 			return {"tool_call": {"name": fn.get("name"), "args": args}}
 
-		return {"text": message.get("content") or ""}
+		content = message.get("content") or ""
+		if protocol:
+			parsed = _extract_tool_call(content, allowed_tools)
+			if parsed:
+				return {"tool_call": parsed}
+		return {"text": content}
 
 	return provider

@@ -209,6 +209,36 @@ class TestFreeformQA(unittest.TestCase):
 		self.assertIn("2명", result["final_text"])
 
 
+class TestResolveProviderToolSpecs(unittest.TestCase):
+	"""config 경로(hermes)에서 provider 생성 시 tool_specs가 전달되어
+	프롬프트 프로토콜 툴콜링이 활성화되어야 한다."""
+
+	def test_resolve_provider_passes_tool_specs(self):
+		conf = {
+			"korea_agent_harness_provider": "hermes",
+			"hermes_gateway_url": "http://127.0.0.1:8130",
+			"agent_llm_api_key": "k",
+			"agent_llm_provider": "openai",
+			"agent_llm_model": "gpt-5.5",
+		}
+		mod = load_api(fake_frappe=FakeFrappe(conf=conf))
+		captured = {}
+
+		class _StubHP:
+			HermesProviderError = mod._hermes_provider.HermesProviderError
+
+			@staticmethod
+			def make_hermes_provider(**kwargs):
+				captured.update(kwargs)
+				return lambda messages: {"text": "ok"}
+
+		mod._hermes_provider = _StubHP
+		specs = {"get_x": {"description": "d", "args": {}}}
+		provider = mod._resolve_provider(tool_specs=specs)
+		self.assertIsNotNone(provider)
+		self.assertEqual(captured.get("tool_specs"), specs)
+
+
 class TestSystemPromptInjection(unittest.TestCase):
 	"""하네스가 messages[0]에 시스템 프롬프트를 소유·주입하는지(US-1)."""
 

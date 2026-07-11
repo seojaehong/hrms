@@ -11,6 +11,19 @@ from __future__ import annotations
 from typing import Any
 
 
+# 임베딩 입력 안전 절단 길이 — 한국어 ~2토큰/자, 3-small 한도 8192토큰.
+# 8k자 청크(≈16k토큰)로 400 실사고 → 3000자(≈6-7.5k토큰)면 안전. 검색용이라 앞부분로 충분.
+_EMBED_MAX_CHARS = 3000
+
+
+def truncate_for_embedding(text: str) -> str:
+    """임베딩 입력용 텍스트 절단. 빈/공백 문자열은 공백 1자(OpenAI가 빈 입력 거부)."""
+    t = (text or "").strip()
+    if not t:
+        return " "
+    return t[:_EMBED_MAX_CHARS]
+
+
 def chunk_batches(items: list, size: int) -> list[list]:
     """items를 size 단위 배치로 분할."""
     return [items[i:i + size] for i in range(0, len(items), size)]

@@ -76,7 +76,8 @@ def main():
         if not rows:
             break
         ids = [r["id"] for r in rows]
-        texts = [r["content"] for r in rows]
+        # 8k자 한국어 청크가 8192토큰 한도 초과(400) → 안전 절단(검색용이라 앞부분로 충분)
+        texts = [core.truncate_for_embedding(r["content"]) for r in rows]
 
         # 2) OpenAI 배치 임베딩(1536)
         er = requests.post(

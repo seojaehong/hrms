@@ -19,6 +19,24 @@ _spec.loader.exec_module(_mod)
 chunk_batches = _mod.chunk_batches
 parse_openai_embeddings = _mod.parse_openai_embeddings
 assemble_write_payload = _mod.assemble_write_payload
+truncate_for_embedding = _mod.truncate_for_embedding
+
+
+class TestTruncateForEmbedding(unittest.TestCase):
+    def test_short_text_unchanged(self):
+        self.assertEqual(truncate_for_embedding("주휴수당"), "주휴수당")
+
+    def test_long_korean_truncated_to_limit(self):
+        # 한국어 ~2토큰/자 → 8k자 청크가 8192토큰 한도 초과(실사고). 3000자로 절단.
+        long = "가" * 8000
+        out = truncate_for_embedding(long)
+        self.assertEqual(len(out), 3000)
+        self.assertEqual(out, "가" * 3000)
+
+    def test_empty_becomes_single_space(self):
+        # OpenAI는 빈 문자열 입력을 거부 → 공백 1자로 대체
+        self.assertEqual(truncate_for_embedding(""), " ")
+        self.assertEqual(truncate_for_embedding("   "), " ")
 
 
 class TestChunkBatches(unittest.TestCase):

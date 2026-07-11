@@ -226,9 +226,39 @@ class TestCalcTools(unittest.TestCase):
 			"calc_daily_worker_payroll",
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
+			"build_employment_contract",
 			"search_labor_knowledge",
 		):
 			self.assertIn(expected, names)
+
+	def test_build_employment_contract_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"build_employment_contract",
+			{
+				"data": {
+					"company": {
+						"company_name": "가나다 주식회사",
+						"representative_name": "홍길동",
+						"address": "서울시 강남구 테헤란로 1",
+						"business_registration_number": "123-45-67890",
+					},
+					"employee": {"employee_name": "김철수", "address": "서울시 송파구 올림픽로 2"},
+					"workplace": "본사",
+					"job_description": "인사 관리",
+					"contract_period": {"start_date": "2026-08-01"},
+					"scheduled_work": {"start_time": "09:00", "end_time": "18:00", "work_days": "월~금"},
+					"holidays": "매주 일요일",
+					"annual_leave": "근로기준법 제60조에 따름",
+					"wage_components": [{"component": "기본급", "amount": 2500000}],
+					"wage_payment_date": "매월 25일",
+					"wage_payment_method": "계좌 입금",
+				}
+			},
+			human_approved=False,
+		)
+		self.assertTrue(result["result"]["required_fields_complete"])
+		self.assertEqual(result["result"]["wage_total"], 2500000)
 
 	def test_weekly_holiday_via_registry(self):
 		reg = self._registry()

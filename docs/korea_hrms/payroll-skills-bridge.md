@@ -24,6 +24,11 @@
 | `~/.claude/skills/퇴직정산` | 미사용연차수당 = 기본급 ÷ 209 × 8 × 미사용일수 (통상일급 × 일수) | `hourly_wage.py:unused_leave_allowance` | **일치 (2026-07-11 엔진 구현)** — 부여 일수는 기존 `annual_leave.py`, 금액 환산은 이 함수. |
 | `~/.claude/skills/4대보험신고`, `~/.claude/skills/급여검증`(검증17/18) | 4대보험 요율(2026): 국민연금 4.75%, 건강보험 3.595%, 장기요양 13.14%(건강보험료 대비), 고용보험 0.9%, 만60세↑ 국민연금 면제 | `statutory_2026.py:calculate_pension`/`calculate_health_insurance`/`calculate_employment_insurance`, `PENSION_RATE_EMPLOYEE`/`HEALTH_RATE_EMPLOYEE`/`LONGTERM_CARE_RATE`/`EMPLOYMENT_INSURANCE_RATE_EMPLOYEE` | **일치** — 요율 값이 스킬 기술과 동일. 장기요양은 엔진이 `0.009448/0.0719 ≈ 13.1405%`로 계산(스킬 표기 13.14%와 반올림 차이만, 실질 동일). 이 상수들은 이미 `hrms/tests/test_korea_rate_single_source.py`가 `foreign_worker.py`·`leave_of_absence.py`와 어긋나지 않도록 단일소스 가드를 걸어 회귀를 방지한다. |
 | `~/.claude/skills/급여관리`, `~/.claude/skills/퇴직정산` | 연차 산정: 1년 미만 매월 개근 1일(최대 11일), 1년 이상 15일, 3년 이상부터 2년마다 1일 가산(최대 25일) | `annual_leave.py:calculate_annual_leave_entitlement`, `first_year_monthly_accrual`, `anniversary_annual_entitlement` | **일치** |
+| `~/.claude/skills/취업규칙검토` | 근기법 §93 필수기재 14호(9의2 포함) 있음/불충분/누락 판정 (`references/근기법-93조-체크리스트.md`) | `work_rules.py:WORK_RULES_REQUIRED_ITEMS`, `check_required_items` | **역할분리** — 엔진은 키워드 candidate 판정(있음/누락 2단만, "불충분" 세분 없음)만 반환. 조문 단위 대조·HWP 변경지시 생성은 스킬 Step 0~7 전담. |
+| `~/.claude/skills/취업규칙검토` | 상시 10명 이상 → 취업규칙 작성·신고 의무 (근기법 §93) | `work_rules.py:filing_obligation` | **일치** — 엔진이 임계값(10명) 판정만 반환, 신고서 작성·제출은 `~/.claude/skills/4대보험신고` 등 별개 흐름. |
+| `~/.claude/skills/취업규칙검토`, `~/.claude/skills/취업규칙의견서` | 작성·변경 절차: 과반수 노조(없으면 근로자 과반수) 의견청취, 불이익변경 시 **동의**, 신고 시 의견서 첨부(근기법 §94), 게시(§14) | `work_rules.py:amendment_procedure` | **일치** — 절차 단계 리스트·주체 판정만 엔진 담당. 불이익변경 **해당 여부 자체**는 여전히 사람(노무사) 판단(스킬 diff-engine-규칙.md §5, 엔진도 입력값으로만 받고 단정하지 않음). |
+| `~/.claude/skills/취업규칙검토` | 불이익변경 후보 판정: 수치형 항목(임금·휴가일수 등)은 방향 비교로 플래그, 단정 금지 | `work_rules.py:classify_amendment` | **역할분리** — 엔진은 `candidate` 라벨(favorable/unfavorable/neutral/indeterminate) + `requires_labor_attorney_review=True` 고정 반환. 최종 불이익변경 확정·`변경지시.json`의 `disadvantage_risk` 필드 작성은 스킬(사람) 몫. |
+| `~/.claude/skills/취업규칙개정` | HWP 원본에 변경지시(before/after) 적용, 한글 COM ReplaceAll | (엔진 대응 없음 — HWP 렌더링은 스킬 전담) | **역할분리(엔진 미개입)** — `work_rules.py`는 판정 로직만 제공하고 실제 HWP 개정·문서 렌더는 다루지 않는다. |
 
 ## 2. 활용 가이드
 
@@ -37,6 +42,11 @@ HRMS로 급여 작업을 하다가 아래 상황이면 해당 개인 스킬을 �
 - 근로기준법 제48조제2항 요건(구성항목·계산방법 명시)을 갖춘 임금명세서를 만들 때 → `~/.claude/skills/명세서생성`
 - 4대보험 취득/상실/근로내용확인 신고서를 생성할 때 → `~/.claude/skills/4대보험신고`
 - 급여대장을 세무대장으로 변환해 세무사에게 전달할 때 → `~/.claude/skills/세무변환`
+- 취업규칙 필수기재·신고의무·절차(의견청취/동의)를 에이전트가 즉시 candidate 판정하고 싶을 때
+  → `hrms/regional/south_korea/work_rules.py` (도구: `check_work_rules_required_items`,
+  `work_rules_amendment_procedure`). **실제 조문 대조·HWP 변경지시·개정본 렌더링은 여전히**
+  `~/.claude/skills/취업규칙검토` → `~/.claude/skills/취업규칙개정` → `~/.claude/skills/취업규칙의견서`
+  순서의 개인 스킬이 담당한다 — 엔진은 판정 보조일 뿐 생성 파이프라인을 대체하지 않는다.
 
 ## 3. 정합성 게이트
 

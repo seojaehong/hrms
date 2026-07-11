@@ -291,6 +291,7 @@ def _register_calc_tools(registry) -> None:
 
 	hourly = _load("hourly_wage")
 	daily = _load("daily_worker")
+	wr = _load("work_rules")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -313,6 +314,15 @@ def _register_calc_tools(registry) -> None:
 
 	def calc_unused_leave_allowance(*, monthly_base_salary, unused_days):
 		return {"allowance": float(hourly.unused_leave_allowance(monthly_base_salary, unused_days))}
+
+	def check_work_rules_required_items(*, rules_outline):
+		return wr.check_required_items(rules_outline)
+
+	def work_rules_amendment_procedure(*, is_disadvantageous, has_majority_union=None):
+		return wr.amendment_procedure(
+			bool(is_disadvantageous),
+			has_majority_union=None if has_majority_union is None else bool(has_majority_union),
+		)
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -346,6 +356,19 @@ def _register_calc_tools(registry) -> None:
 	registry.register_tool(
 		"calc_unused_leave_allowance", calc_unused_leave_allowance,
 		{"description": "미사용 연차수당 = 기본급/209 x 8 x 미사용일수", "args": {"monthly_base_salary": "필수(원)", "unused_days": "필수"}},
+		True,
+	)
+	registry.register_tool(
+		"check_work_rules_required_items", check_work_rules_required_items,
+		{"description": "취업규칙 개요가 근기법 §93 필수기재 14호를 커버하는지 키워드 candidate 판정(확정 아님)",
+		 "args": {"rules_outline": "필수 — {호:텍스트} dict 또는 텍스트 list"}},
+		True,
+	)
+	registry.register_tool(
+		"work_rules_amendment_procedure", work_rules_amendment_procedure,
+		{"description": "취업규칙 작성·변경 절차 판정 (근기법 §94 — 의견청취 vs 동의, 신고 첨부·게시 단계)",
+		 "args": {"is_disadvantageous": "필수(불이익변경 여부, 판정은 호출측 책임)",
+			  "has_majority_union": "선택(과반수 노조 유무, 미상이면 생략)"}},
 		True,
 	)
 	registry.register_tool(

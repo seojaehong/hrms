@@ -227,6 +227,8 @@ class TestCalcTools(unittest.TestCase):
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
 			"search_labor_knowledge",
+			"check_work_rules_required_items",
+			"work_rules_amendment_procedure",
 		):
 			self.assertIn(expected, names)
 
@@ -254,6 +256,26 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
 		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
 		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_check_work_rules_required_items_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"check_work_rules_required_items",
+			{"rules_outline": {"11": "직장 내 괴롭힘 예방 교육과 발생 시 조치를 규정한다"}},
+			human_approved=False,
+		)
+		covered_hos = {item["ho"] for item in result["result"]["covered"]}
+		self.assertIn("11", covered_hos)
+
+	def test_work_rules_amendment_procedure_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"work_rules_amendment_procedure",
+			{"is_disadvantageous": True, "has_majority_union": False},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["requirement"], "consent")
+		self.assertIn("근로자 과반수", result["result"]["subject"])
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

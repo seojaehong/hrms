@@ -293,6 +293,7 @@ def _register_calc_tools(registry) -> None:
 	daily = _load("daily_worker")
 	contract_doc = _load("employment_contract_doc")
 	inclusive = _load("inclusive_wage")
+	wr = _load("work_rules")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -372,6 +373,14 @@ def _register_calc_tools(registry) -> None:
 			"overtime_limit_ok": r["overtime_limit_ok"],
 			"warnings": r["warnings"],
 		}
+	def check_work_rules_required_items(*, rules_outline):
+		return wr.check_required_items(rules_outline)
+
+	def work_rules_amendment_procedure(*, is_disadvantageous, has_majority_union=None):
+		return wr.amendment_procedure(
+			bool(is_disadvantageous),
+			has_majority_union=None if has_majority_union is None else bool(has_majority_union),
+		)
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -430,6 +439,19 @@ def _register_calc_tools(registry) -> None:
 			"fixed_night_pay": "선택(기본 0)", "fixed_night_hours": "선택(기본 0)",
 			"fixed_holiday_pay": "선택(기본 0)", "fixed_holiday_hours": "선택(기본 0)",
 			"minimum_hourly_wage": "필수(원, 하드코딩 금지 — ontology 조회값 주입)"}},
+		True,
+	)
+	registry.register_tool(
+		"check_work_rules_required_items", check_work_rules_required_items,
+		{"description": "취업규칙 개요가 근기법 §93 필수기재 14호를 커버하는지 키워드 candidate 판정(확정 아님)",
+		 "args": {"rules_outline": "필수 — {호:텍스트} dict 또는 텍스트 list"}},
+		True,
+	)
+	registry.register_tool(
+		"work_rules_amendment_procedure", work_rules_amendment_procedure,
+		{"description": "취업규칙 작성·변경 절차 판정 (근기법 §94 — 의견청취 vs 동의, 신고 첨부·게시 단계)",
+		 "args": {"is_disadvantageous": "필수(불이익변경 여부, 판정은 호출측 책임)",
+			  "has_majority_union": "선택(과반수 노조 유무, 미상이면 생략)"}},
 		True,
 	)
 	registry.register_tool(

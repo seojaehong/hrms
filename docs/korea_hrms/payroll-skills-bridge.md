@@ -26,6 +26,11 @@
 | `~/.claude/skills/급여관리`, `~/.claude/skills/퇴직정산` | 연차 산정: 1년 미만 매월 개근 1일(최대 11일), 1년 이상 15일, 3년 이상부터 2년마다 1일 가산(최대 25일) | `annual_leave.py:calculate_annual_leave_entitlement`, `first_year_monthly_accrual`, `anniversary_annual_entitlement` | **일치** |
 | `~/.claude/skills/명세서생성` | 포괄임금 설계: 총액을 통상시급 기준 기본급(÷209)·고정연장(×1.5)·고정야간(×0.5 가산분)·고정휴일(×1.5)로 분해(산정내역 구성항목 표시용) | `inclusive_wage.py:design_inclusive_wage` | **일치 (2026-07-11 엔진 신규 구현)** — `t = total ÷ (209 + 1.5×H_ot + 0.5×H_night + 1.5×H_hol)`, 끝수는 기본급이 흡수(검산 항등 `base+ot+night+holiday == 입력총액` 보장). 명세서생성 스킬의 산정내역 분해는 이 함수의 출력 매핑을 참조만 한다(스킬 파일 자체는 미수정, 읽기 전용). |
 | `~/.claude/skills/명세서생성` | 포괄임금 역산 감사: 기존 계약 기재액(기본급+고정수당)이 통상시급(기본급÷209) 기준 적정 최소지급액을 충족하는지 검증, 부족분·최저임금·주12h 한도 초과는 경고(확정 아님) | `inclusive_wage.py:audit_inclusive_wage` | **일치 (2026-07-11 엔진 신규 구현)** — 경고는 raise가 아닌 `warnings` 리스트로 반환(판단은 노무사). 최저임금 값은 하드코딩 없이 인자로 주입(`ontology/statutory_ontology.get_minimum_hourly_wage`). |
+| `~/.claude/skills/취업규칙검토` | 근기법 §93 필수기재 14호(9의2 포함) 있음/불충분/누락 판정 (`references/근기법-93조-체크리스트.md`) | `work_rules.py:WORK_RULES_REQUIRED_ITEMS`, `check_required_items` | **역할분리** — 엔진은 키워드 candidate 판정(있음/누락 2단만, "불충분" 세분 없음)만 반환. 조문 단위 대조·HWP 변경지시 생성은 스킬 Step 0~7 전담. |
+| `~/.claude/skills/취업규칙검토` | 상시 10명 이상 → 취업규칙 작성·신고 의무 (근기법 §93) | `work_rules.py:filing_obligation` | **일치** — 엔진이 임계값(10명) 판정만 반환, 신고서 작성·제출은 `~/.claude/skills/4대보험신고` 등 별개 흐름. |
+| `~/.claude/skills/취업규칙검토`, `~/.claude/skills/취업규칙의견서` | 작성·변경 절차: 과반수 노조(없으면 근로자 과반수) 의견청취, 불이익변경 시 **동의**, 신고 시 의견서 첨부(근기법 §94), 게시(§14) | `work_rules.py:amendment_procedure` | **일치** — 절차 단계 리스트·주체 판정만 엔진 담당. 불이익변경 **해당 여부 자체**는 여전히 사람(노무사) 판단(스킬 diff-engine-규칙.md §5, 엔진도 입력값으로만 받고 단정하지 않음). |
+| `~/.claude/skills/취업규칙검토` | 불이익변경 후보 판정: 수치형 항목(임금·휴가일수 등)은 방향 비교로 플래그, 단정 금지 | `work_rules.py:classify_amendment` | **역할분리** — 엔진은 `candidate` 라벨(favorable/unfavorable/neutral/indeterminate) + `requires_labor_attorney_review=True` 고정 반환. 최종 불이익변경 확정·`변경지시.json`의 `disadvantage_risk` 필드 작성은 스킬(사람) 몫. |
+| `~/.claude/skills/취업규칙개정` | HWP 원본에 변경지시(before/after) 적용, 한글 COM ReplaceAll | (엔진 대응 없음 — HWP 렌더링은 스킬 전담) | **역할분리(엔진 미개입)** — `work_rules.py`는 판정 로직만 제공하고 실제 HWP 개정·문서 렌더는 다루지 않는다. |
 
 ## 2. 활용 가이드
 
@@ -39,6 +44,11 @@ HRMS로 급여 작업을 하다가 아래 상황이면 해당 개인 스킬을 �
 - 근로기준법 제48조제2항 요건(구성항목·계산방법 명시)을 갖춘 임금명세서를 만들 때 → `~/.claude/skills/명세서생성`
 - 4대보험 취득/상실/근로내용확인 신고서를 생성할 때 → `~/.claude/skills/4대보험신고`
 - 급여대장을 세무대장으로 변환해 세무사에게 전달할 때 → `~/.claude/skills/세무변환`
+- 취업규칙 필수기재·신고의무·절차(의견청취/동의)를 에이전트가 즉시 candidate 판정하고 싶을 때
+  → `hrms/regional/south_korea/work_rules.py` (도구: `check_work_rules_required_items`,
+  `work_rules_amendment_procedure`). **실제 조문 대조·HWP 변경지시·개정본 렌더링은 여전히**
+  `~/.claude/skills/취업규칙검토` → `~/.claude/skills/취업규칙개정` → `~/.claude/skills/취업규칙의견서`
+  순서의 개인 스킬이 담당한다 — 엔진은 판정 보조일 뿐 생성 파이프라인을 대체하지 않는다.
 
 ## 3. 정합성 게이트
 

@@ -17,8 +17,42 @@ frappe 의존 없음 → `python3 hrms/tests/test_korea_hourly_wage.py` 직접 �
 """
 from __future__ import annotations
 
+import pathlib
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
+
+# 법적 근거 인용 베이스 — published 온톨로지 노드가 없을 때의 폴백 (annual_leave 패턴)
+LEGAL_BASIS_BASE_FALLBACK = "근로기준법 제55조"
+
+
+def legal_basis_base(wiki_root: Any = None) -> str:
+	"""주휴수당 근거 조항 인용 베이스 — published §55 노드 우선, 폴백 상수.
+
+	wiki_root 미지정 시 레포 wiki/ontology. 로더 부재·노드 draft/부재 시 조용히 폴백.
+	"""
+	try:
+		import importlib.util as _ilu
+
+		loader_path = pathlib.Path(__file__).resolve().parent / "ontology" / "loader.py"
+		spec = _ilu.spec_from_file_location("korea_ontology_loader", loader_path)
+		loader = _ilu.module_from_spec(spec)
+		spec.loader.exec_module(loader)
+
+		root = (
+			pathlib.Path(wiki_root)
+			if wiki_root is not None
+			else pathlib.Path(__file__).resolve().parents[3] / "wiki" / "ontology"
+		)
+		nodes, _errors = loader.load_nodes(root, review_state="published")
+		for node in nodes:
+			if getattr(node, "node_id", None) == "근로기준법_제55조":
+				sources = getattr(node, "sources", None) or []
+				if sources:
+					return sources[0]
+	except Exception:
+		pass
+	return LEGAL_BASIS_BASE_FALLBACK
+
 
 # 근로기준법 상수 (법정)
 FULL_TIME_WEEKLY_HOURS = Decimal("40")   # 법정 소정근로 상한 (§50)

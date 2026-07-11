@@ -83,6 +83,28 @@ class TestMinimumWage(unittest.TestCase):
 		self.assertGreater(mw, 10030)
 
 
+_PUBLISHED_RATE = """---
+node_id: 국민연금요율_2026
+kind: 법정수치
+label: 2026년 국민연금 보험료율 (사업장가입자)
+review_state: published
+value: 0.0475
+effective_year: 2026
+sources:
+- 국민연금법 제88조제3항
+---
+2026년 적용률은 근로자·사업주 각 4.75%이다.
+"""
+
+
+class TestKindCollision(unittest.TestCase):
+	def test_rate_node_does_not_shadow_minimum_wage(self):
+		# 같은 kind=법정수치·같은 연도의 요율 노드(value 0.0475)가 먼저 로드돼도
+		# 최저임금 조회는 최저임금 노드의 값을 반환해야 한다 (int(0.0475)=0 사고 방지)
+		root = _wiki_with(_PUBLISHED_RATE, _PUBLISHED)  # 요율이 n0 — 먼저 온다
+		self.assertEqual(_stat.get_minimum_hourly_wage(root, 2026), 10320)
+
+
 class TestRealRepoNode(unittest.TestCase):
 	def test_repo_has_published_2026_minimum_wage(self):
 		# 실제 레포 wiki에 2026 최저임금 published 노드가 있어야 한다

@@ -27,12 +27,17 @@ def get_minimum_hourly_wage(wiki_root: Any, year: int) -> int | None:
 
 	노드 frontmatter: kind=법정수치, effective_year=<연도>, value=<시급>, review_state=published.
 	draft·미존재 연도는 None(확정값 없음 → 호출자가 판단 보류).
+	같은 kind·연도에 요율 등 다른 법정수치 노드가 공존하므로 node_id로 특정한다.
 	"""
 	loader = _loader()
 	nodes, _errors = loader.load_nodes(wiki_root, review_state="published")
+	expected_node_id = f"최저임금_{int(year)}"
 	for node in nodes:
 		fm = getattr(node, "frontmatter", None) or {}
 		if str(fm.get("kind") or getattr(node, "kind", "")).strip() != "법정수치":
+			continue
+		node_id = str(fm.get("node_id") or getattr(node, "node_id", "")).strip()
+		if node_id != expected_node_id:
 			continue
 		ey = fm.get("effective_year")
 		if ey is None or int(ey) != int(year):

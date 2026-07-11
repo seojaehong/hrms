@@ -4,8 +4,10 @@
 > 작동되는 HR SaaS." — 이 문서가 제품의 최상위 방향이다. 진행: 하네스 코어 완성(agent-harness-poc)
 > → Hermes 소스 안착·런타임 설치·키라우팅·Provider 어댑터 완료 → 온톨로지 LLM Wiki 이관 착수
 > (2026-07-11: 노드 8종 — 법령조항 §55·§56·§60 + 급여규칙 연차·주휴·가산 + 법정수치 최저임금, 게이트 그린.
-> published 승격은 노무사 HITL 몫) → 남은 것: gateway 서비스 기동(사용자 GPT OAuth 예정)·실 LLM 스모크·
-> Wiki 노드 지속 확충(4대보험·퇴직금 축).
+> published 승격은 노무사 HITL 몫) → **gateway 가동 확인**(2026-07-11 실사: :8130 api_server 라이브,
+> openai-codex OAuth 완료, gpt-5.5, 도구 잠금 [mcp-korea_hrms], MCP :8100 라이브) → 실 LLM 1단계 스모크 성공
+> (주휴수당 정답) → 남은 것: 하네스 경유 본스모크(API_SERVER_KEY 승인 필요)·gateway systemd화(선택)·
+> HITL published 승격·Wiki 노드 지속 확충. 상세: USER_INPUT_HANDOFF.md §북극성 트랙.
 
 작성: 2026-07-09. 성격: **장기 아키텍처 북극성** — 지금 구현하지 않는다. 현행 구조(MCP 서비스 + 채널)는 유지하며, 아래로 점진 수렴한다.
 출처: `~/Downloads/SafeClaw_Agent_Architecture_Strategy.md`, `~/Downloads/SafeClaw 온톨로지 기반 LLM Wiki_ Human-in-the-loop 운영 계획.md` (둘 다 SafeClaw 기준. Korea HRMS AI 플레인도 "여기도" 동일 아키텍처로 수렴이 목표).

@@ -67,12 +67,13 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 - **후처리**: Claude가 GEMINI/SERVICE_KEY 줄 제거 + chmod 600 + `docker compose up -d frappe` + configured 검증. 파일 없으면 v1 폴백 무해
 - **적용값**: `YELLOW_ENVELOPE_SUPABASE_URL`, `YELLOW_ENVELOPE_SUPABASE_KEY`(anon), `OPENAI_API_KEY`
 
-### N3. Hermes gateway LLM 키 — GPT OAuth 또는 플랫폼 키
-- **어디서**: claudebot-2 `~/workspaces/hermes-agent` — `hermes auth`(OAuth) 또는 서버 env `PLATFORM_LLM_API_KEY`(Anthropic 권장)
-- **전제 충족됨**: 자체 도구 하드 잠금(`platform_toolsets: [mcp-korea_hrms]`) 확정·라이브 적용 완료
+### N3. Hermes gateway — ✅ **이미 가동 중 확인 (2026-07-11 실사)**
+- **실측**: `gateway/run.py`(PID ad-hoc, HERMES_HOME=`~/workspaces/hermes-agent/.hermes-home`)가 **:8130 api_server 라이브**, openai-codex **OAuth 인증 완료**(gpt-5.5), 도구 잠금 `platform_toolsets: api_server: [mcp-korea_hrms]` 적용, MCP :8100 라이브. 문서의 "OAuth 예정"은 낡은 정보였음.
+- **잔여(선택)**: ad-hoc 프로세스의 systemd 서비스화 — 유닛 초안이 준비되어 있으니 "korea gateway systemd 서비스 생성 승인"이라고 지시하면 Claude가 설치(기존 프로세스 교체 포함). 재부팅 생존이 필요해질 때 하면 됨.
 
-### N4. 실 LLM 스모크 — N3 후 Claude가 수행
-- `hourly_closing_prep` 스킬 1회 실 LLM 실행 → 요약 품질 확인 (hermes-embedding.md §4-4)
+### N4. 실 LLM 스모크 — 🔶 1단계 성공, 하네스 경유 본스모크만 잔여
+- ✅ **1단계 (2026-07-11)**: gateway `/v1/chat/completions` 실호출 → gpt-5.5가 "주휴수당 = 주 15h 이상 + 개근" 정답 (온톨로지 노드와 일치, usage 4,211 tokens)
+- **잔여**: `run_agent_skill(hourly_closing_prep)` 하네스 전 구간 스모크. 스크립트 준비됨(`/tmp/smoke_n4.py` 서버 전송 완료). 실행에는 gateway `API_SERVER_KEY`가 필요 — 프로세스 env에만 존재해 Claude의 접근이 권한 정책상 차단됨. **"gateway API_SERVER_KEY 사용 승인"** 지시 또는 gateway를 systemd 서비스화(위 N3 잔여, EnvironmentFile로 키가 정규 위치에 생김)하면 Claude가 즉시 수행.
 
 ---
 

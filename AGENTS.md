@@ -41,3 +41,18 @@ Validation order
 2. `yarn build`
 3. If runtime-related, check Docker/Bench status
 4. If UI-facing, validate served output when the site is up
+
+## 한국 급여 작업 시 개인 스킬 활용
+
+규칙 충돌 시 우선순위:
+1. Published 온톨로지 노드 (`docs/korea_hrms/payroll-skills-bridge.md`)
+2. 정합성 테스트 결과
+3. 스킬 문서
+4. 엔진 상수
+
+불일치 발견 시 노무사에 확인. 정합성 테스트:
+```
+python3 hrms/tests/test_korea_skill_consistency.py
+```
+
+공개 레포(PUBLIC): 고객사명·개인정보·개인 경로 금지. 규칙과 공식만 기술.

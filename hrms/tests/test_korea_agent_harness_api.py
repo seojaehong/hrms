@@ -226,6 +226,7 @@ class TestCalcTools(unittest.TestCase):
 			"calc_daily_worker_payroll",
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
+			"calc_annual_leave_promotion",
 			"search_labor_knowledge",
 		):
 			self.assertIn(expected, names)
@@ -254,6 +255,17 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
 		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
 		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_annual_leave_promotion_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_annual_leave_promotion",
+			{"hire_date": "2020-01-01", "as_of": "2026-07-05", "is_first_year": False},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["expiry_date"], "2027-01-01")
+		self.assertEqual(result["result"]["stage"], "1차_촉구_기간")
+		self.assertTrue(any("제61조" in c for c in result["result"]["legal_basis"]))
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

@@ -291,6 +291,7 @@ def _register_calc_tools(registry) -> None:
 
 	hourly = _load("hourly_wage")
 	daily = _load("daily_worker")
+	promotion = _load("annual_leave_promotion")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -313,6 +314,22 @@ def _register_calc_tools(registry) -> None:
 
 	def calc_unused_leave_allowance(*, monthly_base_salary, unused_days):
 		return {"allowance": float(hourly.unused_leave_allowance(monthly_base_salary, unused_days))}
+
+	def calc_annual_leave_promotion(*, hire_date, as_of, is_first_year=False):
+		import datetime as _dt
+
+		def _to_date(value):
+			if isinstance(value, _dt.date):
+				return value
+			return _dt.date.fromisoformat(str(value))
+
+		result = promotion.promotion_schedule(
+			_to_date(hire_date), _to_date(as_of), is_first_year=bool(is_first_year)
+		)
+		return {
+			key: (value.isoformat() if isinstance(value, _dt.date) else value)
+			for key, value in result.items()
+		}
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -346,6 +363,12 @@ def _register_calc_tools(registry) -> None:
 	registry.register_tool(
 		"calc_unused_leave_allowance", calc_unused_leave_allowance,
 		{"description": "미사용 연차수당 = 기본급/209 x 8 x 미사용일수", "args": {"monthly_base_salary": "필수(원)", "unused_days": "필수"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_annual_leave_promotion", calc_annual_leave_promotion,
+		{"description": "근기법 §61 연차 사용촉진 기한표 + 현재 단계 판정 (1년미만 특칙 포함)",
+		 "args": {"hire_date": "필수(YYYY-MM-DD)", "as_of": "필수(YYYY-MM-DD)", "is_first_year": "선택(기본 false)"}},
 		True,
 	)
 	registry.register_tool(

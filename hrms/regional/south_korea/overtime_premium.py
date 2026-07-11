@@ -32,7 +32,42 @@ Break assumption: break_minutes는 총 근무시간에서 공제하며, 야간 �
 from __future__ import annotations
 
 import datetime as dt
+import pathlib
 from typing import Any
+
+# 법적 근거 인용 베이스 — published 온톨로지 노드가 없을 때의 폴백 (annual_leave 패턴)
+LEGAL_BASIS_BASE_FALLBACK = "근로기준법 제56조"
+
+
+def legal_basis_base(wiki_root: Any = None) -> str:
+    """가산수당 근거 조항 인용 베이스 — published §56 노드 우선, 폴백 상수.
+
+    wiki_root 미지정 시 레포 wiki/ontology. 온톨로지 로더가 없거나 노드가
+    draft/부재면 조용히 폴백한다 (annual_leave._legal_basis_base 패턴).
+    """
+    try:
+        import importlib.util as _ilu
+
+        loader_path = pathlib.Path(__file__).resolve().parent / "ontology" / "loader.py"
+        spec = _ilu.spec_from_file_location("korea_ontology_loader", loader_path)
+        loader = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(loader)
+
+        root = (
+            pathlib.Path(wiki_root)
+            if wiki_root is not None
+            else pathlib.Path(__file__).resolve().parents[3] / "wiki" / "ontology"
+        )
+        nodes, _errors = loader.load_nodes(root, review_state="published")
+        for node in nodes:
+            if getattr(node, "node_id", None) == "근로기준법_제56조":
+                sources = getattr(node, "sources", None) or []
+                if sources:
+                    return sources[0]
+    except Exception:
+        pass
+    return LEGAL_BASIS_BASE_FALLBACK
+
 
 # 주 최대 연장 한도 — 근기법 §53①
 WEEKLY_OVERTIME_LIMIT_HOURS: float = 12.0

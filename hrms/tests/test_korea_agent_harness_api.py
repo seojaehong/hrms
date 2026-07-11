@@ -226,6 +226,8 @@ class TestCalcTools(unittest.TestCase):
 			"calc_daily_worker_payroll",
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
+			"calc_design_inclusive_wage",
+			"calc_audit_inclusive_wage",
 			"search_labor_knowledge",
 		):
 			self.assertIn(expected, names)
@@ -254,6 +256,34 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
 		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
 		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_design_inclusive_wage_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_design_inclusive_wage",
+			{"total_monthly": 2500000, "fixed_ot_hours": 20, "minimum_hourly_wage": 10320},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["base_pay"], 2186192)
+		self.assertEqual(result["result"]["fixed_ot_pay"], 313808)
+		self.assertEqual(result["result"]["total"], 2500000)
+		self.assertTrue(result["result"]["legal_floor_ok"])
+
+	def test_audit_inclusive_wage_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_audit_inclusive_wage",
+			{
+				"base_pay": 2156880,
+				"fixed_ot_pay": 250000,
+				"fixed_ot_hours": 20,
+				"minimum_hourly_wage": 10320,
+			},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["expected_ot_pay"], 309600)
+		self.assertEqual(result["result"]["ot_shortfall"], 59600)
+		self.assertTrue(any("부족" in w for w in result["result"]["warnings"]))
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

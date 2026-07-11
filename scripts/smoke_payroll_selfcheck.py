@@ -62,15 +62,15 @@ key = os.environ["API_SERVER_KEY"]
 provider = hermes_provider.make_hermes_provider(
     base_url=os.environ.get("HERMES_GATEWAY_URL", "http://127.0.0.1:8130"),
     credentials={"status": "ok", "api_key": key, "model": os.environ.get("HERMES_MODEL", "gpt-5.5")},
+    tool_specs={"get_payroll_calculations": {"description": "이번 달 급여 엔진 계산 확정값 조회 (주휴·일용 원천징수·통상시급)", "args": {}}},
 )
 
 result = api.run_agent_skill(
     "hr_freeform_qa",
     args={
-        "요청": "아래 엔진 확정값으로 3건을 검토 요약하라. 각 항목에 금액(원 단위 그대로)과 법적 근거 조항을 명시: "
+        "요청": "이번 달 급여 3건을 검토 요약하라. 반드시 도구로 엔진 확정값을 조회해 그 수치를 그대로 인용할 것(직접 계산 금지): "
         "①시급 10,320원·주 20시간·개근 알바의 1주 주휴수당 ②일급 160,000원 4일 일괄지급 일용직의 소득세·지방소득세·고용보험·실지급액 "
-        "③기본급 2,156,880원의 통상시급(÷209). 숫자는 계산값을 절대 바꾸지 말고 그대로 쓸 것.",
-        "engine_calculations": engine,
+        "③기본급 2,156,880원의 통상시급(÷209). 각 항목에 법적 근거 조항 명시.",
     },
     provider=provider,
     tool_registry=reg,
@@ -93,5 +93,6 @@ passed = sum(checks.values())
 print("--- 대조 결과 ---")
 for name, ok in checks.items():
     print(("PASS " if ok else "FAIL "), name, "=", engine[name])
-print(f"[verdict] {passed}/{len(checks)} 일치, harness status={result.get('status')}")
-sys.exit(0 if (passed == len(checks) and result.get("status") == "completed") else 1)
+tc = result.get("tool_calls") or []
+print(f"[verdict] {passed}/{len(checks)} 일치, tool_calls={len(tc)}, harness status={result.get('status')}")
+sys.exit(0 if (passed == len(checks) and result.get("status") == "completed" and len(tc) >= 1) else 1)

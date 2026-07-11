@@ -291,6 +291,7 @@ def _register_calc_tools(registry) -> None:
 
 	hourly = _load("hourly_wage")
 	daily = _load("daily_worker")
+	breakdown = _load("payslip_breakdown")
 
 	def calc_weekly_holiday_allowance(*, contracted_weekly_hours, hourly_rate, perfect_attendance=True):
 		allowance = hourly.weekly_holiday_allowance(
@@ -313,6 +314,9 @@ def _register_calc_tools(registry) -> None:
 
 	def calc_unused_leave_allowance(*, monthly_base_salary, unused_days):
 		return {"allowance": float(hourly.unused_leave_allowance(monthly_base_salary, unused_days))}
+
+	def calc_payslip_breakdown(**kwargs):
+		return breakdown.build_payslip_breakdown(**kwargs)
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -346,6 +350,16 @@ def _register_calc_tools(registry) -> None:
 	registry.register_tool(
 		"calc_unused_leave_allowance", calc_unused_leave_allowance,
 		{"description": "미사용 연차수당 = 기본급/209 x 8 x 미사용일수", "args": {"monthly_base_salary": "필수(원)", "unused_days": "필수"}},
+		True,
+	)
+	registry.register_tool(
+		"calc_payslip_breakdown", calc_payslip_breakdown,
+		{"description": "임금명세서 산정내역 분해(§48②) — 구성항목별 계산방법 문자열 + 공제내역 + 실지급액",
+		 "args": {"employee": "필수", "period": "필수(YYYY-MM)", "payment_date": "필수(YYYY-MM-DD)",
+			  "wage_type": "필수('monthly'|'hourly')", "base_salary": "monthly 필수(원)",
+			  "hourly_rate": "hourly 필수(원)", "contracted_weekly_hours": "hourly 필수",
+			  "regular_hours": "선택", "overtime_hours": "선택", "night_hours": "선택",
+			  "holiday_work_hours": "선택", "annual_leave_hours": "선택"}},
 		True,
 	)
 	registry.register_tool(

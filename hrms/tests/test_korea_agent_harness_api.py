@@ -226,6 +226,7 @@ class TestCalcTools(unittest.TestCase):
 			"calc_daily_worker_payroll",
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
+			"calc_payslip_breakdown",
 			"search_labor_knowledge",
 		):
 			self.assertIn(expected, names)
@@ -254,6 +255,24 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
 		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
 		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_payslip_breakdown_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_payslip_breakdown",
+			{
+				"employee": "김철수",
+				"period": "2026-07",
+				"payment_date": "2026-08-10",
+				"wage_type": "monthly",
+				"base_salary": 2156880,
+			},
+			human_approved=False,
+		)
+		payload = result["result"]
+		self.assertEqual(payload["gross_pay"], 2156880)
+		self.assertIn("209h", payload["earnings"][0]["basis"])
+		self.assertTrue(payload["compliance"]["compliant"])
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

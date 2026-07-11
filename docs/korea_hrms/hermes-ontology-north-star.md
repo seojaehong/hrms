@@ -36,11 +36,11 @@ SafeClaw·Korea HRMS의 AI 플레인을 **Hermes Agent(NousResearch, MIT, Python
 
 ## Korea HRMS 적용 관점 (현행 → 수렴)
 - 현행: `korea-hrms-mcp.service`(무상태 11도구) + 5채널 + retrieval-우선 노동법 Q&A. 이미 **무상태·MCP·retrieval·사람승인 게이트**를 갖춰 방향이 일치.
-- 수렴 경로(권장 순서, SafeClaw 전략 §5 준용):
-  1. **현행 유지** — 출시·초기검증은 현 MCP 구조로(훌륭한 MVP).
-  2. **Hermes PoC** — 별도 브랜치/레포에서 Hermes(Python) 기동, 기존 MCP 도구를 Hermes에 연결해 동일 동작 검증.
-  3. **백엔드 분리** — UI ─ API Gateway ─ Hermes Worker(Python) 마이크로서비스화, 세션상태 외부 DB.
-  4. **LLM Wiki 이관** — 노동법/급여규칙 지식을 온톨로지 md 노드로, HITL 게이트 + `validate-graph`/`seed-load` 파이프라인(SafeClaw 구현 재사용).
+- 수렴 경로(권장 순서, SafeClaw 전략 §5 준용) — **상태 2026-07-11**:
+  1. **현행 유지** ✅ — 출시·초기검증은 현 MCP 구조로(훌륭한 MVP). noho 라이브.
+  2. **Hermes PoC** ✅ — gateway systemd(`korea-hermes-gateway.service`, :8130, OAuth, 도구 잠금 [mcp-korea_hrms]) + 하네스 실 LLM 본스모크 completed(`scripts/smoke_hermes_harness.py`).
+  3. **백엔드 분리** ⬜ — UI ─ API Gateway ─ Hermes Worker(Python) 마이크로서비스화, 세션상태 외부 DB. 별도 인프라 트랙.
+  4. **LLM Wiki 이관** ✅ **실질 가동** — 노동법/급여규칙 지식 온톨로지 md 노드 14종(published 12), HITL 1차 승격 완료, validate-graph 게이트 편입, seed-load 실동: 최저임금·요율이 published 노드→엔진 로드(`get_statutory_value`/`resolve_rates`), 연차·가산·주휴 법적 근거 인용 배선.
 
 ## 불변 원칙 (수렴 중에도 유지)
 - 확정 행위(마감·신고 제출)는 항상 사람 승인 게이트 — 에이전트는 조회·계산·초안까지.

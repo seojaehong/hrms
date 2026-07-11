@@ -105,11 +105,36 @@ class TestKindCollision(unittest.TestCase):
 		self.assertEqual(_stat.get_minimum_hourly_wage(root, 2026), 10320)
 
 
+class TestGetStatutoryValue(unittest.TestCase):
+	"""일반 법정수치 리더 — 임의 node_id의 value를 published에서만 로드."""
+
+	def test_published_rate_loaded(self):
+		root = _wiki_with(_PUBLISHED_RATE)
+		self.assertAlmostEqual(_stat.get_statutory_value(root, "국민연금요율_2026", 2026), 0.0475)
+
+	def test_draft_returns_none(self):
+		root = _wiki_with(_DRAFT)
+		self.assertIsNone(_stat.get_statutory_value(root, "최저임금_2027", 2027))
+
+	def test_wrong_year_returns_none(self):
+		root = _wiki_with(_PUBLISHED_RATE)
+		self.assertIsNone(_stat.get_statutory_value(root, "국민연금요율_2026", 2027))
+
+	def test_unknown_node_returns_none(self):
+		root = _wiki_with(_PUBLISHED)
+		self.assertIsNone(_stat.get_statutory_value(root, "없는_노드", 2026))
+
+
 class TestRealRepoNode(unittest.TestCase):
 	def test_repo_has_published_2026_minimum_wage(self):
 		# 실제 레포 wiki에 2026 최저임금 published 노드가 있어야 한다
 		root = pathlib.Path(__file__).resolve().parents[2] / "wiki" / "ontology"
 		self.assertEqual(_stat.get_minimum_hourly_wage(root, 2026), 10320)
+
+	def test_repo_rates_published(self):
+		root = pathlib.Path(__file__).resolve().parents[2] / "wiki" / "ontology"
+		self.assertAlmostEqual(_stat.get_statutory_value(root, "국민연금요율_2026", 2026), 0.0475)
+		self.assertAlmostEqual(_stat.get_statutory_value(root, "건강보험요율_2026", 2026), 0.0719)
 
 
 if __name__ == "__main__":

@@ -51,6 +51,43 @@ EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_LARGE: float = 0.0065   # 1000인 �
 LOCAL_INCOME_TAX_RATE: float = 0.10  # 소득세의 10%
 
 # ---------------------------------------------------------------------------
+# 요율 해석 — published 온톨로지 노드 우선, 상수 폴백 (북극성 4단계 seed-load)
+# ---------------------------------------------------------------------------
+
+def resolve_rates(wiki_root: Any = None) -> dict:
+    """공제 요율을 published 법정수치 노드에서 우선 로드한다. 실패 시 모듈 상수 폴백.
+
+    반환: {pension_employee, health_employee, source: "ontology"|"constants"}.
+    framework-free — 온톨로지 리더는 spec 직접 로드(임포트·부재 내성).
+    """
+    if wiki_root is not None:
+        try:
+            import importlib.util as _ilu
+            import pathlib as _pl
+
+            stat_path = _pl.Path(__file__).resolve().parent / "ontology" / "statutory_ontology.py"
+            spec = _ilu.spec_from_file_location("korea_statutory_ontology", stat_path)
+            stat = _ilu.module_from_spec(spec)
+            spec.loader.exec_module(stat)
+
+            pension = stat.get_statutory_value(wiki_root, "국민연금요율_2026", 2026)
+            health_total = stat.get_statutory_value(wiki_root, "건강보험요율_2026", 2026)
+            if pension is not None and health_total is not None:
+                return {
+                    "pension_employee": pension,
+                    "health_employee": round(health_total / 2, 6),
+                    "source": "ontology",
+                }
+        except Exception:
+            pass
+    return {
+        "pension_employee": PENSION_RATE_EMPLOYEE,
+        "health_employee": HEALTH_RATE_EMPLOYEE,
+        "source": "constants",
+    }
+
+
+# ---------------------------------------------------------------------------
 # 내부 유틸리티
 # ---------------------------------------------------------------------------
 

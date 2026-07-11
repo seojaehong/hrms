@@ -22,6 +22,31 @@ def _loader():
 	return m
 
 
+def get_statutory_value(wiki_root: Any, node_id: str, year: int) -> float | None:
+	"""임의 법정수치 published 노드의 value를 float로 반환. 없으면 None.
+
+	kind=법정수치·node_id 정확 일치·effective_year 일치·published만 —
+	get_minimum_hourly_wage와 동일한 신뢰 규칙의 일반형 (요율 등 소수값용).
+	"""
+	loader = _loader()
+	nodes, _errors = loader.load_nodes(wiki_root, review_state="published")
+	for node in nodes:
+		fm = getattr(node, "frontmatter", None) or {}
+		if str(fm.get("kind") or getattr(node, "kind", "")).strip() != "법정수치":
+			continue
+		nid = str(fm.get("node_id") or getattr(node, "node_id", "")).strip()
+		if nid != str(node_id).strip():
+			continue
+		ey = fm.get("effective_year")
+		if ey is None or int(ey) != int(year):
+			continue
+		val = fm.get("value")
+		if val in (None, ""):
+			return None
+		return float(val)
+	return None
+
+
 def get_minimum_hourly_wage(wiki_root: Any, year: int) -> int | None:
 	"""해당 연도의 최저시급(원)을 published 노드에서 반환. 없으면 None.
 

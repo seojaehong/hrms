@@ -455,5 +455,28 @@ class TestOntologyConsistency(unittest.TestCase):
         self.assertAlmostEqual(_mod.HEALTH_RATE_EMPLOYEE, round(node_val / 2, 6), places=6)
 
 
+class TestResolveRates(unittest.TestCase):
+    """요율 노드 우선 로드 (상수 폴백) — 북극성 4단계 seed-load."""
+
+    def test_repo_wiki_returns_node_values(self):
+        wiki = _MODULE_PATH.resolve().parents[3] / "wiki" / "ontology"
+        rates = _mod.resolve_rates(wiki)
+        self.assertAlmostEqual(rates["pension_employee"], 0.0475)
+        self.assertAlmostEqual(rates["health_employee"], round(0.0719 / 2, 6))
+        self.assertEqual(rates["source"], "ontology")
+
+    def test_no_wiki_falls_back_to_constants(self):
+        rates = _mod.resolve_rates(None)
+        self.assertAlmostEqual(rates["pension_employee"], _mod.PENSION_RATE_EMPLOYEE)
+        self.assertAlmostEqual(rates["health_employee"], _mod.HEALTH_RATE_EMPLOYEE)
+        self.assertEqual(rates["source"], "constants")
+
+    def test_empty_wiki_falls_back(self):
+        import tempfile
+
+        rates = _mod.resolve_rates(pathlib.Path(tempfile.mkdtemp()))
+        self.assertEqual(rates["source"], "constants")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

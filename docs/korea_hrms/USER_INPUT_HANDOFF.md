@@ -61,19 +61,17 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 - **어떻게**: 내용 검토 후 frontmatter `review_state: draft` → `published` 로 바꿔 커밋
 - **⚠ 우선 검수**: `국민연금요율_2026`(4.75%)·`건강보험요율_2026`(3.595%) — 승격 시 Claude가 `statutory_2026.py` 2025요율 잔존(노호 트래커 #6) 정정 + 검증18 재대조 수행
 
-### N2. v2 시맨틱 활성화 — 키 파일 1개 (⏱️2분)
-- **어떻게**: 로컬에서 `scp C:/Users/iceam/dev/hrms/.env.smoke claudebot-2:~/workspaces/seojaehong-hrms-100h/docker/frappe.env`
-  (또는 Claude 세션에서 "키 전송 승인" — 화면 비노출 전송)
-- **후처리**: Claude가 GEMINI/SERVICE_KEY 줄 제거 + chmod 600 + `docker compose up -d frappe` + configured 검증. 파일 없으면 v1 폴백 무해
-- **적용값**: `YELLOW_ENVELOPE_SUPABASE_URL`, `YELLOW_ENVELOPE_SUPABASE_KEY`(anon), `OPENAI_API_KEY`
+### N2. v2 시맨틱 활성화 — ✅ **완료 (2026-07-11)**
+- 사용자 scp + Claude 정리(3변수만·600) → 컨테이너 재생성 → **프로덕션 검증: retriever configured=True, 실 시맨틱 검색 5건 반환**, noho HTTP 200
 
-### N3. Hermes gateway — ✅ **이미 가동 중 확인 (2026-07-11 실사)**
-- **실측**: `gateway/run.py`(PID ad-hoc, HERMES_HOME=`~/workspaces/hermes-agent/.hermes-home`)가 **:8130 api_server 라이브**, openai-codex **OAuth 인증 완료**(gpt-5.5), 도구 잠금 `platform_toolsets: api_server: [mcp-korea_hrms]` 적용, MCP :8100 라이브. 문서의 "OAuth 예정"은 낡은 정보였음.
-- **잔여(선택)**: ad-hoc 프로세스의 systemd 서비스화 — 유닛 초안이 준비되어 있으니 "korea gateway systemd 서비스 생성 승인"이라고 지시하면 Claude가 설치(기존 프로세스 교체 포함). 재부팅 생존이 필요해질 때 하면 됨.
+### N3. Hermes gateway — ✅ **systemd 서비스화 완료 (2026-07-11)**
+- `korea-hermes-gateway.service`(user unit) active — `hermes_cli.main gateway run --replace`, EnvironmentFile=`.hermes-home/gateway.env`(600, 새 API_SERVER_KEY 발급), 재부팅 생존, openai-codex OAuth(gpt-5.5), 도구 잠금 `[mcp-korea_hrms]`, MCP :8100 라이브
+- ⚠️ 바인딩이 **127.0.0.1:8130**(구 ad-hoc은 0.0.0.0 — 더 안전해짐). 컨테이너(frappe)에서 gateway 호출이 필요해지는 시점에 노출 범위 결정 필요: `API_SERVER_HOST=172.17.0.1` 추가(전 컨테이너 노출) vs ssh 터널/socat. **별도 승인 항목**.
 
-### N4. 실 LLM 스모크 — 🔶 1단계 성공, 하네스 경유 본스모크만 잔여
-- ✅ **1단계 (2026-07-11)**: gateway `/v1/chat/completions` 실호출 → gpt-5.5가 "주휴수당 = 주 15h 이상 + 개근" 정답 (온톨로지 노드와 일치, usage 4,211 tokens)
-- **잔여**: `run_agent_skill(hourly_closing_prep)` 하네스 전 구간 스모크. 스크립트 준비됨(`/tmp/smoke_n4.py` 서버 전송 완료). 실행에는 gateway `API_SERVER_KEY`가 필요 — 프로세스 env에만 존재해 Claude의 접근이 권한 정책상 차단됨. **"gateway API_SERVER_KEY 사용 승인"** 지시 또는 gateway를 systemd 서비스화(위 N3 잔여, EnvironmentFile로 키가 정규 위치에 생김)하면 Claude가 즉시 수행.
+### N4. 실 LLM 스모크 — ✅ **본스모크 완료 (2026-07-11)**
+- `run_agent_skill(hourly_closing_prep)` 하네스 전 구간(프롬프트 조립→PII 리댁션→agent_loop→HermesProvider→systemd gateway→gpt-5.5) `status: completed`
+- 요약 품질: 주휴 미충족(주 14h) 정확 판정·야간 0.5 가산 확인 지시·5인 사업장 확인·"1원 단위 대조" 불변 원칙 준수 — 프롬프트 하네스 주입 실증
+- 재실행: `scripts/smoke_hermes_harness.py` (서버에서 `. gateway.env` 후 실행, HRMS_REPO/HERMES_GATEWAY_URL env로 조정)
 
 ---
 

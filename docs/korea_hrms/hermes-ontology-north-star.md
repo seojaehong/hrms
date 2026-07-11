@@ -2,8 +2,10 @@
 
 > **★ 공식 Goal Set (사용자 확정, 2026-07-10)**: "온톨로지 + Hermes 기반 하네스 엔지니어링으로
 > 작동되는 HR SaaS." — 이 문서가 제품의 최상위 방향이다. 진행: 하네스 코어 완성(agent-harness-poc)
-> → Hermes 소스 안착·런타임 설치·키라우팅·Provider 어댑터 완료 → 남은 것: gateway 서비스 기동
-> (사용자 GPT OAuth 예정)·실 LLM 스모크·온톨로지 LLM Wiki 이관.
+> → Hermes 소스 안착·런타임 설치·키라우팅·Provider 어댑터 완료 → 온톨로지 LLM Wiki 이관 착수
+> (2026-07-11: 노드 8종 — 법령조항 §55·§56·§60 + 급여규칙 연차·주휴·가산 + 법정수치 최저임금, 게이트 그린.
+> published 승격은 노무사 HITL 몫) → 남은 것: gateway 서비스 기동(사용자 GPT OAuth 예정)·실 LLM 스모크·
+> Wiki 노드 지속 확충(4대보험·퇴직금 축).
 
 작성: 2026-07-09. 성격: **장기 아키텍처 북극성** — 지금 구현하지 않는다. 현행 구조(MCP 서비스 + 채널)는 유지하며, 아래로 점진 수렴한다.
 출처: `~/Downloads/SafeClaw_Agent_Architecture_Strategy.md`, `~/Downloads/SafeClaw 온톨로지 기반 LLM Wiki_ Human-in-the-loop 운영 계획.md` (둘 다 SafeClaw 기준. Korea HRMS AI 플레인도 "여기도" 동일 아키텍처로 수렴이 목표).

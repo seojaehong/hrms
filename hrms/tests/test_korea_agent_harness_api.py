@@ -227,6 +227,7 @@ class TestCalcTools(unittest.TestCase):
 			"calc_ordinary_hourly_wage",
 			"calc_unused_leave_allowance",
 			"search_labor_knowledge",
+			"calc_severance_settlement",
 		):
 			self.assertIn(expected, names)
 
@@ -254,6 +255,15 @@ class TestCalcTools(unittest.TestCase):
 		self.assertEqual(r1["result"]["ordinary_hourly_wage"], 10320.0)
 		r2 = reg.call("calc_unused_leave_allowance", {"monthly_base_salary": 2156880, "unused_days": 5}, human_approved=False)
 		self.assertEqual(r2["result"]["allowance"], 412800.0)
+
+	def test_severance_settlement_via_registry(self):
+		reg = self._registry()
+		result = reg.call(
+			"calc_severance_settlement",
+			{"severance_pay": 500_000, "service_years": 1},
+			human_approved=False,
+		)
+		self.assertEqual(result["result"]["income_tax"], 0)
 
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()

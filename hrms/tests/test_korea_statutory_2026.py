@@ -97,39 +97,39 @@ class TestHealthInsurance(unittest.TestCase):
         # 건강보험: 2,000,000 × 0.03595 = 71,900
         self.assertEqual(result["health_employee"], 71_900)
         self.assertEqual(result["health_employer"], 71_900)
-        # 장기요양: 71,900 × 0.1295 = 9,311.05 → 10원 절사 = 9,310
-        self.assertEqual(result["longterm_care_employee"], 9_310)
-        self.assertEqual(result["longterm_care_employer"], 9_310)
-        # 근로자 합계: 71,900 + 9,310 = 81,210
-        self.assertEqual(result["total_employee"], 81_210)
+        # 장기요양: 71,900 × 13.1405%(0.9448/7.19) = 9,448.0 → 10원 절사 = 9,440
+        self.assertEqual(result["longterm_care_employee"], 9_440)
+        self.assertEqual(result["longterm_care_employer"], 9_440)
+        # 근로자 합계: 71,900 + 9,440 = 81,340
+        self.assertEqual(result["total_employee"], 81_340)
 
     def test_500만원(self):
         result = _mod.calculate_health_insurance(5_000_000)
         # 건강보험: 5,000,000 × 0.03595 = 179,750
         self.assertEqual(result["health_employee"], 179_750)
-        # 장기요양: 179,750 × 0.1295 = 23,277.625 → 10원 절사 = 23,270
-        self.assertEqual(result["longterm_care_employee"], 23_270)
-        self.assertEqual(result["total_employee"], 179_750 + 23_270)
+        # 장기요양: 179,750 × 13.1405% = 23,620.0 → 10원 절사 = 23,620 (float 경계 방어)
+        self.assertEqual(result["longterm_care_employee"], 23_620)
+        self.assertEqual(result["total_employee"], 179_750 + 23_620)
 
     def test_600만원(self):
         result = _mod.calculate_health_insurance(6_000_000)
         # 건강보험: 6,000,000 × 0.03595 = 215,700
         self.assertEqual(result["health_employee"], 215_700)
-        # 장기요양: 215,700 × 0.1295 = 27,930.15 → 10원 절사 = 27,930
-        self.assertEqual(result["longterm_care_employee"], 27_930)
+        # 장기요양: 215,700 × 13.1405% = 28,344.0 → 10원 절사 = 28,340
+        self.assertEqual(result["longterm_care_employee"], 28_340)
 
     def test_30만원(self):
         result = _mod.calculate_health_insurance(300_000)
         # 건강보험: 300,000 × 0.03595 = 10,785.0
         self.assertEqual(result["health_employee"], 10_785)
-        # 장기요양: 10,785 × 0.1295 = 1,396.6575 → 10원 절사 = 1,390
-        self.assertEqual(result["longterm_care_employee"], 1_390)
+        # 장기요양: 10,785 × 13.1405% = 1,417.2 → 10원 절사 = 1,410
+        self.assertEqual(result["longterm_care_employee"], 1_410)
 
     def test_장기요양_10원절사(self):
-        # 100,000 × 0.03595 = 3,595 → 3,595 × 0.1295 = 465.5525 → 460
+        # 100,000 × 0.03595 = 3,595 → 3,595 × 13.1405% = 472.4 → 470
         result = _mod.calculate_health_insurance(100_000)
         self.assertEqual(result["health_employee"], 3_595)
-        self.assertEqual(result["longterm_care_employee"], 460)
+        self.assertEqual(result["longterm_care_employee"], 470)
 
 
 class TestEmploymentInsurance(unittest.TestCase):
@@ -304,7 +304,7 @@ class TestCalculateAllStatutory(unittest.TestCase):
         # 건강보험
         self.assertEqual(result["health"]["health_employee"], 71_900)
         # 장기요양
-        self.assertEqual(result["health"]["longterm_care_employee"], 9_310)
+        self.assertEqual(result["health"]["longterm_care_employee"], 9_440)
         # 고용보험
         self.assertEqual(result["employment_insurance"]["employee"], 18_000)
         # 소득세
@@ -313,7 +313,7 @@ class TestCalculateAllStatutory(unittest.TestCase):
         self.assertEqual(result["income_tax"]["local_income_tax"], 5_497)
 
         # 근로자 총 공제: 90,000 + 70,900 + 9,180 + 18,000 + 54,970 + 5,497 = 248,547
-        expected_employee = 95_000 + 71_900 + 9_310 + 18_000 + 54_970 + 5_497
+        expected_employee = 95_000 + 71_900 + 9_440 + 18_000 + 54_970 + 5_497
         self.assertEqual(result["summary"]["employee_total_deduction"], expected_employee)
 
     def test_500만원_전항목(self):
@@ -324,12 +324,12 @@ class TestCalculateAllStatutory(unittest.TestCase):
         )
         self.assertEqual(result["pension"]["employee"], 237_500)
         self.assertEqual(result["health"]["health_employee"], 179_750)
-        self.assertEqual(result["health"]["longterm_care_employee"], 23_270)
+        self.assertEqual(result["health"]["longterm_care_employee"], 23_620)
         self.assertEqual(result["employment_insurance"]["employee"], 45_000)
         self.assertEqual(result["income_tax"]["income_tax"], 358_400)
         self.assertEqual(result["income_tax"]["local_income_tax"], 35_840)
 
-        expected_employee = 237_500 + 179_750 + 23_270 + 45_000 + 358_400 + 35_840
+        expected_employee = 237_500 + 179_750 + 23_620 + 45_000 + 358_400 + 35_840
         self.assertEqual(result["summary"]["employee_total_deduction"], expected_employee)
 
     def test_600만원_국민연금_상한_확인(self):
@@ -342,7 +342,7 @@ class TestCalculateAllStatutory(unittest.TestCase):
         self.assertEqual(result["pension"]["employee"], 282_625)
         # 건강보험은 실제 6,000,000 기준
         self.assertEqual(result["health"]["health_employee"], 215_700)
-        self.assertEqual(result["health"]["longterm_care_employee"], 27_930)
+        self.assertEqual(result["health"]["longterm_care_employee"], 28_340)
 
     def test_30만원_국민연금_하한_확인(self):
         result = _mod.calculate_all_statutory(
@@ -410,7 +410,8 @@ class TestRateConstants(unittest.TestCase):
         self.assertAlmostEqual(_mod.HEALTH_RATE_EMPLOYER, 0.03595)
 
     def test_장기요양_요율(self):
-        self.assertAlmostEqual(_mod.LONGTERM_CARE_RATE, 0.1295)
+        # 2026 환산율 = 0.9448%(시행령 §4) ÷ 7.19% (12.95%는 2025년 값)
+        self.assertAlmostEqual(_mod.LONGTERM_CARE_RATE, 0.009448 / 0.0719)
 
     def test_고용보험_요율(self):
         self.assertAlmostEqual(_mod.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE, 0.009)
@@ -453,6 +454,27 @@ class TestOntologyConsistency(unittest.TestCase):
         node_val = self._published_value("건강보험요율_2026")
         self.assertIsNotNone(node_val, "건강보험요율_2026 published 노드가 없음")
         self.assertAlmostEqual(_mod.HEALTH_RATE_EMPLOYEE, round(node_val / 2, 6), places=6)
+
+    def test_employment_rate_matches_published_node(self):
+        node_val = self._published_value("고용보험요율_2026")
+        self.assertIsNotNone(node_val, "고용보험요율_2026 published 노드가 없음")
+        self.assertAlmostEqual(_mod.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE, node_val, places=6)
+
+    def test_longterm_rate_matches_published_nodes(self):
+        # 장기요양 환산율 = 법정 장기요양요율(보수 대비) ÷ 건강보험료율 (2026: 0.9448%/7.19% = 13.1405%)
+        lt = self._published_value("장기요양요율_2026")
+        hi = self._published_value("건강보험요율_2026")
+        self.assertIsNotNone(lt, "장기요양요율_2026 published 노드가 없음")
+        self.assertAlmostEqual(_mod.LONGTERM_CARE_RATE, lt / hi, places=6)
+
+
+class TestEmploymentInsuranceXLarge(unittest.TestCase):
+    """고용안정 라목 — 1천명 이상(우선지원 외)·국가/지자체: 0.85% (시행령 §12①1라)."""
+
+    def test_xlarge_사업장(self):
+        result = _mod.calculate_employment_insurance(5_000_000, "xlarge")
+        # 고용안정(xlarge): 5,000,000 × 0.0085 = 42,500
+        self.assertEqual(result["employer_stability"], 42_500)
 
 
 class TestResolveRates(unittest.TestCase):

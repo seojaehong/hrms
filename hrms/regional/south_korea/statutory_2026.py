@@ -12,7 +12,7 @@
 출처 및 적용 기준:
   - 국민연금: 2026년 요율 각 4.75% (연금개혁 단계인상, §88③·published 노드 국민연금요율_2026). 상한 5,950,000 / 하한 380,000 (2025.7.1 기준, 매년 7월 갱신)
   - 건강보험: 2026년 요율 7.19% (근로자 3.595%, 사업주 3.595% — 시행령 §44①, published 노드 건강보험요율_2026)
-  - 장기요양: 건강보험료의 12.95% (2026년 기준)
+  - 장기요양: 건강보험료의 13.1405% (2026 환산율 = 0.9448%/7.19%, 시행령 §4)
   - 고용보험: 2026년 실업급여 근로자 0.9%, 사업주 0.9%
   - 소득세: 국세청 근로소득 간이세액표 기반 (2026년 고시)
 """
@@ -37,15 +37,18 @@ PENSION_MAX_BASE: int = 5_950_000  # 월 기준소득월액 상한 (2025.7.1 기
 # 건강보험 (Health Insurance)
 HEALTH_RATE_EMPLOYEE: float = 0.03595
 HEALTH_RATE_EMPLOYER: float = 0.03595
-LONGTERM_CARE_RATE: float = 0.1295  # 장기요양보험 = 건강보험료의 12.95%
+# 장기요양 환산율 = 법정 요율(보수 대비, 시행령 §4 0.9448%) ÷ 건강보험료율(7.19%) = 13.1405%
+# (12.95%는 2025년 환산율 — published 노드 장기요양요율_2026·건강보험요율_2026 정합)
+LONGTERM_CARE_RATE: float = 0.009448 / 0.0719
 
 # 고용보험 (Employment Insurance)
 EMPLOYMENT_INSURANCE_RATE_EMPLOYEE: float = 0.009  # 실업급여 근로자 부담
 EMPLOYMENT_INSURANCE_RATE_EMPLOYER_BASE: float = 0.009  # 실업급여 사업주 부담
 # 고용안정/직업능력개발 사업주 추가 부담 (사업장 규모별)
-EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_SMALL: float = 0.0025   # 150인 미만
-EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_MEDIUM: float = 0.0045  # 150인 이상 우선지원대상
-EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_LARGE: float = 0.0065   # 1000인 이상
+EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_SMALL: float = 0.0025   # 150인 미만 (§12①1가)
+EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_MEDIUM: float = 0.0045  # 150인 이상 우선지원대상기업 (§12①1나)
+EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_LARGE: float = 0.0065   # 150인 이상 1천명 미만, 우선지원 외 (§12①1다)
+EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_XLARGE: float = 0.0085  # 1천명 이상(우선지원 외)·국가/지자체 (§12①1라)
 
 # 지방소득세 (Local Income Tax)
 LOCAL_INCOME_TAX_RATE: float = 0.10  # 소득세의 10%
@@ -137,7 +140,7 @@ def calculate_pension(monthly_base: float) -> dict[str, Any]:
 def calculate_health_insurance(monthly_base: float) -> dict[str, Any]:
     """건강보험 + 장기요양보험 계산.
 
-    장기요양보험료는 '건강보험료(원단위 절사 후)' × 12.95%로 산출하고 10원 단위 절사.
+    장기요양보험료는 '건강보험료(원단위 절사 후)' × 13.1405%(2026 환산율)로 산출하고 10원 단위 절사.
 
     Args:
         monthly_base: 보수월액 (비과세 제외 월급여).
@@ -156,9 +159,11 @@ def calculate_health_insurance(monthly_base: float) -> dict[str, Any]:
     health_employee = _truncate(base * HEALTH_RATE_EMPLOYEE)
     health_employer = _truncate(base * HEALTH_RATE_EMPLOYER)
 
-    # 장기요양보험: 건강보험료 기준, 10원 단위 절사
-    longterm_employee = _truncate_10(health_employee * LONGTERM_CARE_RATE)
-    longterm_employer = _truncate_10(health_employer * LONGTERM_CARE_RATE)
+    # 장기요양보험: 건강보험료 기준, 10원 단위 절사.
+    # 환산율이 무한소수(9448/71900)라 float 오차로 정확한 10원 배수(예: 23,620.0)가
+    # 23,619.99997로 밀려 한 단계 더 절사되는 것을 round(…, 2)로 방어한다.
+    longterm_employee = _truncate_10(round(health_employee * LONGTERM_CARE_RATE, 2))
+    longterm_employer = _truncate_10(round(health_employer * LONGTERM_CARE_RATE, 2))
 
     return {
         "health_employee": health_employee,
@@ -182,10 +187,11 @@ def calculate_employment_insurance(
 
     Args:
         monthly_base: 월평균 보수.
-        company_size: 사업장 규모.
+        company_size: 사업장 규모 (시행령 §12①1 가~라).
             "small"  — 150인 미만 (고용안정 0.25%)
             "medium" — 150인 이상 우선지원대상기업 (0.45%)
-            "large"  — 1,000인 이상 또는 국가·지자체 (0.65%)
+            "large"  — 150인 이상 1천명 미만, 우선지원 외 (0.65%)
+            "xlarge" — 1천명 이상(우선지원 외) 또는 국가·지자체 (0.85%)
 
     Returns:
         {
@@ -200,6 +206,7 @@ def calculate_employment_insurance(
         "small": EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_SMALL,
         "medium": EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_MEDIUM,
         "large": EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_LARGE,
+        "xlarge": EMPLOYMENT_INSURANCE_RATE_EMPLOYER_STABILITY_XLARGE,
     }
     if company_size not in stability_map:
         raise ValueError(

@@ -237,7 +237,8 @@ class TestLeaveOfAbsenceCore(unittest.TestCase):
         )
         self.assertTrue(result["pension_continues"])
         # 사업주 부담 4.5% = 135,000원
-        self.assertEqual(result["pension_employer_payment"], 135_000)
+        # 3,000,000 × 4.75% (2026 연금개혁, statutory_2026 단일소스) = 142,500
+        self.assertEqual(result["pension_employer_payment"], 142_500)
         self.assertTrue(result["pension_employee_deferred"])
         self.assertTrue(result["health_insurance_continues"])
         self.assertTrue(result["employment_insurance_continues"])
@@ -576,7 +577,8 @@ class TestLeaveOfAbsenceApi(unittest.TestCase):
             }
         )
         self.assertTrue(result["pension_continues"])
-        self.assertEqual(result["pension_employer_payment"], 135_000)
+        # 3,000,000 × 4.75% (2026 연금개혁, statutory_2026 단일소스) = 142,500
+        self.assertEqual(result["pension_employer_payment"], 142_500)
         self.assertTrue(result["pension_employee_deferred"])
 
     def test_api_calculate_childcare_benefit_month1(self):

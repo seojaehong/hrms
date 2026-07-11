@@ -38,7 +38,7 @@ VISA_TYPES: dict[str, dict[str, Any]] = {
         "health_insurance_required": True,
         "employment_insurance_required": True,
         "industrial_accident_required": True,     # 산재: 사업주 100%, 모든 비자
-        "long_term_care_required": True,           # 장기요양: 건강보험료의 12.95% (2024)
+        "long_term_care_required": True,           # 장기요양: 건강보험료 기반 (요율=statutory_2026 단일소스)
         "max_weekly_overtime_hours": 12,           # 근로기준법 §53
         "workplace_change_limit_per_year": 1,     # 외고법 §25 (1년 1회, 사유 있을 시 허가)
         "income_tax_rule": "resident",            # 거주자: 국내원천소득 일반세율
@@ -469,17 +469,35 @@ def _compute_applicable_insurances(
 # 공개 API — 4대보험 금액 계산
 # ---------------------------------------------------------------------------
 
-# 2024년 기준 요율 (매년 고시 변경될 수 있음)
-_RATES_2024: dict[str, float] = {
-    "national_pension_employee_rate": 0.045,   # 4.5% (사용자 4.5%, 합계 9%)
-    "national_pension_employer_rate": 0.045,
-    "health_insurance_employee_rate": 0.03545, # 3.545% (2024)
-    "health_insurance_employer_rate": 0.03545,
-    "long_term_care_rate_on_health": 0.1295,   # 건강보험료의 12.95% (2024)
-    "employment_insurance_employee_rate": 0.009,  # 0.9% (실업급여)
-    "employment_insurance_employer_rate": 0.009,  # 0.9% + 고용안정·직능개발 별도
+# 요율 단일소스 = statutory_2026 (연도별 하드코딩 혼재 사고 방지 — 검증18 코드측 대책)
+def _load_statutory_2026():
+    import importlib.util as _ilu
+    import pathlib as _pl
+
+    path = _pl.Path(__file__).resolve().parent / "statutory_2026.py"
+    spec = _ilu.spec_from_file_location("korea_statutory_2026", path)
+    mod = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_STAT = _load_statutory_2026()
+
+_RATES: dict[str, float] = {
+    "national_pension_employee_rate": _STAT.PENSION_RATE_EMPLOYEE,
+    "national_pension_employer_rate": _STAT.PENSION_RATE_EMPLOYER,
+    "health_insurance_employee_rate": _STAT.HEALTH_RATE_EMPLOYEE,
+    "health_insurance_employer_rate": _STAT.HEALTH_RATE_EMPLOYER,
+    "long_term_care_rate_on_health": _STAT.LONGTERM_CARE_RATE,
+    "employment_insurance_employee_rate": _STAT.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE,
+    "employment_insurance_employer_rate": _STAT.EMPLOYMENT_INSURANCE_RATE_EMPLOYER_BASE,
     "industrial_accident_rate": 0.0,           # 업종별 상이 — 사업주 전액 (계산 제외)
 }
+
+
+def get_insurance_rates() -> dict[str, float]:
+    """현행 4대보험 요율(사본) — statutory_2026 단일소스."""
+    return dict(_RATES)
 
 
 def calculate_foreign_worker_insurance(
@@ -532,7 +550,7 @@ def calculate_foreign_worker_insurance(
     """
     rules = VISA_TYPES.get(visa_type.upper() if visa_type else "", {})
     salary = float(monthly_base_salary or 0)
-    rates = _RATES_2024
+    rates = _RATES
 
     # 연금 면제 여부 결정
     pension_exempt = pension_treaty_country or is_treaty_country(country_of_origin.upper())
@@ -555,7 +573,7 @@ def calculate_foreign_worker_insurance(
     emp_health = round(salary * rates["health_insurance_employee_rate"]) if health_base else 0.0
     er_health = round(salary * rates["health_insurance_employer_rate"]) if health_base else 0.0
 
-    # 장기요양 (건강보험료 × 12.95%)
+    # 장기요양 (건강보험료 × LONGTERM_CARE_RATE — statutory_2026)
     emp_ltc = round(emp_health * rates["long_term_care_rate_on_health"]) if health_base else 0.0
     er_ltc = round(er_health * rates["long_term_care_rate_on_health"]) if health_base else 0.0
 

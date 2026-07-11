@@ -88,10 +88,23 @@ LEAVE_TYPES: dict[str, dict[str, Any]] = {
     },
 }
 
-# 4대보험 요율 (2026년 기준)
-PENSION_EMPLOYER_RATE = 0.045       # 국민연금 사용자 부담 4.5%
-PENSION_EMPLOYEE_RATE = 0.045       # 국민연금 근로자 부담 4.5%
-HEALTH_INSURANCE_EMPLOYER_RATE = 0.03545  # 건강보험 사용자 부담 (장기요양 포함 근사값)
+# 4대보험 요율 — statutory_2026 단일소스 (연도별 하드코딩 혼재 사고 방지)
+def _load_statutory_2026():
+    import importlib.util as _ilu
+    import pathlib as _pl
+
+    path = _pl.Path(__file__).resolve().parent / "statutory_2026.py"
+    spec = _ilu.spec_from_file_location("korea_statutory_2026", path)
+    mod = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_STAT = _load_statutory_2026()
+
+PENSION_EMPLOYER_RATE = _STAT.PENSION_RATE_EMPLOYER  # 국민연금 사용자 부담 (2026: 4.75%)
+PENSION_EMPLOYEE_RATE = _STAT.PENSION_RATE_EMPLOYEE  # 국민연금 근로자 부담 (2026: 4.75%)
+HEALTH_INSURANCE_EMPLOYER_RATE = _STAT.HEALTH_RATE_EMPLOYER  # 건강보험 사용자 부담 (2026: 3.595%)
 
 # 육아휴직급여 구간 (leave_month_index 기준)
 _CHILDCARE_BENEFIT_TIERS = [

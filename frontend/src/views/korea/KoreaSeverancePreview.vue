@@ -123,6 +123,14 @@
 					</div>
 				</div>
 
+				<!-- 퇴직정산(통합) 바로가기 -->
+				<router-link
+					:to="{ name: 'KoreaSeveranceSettlement' }"
+					class="w-full py-3 border border-black text-black text-sm rounded-full font-semibold text-center hover:bg-black/5 active:bg-black/10 transition-colors"
+				>
+					{{ __('퇴직정산 (통합) — 세금·건보정산까지 계산') }}
+				</router-link>
+
 				<!-- 면책 고지 -->
 				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
 					<span class="font-semibold text-black">참고용 미리보기입니다.</span>

@@ -31,6 +31,11 @@ const routes = [
 		component: () => import("@/views/korea/KoreaPayrollExcel.vue"),
 	},
 	{
+		name: "KoreaSeveranceSettlement",
+		path: "/dashboard/korea-severance-settlement",
+		component: () => import("@/views/korea/KoreaSeveranceSettlement.vue"),
+	},
+	{
 		name: "KoreaInclusiveWage",
 		path: "/dashboard/korea-inclusive-wage",
 		component: () => import("@/views/korea/KoreaInclusiveWage.vue"),

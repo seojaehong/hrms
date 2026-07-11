@@ -10,8 +10,8 @@
   - 지방세: 원단위 절사 (int(x))
 
 출처 및 적용 기준:
-  - 국민연금: 2025.7.1 기준 상한 5,950,000 / 하한 380,000 (매년 7월 갱신)
-  - 건강보험: 2026년 요율 (근로자 3.545%, 사업주 3.545%)
+  - 국민연금: 2026년 요율 각 4.75% (연금개혁 단계인상, §88③·published 노드 국민연금요율_2026). 상한 5,950,000 / 하한 380,000 (2025.7.1 기준, 매년 7월 갱신)
+  - 건강보험: 2026년 요율 7.19% (근로자 3.595%, 사업주 3.595% — 시행령 §44①, published 노드 건강보험요율_2026)
   - 장기요양: 건강보험료의 12.95% (2026년 기준)
   - 고용보험: 2026년 실업급여 근로자 0.9%, 사업주 0.9%
   - 소득세: 국세청 근로소득 간이세액표 기반 (2026년 고시)
@@ -29,14 +29,14 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 # 국민연금 (National Pension)
-PENSION_RATE_EMPLOYEE: float = 0.045
-PENSION_RATE_EMPLOYER: float = 0.045
+PENSION_RATE_EMPLOYEE: float = 0.0475
+PENSION_RATE_EMPLOYER: float = 0.0475
 PENSION_MIN_BASE: int = 380_000   # 월 기준소득월액 하한 (2025.7.1 기준)
 PENSION_MAX_BASE: int = 5_950_000  # 월 기준소득월액 상한 (2025.7.1 기준)
 
 # 건강보험 (Health Insurance)
-HEALTH_RATE_EMPLOYEE: float = 0.03545
-HEALTH_RATE_EMPLOYER: float = 0.03545
+HEALTH_RATE_EMPLOYEE: float = 0.03595
+HEALTH_RATE_EMPLOYER: float = 0.03595
 LONGTERM_CARE_RATE: float = 0.1295  # 장기요양보험 = 건강보험료의 12.95%
 
 # 고용보험 (Employment Insurance)

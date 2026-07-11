@@ -56,10 +56,9 @@ BACKUP_S3_BUCKET=s3://hrms-backup AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=..
 
 배경: v2 시맨틱 RAG 배포 완료(develop 8dc039d53, noho 200)·온톨로지 12노드 게이트 그린·compose env_file 사전배선 완료. 아래 4건만 사람 몫.
 
-### N1. 온톨로지 draft 12노드 → published 승격 — 노무사 검수 (HITL, 에이전트 금지)
-- **어디서**: `wiki/ontology/` (법령조항 4·급여규칙 4·법정수치 4)
-- **어떻게**: 내용 검토 후 frontmatter `review_state: draft` → `published` 로 바꿔 커밋
-- **⚠ 우선 검수**: `국민연금요율_2026`(4.75%)·`건강보험요율_2026`(3.595%) — 승격 시 Claude가 `statutory_2026.py` 2025요율 잔존(노호 트래커 #6) 정정 + 검증18 재대조 수행
+### N1. 온톨로지 HITL 1차 승격 — ✅ **완료 (2026-07-11, e6dfac28a)**
+- 노무사 세션 검수 패킷 4그룹 전체 승인 → 11노드 published (총 12/12). 최저임금 조회 kind충돌 방어(tdd) 포함, korea 전체 128/1683 그린, 서버 배포·noho 200
+- **후속 잔여**: `statutory_2026.py` 2025요율 잔존 정정(국연 4.75%·건강 3.595%, 노호 트래커 #6) + /급여검증 검증18 실데이터 재대조 — 급여 캐스케이드라 노호 6월 급여 착수 전 별도 작업으로 진행 권장
 
 ### N2. v2 시맨틱 활성화 — ✅ **완료 (2026-07-11)**
 - 사용자 scp + Claude 정리(3변수만·600) → 컨테이너 재생성 → **프로덕션 검증: retriever configured=True, 실 시맨틱 검색 5건 반환**, noho HTTP 200

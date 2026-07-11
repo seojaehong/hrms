@@ -8,7 +8,8 @@
 > openai-codex OAuth 완료, gpt-5.5, 도구 잠금 [mcp-korea_hrms], MCP :8100 라이브) → **2026-07-11 전 단계 완료**:
 > v2 시맨틱 프로덕션 활성화(retriever configured, noho 200) + gateway systemd화(korea-hermes-gateway.service,
 > 127.0.0.1:8130) + 하네스 본스모크 completed(hourly_closing_prep 실 LLM, scripts/smoke_hermes_harness.py).
-> 남은 것: HITL published 승격(노무사)·컨테이너→gateway 노출 결정·Wiki 노드 지속 확충. 상세: USER_INPUT_HANDOFF.md §북극성 트랙.
+> **HITL 1차 승격 완료**(2026-07-11 노무사 승인, 12/12 published, e6dfac28a) — **북극성 1단계(Hermes PoC+온톨로지 M2) 종결.**
+> 다음: 엔진 2026요율 정정(트래커 #6)·컨테이너→gateway 노출 결정·Wiki 노드 지속 확충·백엔드 분리(수렴 3단계). 상세: USER_INPUT_HANDOFF.md §북극성 트랙.
 
 작성: 2026-07-09. 성격: **장기 아키텍처 북극성** — 지금 구현하지 않는다. 현행 구조(MCP 서비스 + 채널)는 유지하며, 아래로 점진 수렴한다.
 출처: `~/Downloads/SafeClaw_Agent_Architecture_Strategy.md`, `~/Downloads/SafeClaw 온톨로지 기반 LLM Wiki_ Human-in-the-loop 운영 계획.md` (둘 다 SafeClaw 기준. Korea HRMS AI 플레인도 "여기도" 동일 아키텍처로 수렴이 목표).

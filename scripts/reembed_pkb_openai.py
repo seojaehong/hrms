@@ -63,10 +63,11 @@ def main():
 
     sb_headers = {"apikey": svc, "Authorization": f"Bearer {svc}",
                   "Content-Type": "application/json"}
+    ses = requests.Session()  # keep-alive — 건당 TLS 핸드셰이크 제거(개별 PATCH 속도 핵심)
     total = 0
     while True:
         # 1) 아직 embedding_1536 없는 청크 배치 조회(service_role → RLS 우회)
-        rows = requests.get(
+        rows = ses.get(
             f"{url}/rest/v1/pkb_chunks",
             headers=sb_headers,
             params={"select": "id,content", "embedding_1536": "is.null",
@@ -80,7 +81,7 @@ def main():
         texts = [core.truncate_for_embedding(r["content"]) for r in rows]
 
         # 2) OpenAI 배치 임베딩(1536)
-        er = requests.post(
+        er = ses.post(
             "https://api.openai.com/v1/embeddings",
             headers={"Authorization": f"Bearer {openai_key}",
                      "Content-Type": "application/json"},
@@ -91,7 +92,7 @@ def main():
 
         # 3) 개별 PATCH로 기록(service_role)
         for cid, vec in zip(ids, vectors):
-            pr = requests.patch(
+            pr = ses.patch(
                 f"{url}/rest/v1/pkb_chunks",
                 headers=sb_headers, params={"id": f"eq.{cid}"},
                 json={"embedding_1536": "[" + ",".join(map(str, vec)) + "]"},

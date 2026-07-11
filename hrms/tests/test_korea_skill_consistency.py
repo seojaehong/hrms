@@ -64,35 +64,30 @@ class TestDailyWorkerDecidedTax(unittest.TestCase):
         self.assertEqual(result["income_tax_per_day"], skill_value)
 
     def test_일급_187000원_이하_1일_소액부징수_0원(self):
-        # 187,000원 이하 → 스킬·엔진 모두 그 날 세액 0 (docs §1 "일치" 구간)
+        # 1일 지급: 일별 결정세액 999원 < 1,000원 → 소액부징수로 납부세액 0 (소득세법 §86)
         result = _daily.calculate_daily_worker_payroll(daily_wage=187_000, days_worked=1)
-        self.assertEqual(result["income_tax_per_day"], 0.0)
+        self.assertEqual(result["income_tax_per_day"], 999.0)  # 결정세액 (징수 전)
         self.assertEqual(result["income_tax_total"], 0.0)
 
-    def test_일급_160000원_4일_합산_스킬규칙이면_과세_엔진은_0원_불일치기록(self):
-        """불일치 기록 테스트 (docs §1 "소액부징수 판단 단위" 불일치).
+    def test_일급_160000원_4일_지급합산_소액부징수_미적용_과세(self):
+        """소액부징수는 지급분 원천징수세액 합산 기준 (2026-07-11 국세청 기준 정렬 완료).
 
-        스킬 규칙(~/.claude/skills/일용직세금/SKILL.md §2): 원천징수세액을
-        신고근무일수만큼 **합산**한 값이 1,000원 미만이면 소득세 0 — 즉 합산 후 판단.
-        일급 160,000원(과세표준 10,000 × 2.7% = 270원/일) × 4일 합산 = 1,080원 ≥ 1,000원
-        → 스킬 규칙이면 4일치 과세(1,080원, 10원 절사 시 1,080원 그대로).
-
-        엔진(daily_worker.py:_calc_daily_income_tax): 일급 ≤ 187,000원이면 그 날 세액을
-        **무조건 0**으로 처리(일급 단위 판단, 합산 판단 아님) → 4일 모두 0원, 총액도 0원.
-
-        노무사 판단 필요(Task 1 인계). 엔진 로직 변경 금지 — 현재 엔진값만 assert.
+        근거: 소득세법 §86 "원천징수세액이 1천원 미만" (법제처 원문) + 행정해석
+        (일괄 지급 시 일별 징수세액 합계 기준 판단). 스킬 규칙과 동일.
+        일급 160,000원 → 일별 결정세액 (160,000−150,000)×2.7% = 270원.
+        4일 일괄지급 → 합산 1,080원 ≥ 1,000원 → 과세, 납부세액 10원 절사 = 1,080원.
         """
-        skill_expected_if_summed = 270 * 4  # = 1,080원 (스킬 규칙이라면 과세)
-        self.assertEqual(skill_expected_if_summed, 1_080)
-
         result = _daily.calculate_daily_worker_payroll(daily_wage=160_000, days_worked=4)
-        # 현재 엔진값: 일급 160,000 ≤ 187,000 → 항상 0 (스킬 규칙과 다름, 기록만)
-        self.assertEqual(result["income_tax_per_day"], 0.0)
-        self.assertEqual(result["income_tax_total"], 0.0)
-        self.assertNotEqual(result["income_tax_total"], skill_expected_if_summed)
+        self.assertEqual(result["income_tax_per_day"], 270.0)
+        self.assertEqual(result["income_tax_total"], 1_080.0)
 
-    def test_일급_215000원_4일_절사순서_불일치기록(self):
-        """불일치 기록 테스트 (docs §1 "절사 순서" 불일치, docs §3 갱신분).
+    def test_일급_160000원_3일_지급합산_1000원미만_소액부징수(self):
+        # 270 × 3 = 810원 < 1,000원 → 소액부징수 0 (소득세법 §86)
+        result = _daily.calculate_daily_worker_payroll(daily_wage=160_000, days_worked=3)
+        self.assertEqual(result["income_tax_total"], 0.0)
+
+    def test_일급_215000원_4일_절사순서_납부시_10원절사(self):
+        """절사 순서: 일별 1원 단위 합산 → 납부(총액) 시 10원 미만 절사.
 
         스킬 규칙(~/.claude/skills/일용직세금/SKILL.md §2): 일별 결정세액은 **1원 단위**로만
         truncate 후 신고근무일만큼 합산하고, **최종 납부세액만 10원 단위 절사**한다.
@@ -108,18 +103,13 @@ class TestDailyWorkerDecidedTax(unittest.TestCase):
         0원으로 일치해 이 절사순서 불일치를 드러내지 못한다 — 경계 위 일급으로 교체해
         값이 실제로 갈리는 사례를 기록했다.)
 
-        노무사 판단 필요(Task 1 인계). 엔진 로직 변경 금지 — 현재 엔진값만 assert.
+        2026-07-11 국세청 기준 정렬 완료 — 근거: 국고금관리법 §47①(10원 절사는
+        수입·지출=납부 단계) + 국세청 계산례(매일 세액 합산 후 납부 시 절사). 스킬 규칙과 동일.
         """
-        skill_per_day_truncated = int((215_000 - 150_000) * 0.027)  # = 1,755 (정수, truncate no-op)
-        self.assertEqual(skill_per_day_truncated, 1_755)
-        skill_expected_total = (skill_per_day_truncated * 4 // 10) * 10  # 최종 10원 절사 = 7,020
-        self.assertEqual(skill_expected_total, 7_020)
-
         result = _daily.calculate_daily_worker_payroll(daily_wage=215_000, days_worked=4)
-        # 현재 엔진값: 일별 절사(1,755→1,750) 후 합산 = 7,000 (스킬 규칙과 20원 차이, 기록만)
-        self.assertEqual(result["income_tax_per_day"], 1_750.0)
-        self.assertEqual(result["income_tax_total"], 7_000.0)
-        self.assertNotEqual(result["income_tax_total"], skill_expected_total)
+        # 일별 결정세액 1원 단위(1,755) 유지 → 합산 7,020 → 납부 10원 절사 = 7,020
+        self.assertEqual(result["income_tax_per_day"], 1_755.0)
+        self.assertEqual(result["income_tax_total"], 7_020.0)
 
 
 # =============================================================================

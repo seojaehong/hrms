@@ -3,7 +3,7 @@ Korean daily worker (일용근로자) payroll calculation — framework-free mod
 
 Legal basis (2026 standards):
   - 소득세법 제22조 (일용근로소득) / 소득세법 제47조의2 (일용근로소득공제)
-  - 일용근로소득 비과세 한도: 일급 187,000원 이하 (소액부징수 실질 기준)
+  - 소액부징수: 지급분 원천징수세액 합산 1,000원 미만 (소득세법 §86 — 1일 지급 기준 일급 187,000원 이하)
   - 일용근로소득공제: 일당 150,000원
   - 분리과세율: 6% × (1 - 55% 세액공제) = 2.7%
   - 지방소득세: 원천징수 소득세의 10%
@@ -26,7 +26,8 @@ from __future__ import annotations
 # 2026년 기준 상수
 # ---------------------------------------------------------------------------
 
-DAILY_TAX_EXEMPT_LIMIT = 187_000        # 소액부징수 실질 비과세 일급 한도 (원)
+DAILY_TAX_EXEMPT_LIMIT = 187_000        # 1일 지급 시 소액부징수 경계 일급 (참고치 — 판정은 지급분 세액 합산 기준)
+SMALL_AMOUNT_WITHHOLDING_THRESHOLD = 1_000  # 소액부징수 기준 (소득세법 §86 — 지급분 원천징수세액 합산)
 DAILY_WORKING_DEDUCTION_AMOUNT = 150_000  # 일용근로소득공제 (원/일)
 
 _SEPARATION_TAX_RATE = 0.06             # 분리과세율 6%
@@ -110,13 +111,18 @@ def calculate_daily_worker_payroll(
     taxable_wages = taxable_per_day * days_worked
 
     # -----------------------------------------------------------------------
-    # 3. 소득세 계산 (분리과세)
-    #    과세 기준: (일급 − 150,000) × 2.7%
-    #    소액부징수: 일급 ≤ 187,000원이면 0원
-    #    (187,000 − 150,000) × 0.027 = 999원 < 1,000원 → 0으로 처리
+    # 3. 소득세 계산 (분리과세) — 2026-07-11 국세청 기준 정렬
+    #    일별 결정세액(1원 절사) × 일수 = 지급분 원천징수세액
+    #    소액부징수: 지급분 합산 세액 < 1,000원이면 0 (소득세법 §86 — 세액 기준.
+    #      일급 187,000원 이하라도 다일 일괄지급 합산이 1,000원 이상이면 과세)
+    #    납부세액: 합산액에서 10원 미만 절사 (국고금관리법 §47①)
     # -----------------------------------------------------------------------
     income_tax_per_day = _calc_daily_income_tax(daily_wage)
-    income_tax_total = income_tax_per_day * days_worked
+    withholding_sum = income_tax_per_day * days_worked
+    if withholding_sum < SMALL_AMOUNT_WITHHOLDING_THRESHOLD:
+        income_tax_total = 0.0  # 소액부징수 (소득세법 §86)
+    else:
+        income_tax_total = _floor10(withholding_sum)
 
     # -----------------------------------------------------------------------
     # 4. 지방소득세 (소득세 × 10%, 10원 절사)
@@ -161,32 +167,34 @@ def calculate_daily_worker_payroll(
 
 def _calc_daily_income_tax(daily_wage: float) -> float:
     """
-    일별 분리과세 소득세를 계산한다.
+    일별 결정세액(분리과세)을 계산한다 — 1원 단위 절사.
 
     공식:
         과세표준 = max(0, 일급 − 150,000)
-        세액     = 과세표준 × 6% × (1 − 55%) = 과세표준 × 2.7%
-        소액부징수: 일급 ≤ 187,000이면 0원 반환
-                   (계산 결과 999원 < 1,000원, 실무상 0으로 처리)
+        일별 결정세액 = 과세표준 × 6% × (1 − 55%) = 과세표준 × 2.7% (1원 미만 절사)
+
+    끝수 처리 근거(2026-07-11 국세청 기준 정렬):
+        10원 미만 절사는 국고금관리법 §47①에 따라 **납부(지급) 단계의 총액**에만
+        적용한다 — 일별 세액을 미리 10원 절사하지 않는다(국세청 계산례: 매일의
+        세액을 더하고 납부하는 때에 10원 미만 절사).
+        소액부징수(소득세법 §86)도 지급분 원천징수세액 **합산** 기준이므로
+        여기서 판단하지 않고 집계부에서 판단한다.
 
     부동소수점 처리:
-        0.027은 부동소수점으로 정확히 표현되지 않으므로
-        원 단위로 반올림(round)한 뒤 10원 단위 절사를 적용한다.
+        0.027 이진표현 오차로 정확한 정수(예: 1,755.0)가 1,754.9999…로 밀려
+        절사가 한 단계 더 내려가는 것을 round(…, 6) 후 int 절사로 방어한다.
 
     Returns
     -------
     float
-        10원 단위 절사 후 일별 소득세 (원).
+        일별 결정세액 (1원 단위 절사, 원).
     """
-    if daily_wage <= DAILY_TAX_EXEMPT_LIMIT:
-        return 0.0
-
     taxable_base = daily_wage - DAILY_WORKING_DEDUCTION_AMOUNT
     if taxable_base <= 0:
         return 0.0
 
     raw_tax = taxable_base * _EFFECTIVE_TAX_RATE
-    return _floor10(raw_tax)
+    return float(int(round(raw_tax, 6)))
 
 
 def _floor10(amount: float) -> float:

@@ -9,7 +9,7 @@
 
 법적 근거 (2026년 기준):
   - 소득세법 제22조·제47조의2: 일용근로소득공제 150,000원
-  - 소액부징수: 일급 187,000원 이하 소득세 0원
+  - 소액부징수: 지급분 원천징수세액 합산 1,000원 미만 (소득세법 §86)
   - 분리과세: (일급 − 150,000) × 6% × (1 − 55%) = × 2.7%
   - 지방소득세: 소득세 × 10%
   - 10원 절사 적용
@@ -322,16 +322,21 @@ class TestEdgeCases(unittest.TestCase):
     """경계값 및 에러 처리 테스트."""
 
     def test_exactly_at_exempt_limit(self):
-        """일급 = 187,000원 → 소액부징수, 소득세 0."""
+        """일급 187,000원 1일 지급 → 결정세액 999원 < 1,000원 → 소액부징수 (소득세법 §86)."""
         result = calculate_daily_worker_payroll(daily_wage=187_000, days_worked=1)
-        self.assertEqual(result["income_tax_per_day"], 0.0)
-        self.assertEqual(result["income_tax_total"], 0.0)
+        self.assertEqual(result["income_tax_per_day"], 999.0)  # 일별 결정세액 (1원 절사)
+        self.assertEqual(result["income_tax_total"], 0.0)      # 지급분 합산 < 1,000 → 부징수
 
     def test_just_above_exempt_limit(self):
-        """일급 = 187,001원 → 과세 발생."""
+        """일급 187,001원 1일: 결정세액 999원(1원 절사) — 여전히 부징수. 187,038원부터 과세."""
         result = calculate_daily_worker_payroll(daily_wage=187_001, days_worked=1)
-        # (187,001 − 150,000) × 0.027 = 999.027 → 10원 절사 = 990
-        self.assertEqual(result["income_tax_per_day"], 990.0)
+        # (187,001 − 150,000) × 0.027 = 999.027 → 1원 절사 = 999 → 합산 999 < 1,000 → 0
+        self.assertEqual(result["income_tax_per_day"], 999.0)
+        self.assertEqual(result["income_tax_total"], 0.0)
+        # 1일 지급 과세 개시 경계: 결정세액 1,000원 (일급 187,038원)
+        taxed = calculate_daily_worker_payroll(daily_wage=187_038, days_worked=1)
+        self.assertEqual(taxed["income_tax_per_day"], 1_000.0)
+        self.assertEqual(taxed["income_tax_total"], 1_000.0)
 
     def test_zero_days_worked(self):
         """근무일수 0일."""
@@ -372,10 +377,12 @@ class TestEdgeCases(unittest.TestCase):
         self.assertFalse(result["applies_health_insurance"])
 
     def test_ten_won_floor_applied(self):
-        """10원 절사 적용 확인: 187,001원일 때 1원 단위 제거."""
-        result = calculate_daily_worker_payroll(daily_wage=187_001, days_worked=1)
-        # 소득세는 10의 배수여야 함
-        self.assertEqual(result["income_tax_per_day"] % 10, 0.0)
+        """10원 절사는 납부 총액 단계에서 적용 (국고금관리법 §47①) — 일별 세액엔 미적용."""
+        result = calculate_daily_worker_payroll(daily_wage=215_000, days_worked=3)
+        # 일별 결정세액 1,755원(1원 단위) × 3 = 5,265 → 납부세액 10원 절사 = 5,260
+        self.assertEqual(result["income_tax_per_day"], 1_755.0)
+        self.assertEqual(result["income_tax_total"], 5_260.0)
+        self.assertEqual(result["income_tax_total"] % 10, 0.0)
 
     def test_float_input_coercion(self):
         """float 입력 정상 처리."""

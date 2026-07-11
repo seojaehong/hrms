@@ -374,11 +374,94 @@ class TestCalcTools(unittest.TestCase):
 		)
 		self.assertEqual(result["result"]["income_tax"], 0)
 
+	def test_severance_settlement_integrates_unused_leave_when_requested(self):
+		"""calc_severance_settlement 도구명은 '퇴직정산'을 표방하므로, 미사용연차수당까지
+		선택 인자로 주면 함께 계산해 통합 결과를 반환해야 한다(퇴직소득세 단독 호출은
+		하위호환 그대로 유지)."""
+		reg = self._registry()
+		result = reg.call(
+			"calc_severance_settlement",
+			{
+				"severance_pay": 15_016_438,
+				"service_years": 5,
+				"monthly_base_salary": 2_156_881,
+				"unused_leave_days": 5,
+			},
+			human_approved=False,
+		)
+		payload = result["result"]
+		self.assertEqual(payload["income_tax"], 160_390)
+		self.assertEqual(payload["unused_leave_allowance"], 412_800)
+
 	def test_knowledge_search_unconfigured_fails_closed(self):
 		reg = self._registry()
 		result = reg.call("search_labor_knowledge", {"query": "주휴수당 발생 요건"}, human_approved=False)
 		self.assertFalse(result["result"]["configured"])
 		self.assertEqual(result["result"]["documents"], [])
+
+	def test_clamp_top_k_rejects_zero_and_negative(self):
+		mod = load_api(fake_frappe=None)
+		self.assertEqual(mod._clamp_top_k(0), 1)
+		self.assertEqual(mod._clamp_top_k(-3), 1)
+		self.assertEqual(mod._clamp_top_k(5), 5)
+
+
+class TestBuildCalcToolRegistry(unittest.TestCase):
+	"""build_calc_tool_registry() — frappe 부재에서도 calc 도구 13종에 도달 가능해야 한다."""
+
+	def test_returns_registry_with_all_calc_tools_without_frappe(self):
+		mod = load_api(fake_frappe=None)
+		reg = mod.build_calc_tool_registry()
+		names = set(reg.list_tools())
+		for expected in (
+			"calc_weekly_holiday_allowance",
+			"calc_daily_worker_payroll",
+			"calc_ordinary_hourly_wage",
+			"calc_unused_leave_allowance",
+			"build_employment_contract",
+			"calc_design_inclusive_wage",
+			"calc_audit_inclusive_wage",
+			"calc_annual_leave_promotion",
+			"calc_payslip_breakdown",
+			"search_labor_knowledge",
+			"check_work_rules_required_items",
+			"work_rules_amendment_procedure",
+			"calc_severance_settlement",
+		):
+			self.assertIn(expected, names)
+
+	def test_callable_without_frappe(self):
+		mod = load_api(fake_frappe=None)
+		reg = mod.build_calc_tool_registry()
+		result = reg.call(
+			"calc_ordinary_hourly_wage", {"monthly_base_salary": 2156880}, human_approved=False
+		)
+		self.assertEqual(result["result"]["ordinary_hourly_wage"], 10320.0)
+
+	def test_run_agent_skill_falls_back_to_calc_registry_for_freeform_when_no_frappe(self):
+		"""hr_freeform_qa(steps=[])는 frappe 없이도 no_tools가 아니라 calc 폴백 레지스트리로
+		실행되어야 한다 — 고정 도구 요건이 없는 스킬은 calc 도구 요건(빈 집합)을 항상
+		충족하기 때문."""
+		mod = load_api(fake_frappe=None)
+
+		def provider(convo):
+			return {"text": "확인했습니다"}
+
+		result = mod.run_agent_skill(
+			"hr_freeform_qa", {"question": "질문"}, provider=provider
+		)
+		self.assertEqual(result["status"], "completed")
+
+	def test_hourly_closing_prep_still_no_tools_when_frappe_tool_unmet(self):
+		"""hourly_closing_prep은 frappe 전용 list_hourly_payroll_proposals가 필요해
+		calc 폴백으로 충족되지 않으므로 여전히 no_tools여야 한다(기존 의미 불변)."""
+		mod = load_api(fake_frappe=None)
+
+		def provider(convo):
+			return {"text": "should not run"}
+
+		result = mod.run_agent_skill("hourly_closing_prep", provider=provider)
+		self.assertEqual(result["status"], "no_tools")
 
 
 class TestResolveProviderToolSpecs(unittest.TestCase):

@@ -317,22 +317,28 @@ def _build_deduction_lines(statutory: dict[str, Any], *, dependents: int) -> lis
         {
             "label": "국민연금",
             "amount": pension["employee"],
-            "basis": f"기준소득월액 {pension['base']:,.0f}원 × 4.75%",
+            "basis": f"기준소득월액 {pension['base']:,.0f}원 × {_rate_pct(_statutory.PENSION_RATE_EMPLOYEE)}",
         },
         {
             "label": "건강보험",
             "amount": health["health_employee"],
-            "basis": f"보수월액 {base:,.0f}원 × 3.595%",
+            "basis": f"보수월액 {base:,.0f}원 × {_rate_pct(_statutory.HEALTH_RATE_EMPLOYEE)}",
         },
         {
             "label": "장기요양보험",
             "amount": health["longterm_care_employee"],
-            "basis": f"건강보험료 {health['health_employee']:,}원 × 13.14%",
+            "basis": (
+                f"건강보험료 {health['health_employee']:,}원 × "
+                f"{_rate_pct(_statutory.LONGTERM_CARE_RATE)}"
+            ),
         },
         {
             "label": "고용보험",
             "amount": employment["employee"],
-            "basis": f"보수월액 {base:,.0f}원 × 0.9%",
+            "basis": (
+                f"보수월액 {base:,.0f}원 × "
+                f"{_rate_pct(_statutory.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE)}"
+            ),
         },
         {
             "label": "소득세",
@@ -383,6 +389,17 @@ def _round_won(value: Decimal) -> int:
 
 def _fmt_won(value: Decimal) -> str:
     return f"{_round_won(value):,}"
+
+
+def _rate_pct(rate: float) -> str:
+    """요율(비율, 예: 0.0475) → 표시용 퍼센트 문자열(예: "4.75%").
+
+    statutory_2026 상수를 하드코딩 문자열로 다시 적지 않기 위한 동적 포맷.
+    ``.6g``(유효숫자 6자리)를 쓰면 4.75/3.595/0.9 같은 단순 요율은 그대로,
+    장기요양 환산율(13.140472...%)은 13.1405%로 정확히 표기된다(기존 "13.14%"
+    는 4자리로 잘려 부정확했다).
+    """
+    return f"{rate * 100:.6g}%"
 
 
 def _fmt_hours(value: Decimal) -> str:

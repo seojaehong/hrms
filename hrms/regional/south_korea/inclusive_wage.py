@@ -86,6 +86,9 @@ def design_inclusive_wage(
 
 	if total < 0:
 		raise ValueError("total_monthly must be >= 0")
+	# 총액은 원 단위(정수)여야 한다 — 절사해서 조용히 흘려보내지 않고 거부한다.
+	if total != total.to_integral_value():
+		raise ValueError(f"total_monthly must be a whole-won amount (no fractional won): {total_monthly!r}")
 	for name, h in (("fixed_ot_hours", ot_h), ("fixed_night_hours", night_h), ("fixed_holiday_hours", hol_h)):
 		if h < 0:
 			raise ValueError(f"{name} must be >= 0")
@@ -160,6 +163,16 @@ def audit_inclusive_wage(
 
 	if base < 0:
 		raise ValueError("base_pay must be >= 0")
+	for name, value in (
+		("fixed_ot_pay", ot_pay),
+		("fixed_ot_hours", ot_h),
+		("fixed_night_pay", night_pay),
+		("fixed_night_hours", night_h),
+		("fixed_holiday_pay", holiday_pay),
+		("fixed_holiday_hours", holiday_h),
+	):
+		if value < 0:
+			raise ValueError(f"{name} must be >= 0")
 
 	t = base / MONTHLY_ORDINARY_HOURS
 

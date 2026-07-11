@@ -32,6 +32,9 @@ from typing import Any
 # §61 근거 인용 베이스 — published 온톨로지 노드가 없을 때의 폴백 (annual_leave/hourly_wage 패턴).
 LEGAL_BASIS_BASE_FALLBACK = "근로기준법 제61조"
 
+# legal_basis_base() 결과 모듈 캐시 — 매 호출마다 온톨로지 로더를 재실행하지 않도록.
+_LEGAL_BASIS_BASE_CACHE: str | None = None
+
 _ONTOLOGY_NODE_ID = "연차_사용촉진"
 
 # 단계 판정 라벨 (schedule/proviso 공용)
@@ -64,7 +67,15 @@ def legal_basis_base() -> str:
 	"""§61 촉진 규칙 인용 베이스 — published 온톨로지 노드 우선, 폴백 상수.
 
 	노드 부재/미발행/로더 실패 시 조용히 폴백한다(annual_leave/hourly_wage와 동일 컨벤션).
+	결과는 모듈 레벨(_LEGAL_BASIS_BASE_CACHE)에 캐시되어, 최초 1회만 온톨로지 로더를
+	실행하고 이후 호출은 캐시를 그대로 반환한다(promotion_schedule 등에서 요청마다
+	반복 호출되므로 파일 I/O 반복을 피한다).
 	"""
+	global _LEGAL_BASIS_BASE_CACHE
+	if _LEGAL_BASIS_BASE_CACHE is not None:
+		return _LEGAL_BASIS_BASE_CACHE
+
+	result = LEGAL_BASIS_BASE_FALLBACK
 	try:
 		loader = _load_sibling_module(
 			str(Path("ontology") / "loader.py"), "korea_ontology_loader_for_promotion"
@@ -75,10 +86,13 @@ def legal_basis_base() -> str:
 			if getattr(node, "node_id", None) == _ONTOLOGY_NODE_ID:
 				sources = getattr(node, "sources", None) or []
 				if sources:
-					return sources[0]
+					result = sources[0]
+					break
 	except Exception:
 		pass
-	return LEGAL_BASIS_BASE_FALLBACK
+
+	_LEGAL_BASIS_BASE_CACHE = result
+	return result
 
 
 def _validate_dates(hire_date: dt.date, as_of: dt.date) -> None:
@@ -126,6 +140,12 @@ def promotion_schedule(hire_date: dt.date, as_of: dt.date, is_first_year: bool =
 	_validate_dates(hire_date, as_of)
 
 	al = _annual_leave()
+	if not is_first_year and as_of < al.add_years(hire_date, 1):
+		raise ValueError(
+			"is_first_year=False는 근속 1년 이상자에게만 쓸 수 있다 — 근속 1년 미만"
+			"(§60② 특칙 대상)에 일반(§60①·④) 6개월전/2개월전 스케줄을 적용하면 촉구·통보"
+			"기한이 법정 기한과 어긋난다. is_first_year=True로 호출할 것."
+		)
 	if is_first_year:
 		expiry_date = al.add_years(hire_date, 1)
 	else:

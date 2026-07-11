@@ -121,6 +121,22 @@ class TestMonthlyBreakdown(unittest.TestCase):
         self.assertTrue(result["compliance"]["compliant"])
         self.assertEqual(result["compliance"]["missing_basis_labels"], [])
 
+    def test_deduction_basis_rates_are_dynamic_not_hardcoded(self):
+        """공제 basis 문자열의 요율은 statutory_2026 상수에서 동적 포맷되어야 한다.
+        장기요양은 13.14%(부정확한 4자리 어림)가 아니라 13.1405%(정확한 2026 환산율)여야
+        한다."""
+        result = self._build()
+        deductions = {l["label"]: l for l in result["deductions"]}
+        pension_rate_str = f"{_statutory.PENSION_RATE_EMPLOYEE * 100:.6g}%"
+        health_rate_str = f"{_statutory.HEALTH_RATE_EMPLOYEE * 100:.6g}%"
+        longterm_rate_str = f"{_statutory.LONGTERM_CARE_RATE * 100:.6g}%"
+        employment_rate_str = f"{_statutory.EMPLOYMENT_INSURANCE_RATE_EMPLOYEE * 100:.6g}%"
+        self.assertIn(pension_rate_str, deductions["국민연금"]["basis"])
+        self.assertIn(health_rate_str, deductions["건강보험"]["basis"])
+        self.assertIn(longterm_rate_str, deductions["장기요양보험"]["basis"])
+        self.assertIn("13.1405%", deductions["장기요양보험"]["basis"])
+        self.assertIn(employment_rate_str, deductions["고용보험"]["basis"])
+
 
 class TestHourlyBreakdown(unittest.TestCase):
     """시급제 경로 — 주휴수당 별도 라인 + hourly_wage.py 단일 소스로 교차검증."""

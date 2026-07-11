@@ -82,6 +82,11 @@ class TestDesignInclusiveWage(unittest.TestCase):
 		r = design_inclusive_wage(2500000, 60, minimum_hourly_wage=MIN_WAGE_2026)
 		self.assertTrue(any("12시간" in w or "한도" in w for w in r["warnings"]))
 
+	def test_non_integer_total_monthly_rejected(self):
+		"""총액은 원 단위(정수)여야 한다 — 절사해서 조용히 넘기지 않고 ValueError."""
+		with self.assertRaises(ValueError):
+			design_inclusive_wage(2500000.5, 20, minimum_hourly_wage=MIN_WAGE_2026)
+
 	def test_zero_ot_night_holiday_reduces_to_209_division(self):
 		r = design_inclusive_wage(2092000, 0, minimum_hourly_wage=MIN_WAGE_2026)
 		self.assertEqual(r["base_pay"], 2092000)
@@ -146,6 +151,24 @@ class TestAuditInclusiveWage(unittest.TestCase):
 		)
 		self.assertFalse(r["overtime_limit_ok"])
 		self.assertTrue(any("12시간" in w or "한도" in w for w in r["warnings"]))
+
+	def test_negative_hours_rejected(self):
+		with self.assertRaises(ValueError):
+			audit_inclusive_wage(
+				base_pay=2156880,
+				fixed_ot_pay=309600,
+				fixed_ot_hours=-1,
+				minimum_hourly_wage=MIN_WAGE_2026,
+			)
+
+	def test_negative_pay_rejected(self):
+		with self.assertRaises(ValueError):
+			audit_inclusive_wage(
+				base_pay=2156880,
+				fixed_night_pay=-1,
+				fixed_night_hours=10,
+				minimum_hourly_wage=MIN_WAGE_2026,
+			)
 
 	def test_holiday_pay_shortfall_detected(self):
 		# 기본급 2,500,000 -> t=11,961.72..., 휴일 8h 적정액 143,541

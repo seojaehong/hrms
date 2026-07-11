@@ -31,9 +31,10 @@ frappe 의존 없음 → `python3 hrms/tests/test_korea_severance_settlement.py`
 
 from __future__ import annotations
 
+import datetime as _dt
 import importlib.util as _ilu
 import pathlib as _pl
-from decimal import ROUND_CEILING, ROUND_DOWN, Decimal
+from decimal import ROUND_CEILING, ROUND_DOWN, ROUND_HALF_UP, Decimal
 from typing import Any
 
 
@@ -65,9 +66,18 @@ def _load_hourly_wage():
     return mod
 
 
+def _load_annual_leave():
+    path = _pl.Path(__file__).resolve().parent / "annual_leave.py"
+    spec = _ilu.spec_from_file_location("korea_annual_leave_for_settlement", path)
+    mod = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 _STAT = _load_statutory_2026()
 _SEVERANCE_PAY = _load_severance_pay()
 _HOURLY_WAGE = _load_hourly_wage()
+_ANNUAL_LEAVE = _load_annual_leave()
 
 # 건강보험/장기요양 요율 — statutory_2026 단일소스(하드코딩 금지)
 HEALTH_RATE_EMPLOYEE = Decimal(str(_STAT.HEALTH_RATE_EMPLOYEE))
@@ -370,6 +380,35 @@ def reconcile_health_insurance_on_exit(
 
 
 # ---------------------------------------------------------------------------
+# 근속연수(달력 기준 "만연수") 산정 — settle_retirement 전용 내부 헬퍼
+# ---------------------------------------------------------------------------
+
+def _calendar_service_years(hire_date, severance_date, continuous_service_days: int) -> Decimal:
+    """근속연수를 달력 기준 만연수로 계산한다(§48① 적용을 위한 calculate_severance_income_tax 입력값).
+
+    버그 이력: 기존 코드는 `continuous_service_days / 365`로 근속연수를 근사했다.
+    윤년이 포함된 구간에서는 이 값이 정수 경계에서 실제보다 커져(예: 2020-01-01→
+    2025-01-01은 만 5년 0일인데 1,827/365=5.0055가 되어 §48① 올림 적용 시 6년으로
+    과대 계산 → 세액 과소, 96,390원 vs 정답 160,390원) 실무 오류가 발생했다.
+
+    이 함수는 severance_pay.calculate_continuous_service_days의 일수 정의
+    ("당일 불포함", 즉 continuous_service_days = severance_date - hire_date, exclusions
+    차감 후)와 정합하도록, exclusions로 차감된 일수만큼 hire_date를 뒤로 민 가상
+    시작일(effective_hire_date = severance_date - continuous_service_days)을 기준으로
+    annual_leave.completed_years(달력 기준 만년수, whole anniversary 완료 여부)를 쓴다.
+
+    §48①: "1년 미만의 기간이 있는 경우에는 이를 1년으로 본다" → 만연수를 넘는 잔여
+    일수가 하루라도 있으면 +1년(올림). 정확히 만년으로 떨어지면(잔여 0일) 올림하지
+    않는다. 예: 만 5년 0일 → 5년. 만 5년 + 1일 → 6년.
+    """
+    effective_hire_date = severance_date - _dt.timedelta(days=continuous_service_days)
+    floor_years = _ANNUAL_LEAVE.completed_years(effective_hire_date, severance_date)
+    if _ANNUAL_LEAVE.add_years(effective_hire_date, floor_years) < severance_date:
+        floor_years += 1
+    return Decimal(max(floor_years, 1))
+
+
+# ---------------------------------------------------------------------------
 # 공개 API 3: 퇴직정산 통합 오케스트레이션
 # ---------------------------------------------------------------------------
 
@@ -416,13 +455,19 @@ def settle_retirement(
     severance_amount = _dec(severance_result["severance_pay_amount"], "severance_pay_amount")
 
     unused_leave_amount = _HOURLY_WAGE.unused_leave_allowance(monthly_base_salary, unused_leave_days)
-    unused_leave_won = int(unused_leave_amount.to_integral_value(rounding=ROUND_CEILING)) if unused_leave_amount > 0 else 0
+    # 반올림 규칙: annual_leave_promotion.settle_unused_leave와 동일하게 ROUND_HALF_UP
+    # (기존 실무 관행 — ROUND_CEILING이면 1원 단위 오차로 과다 지급됨).
+    unused_leave_won = (
+        int(unused_leave_amount.to_integral_value(rounding=ROUND_HALF_UP)) if unused_leave_amount > 0 else 0
+    )
 
     income_tax_result: dict[str, Any] | None = None
     income_tax = 0
     local_income_tax = 0
     if severance_result["qualified_for_severance"] and severance_amount > 0:
-        service_years = Decimal(severance_result["continuous_service_days"]) / Decimal("365")
+        service_years = _calendar_service_years(
+            hire_date, severance_date, severance_result["continuous_service_days"]
+        )
         income_tax_result = calculate_severance_income_tax(
             severance_pay=severance_amount,
             service_years=service_years,

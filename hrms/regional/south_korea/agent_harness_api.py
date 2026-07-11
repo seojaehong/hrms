@@ -147,6 +147,16 @@ def run_agent_skill(
 	if tool_registry is None:
 		tool_registry = _build_default_tool_registry()  # 빌트인 조회 도구 바인딩
 	if tool_registry is None:
+		# frappe 부재 폴백: calc 전용 레지스트리(build_calc_tool_registry)로 해당 스킬의
+		# 고정 steps가 요구하는 도구를 전부 충족할 수 있으면 그것을 대신 쓴다. 그렇지
+		# 않으면(예: hourly_closing_prep/insurance_reconcile처럼 frappe 전용 조회 도구가
+		# 필요한 스킬) 기존과 동일하게 no_tools로 fail-closed 한다 — 의미 불변.
+		skill_def = registry.get(skill_name)
+		required_tools = {step["tool"] for step in (skill_def.get("steps") or [])}
+		calc_registry = build_calc_tool_registry()
+		if required_tools <= set(calc_registry.list_tools()):
+			tool_registry = calc_registry
+	if tool_registry is None:
 		return {
 			"status": "no_tools",
 			"skill_name": skill_name,
@@ -270,6 +280,33 @@ def _resolve_provider(tool_specs: dict | None = None) -> Callable[[list], dict] 
 		)
 	except _hermes_provider.HermesProviderError:
 		return None
+
+
+def _clamp_top_k(top_k: Any) -> int:
+	"""search_labor_knowledge의 top_k를 1 이상 정수로 클램프한다.
+
+	0/음수/비정수 문자열("0", "-3") 등이 들어와도 빈 결과·오류 대신 최소 1건은
+	조회하도록 fail-closed가 아니라 fail-safe(최소 유효 요청)로 정규화한다.
+	"""
+	try:
+		k = int(top_k)
+	except (TypeError, ValueError):
+		k = 5
+	return max(k, 1)
+
+
+def build_calc_tool_registry():
+	"""frappe 불필요 — calc·지식검색 도구 13종만 담은 ToolRegistry를 만들어 반환한다.
+
+	`_build_default_tool_registry()`는 frappe 사이트 조회 도구(list_hourly_payroll_proposals
+	등)까지 함께 바인딩하므로 frappe가 없으면 통째로 None을 반환해, framework-free
+	calc 도구(hourly_wage/daily_worker/inclusive_wage/... — 그 자체는 frappe에 의존하지
+	않는다)까지 도달 불가능해지는 문제가 있었다. 이 헬퍼는 ToolRegistry 생성 +
+	`_register_calc_tools` 바인딩만 수행해 frappe 유무와 무관하게 항상 사용 가능하다.
+	"""
+	registry = _tool_registry_mod.ToolRegistry()
+	_register_calc_tools(registry)
+	return registry
 
 
 def _register_calc_tools(registry) -> None:
@@ -401,10 +438,44 @@ def _register_calc_tools(registry) -> None:
 		}
 	def calc_payslip_breakdown(**kwargs):
 		return breakdown.build_payslip_breakdown(**kwargs)
-	def calc_severance_settlement(*, severance_pay, service_years):
-		return severance_settlement.calculate_severance_income_tax(
-			severance_pay=severance_pay, service_years=service_years,
+	def calc_severance_settlement(
+		*,
+		severance_pay,
+		service_years,
+		monthly_base_salary=None,
+		unused_leave_days=0,
+		monthly_remuneration_for_health=None,
+		paid_health_total=0,
+		paid_longterm_care_total=0,
+		mid_month_hire=False,
+	):
+		"""퇴직소득세(필수) + 선택 인자를 주면 미사용연차수당·건보정산까지 통합 반환.
+
+		도구명(calc_severance_settlement)이 '퇴직정산' 전반을 표방하므로, 퇴직소득세만
+		단독 호출하던 기존 계약(severance_pay+service_years)은 하위호환으로 그대로
+		유지하면서, monthly_base_salary 등 추가 정보가 주어지면 severance_settlement의
+		다른 공개 API(미사용연차수당·건보정산)까지 같은 결과 dict에 합쳐 반환한다.
+		"""
+		result = dict(
+			severance_settlement.calculate_severance_income_tax(
+				severance_pay=severance_pay, service_years=service_years,
+			)
 		)
+		if monthly_base_salary is not None and unused_leave_days:
+			from decimal import ROUND_HALF_UP
+
+			raw = hourly.unused_leave_allowance(monthly_base_salary, unused_leave_days)
+			result["unused_leave_allowance"] = (
+				int(raw.to_integral_value(rounding=ROUND_HALF_UP)) if raw > 0 else 0
+			)
+		if monthly_remuneration_for_health:
+			result["health_insurance_reconciliation"] = severance_settlement.reconcile_health_insurance_on_exit(
+				monthly_remuneration=monthly_remuneration_for_health,
+				paid_health_total=paid_health_total,
+				paid_longterm_care_total=paid_longterm_care_total,
+				mid_month_hire=mid_month_hire,
+			)
+		return result
 
 	def search_labor_knowledge(*, query, top_k=5):
 		try:
@@ -415,7 +486,8 @@ def _register_calc_tools(registry) -> None:
 		if retriever is None:
 			return {"configured": False, "documents": [],
 				"note": "시맨틱 검색 미설정(env) — 근거 검색 없이 답하지 말고 미설정임을 알릴 것"}
-		docs = retriever(str(query))[: int(top_k)]
+		k = _clamp_top_k(top_k)
+		docs = retriever(str(query))[:k]
 		return {"configured": True, "documents": docs}
 
 	registry.register_tool(
@@ -502,8 +574,15 @@ def _register_calc_tools(registry) -> None:
 	)
 	registry.register_tool(
 		"calc_severance_settlement", calc_severance_settlement,
-		{"description": "퇴직소득세 계산 (소득세법 §48 근속연수공제·환산급여공제 + §55② 산출세액, 10원 절사)",
-		 "args": {"severance_pay": "필수(원, 퇴직소득금액)", "service_years": "필수(근속연수, 1년 미만 잔여는 올림)"}},
+		{"description": "퇴직정산 — 퇴직소득세(소득세법 §48 근속연수공제·환산급여공제 + §55② 산출세액,"
+			" 10원 절사) 필수 + 선택 인자를 주면 미사용연차수당·건강보험 보수총액 정산까지 통합 계산",
+		 "args": {"severance_pay": "필수(원, 퇴직소득금액)", "service_years": "필수(근속연수, 1년 미만 잔여는 올림)",
+			"monthly_base_salary": "선택(원) — 미사용연차수당 계산용, unused_leave_days와 함께 지정",
+			"unused_leave_days": "선택 — 미사용 연차일수(기본 0)",
+			"monthly_remuneration_for_health": "선택(리스트) — 지정 시 건보 보수총액 정산 포함",
+			"paid_health_total": "선택(원, 기납부 건강보험 누계)",
+			"paid_longterm_care_total": "선택(원, 기납부 장기요양 누계)",
+			"mid_month_hire": "선택(중도입사 여부, 기본 false)"}},
 		True,
 	)
 

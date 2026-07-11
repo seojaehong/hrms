@@ -258,6 +258,44 @@ class TestSettleRetirement(unittest.TestCase):
         self.assertIsNone(result["health_insurance_reconciliation"])
         self.assertEqual(result["payout_summary"]["health_insurance_settlement"], 0)
 
+    def test_exact_calendar_year_service_is_not_rounded_up(self):
+        """2020-01-01→2025-01-01(만 5년 0일, 윤년 2회 포함 1,827일)은 근속연수 5년으로
+        과세되어야 한다. continuous_service_days/365 올림(구버전)은 6년으로 잘못
+        계산해 세액을 96,390원으로 과소산정했다(정답은 160,390원). 소득세법 §48①의
+        '1년 미만 잔여기간 올림'은 달력 기준 잔여일이 있을 때만 적용되어야 하며,
+        정확히 만년으로 떨어지는 경우(잔여 0일)에는 올림이 적용되지 않는다."""
+        result = settle_retirement(
+            hire_date=_d("2020-01-01"),
+            severance_date=_d("2025-01-01"),
+            average_wage_per_day=100_000,
+            monthly_base_salary=2_090_000,
+        )
+        self.assertEqual(result["severance_income_tax"]["service_years_rounded"], 5)
+        self.assertEqual(result["payout_summary"]["severance_income_tax"], 160_390)
+
+    def test_one_day_over_exact_year_rounds_up(self):
+        """만 5년 + 1일(2025-01-02 퇴직)은 소득세법 §48①에 따라 6년으로 올림되어야 한다."""
+        result = settle_retirement(
+            hire_date=_d("2020-01-01"),
+            severance_date=_d("2025-01-02"),
+            average_wage_per_day=100_000,
+            monthly_base_salary=2_090_000,
+        )
+        self.assertEqual(result["severance_income_tax"]["service_years_rounded"], 6)
+
+    def test_unused_leave_allowance_rounds_half_up_not_ceiling(self):
+        """미사용연차수당은 annual_leave_promotion.settle_unused_leave와 동일하게
+        ROUND_HALF_UP을 써야 한다(기존 관행). 기본급 2,156,881원 × 5일 케이스는
+        ROUND_CEILING이면 412,801원(오답), ROUND_HALF_UP이면 412,800원(정답)이다."""
+        result = settle_retirement(
+            hire_date=_d("2020-01-01"),
+            severance_date=_d("2025-01-01"),
+            average_wage_per_day=100_000,
+            monthly_base_salary=2_156_881,
+            unused_leave_days=5,
+        )
+        self.assertEqual(result["unused_leave_allowance"], 412_800)
+
 
 if __name__ == "__main__":
     unittest.main()

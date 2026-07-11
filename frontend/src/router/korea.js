@@ -41,6 +41,11 @@ const routes = [
 		component: () => import("@/views/korea/KoreaInclusiveWage.vue"),
 	},
 	{
+		name: "KoreaLeavePromotion",
+		path: "/dashboard/korea-leave-promotion",
+		component: () => import("@/views/korea/KoreaLeavePromotion.vue"),
+	},
+	{
 		name: "KoreaServiceRequests",
 		path: "/dashboard/korea-service-requests",
 		component: () => import("@/views/korea/KoreaServiceRequests.vue"),

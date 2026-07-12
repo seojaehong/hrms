@@ -77,10 +77,23 @@ PY
   fi
 fi
 
+# ── 디자인 규율 감사 (DESIGN.md v2) — 베이스라인 래칫: 위반이 늘면 실패
+DESIGN_AUDIT_BASELINE=370
+DAOUT=$(PYTHONIOENCODING=utf-8 python3 scripts/design_audit.py --baseline $DESIGN_AUDIT_BASELINE 2>&1 | head -1)
+DARC=$?
+DESIGN_FAIL=0
+if [ $DARC -eq 0 ]; then
+  echo "  ✓ design audit ($DAOUT · baseline $DESIGN_AUDIT_BASELINE)"
+else
+  DESIGN_FAIL=1
+  echo "  ✗ design audit — $DAOUT (baseline $DESIGN_AUDIT_BASELINE 초과)"
+fi
+
 echo ""
 echo "════ 결과: 파일 PASS $PASS / FAIL $FAIL · 케이스 $TOTAL_CASES ════"
-if [ $FAIL -gt 0 ] || [ $GRAPH_FAIL -gt 0 ]; then
+if [ $FAIL -gt 0 ] || [ $GRAPH_FAIL -gt 0 ] || [ $DESIGN_FAIL -gt 0 ]; then
   [ $FAIL -gt 0 ] && printf '실패: %s\n' "${FAILED_FILES[@]}"
   [ $GRAPH_FAIL -gt 0 ] && echo "실패: ontology graph validation"
+  [ $DESIGN_FAIL -gt 0 ] && echo "실패: design audit (scripts/design_audit.py)"
   exit 1
 fi

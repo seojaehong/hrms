@@ -1,17 +1,17 @@
 <template>
 	<BaseLayout pageTitle="Korea Payroll Review Audit Logs">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-gray-50 p-4 pb-24">
-				<section class="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
-					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">Human review audit trail</p>
+			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
+				<section class="rounded-2xl bg-[var(--k-ink)] p-5 text-white shadow-sm">
+					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-faint)]">Human review audit trail</p>
 					<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
-					<p class="mt-2 text-sm text-gray-300">
+					<p class="mt-2 text-sm text-[var(--k-ink-faint)]">
 						{{ fixture.company }} · {{ fixture.summary.total_count }} audit rows · updated {{ fixture.updated_at }}
 					</p>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/10 p-3">
 							<p class="text-2xl font-bold">{{ fixture.summary.approved_count }}</p>
-							<p class="text-xs text-gray-300">Approved</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">Approved</p>
 						</div>
 						<div class="rounded-xl bg-amber-400/20 p-3">
 							<p class="text-2xl font-bold text-amber-100">{{ fixture.summary.changes_requested_count }}</p>
@@ -44,25 +44,25 @@
 						<router-link :to="item.route" class="block">
 							<div class="flex items-start justify-between gap-3">
 							<div>
-								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.workplace }}</p>
-								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.name }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.draft_name }}</p>
+								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">{{ item.workplace }}</p>
+								<h2 class="mt-1 text-lg font-bold text-[var(--k-ink)]">{{ item.name }}</h2>
+								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ item.period_start }} → {{ item.period_end }} · {{ item.draft_name }}</p>
 							</div>
 							<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(item.status)">
 								{{ statusLabel(item.status) }}
 							</span>
 						</div>
 
-						<div class="mt-4 rounded-xl bg-gray-50 p-3 text-sm">
+						<div class="mt-4 rounded-xl bg-[var(--k-surface-soft)] p-3 text-sm">
 							<div class="flex items-center justify-between gap-3">
-								<p class="font-semibold text-gray-900">{{ item.action }}</p>
-								<p class="text-xs text-gray-500">{{ item.source_payroll_entry }}</p>
+								<p class="font-semibold text-[var(--k-ink)]">{{ item.action }}</p>
+								<p class="text-xs text-[var(--k-ink-muted)]">{{ item.source_payroll_entry }}</p>
 							</div>
-							<p class="mt-2 text-gray-700">{{ item.previous_status }} → {{ item.status }}</p>
+							<p class="mt-2 text-[var(--k-ink)]">{{ item.previous_status }} → {{ item.status }}</p>
 						</div>
 
 
-							<div class="mt-3 flex items-center justify-between rounded-xl border border-gray-100 bg-white px-3 py-2 text-xs font-semibold text-gray-700">
+							<div class="mt-3 flex items-center justify-between rounded-xl border border-[var(--k-hairline-soft)] bg-white px-3 py-2 text-xs font-semibold text-[var(--k-ink)]">
 								<span>Open detail</span>
 								<span aria-hidden="true">→</span>
 							</div>

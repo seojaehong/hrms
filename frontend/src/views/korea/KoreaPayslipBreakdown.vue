@@ -16,15 +16,15 @@
 					<div class="text-base font-bold tracking-tight text-black">{{ __('명세서 입력') }}</div>
 
 					<!-- 급여형태 토글 -->
-					<div class="flex rounded-full border border-[var(--k-hairline)] p-1 text-sm font-semibold">
+					<div class="flex rounded-lg border border-[var(--k-hairline)] p-1 text-sm font-semibold">
 						<button
-							class="flex-1 py-2 rounded-full transition-colors"
-							:class="form.wage_type === 'monthly' ? 'bg-black text-white' : 'text-black/60'"
+							class="flex-1 py-2 rounded-md transition-colors"
+							:class="form.wage_type === 'monthly' ? 'k-segment-active' : 'text-black/60'"
 							@click="form.wage_type = 'monthly'"
 						>{{ __('월급제') }}</button>
 						<button
-							class="flex-1 py-2 rounded-full transition-colors"
-							:class="form.wage_type === 'hourly' ? 'bg-black text-white' : 'text-black/60'"
+							class="flex-1 py-2 rounded-md transition-colors"
+							:class="form.wage_type === 'hourly' ? 'k-segment-active' : 'text-black/60'"
 							@click="form.wage_type = 'hourly'"
 						>{{ __('시급제') }}</button>
 					</div>
@@ -131,7 +131,7 @@
 					<button
 						@click="calculate"
 						:disabled="buildPayslipBreakdown.loading || !canSubmit"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="buildPayslipBreakdown.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('명세서 생성') }}</span>
@@ -161,7 +161,7 @@
 							<tbody>
 								<tr v-for="(line, idx) in breakdown.earnings" :key="'e' + idx" class="border-t border-[var(--k-hairline)]">
 									<td class="py-2 font-medium text-black">{{ line.label }}</td>
-									<td class="py-2 text-right k-numeric text-black">{{ formatKRW(line.amount) }}</td>
+									<td class="py-2 text-right k-numeric k-amount">{{ formatKRW(line.amount) }}</td>
 									<td class="py-2 text-xs text-black/60">{{ line.basis || __('(계산방법 미기재)') }}</td>
 								</tr>
 							</tbody>
@@ -186,14 +186,14 @@
 							<tbody>
 								<tr v-for="(line, idx) in breakdown.deductions" :key="'d' + idx" class="border-t border-[var(--k-hairline)]">
 									<td class="py-2 font-medium text-black">{{ line.label }}</td>
-									<td class="py-2 text-right k-numeric text-black">{{ formatKRW(line.amount) }}</td>
+									<td class="py-2 text-right k-numeric k-amount">{{ formatKRW(line.amount) }}</td>
 									<td class="py-2 text-xs text-black/60">{{ line.basis || __('(산출근거 미기재)') }}</td>
 								</tr>
 							</tbody>
 						</table>
 						<div class="flex justify-between text-sm pt-2 border-t border-[var(--k-hairline)]">
 							<span class="text-black/60">{{ __('공제합계') }}</span>
-							<span class="k-numeric font-semibold text-black">{{ formatKRW(breakdown.total_deductions) }}</span>
+							<span class="k-numeric font-semibold k-amount">{{ formatKRW(breakdown.total_deductions) }}</span>
 						</div>
 					</div>
 
@@ -209,7 +209,7 @@
 						<button
 							@click="generateMarkdown"
 							:disabled="renderPayslipMarkdown.loading"
-							class="w-full py-2.5 border border-black text-black text-sm rounded-full font-semibold hover:bg-black/5 transition-colors disabled:opacity-50"
+							class="k-btn-secondary w-full"
 						>
 							<span v-if="renderPayslipMarkdown.loading">{{ __('생성 중...') }}</span>
 							<span v-else>{{ __('마크다운 생성') }}</span>
@@ -218,7 +218,7 @@
 							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
 							<button
 								@click="copyMarkdown"
-								class="w-full py-2.5 border border-black text-black text-sm rounded-full font-semibold hover:bg-black/5 transition-colors"
+								class="k-btn-secondary w-full"
 							>{{ copied ? __('복사됨 ✓') : __('마크다운 복사') }}</button>
 						</template>
 					</div>

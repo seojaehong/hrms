@@ -2,27 +2,27 @@
 	<ion-page>
 		<ion-content :fullscreen="true">
 			<!-- BaseLayout 컨테이너 규칙과 동일한 폭 제한 (데스크톱 풀와이드 방지) -->
-			<div class="flex flex-col min-h-full p-4 gap-5 bg-gray-50 w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
+			<div class="flex flex-col min-h-full p-4 gap-5 bg-[var(--k-surface-soft)] w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 
 				<!-- Header -->
 				<div class="flex items-center gap-3 pt-2">
 					<router-link :to="{ name: 'Home' }">
-						<button class="p-1 rounded-full hover:bg-gray-200" aria-label="뒤로 가기">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<button class="p-1 rounded-md hover:bg-[var(--k-hairline)]" aria-label="뒤로 가기">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[var(--k-ink-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 							</svg>
 						</button>
 					</router-link>
-					<h1 class="text-lg font-bold text-gray-900">{{ __("Korea Mobile Check-In") }}</h1>
+					<h1 class="text-lg font-bold text-[var(--k-ink)]">{{ __("Korea Mobile Check-In") }}</h1>
 				</div>
 
 				<!-- Status Card -->
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+				<div class="bg-white rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="text-sm text-gray-500">{{ __("Current Time") }}</p>
-							<p class="text-2xl font-bold text-gray-900 tabular-nums">{{ currentTime }}</p>
-							<p class="text-sm text-gray-500 mt-0.5">{{ currentDate }}</p>
+							<p class="text-sm text-[var(--k-ink-muted)]">{{ __("Current Time") }}</p>
+							<p class="text-2xl font-bold text-[var(--k-ink)] tabular-nums">{{ currentTime }}</p>
+							<p class="text-sm text-[var(--k-ink-muted)] mt-0.5">{{ currentDate }}</p>
 						</div>
 						<div class="flex flex-col items-end gap-1">
 							<span
@@ -31,7 +31,7 @@
 							>
 								{{ nextAction === "IN" ? __("Check In") : __("Check Out") }}
 							</span>
-							<p v-if="lastCheckinTime" class="text-xs text-gray-400">
+							<p v-if="lastCheckinTime" class="text-xs text-[var(--k-ink-faint)]">
 								{{ __("Last: {0}", [lastCheckinTime]) }}
 							</p>
 						</div>
@@ -45,7 +45,7 @@
 						'border-green-200': gpsStatus === 'ok',
 						'border-yellow-200': gpsStatus === 'warn',
 						'border-red-200': gpsStatus === 'error',
-						'border-gray-100': gpsStatus === 'idle' || gpsStatus === 'loading',
+						'border-[var(--k-hairline-soft)]': gpsStatus === 'idle' || gpsStatus === 'loading',
 					}"
 				>
 					<div class="flex items-start gap-3">
@@ -55,7 +55,7 @@
 								'bg-green-100': gpsStatus === 'ok',
 								'bg-yellow-100': gpsStatus === 'warn',
 								'bg-red-100': gpsStatus === 'error',
-								'bg-gray-100': gpsStatus === 'idle' || gpsStatus === 'loading',
+								'bg-[var(--k-hairline-soft)]': gpsStatus === 'idle' || gpsStatus === 'loading',
 							}"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
@@ -63,7 +63,7 @@
 									'text-green-600': gpsStatus === 'ok',
 									'text-yellow-600': gpsStatus === 'warn',
 									'text-red-600': gpsStatus === 'error',
-									'text-gray-400': gpsStatus === 'idle' || gpsStatus === 'loading',
+									'text-[var(--k-ink-faint)]': gpsStatus === 'idle' || gpsStatus === 'loading',
 								}"
 								fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -72,28 +72,28 @@
 							</svg>
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium text-gray-800">{{ __("GPS Location") }}</p>
-							<p class="text-xs text-gray-500 mt-0.5">{{ gpsStatusLabel }}</p>
-							<p v-if="gpsCoords" class="text-xs text-gray-400 mt-1 font-mono">
+							<p class="text-sm font-medium text-[var(--k-ink)]">{{ __("GPS Location") }}</p>
+							<p class="text-xs text-[var(--k-ink-muted)] mt-0.5">{{ gpsStatusLabel }}</p>
+							<p v-if="gpsCoords" class="text-xs text-[var(--k-ink-faint)] mt-1 font-mono">
 								{{ gpsCoords }}
 							</p>
 						</div>
 						<button
 							v-if="gpsStatus !== 'loading'"
 							@click="fetchGps"
-							class="text-xs text-gray-900 underline flex-shrink-0"
+							class="text-xs text-[var(--k-ink)] underline flex-shrink-0"
 						>
 							{{ gpsStatus === 'idle' ? __("Get GPS") : __("Retry") }}
 						</button>
-						<div v-else class="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-1"></div>
+						<div v-else class="w-4 h-4 border-2 border-[var(--k-ink)] border-t-transparent rounded-full animate-spin flex-shrink-0 mt-1"></div>
 					</div>
 				</div>
 
 				<!-- Selfie Section -->
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+				<div class="bg-white rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
 					<div class="flex items-center justify-between mb-3">
-						<p class="text-sm font-medium text-gray-800">{{ __("Selfie (Optional)") }}</p>
-						<span class="text-xs text-gray-400">{{ __("Privacy protected") }}</span>
+						<p class="text-sm font-medium text-[var(--k-ink)]">{{ __("Selfie (Optional)") }}</p>
+						<span class="text-xs text-[var(--k-ink-faint)]">{{ __("Privacy protected") }}</span>
 					</div>
 
 					<!-- Preview -->
@@ -106,7 +106,7 @@
 						<button
 							@click="removeSelfie"
 							aria-label="셀카 삭제"
-							class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+							class="k-btn-primary absolute top-2 right-2 bg-opacity-50 w-6 h-6 flex items-center justify-center"
 						>
 							&times;
 						</button>
@@ -115,7 +115,7 @@
 					<button
 						v-if="!selfiePreviewUrl"
 						@click="takeSelfie"
-						class="w-full py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+						class="w-full py-3 border-2 border-dashed border-[var(--k-hairline)] rounded-lg text-sm text-[var(--k-ink-muted)] hover:border-[var(--k-ink-faint)] hover:text-[var(--k-ink)] transition-colors flex items-center justify-center gap-2"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -152,7 +152,7 @@
 									: __("Check-In Failed")
 								}}
 							</p>
-							<p v-if="result.attendance_name" class="text-xs text-gray-500 mt-0.5 font-mono">
+							<p v-if="result.attendance_name" class="text-xs text-[var(--k-ink-muted)] mt-0.5 font-mono">
 								{{ result.attendance_name }}
 							</p>
 							<p v-if="errorMessage" class="text-xs text-red-600 mt-0.5">{{ errorMessage }}</p>
@@ -176,7 +176,7 @@
 							{{ nextAction === "IN" ? __("Check In") : __("Check Out") }}
 						</span>
 					</button>
-					<p v-if="gpsStatus !== 'ok'" class="text-xs text-center text-gray-400">
+					<p v-if="gpsStatus !== 'ok'" class="text-xs text-center text-[var(--k-ink-faint)]">
 						{{ __("GPS location required to proceed") }}
 					</p>
 				</div>

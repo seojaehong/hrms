@@ -117,7 +117,7 @@
 					<button
 						@click="calculate"
 						:disabled="severanceSettlement.loading || !canSubmit"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="severanceSettlement.loading">{{ __('정산 중...') }}</span>
 						<span v-else>{{ __('퇴직정산 계산') }}</span>
@@ -142,15 +142,15 @@
 							<div class="k-display">{{ formatKRW(summary.net_total_payout) }}</div>
 							<div class="mt-4 grid grid-cols-3 gap-2">
 								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
-									<p class="k-numeric text-sm font-bold text-black">{{ formatKRW(summary.severance_pay_amount) }}</p>
+									<p class="k-numeric text-sm font-bold k-amount">{{ formatKRW(summary.severance_pay_amount) }}</p>
 									<p class="text-[11px] text-black/55">퇴직금 (세전)</p>
 								</div>
 								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
-									<p class="k-numeric text-sm font-bold text-black">{{ formatKRW(summary.unused_leave_allowance) }}</p>
+									<p class="k-numeric text-sm font-bold k-amount">{{ formatKRW(summary.unused_leave_allowance) }}</p>
 									<p class="text-[11px] text-black/55">미사용연차수당</p>
 								</div>
 								<div class="rounded-lg bg-black px-3 py-2 text-center">
-									<p class="k-numeric text-sm font-bold text-white">{{ formatKRW(summary.net_severance_payout) }}</p>
+									<p class="k-numeric text-sm font-bold text-white k-amount">{{ formatKRW(summary.net_severance_payout) }}</p>
 									<p class="text-[11px] text-white/60">퇴직금 실지급</p>
 								</div>
 							</div>
@@ -172,31 +172,31 @@
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">퇴직금 (세전)</span>
-								<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(summary.severance_pay_amount) }}</span>
+								<span class="text-sm font-semibold k-numeric k-amount">{{ formatKRW(summary.severance_pay_amount) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">퇴직소득세</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(summary.severance_income_tax) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(summary.severance_income_tax) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">지방소득세</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(summary.severance_local_income_tax) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(summary.severance_local_income_tax) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">미사용연차수당 (세전 근로소득)</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(summary.unused_leave_allowance) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(summary.unused_leave_allowance) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">건강보험 정산 {{ settlementDirection(summary.health_insurance_settlement) }}</span>
-								<span class="text-sm k-numeric" :class="summary.health_insurance_settlement > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(summary.health_insurance_settlement) }}</span>
+								<span class="text-sm k-numeric k-amount" :class="summary.health_insurance_settlement > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(summary.health_insurance_settlement) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">장기요양 정산 {{ settlementDirection(summary.longterm_care_settlement) }}</span>
-								<span class="text-sm k-numeric" :class="summary.longterm_care_settlement > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(summary.longterm_care_settlement) }}</span>
+								<span class="text-sm k-numeric k-amount" :class="summary.longterm_care_settlement > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(summary.longterm_care_settlement) }}</span>
 							</div>
 							<div class="flex justify-between items-center">
 								<span class="text-sm font-semibold text-black">실지급 총액</span>
-								<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(summary.net_total_payout) }}</span>
+								<span class="text-sm font-bold k-numeric k-amount">{{ formatKRW(summary.net_total_payout) }}</span>
 							</div>
 						</div>
 
@@ -204,11 +204,11 @@
 						<div v-if="result.severance_income_tax" class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/60 leading-relaxed flex flex-col gap-1">
 							<div class="k-label mb-1">퇴직소득세 산출 (소득세법 §48·§55②)</div>
 							<div class="flex justify-between"><span>근속연수 (1년 미만 올림)</span><span class="k-numeric">{{ result.severance_income_tax.service_years_rounded }}년</span></div>
-							<div class="flex justify-between"><span>근속연수공제</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.service_year_deduction) }}</span></div>
-							<div class="flex justify-between"><span>환산급여</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.converted_wage) }}</span></div>
-							<div class="flex justify-between"><span>환산급여공제</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.converted_wage_deduction) }}</span></div>
-							<div class="flex justify-between"><span>과세표준</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.tax_base) }}</span></div>
-							<div class="flex justify-between font-semibold text-black"><span>소득세 (10원 절사)</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.income_tax) }}</span></div>
+							<div class="flex justify-between k-amount"><span>근속연수공제</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.service_year_deduction) }}</span></div>
+							<div class="flex justify-between k-amount"><span>환산급여</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.converted_wage) }}</span></div>
+							<div class="flex justify-between k-amount"><span>환산급여공제</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.converted_wage_deduction) }}</span></div>
+							<div class="flex justify-between k-amount"><span>과세표준</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.tax_base) }}</span></div>
+							<div class="flex justify-between font-semibold k-amount"><span>소득세 (10원 절사)</span><span class="k-numeric">{{ formatKRW(result.severance_income_tax.income_tax) }}</span></div>
 						</div>
 
 						<!-- 퇴직금 계산식 -->
@@ -221,8 +221,8 @@
 						<div v-if="result.health_insurance_reconciliation" class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/60 leading-relaxed flex flex-col gap-1">
 							<div class="k-label mb-1">건보정산 (보수총액 확정)</div>
 							<div class="flex justify-between"><span>산정월수 / 납부월수</span><span class="k-numeric">{{ result.health_insurance_reconciliation.calc_months }}개월 / {{ result.health_insurance_reconciliation.paid_months }}개월</span></div>
-							<div class="flex justify-between"><span>확정 건강보험료</span><span class="k-numeric">{{ formatKRW(result.health_insurance_reconciliation.determined_health_insurance) }}</span></div>
-							<div class="flex justify-between"><span>확정 장기요양보험료</span><span class="k-numeric">{{ formatKRW(result.health_insurance_reconciliation.determined_longterm_care) }}</span></div>
+							<div class="flex justify-between k-amount"><span>확정 건강보험료</span><span class="k-numeric">{{ formatKRW(result.health_insurance_reconciliation.determined_health_insurance) }}</span></div>
+							<div class="flex justify-between k-amount"><span>확정 장기요양보험료</span><span class="k-numeric">{{ formatKRW(result.health_insurance_reconciliation.determined_longterm_care) }}</span></div>
 						</div>
 					</template>
 					<div v-else class="text-center py-8 text-black/40 text-sm">

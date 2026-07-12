@@ -1,8 +1,8 @@
 <template>
-	<div class="flex flex-col items-center justify-center min-h-screen p-6 gap-6 text-center bg-gray-50">
+	<div class="flex flex-col items-center justify-center min-h-screen p-6 gap-6 text-center bg-[var(--k-surface-soft)]">
 		<!-- 오프라인 아이콘 -->
-		<div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-			<FeatherIcon name="wifi-off" class="w-9 h-9 text-gray-900" />
+		<div class="w-20 h-20 rounded-full bg-[var(--k-hairline-soft)] flex items-center justify-center">
+			<FeatherIcon name="wifi-off" class="w-9 h-9 text-[var(--k-ink)]" />
 		</div>
 
 		<!-- 상태 배지 -->
@@ -13,18 +13,18 @@
 
 		<!-- 제목 + 설명 -->
 		<div class="flex flex-col gap-2">
-			<h1 class="text-xl font-bold text-gray-900 tracking-tight">
+			<h1 class="text-xl font-bold text-[var(--k-ink)] tracking-tight">
 				인터넷에 연결되어 있지 않아요
 			</h1>
-			<p class="text-sm text-gray-500 leading-relaxed max-w-xs">
+			<p class="text-sm text-[var(--k-ink-muted)] leading-relaxed max-w-xs">
 				네트워크 연결을 확인해 주세요.<br />
 				Wi-Fi 또는 모바일 데이터를 켜면<br />자동으로 다시 연결됩니다.
 			</p>
 		</div>
 
 		<!-- 캐시 페이지 바로가기 -->
-		<div class="w-full max-w-sm bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left">
-			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+		<div class="w-full max-w-sm bg-white rounded-2xl border border-[var(--k-hairline-soft)] shadow-sm p-4 text-left">
+			<p class="text-xs font-semibold text-[var(--k-ink-faint)] uppercase tracking-wide mb-3">
 				오프라인에서 이용 가능한 메뉴
 			</p>
 			<div class="flex flex-col gap-2">
@@ -32,10 +32,10 @@
 					v-for="link in cachedLinks"
 					:key="link.route"
 					:to="{ name: link.route }"
-					class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+					class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[var(--k-surface-soft)] hover:bg-[var(--k-hairline-soft)] transition-colors"
 				>
-					<FeatherIcon :name="link.icon" class="w-4.5 h-4.5 text-gray-700 flex-shrink-0" />
-					<span class="text-sm font-medium text-gray-800">{{ link.label }}</span>
+					<FeatherIcon :name="link.icon" class="w-4.5 h-4.5 text-[var(--k-ink)] flex-shrink-0" />
+					<span class="text-sm font-medium text-[var(--k-ink)]">{{ link.label }}</span>
 				</router-link>
 			</div>
 		</div>

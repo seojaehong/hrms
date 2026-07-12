@@ -18,7 +18,7 @@
 						</Button>
 					</router-link>
 					<div>
-						<div class="text-lg text-gray-800 font-bold">{{ __('Recent Leaves') }} </div>
+						<div class="text-lg text-[var(--k-ink)] font-bold">{{ __('Recent Leaves') }} </div>
 						<RequestList
 							:component="markRaw(LeaveRequestItem)"
 							:items="myLeaves.data"

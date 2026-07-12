@@ -15,7 +15,7 @@
 						>
 							<FeatherIcon name="chevron-left" class="h-5 w-5" />
 						</Button>
-						<h2 class="text-xl font-semibold text-gray-900">
+						<h2 class="text-xl font-semibold text-[var(--k-ink)]">
 							{{ __("구독 플랜") }}
 						</h2>
 					</div>
@@ -37,13 +37,13 @@
 					<!-- 현재 플랜 요약 -->
 					<section
 						v-if="currentPlan"
-						class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+						class="rounded-xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm"
 					>
-						<p class="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+						<p class="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--k-ink-muted)]">
 							{{ __("현재 플랜") }}
 						</p>
 						<div class="flex items-center justify-between">
-							<span class="text-lg font-semibold text-gray-900">
+							<span class="text-lg font-semibold text-[var(--k-ink)]">
 								{{ currentPlan.name }}
 							</span>
 							<span
@@ -52,7 +52,7 @@
 								{{ __("활성") }}
 							</span>
 						</div>
-						<p class="mt-1 text-sm text-gray-500">
+						<p class="mt-1 text-sm text-[var(--k-ink-muted)]">
 							{{ __("직원") }}
 							<strong>{{ employeeCount }}</strong> /
 							<strong>
@@ -64,7 +64,7 @@
 
 					<!-- 플랜 그리드 -->
 					<section>
-						<h3 class="mb-3 text-base font-semibold text-gray-800">
+						<h3 class="mb-3 text-base font-semibold text-[var(--k-ink)]">
 							{{ __("플랜 비교") }}
 						</h3>
 						<div class="flex flex-col gap-3">
@@ -74,21 +74,21 @@
 								class="rounded-xl border p-4 transition-shadow hover:shadow-md"
 								:class="
 									activeTier === tier
-										? 'border-black bg-gray-50'
-										: 'border-gray-200 bg-white'
+										? 'border-black bg-[var(--k-surface-soft)]'
+										: 'border-[var(--k-hairline)] bg-white'
 								"
 							>
 								<div class="flex items-start justify-between">
 									<div>
-										<p class="font-semibold text-gray-900">{{ plan.name }}</p>
-										<p class="mt-0.5 text-sm text-gray-500">
+										<p class="font-semibold text-[var(--k-ink)]">{{ plan.name }}</p>
+										<p class="mt-0.5 text-sm text-[var(--k-ink-muted)]">
 											{{
 												typeof plan.monthly_price_krw === "number"
 													? plan.monthly_price_krw.toLocaleString("ko-KR") + "원/월"
 													: plan.monthly_price_krw
 											}}
 										</p>
-										<p class="mt-0.5 text-xs text-gray-400">
+										<p class="mt-0.5 text-xs text-[var(--k-ink-faint)]">
 											최대
 											{{ plan.max_employees ?? "무제한" }}명
 										</p>
@@ -106,7 +106,7 @@
 									<li
 										v-for="feature in plan.features"
 										:key="feature"
-										class="flex items-center gap-2 text-sm text-gray-700"
+										class="flex items-center gap-2 text-sm text-[var(--k-ink)]"
 									>
 										<FeatherIcon name="check" class="h-3.5 w-3.5 text-green-500 shrink-0" />
 										{{ feature }}
@@ -135,13 +135,13 @@
 
 					<!-- 청구 내역 -->
 					<section>
-						<h3 class="mb-3 text-base font-semibold text-gray-800">
+						<h3 class="mb-3 text-base font-semibold text-[var(--k-ink)]">
 							{{ __("청구 내역") }}
 						</h3>
 
 						<div
 							v-if="invoices.length === 0"
-							class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-10 text-sm text-gray-400"
+							class="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--k-hairline)] bg-white py-10 text-sm text-[var(--k-ink-faint)]"
 						>
 							<FeatherIcon name="file-text" class="mb-2 h-8 w-8" />
 							{{ __("청구 내역이 없습니다.") }}
@@ -149,10 +149,10 @@
 
 						<div
 							v-else
-							class="overflow-hidden rounded-xl border border-gray-200 bg-white"
+							class="overflow-hidden rounded-xl border border-[var(--k-hairline)] bg-white"
 						>
 							<table class="w-full text-sm">
-								<thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+								<thead class="bg-[var(--k-surface-soft)] text-xs uppercase tracking-wide text-[var(--k-ink-muted)]">
 									<tr>
 										<th class="py-2 pl-4 pr-2 text-left">{{ __("기간") }}</th>
 										<th class="py-2 pr-4 text-right">{{ __("금액") }}</th>
@@ -162,12 +162,12 @@
 									<tr
 										v-for="inv in invoices"
 										:key="inv.subscription_id + inv.period_start"
-										class="border-t border-gray-100"
+										class="border-t border-[var(--k-hairline-soft)]"
 									>
-										<td class="py-2 pl-4 pr-2 text-gray-700">
+										<td class="py-2 pl-4 pr-2 text-[var(--k-ink)]">
 											{{ inv.period_start }} ~ {{ inv.period_end }}
 										</td>
-										<td class="py-2 pr-4 text-right font-medium text-gray-900">
+										<td class="py-2 pr-4 text-right font-medium text-[var(--k-ink)]">
 											{{
 												inv.total_amount_krw != null
 													? inv.total_amount_krw.toLocaleString("ko-KR") + "원"
@@ -182,15 +182,15 @@
 
 					<!-- 결제 수단 안내 -->
 					<section
-						class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+						class="rounded-xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm"
 					>
-						<h3 class="mb-2 text-sm font-semibold text-gray-800">
+						<h3 class="mb-2 text-sm font-semibold text-[var(--k-ink)]">
 							{{ __("결제 수단") }}
 						</h3>
-						<p class="text-sm text-gray-500">
+						<p class="text-sm text-[var(--k-ink-muted)]">
 							Stripe (USD/KRW) · 토스페이먼츠 (KRW) 지원 예정
 						</p>
-						<p class="mt-1 text-xs text-gray-400">
+						<p class="mt-1 text-xs text-[var(--k-ink-faint)]">
 							현재 테스트 모드 — 실제 결제 연동은 v2에서 제공됩니다.
 						</p>
 					</section>
@@ -206,10 +206,10 @@
 		>
 			<template #actionSheet>
 				<div class="flex flex-col gap-4 p-6">
-					<h3 class="text-lg font-semibold text-gray-900">
+					<h3 class="text-lg font-semibold text-[var(--k-ink)]">
 						{{ __("플랜 변경 확인") }}
 					</h3>
-					<p class="text-sm text-gray-600">
+					<p class="text-sm text-[var(--k-ink-muted)]">
 						<strong>{{ plans[pendingTier]?.name }}</strong> 플랜으로 변경하시겠습니까?
 					</p>
 					<div

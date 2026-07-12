@@ -1,14 +1,14 @@
 <template>
 	<BaseLayout pageTitle="Korea Payroll Closing">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-gray-50 p-4 pb-24">
-				<section v-if="selectedSession" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-gray-600">← 마감 목록으로</router-link>
+			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
+				<section v-if="selectedSession" class="rounded-2xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm">
+					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-[var(--k-ink-muted)]">← 마감 목록으로</router-link>
 					<div class="mt-4 flex items-start justify-between gap-3">
 						<div>
-							<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">세션 미리보기</p>
-							<h1 class="mt-1 text-2xl font-bold text-gray-900">{{ selectedSession.workplace }}</h1>
-							<p class="mt-1 text-sm text-gray-500">{{ selectedSession.name }} · {{ selectedSession.period_start }} → {{ selectedSession.period_end }}</p>
+							<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">세션 미리보기</p>
+							<h1 class="mt-1 text-2xl font-bold text-[var(--k-ink)]">{{ selectedSession.workplace }}</h1>
+							<p class="mt-1 text-sm text-[var(--k-ink-muted)]">{{ selectedSession.name }} · {{ selectedSession.period_start }} → {{ selectedSession.period_end }}</p>
 						</div>
 						<span
 							class="rounded-full px-3 py-1 text-xs font-semibold"
@@ -26,29 +26,29 @@
 							v-for="card in selectedSession.readiness_cards"
 							:key="`${selectedSession.name}-${card.key}`"
 							class="rounded-xl border p-3"
-							:class="card.state === 'blocked' ? 'border-red-100 bg-red-50' : 'border-gray-100 bg-gray-50'"
+							:class="card.state === 'blocked' ? 'border-red-100 bg-red-50' : 'border-[var(--k-hairline-soft)] bg-[var(--k-surface-soft)]'"
 						>
-							<p class="text-xs font-semibold text-gray-500">{{ card.label }}</p>
-							<p class="mt-1 text-sm font-medium text-gray-900">{{ card.summary }}</p>
+							<p class="text-xs font-semibold text-[var(--k-ink-muted)]">{{ card.label }}</p>
+							<p class="mt-1 text-sm font-medium text-[var(--k-ink)]">{{ card.summary }}</p>
 						</div>
 					</div>
-					<div class="mt-4 rounded-xl bg-gray-50 p-3">
-						<p class="text-xs font-semibold text-gray-500">다음 작업</p>
-						<p class="mt-1 text-base font-bold text-gray-900">{{ selectedSession.primary_action.label }}</p>
-						<p class="mt-1 text-xs text-gray-500">{{ selectedSession.payroll_entry }} · 미리보기에서는 저장·승인·발송이 일어나지 않습니다</p>
+					<div class="mt-4 rounded-xl bg-[var(--k-surface-soft)] p-3">
+						<p class="text-xs font-semibold text-[var(--k-ink-muted)]">다음 작업</p>
+						<p class="mt-1 text-base font-bold text-[var(--k-ink)]">{{ selectedSession.primary_action.label }}</p>
+						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ selectedSession.payroll_entry }} · 미리보기에서는 저장·승인·발송이 일어나지 않습니다</p>
 					</div>
-					<div class="mt-4 rounded-xl bg-gray-900 p-3 text-white">
-						<p class="text-xs font-semibold uppercase tracking-wide text-gray-300">감사 미리보기</p>
+					<div class="mt-4 rounded-xl bg-[var(--k-ink)] p-3 text-white">
+						<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-faint)]">감사 미리보기</p>
 						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
-						<p class="mt-1 text-xs text-gray-300">차단 사유: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : '없음' }}</p>
+						<p class="mt-1 text-xs text-[var(--k-ink-faint)]">차단 사유: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : '없음' }}</p>
 					</div>
-					<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+					<div class="mt-4 rounded-xl border border-[var(--k-hairline)] bg-[var(--k-surface-soft)] p-3">
 						<div class="flex items-start justify-between gap-3">
 							<div>
-								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">증빙 패킷</p>
-								<p class="mt-1 text-sm font-bold text-gray-900">{{ selectedSession.evidence_packet.contract_type }}</p>
+								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">증빙 패킷</p>
+								<p class="mt-1 text-sm font-bold text-[var(--k-ink)]">{{ selectedSession.evidence_packet.contract_type }}</p>
 							</div>
-							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-gray-700">미리보기 전용</span>
+							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-[var(--k-ink)]">미리보기 전용</span>
 						</div>
 						<div class="mt-3 grid grid-cols-1 gap-2">
 							<div
@@ -56,11 +56,11 @@
 								:key="`${selectedSession.name}-${item.key}`"
 								class="rounded-lg bg-white p-2 text-sm"
 							>
-								<p class="font-semibold text-gray-900">{{ item.label }}</p>
-								<p class="mt-1 text-xs text-gray-500">{{ formatEvidenceSummary(item.summary) }}</p>
+								<p class="font-semibold text-[var(--k-ink)]">{{ item.label }}</p>
+								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ formatEvidenceSummary(item.summary) }}</p>
 							</div>
 						</div>
-						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-gray-600">
+						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-[var(--k-ink-muted)]">
 							담당자 체크리스트 {{ selectedSession.evidence_packet.review_checklist.length }}건 · 증빙은 조회 전용으로 보존됩니다
 						</div>
 					</div>
@@ -72,10 +72,10 @@
 						결재함에서 확정 진행
 					</router-link>
 					<!-- 결재자 명시 — 다른 계정의 결재함에는 이 건이 보이지 않는 것이 정상 -->
-					<p class="mt-2 text-center text-xs font-semibold text-gray-700">
+					<p class="mt-2 text-center text-xs font-semibold text-[var(--k-ink)]">
 						결재자: {{ selectedSession.approver || "지정 결재자" }}
 					</p>
-					<p class="mt-1 text-center text-xs text-gray-500">
+					<p class="mt-1 text-center text-xs text-[var(--k-ink-muted)]">
 						이 미리보기에서는 직접 확정하지 않습니다 — 확정·승인은 위 결재자의 결재함에서만 이뤄지며, 다른 계정의 결재함에는 표시되지 않습니다.
 					</p>
 				</section>
@@ -83,49 +83,49 @@
 					<p class="font-semibold">세션 예시 데이터를 찾을 수 없습니다</p>
 					<p class="mt-1 text-sm">{{ route.params.name }} 은(는) 현재 급여 마감 목록에 포함되어 있지 않습니다.</p>
 				</section>
-				<section class="k-block k-block--navy text-white">
+				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-300">{{ dataSourceLabel }}</p>
+							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-black/55">{{ dataSourceLabel }}</p>
 							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
-							<p class="mt-2 text-sm text-gray-300">
+							<p class="mt-2 text-sm text-black/55">
 								{{ activeCompany }} · {{ summaryCards.total_employees ?? '실시간' }}명 · {{ activeWorklist.updated_at || '실시간 조회' }}
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-black/55">
 						실데이터를 불러오는 중…
 					</div>
-					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
+					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
 						<p>실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다. {{ runtimeError }}</p>
 						<p v-if="runtimeWorklistError" class="mt-1">마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}</p>
 					</div>
-					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-400/20 p-3 text-sm text-amber-100">
+					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
 						마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}
 					</div>
-					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/10 p-3 text-sm text-gray-200">
+					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-black/55">
 						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
-					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/15 p-3 text-sm text-white">
+					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/70 p-3 text-sm text-black">
 						실데이터 대시보드 연결됨 (읽기 전용)
 						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
-					<div v-if="runtimeUiState.showRuntimePositiveCopy" class="mt-4 rounded-xl bg-green-400/20 p-3 text-sm text-green-100">
+					<div v-if="runtimeUiState.showRuntimePositiveCopy" class="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
 						{{ runtimeUiState.worklistBanner }}
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
-						<div class="rounded-xl bg-white/10 p-3">
+						<div class="rounded-xl bg-white/55 p-3">
 							<p class="text-2xl font-bold">{{ summaryCards.total_count }}</p>
-							<p class="text-xs text-gray-300">사업장</p>
+							<p class="text-xs text-black/55">사업장</p>
 						</div>
-						<div class="rounded-xl bg-red-400/20 p-3">
-							<p class="text-2xl font-bold text-red-100">{{ summaryCards.blocked_count }}</p>
-							<p class="text-xs text-red-100">차단</p>
+						<div class="rounded-xl bg-red-50 p-3">
+							<p class="text-2xl font-bold text-red-700">{{ summaryCards.blocked_count }}</p>
+							<p class="text-xs text-red-700">차단</p>
 						</div>
-						<div class="rounded-xl bg-green-400/20 p-3">
-							<p class="text-2xl font-bold text-green-100">{{ summaryCards.review_ready_count }}</p>
-							<p class="text-xs text-green-100">확정 대기</p>
+						<div class="rounded-xl bg-green-50 p-3">
+							<p class="text-2xl font-bold text-green-700">{{ summaryCards.review_ready_count }}</p>
+							<p class="text-xs text-green-700">확정 대기</p>
 						</div>
 					</div>
 				</section>
@@ -143,9 +143,9 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<h2 class="text-lg font-bold text-black">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
-							<p class="mt-1 text-xs text-gray-500">근무시간 입력 × 시급 프로파일로 계산한 제안입니다 — 반영은 결재 승인으로만 이뤄집니다.</p>
+							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">근무시간 입력 × 시급 프로파일로 계산한 제안입니다 — 반영은 결재 승인으로만 이뤄집니다.</p>
 						</div>
-						<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">계산 전용</span>
+						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">계산 전용</span>
 					</div>
 					<div class="mt-3 flex flex-col">
 						<div
@@ -155,7 +155,7 @@
 						>
 							<div>
 								<p class="text-sm font-semibold text-black">{{ p.employee_name || p.employee }}</p>
-								<p class="text-xs text-gray-500">
+								<p class="text-xs text-[var(--k-ink-muted)]">
 									시급 {{ formatWonPlain(p.hourly_rate) }} · 주 {{ p.weekly_hours }}h
 									<span v-if="p.below_minimum_wage" class="ml-1 font-semibold text-red-600">최저임금 미달</span>
 								</p>
@@ -177,9 +177,9 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<h2 class="text-lg font-bold text-black">고지 대사</h2>
-							<p class="mt-1 text-xs text-gray-500">{{ insuranceReconSummary }}</p>
+							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ insuranceReconSummary }}</p>
 						</div>
-						<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">읽기 전용</span>
+						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">읽기 전용</span>
 					</div>
 					<div v-if="insuranceReconUnmatchedCount || insuranceReconAmbiguousCount" class="mt-3 flex flex-wrap gap-2">
 						<span v-if="insuranceReconUnmatchedCount" class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
@@ -191,7 +191,7 @@
 					</div>
 					<table v-if="insuranceReconTopDiffs.length" class="mt-3 w-full text-sm">
 						<thead>
-							<tr class="border-b border-[var(--k-hairline-soft)] text-left text-xs text-gray-500">
+							<tr class="border-b border-[var(--k-hairline-soft)] text-left text-xs text-[var(--k-ink-muted)]">
 								<th class="py-1 font-semibold">직원</th>
 								<th class="py-1 font-semibold">보험</th>
 								<th class="py-1 text-right font-semibold">계산</th>
@@ -206,7 +206,7 @@
 								class="border-t border-[var(--k-hairline-soft)]"
 							>
 								<td class="py-2 font-semibold text-black">{{ d.employee }}</td>
-								<td class="py-2 text-gray-700">{{ d.label || d.field }}</td>
+								<td class="py-2 text-[var(--k-ink)]">{{ d.label || d.field }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.computed) }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.notified) }}</td>
 								<td class="py-2 text-right font-bold" :class="d.delta > 0 ? 'text-red-600' : 'text-blue-600'">
@@ -226,9 +226,9 @@
 					>
 						<div class="flex items-start justify-between gap-3">
 							<div>
-								<p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ item.role }}</p>
-								<h2 class="mt-1 text-lg font-bold text-gray-900">{{ item.workplace }}</h2>
-								<p class="mt-1 text-xs text-gray-500">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? '실시간' }}명</p>
+								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">{{ item.role }}</p>
+								<h2 class="mt-1 text-lg font-bold text-[var(--k-ink)]">{{ item.workplace }}</h2>
+								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? '실시간' }}명</p>
 							</div>
 							<span
 								class="rounded-full px-3 py-1 text-xs font-semibold"
@@ -243,18 +243,18 @@
 								v-for="card in item.readiness_cards"
 								:key="`${item.name}-${card.key}`"
 								class="rounded-xl border p-3"
-								:class="card.state === 'blocked' ? 'border-red-100 bg-red-50' : 'border-gray-100 bg-gray-50'"
+								:class="card.state === 'blocked' ? 'border-red-100 bg-red-50' : 'border-[var(--k-hairline-soft)] bg-[var(--k-surface-soft)]'"
 							>
-								<p class="text-xs font-semibold text-gray-500">{{ card.label }}</p>
-								<p class="mt-1 text-sm font-medium text-gray-900">{{ card.summary }}</p>
+								<p class="text-xs font-semibold text-[var(--k-ink-muted)]">{{ card.label }}</p>
+								<p class="mt-1 text-sm font-medium text-[var(--k-ink)]">{{ card.summary }}</p>
 							</div>
 						</div>
 
-						<div class="mt-4 rounded-xl bg-gray-50 p-3">
-							<p class="text-xs font-semibold text-gray-500">다음 작업</p>
+						<div class="mt-4 rounded-xl bg-[var(--k-surface-soft)] p-3">
+							<p class="text-xs font-semibold text-[var(--k-ink-muted)]">다음 작업</p>
 							<div class="mt-1 flex items-center justify-between gap-3">
-								<p class="text-sm font-semibold text-gray-900">{{ item.primary_action.label }}</p>
-								<p class="text-xs text-gray-500">{{ item.payroll_entry }}</p>
+								<p class="text-sm font-semibold text-[var(--k-ink)]">{{ item.primary_action.label }}</p>
+								<p class="text-xs text-[var(--k-ink-muted)]">{{ item.payroll_entry }}</p>
 							</div>
 							<router-link
 								:to="`/${item.route}`"
@@ -326,7 +326,7 @@ const dataSourceLabel = computed(() => runtimeUiState.value.dataSourceLabel)
 const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {
 	if (runtimeHasWorklistData.value) return "bg-green-100 text-green-800"
-	if (runtimeDashboard.value) return "bg-gray-100 text-gray-800"
+	if (runtimeDashboard.value) return "bg-[var(--k-hairline-soft)] text-[var(--k-ink)]"
 	if (runtimeLoading.value) return "bg-white/20 text-white"
 	return "bg-amber-100 text-amber-900"
 })

@@ -14,7 +14,7 @@
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
 							</Button>
-							<h2 class="text-xl font-semibold text-gray-900">{{ __("Profile") }}</h2>
+							<h2 class="text-xl font-semibold text-[var(--k-ink)]">{{ __("Profile") }}</h2>
 						</div>
 					</header>
 
@@ -28,16 +28,16 @@
 						/>
 						<div
 							v-else
-							class="flex items-center justify-center bg-gray-200 uppercase text-gray-600 h-24 w-24 rounded-full object-cover"
+							class="flex items-center justify-center bg-[var(--k-hairline)] uppercase text-[var(--k-ink-muted)] h-24 w-24 rounded-full object-cover"
 						>
 							{{ user.data.first_name[0] }}
 						</div>
 
 						<div class="flex flex-col gap-1.5 items-center mt-2 mb-5">
-							<span v-if="employee" class="text-lg font-bold text-gray-900">{{
+							<span v-if="employee" class="text-lg font-bold text-[var(--k-ink)]">{{
 								employee?.data?.employee_name
 							}}</span>
-							<span v-if="employee" class="font-normal text-sm text-gray-500">{{
+							<span v-if="employee" class="font-normal text-sm text-[var(--k-ink-muted)]">{{
 								employee?.data?.designation
 							}}</span>
 						</div>
@@ -54,15 +54,15 @@
 									<div class="flex flex-row items-center gap-3 grow">
 										<FeatherIcon
 											:name="link.icon"
-											class="h-5 w-5 text-gray-500"
+											class="h-5 w-5 text-[var(--k-ink-muted)]"
 										/>
-										<div class="text-base font-normal text-gray-800">
+										<div class="text-base font-normal text-[var(--k-ink)]">
 											{{ link.title }}
 										</div>
 									</div>
 									<FeatherIcon
 										name="chevron-right"
-										class="h-5 w-5 text-gray-500"
+										class="h-5 w-5 text-[var(--k-ink-muted)]"
 									/>
 								</div>
 							</div>
@@ -81,15 +81,15 @@
 									<div class="flex flex-row items-center gap-3 grow">
 										<FeatherIcon
 											name="settings"
-											class="h-5 w-5 text-gray-500"
+											class="h-5 w-5 text-[var(--k-ink-muted)]"
 										/>
-										<div class="text-base font-normal text-gray-800">
+										<div class="text-base font-normal text-[var(--k-ink)]">
 											{{ __("Settings") }}
 										</div>
 									</div>
 									<FeatherIcon
 										name="chevron-right"
-										class="h-5 w-5 text-gray-500"
+										class="h-5 w-5 text-[var(--k-ink-muted)]"
 									/>
 								</router-link>
 							</div>

@@ -35,7 +35,7 @@
 				<div v-for="group in groupedItems" :key="group.category" class="k-card p-0 overflow-hidden">
 					<button
 						@click="toggleCategory(group.category)"
-						class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/[0.03] transition-colors"
+						class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--k-surface-soft)] transition-colors"
 					>
 						<div class="flex items-center gap-2">
 							<span class="text-base font-bold tracking-tight text-black">{{ group.category }}</span>

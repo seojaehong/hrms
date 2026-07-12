@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 히어로 — lime 색블록 (급여 계열) -->
-				<div class="k-block k-block--lime">
+				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">PAYROLL EXCEL</div>
 					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('급여 엑셀 업로드/다운로드') }}</div>
 					<p class="mt-2 text-sm text-black/60">
@@ -26,7 +26,7 @@
 					<button
 						@click="downloadWorkbook"
 						:disabled="!periodValid || downloadResource.loading"
-						class="w-full py-3 bg-white border border-black/80 text-black text-sm rounded-full font-semibold hover:bg-black/5 active:bg-black/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="downloadResource.loading">{{ __('생성 중...') }}</span>
 						<span v-else>{{ __('급여대장 xlsx 다운로드') }}</span>
@@ -52,7 +52,7 @@
 							<button
 								@click="openFileSelector"
 								:disabled="uploading || !periodValid || validateResource.loading"
-								class="w-full py-3 bg-white border border-black/80 text-black text-sm rounded-full font-semibold hover:bg-black/5 active:bg-black/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+								class="k-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								<span v-if="uploading">{{ __('업로드 중...') }}</span>
 								<span v-else-if="validateResource.loading">{{ __('검증 중...') }}</span>
@@ -126,7 +126,7 @@
 					<button
 						@click="showConfirm = true"
 						:disabled="!approved || applyResource.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="applyResource.loading">{{ __('반영 중...') }}</span>
 						<span v-else>{{ __('반영하기') }}</span>

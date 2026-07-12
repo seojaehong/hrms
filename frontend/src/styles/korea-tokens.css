@@ -11,9 +11,14 @@
     --k-hairline: #e8e5e1; /* v2 웜 */
     --k-hairline-soft: #f0eeeb;
     --k-surface-soft: #fbfaf9; /* = surface-3 */
-    --k-surface-1: #ffffff;
-    --k-surface-2: #fbfaf9;
-    --k-surface-3: #f3f1ee;
+    /* Linear 서피스 래더 (DESIGN.md Migration 표) — 1=캔버스, 2=카드, 3=카드 내 삽입 패널 */
+    --k-surface-1: #f6f5f4;
+    --k-surface-2: #ffffff;
+    --k-surface-3: #fbfaf9;
+    /* 다크 래더 예약 (claude 웜 다크 — Phase 3 전까지 미사용) */
+    --k-surface-dark-1: #181715;
+    --k-surface-dark-2: #1f1e1b;
+    --k-surface-dark-3: #252320;
     --k-ledger-navy: #0d253d; /* Stripe — 금액 잉크 */
     --k-ink-muted: #615d59;
     --k-ink-faint: #a39e98;
@@ -34,7 +39,6 @@
     --k-success: #1ea64a;
     --k-danger: #dc2626;
     --k-warn: #f0b429;
-    --k-accent-magenta: var(--t-accent, #0d253d); /* v2: 단일 액센트 — 테넌트 오버라이드 슬롯 */
 
     /* ── 타입 ── */
     --k-font: -apple-system, BlinkMacSystemFont, "Pretendard",
@@ -50,7 +54,7 @@
     /* ── 하위호환 별칭 (기존 사용처) ── */
     --korea-primary: var(--k-ink);
     --korea-primary-hover: #262626;
-    --korea-accent: var(--k-accent-magenta);
+    --korea-accent: var(--t-accent, #0d253d); /* v2: 단일 액센트 — magenta 폐기 */
     --korea-success: var(--k-success);
     --korea-warn: var(--k-warn);
     --korea-error: var(--k-danger);
@@ -186,3 +190,10 @@
 .k-btn-secondary:active:not(:disabled) { transform: scale(0.97); }
 .k-btn-secondary:focus-visible { outline: none; box-shadow: var(--k-focus-ring); }
 .k-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 세그먼트 토글(월급제/시급제 등) — 데이터 화면용, pill 금지 */
+.k-segment-active {
+    background: var(--t-accent, #0d253d);
+    color: #f6f5f4;
+    border-radius: 6px;
+}

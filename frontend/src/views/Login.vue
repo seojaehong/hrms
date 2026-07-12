@@ -8,7 +8,7 @@
 							<div class="flex flex-col gap-3 items-center mb-8">
 								<FrappeHRLogo class="h-8 w-8" />
 								<div class="k-eyebrow">KOREA HRMS</div>
-								<div class="text-2xl font-semibold text-gray-900 text-center">
+								<div class="text-2xl font-semibold text-[var(--k-ink)] text-center">
 									{{ __("Login to SafeClaw HR") }}
 								</div>
 							</div>
@@ -32,19 +32,19 @@
 								<Button
 									:loading="session.login.loading"
 									variant="solid"
-									class="!mt-6 w-full !h-10 !rounded-full !bg-black !text-white hover:!bg-gray-800 active:!bg-gray-900 disabled:!bg-gray-700 disabled:!text-white"
+									class="!mt-6 w-full !h-10 !rounded-full !bg-black !text-white hover:!bg-[var(--k-ink)] active:!bg-[var(--k-ink)] disabled:!bg-[var(--k-ink-muted)] disabled:!text-white"
 								>
 									{{ __("Login") }}
 								</Button>
 							</form>
 
 							<template v-if="authProviders.data?.length">
-								<div v-if="!user_pass_login_disabled.data" class="text-center text-sm text-gray-600 my-4">or</div>
+								<div v-if="!user_pass_login_disabled.data" class="text-center text-sm text-[var(--k-ink-muted)] my-4">or</div>
 								<div class="space-y-4">
 									<a
 										v-for="provider in authProviders.data"
 										:key="provider.name"
-										class="flex items-center justify-center gap-2 transition-colors focus:outline-none text-gray-800 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring focus-visible:ring-gray-400 h-9 text-base p-2 rounded-full"
+										class="flex items-center justify-center gap-2 transition-colors focus:outline-none text-[var(--k-ink)] bg-[var(--k-hairline-soft)] hover:bg-[var(--k-hairline)] active:bg-[var(--k-hairline)] focus-visible:ring focus-visible:ring-[var(--k-ink-faint)] h-9 text-base p-2 rounded-full"
 										:href="provider.auth_url"
 									>
 										<img class="h-4 w-4" :src="provider.icon" :alt="provider.provider_name" />
@@ -53,7 +53,7 @@
 								</div>
 							</template>
 
-							<div v-else-if="user_pass_login_disabled.data" class="text-center text-gray-600 py-8">{{ __("No login methods are available. Please contact your administrator.") }}</div>
+							<div v-else-if="user_pass_login_disabled.data" class="text-center text-[var(--k-ink-muted)] py-8">{{ __("No login methods are available. Please contact your administrator.") }}</div>
 						</div>
 					</div>
 				</div>
@@ -70,7 +70,7 @@
 				</template>
 				<template #actions>
 					<a
-						class="inline-flex items-center justify-center gap-2 transition-colors focus:outline-none text-white bg-gray-900 hover:bg-gray-800 active:bg-gray-700 focus-visible:ring focus-visible:ring-gray-400 h-7 text-base px-2 rounded"
+						class="inline-flex items-center justify-center gap-2 transition-colors focus:outline-none text-white bg-[var(--k-ink)] hover:bg-[var(--k-ink)] active:bg-[var(--k-ink)] focus-visible:ring focus-visible:ring-[var(--k-ink-faint)] h-7 text-base px-2 rounded"
 						:href="resetPassword.link"
 						target="_blank"
 					>
@@ -100,7 +100,7 @@
 						<Button
 							:loading="session.otp.loading"
 							variant="solid"
-							class="disabled:bg-gray-700 disabled:text-white !mt-6"
+							class="disabled:bg-[var(--k-ink-muted)] disabled:text-white !mt-6"
 						>
 							{{ __("Verify") }}
 						</Button>

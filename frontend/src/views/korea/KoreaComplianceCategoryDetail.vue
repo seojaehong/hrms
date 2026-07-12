@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 히어로 — pink 색블록 -->
-				<div class="k-block k-block--pink flex flex-col gap-2">
+				<div class="k-block k-block--cream flex flex-col gap-2">
 					<div class="k-eyebrow">COMPLIANCE</div>
 					<div class="flex items-center gap-3">
 						<span class="text-2xl">{{ categoryDetail?.statusEmoji ?? '⬜' }}</span>
@@ -90,7 +90,7 @@
 							<div v-if="isAdmin && !finding.data_unavailable" class="mt-2 flex justify-end">
 								<button
 									@click="confirmMarkResolved(idx)"
-									class="text-xs text-black font-medium border border-black/15 rounded-full px-3 py-1 hover:bg-white transition-colors"
+									class="k-btn-secondary"
 								>
 									해결 표시
 								</button>
@@ -214,13 +214,13 @@
 					<div class="flex flex-row gap-3 mt-2">
 						<button
 							@click="showResolveConfirm = false"
-							class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
+							class="k-btn-secondary flex-1"
 						>
 							취소
 						</button>
 						<button
 							@click="markResolved"
-							class="flex-1 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/80 transition-colors"
+							class="k-btn-primary flex-1"
 						>
 							해결 표시
 						</button>

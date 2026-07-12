@@ -4,7 +4,7 @@
 			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-24">
 
 				<!-- 히어로 — 연차(lilac) 색블록 + 핵심 스탯 -->
-				<section class="k-block k-block--lilac">
+				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ANNUAL LEAVE</p>
@@ -92,19 +92,19 @@
 					<p class="k-eyebrow">PROFILE</p>
 					<p class="mt-0.5 text-base font-bold text-black">{{ __("기본 정보") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("입사일") }}</p>
 							<p class="k-numeric mt-1 text-sm font-semibold text-black">{{ display.dateOfJoining }}</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("근속") }}</p>
 							<p class="mt-1 text-sm font-semibold text-black">{{ tenureLabel }}</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("산정 기준") }}</p>
 							<p class="mt-1 text-sm font-semibold text-black">{{ display.basis === 'Hire Date' ? __('입사일 기준') : __('회계연도 기준') }}</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("계산 기준일") }}</p>
 							<p class="k-numeric mt-1 text-sm font-semibold text-black">{{ display.asOfDate }}</p>
 						</div>
@@ -116,15 +116,15 @@
 					<p class="k-eyebrow">ENTITLEMENT</p>
 					<p class="mt-0.5 text-base font-bold text-black">{{ __("부여 현황") }}</p>
 					<div class="mt-3 flex flex-col gap-2">
-						<div v-if="display.serviceYears < 1 && display.monthlyAccrual > 0" class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+						<div v-if="display.serviceYears < 1 && display.monthlyAccrual > 0" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<span class="text-sm text-black">{{ __("월차") }} <span class="text-xs text-black/40">{{ __("(1년 미만 월 단위)") }}</span></span>
 							<span class="k-numeric font-bold text-black">{{ display.monthlyAccrual }}{{ __("일") }}</span>
 						</div>
-						<div v-if="display.serviceYears >= 1 || display.annualEntitlement > 0" class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+						<div v-if="display.serviceYears >= 1 || display.annualEntitlement > 0" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<span class="text-sm text-black">{{ __("연차") }} <span class="text-xs text-black/40">{{ __("(1년 이상)") }}</span></span>
 							<span class="k-numeric font-bold text-black">{{ display.annualEntitlement }}{{ __("일") }}</span>
 						</div>
-						<div v-if="display.serviceYears >= 3" class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+						<div v-if="display.serviceYears >= 3" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<span class="text-sm text-black">{{ __("장기근속 가산 포함") }} <span class="text-xs text-black/40">{{ __("(3년 이상, 2년마다 +1일 · 최대 25일)") }}</span></span>
 							<span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">{{ __("합산 반영") }}</span>
 						</div>
@@ -153,13 +153,13 @@
 						</span>
 					</div>
 					<div class="mt-3 grid grid-cols-2 gap-2">
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("출근률") }}</p>
 							<p class="k-numeric mt-1 text-lg font-bold" :class="display.isBelowThreshold ? 'text-red-700' : 'text-black'">
 								{{ display.attendanceRatio !== null ? (display.attendanceRatio * 100).toFixed(1) + '%' : '—' }}
 							</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-black/50">{{ __("기준선") }}</p>
 							<p class="k-numeric mt-1 text-lg font-bold text-black">{{ (display.threshold * 100).toFixed(0) }}%</p>
 						</div>
@@ -178,12 +178,12 @@
 					<p class="k-eyebrow">USAGE</p>
 					<p class="mt-0.5 text-base font-bold text-black">{{ __("사용 / 잔여") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
-						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="text-xs text-black/50">{{ __("사용") }}</p>
 							<p class="k-numeric mt-1 text-2xl font-bold text-black">{{ display.usedDays }}</p>
 							<p class="text-xs text-black/40">{{ __("일") }}</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black/50'">{{ __("잔여") }}</p>
 							<p class="k-numeric mt-1 text-2xl font-bold" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
 								{{ display.remainingDays }}
@@ -211,7 +211,7 @@
 				<section v-if="isAdmin && display" class="flex flex-col gap-3">
 					<button
 						type="button"
-						class="w-full rounded-full border border-[#e6e6e6] bg-white py-3 text-sm font-semibold text-black"
+						class="k-btn-secondary w-full border-[var(--k-hairline)]"
 						@click="handlePreviewRefresh"
 						:disabled="loading"
 					>
@@ -219,7 +219,7 @@
 					</button>
 					<button
 						type="button"
-						class="w-full rounded-full bg-black py-3 text-sm font-semibold text-white disabled:opacity-50"
+						class="k-btn-primary w-full disabled:opacity-50"
 						@click="handleApply"
 						:disabled="loading || applying || !display.requiresRuntimeApply"
 					>
@@ -249,10 +249,10 @@
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<div v-if="loading" class="mt-3 rounded-xl bg-[#f7f7f5] p-2 text-xs text-black/50">
+					<div v-if="loading" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-black/50">
 						{{ __("읽기 전용 실데이터를 불러오는 중…") }}
 					</div>
-					<div v-else-if="previewError" class="mt-3 rounded-xl bg-[#f7f7f5] p-2 text-xs text-black/60">
+					<div v-else-if="previewError" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-black/60">
 						{{ __("실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다.") }} {{ previewError }}
 					</div>
 				</section>

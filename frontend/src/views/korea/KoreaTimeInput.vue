@@ -4,7 +4,7 @@
 			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-40">
 
 				<!-- 히어로 — 근태(mint) 색블록 + 월 선택 -->
-				<section class="k-block k-block--mint">
+				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">TIME INPUT</p>
@@ -74,8 +74,8 @@
 									step="0.5"
 									inputmode="decimal"
 									:disabled="isRowReadonly(row)"
-									class="k-numeric mt-1 w-full rounded-lg border px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[#f7f7f5] disabled:text-black/40"
-									:class="fieldInvalid(row, field) ? 'border-red-400 bg-red-50' : 'border-[#e6e6e6] bg-white'"
+									class="k-numeric mt-1 w-full rounded-lg border px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-black/40"
+									:class="fieldInvalid(row, field) ? 'border-red-400 bg-red-50' : 'border-[var(--k-hairline)] bg-white'"
 								/>
 							</div>
 						</div>
@@ -85,7 +85,7 @@
 							type="text"
 							:placeholder="__('메모 (예: 5월 누락분 소급)')"
 							:disabled="isRowReadonly(row)"
-							class="mt-2 w-full rounded-lg border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[#f7f7f5] disabled:text-black/40"
+							class="mt-2 w-full rounded-lg border border-[var(--k-hairline)] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-black/40"
 						/>
 					</div>
 					<div v-if="!rows.length" class="k-card p-4 text-sm text-black/40">
@@ -94,17 +94,17 @@
 				</section>
 
 				<!-- 하단 고정 액션 -->
-				<div v-if="!allSubmitted" class="fixed inset-x-0 bottom-16 z-40 border-t border-[#e6e6e6] bg-white/95 p-4 backdrop-blur">
+				<div v-if="!allSubmitted" class="fixed inset-x-0 bottom-16 z-40 border-t border-[var(--k-hairline)] bg-white/95 p-4 backdrop-blur">
 					<div class="mx-auto flex max-w-xl gap-3">
 						<button
-							class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-3 text-sm font-semibold text-black disabled:opacity-50"
+							class="k-btn-secondary flex-1 border-[var(--k-hairline)] disabled:opacity-50"
 							:disabled="saving || loading"
 							@click="saveDraft"
 						>
 							{{ saving ? __("저장 중…") : __("임시저장") }}
 						</button>
 						<button
-							class="flex-1 rounded-full bg-black py-3 text-sm font-bold text-white disabled:opacity-50"
+							class="k-btn-primary flex-1 font-bold disabled:opacity-50"
 							:disabled="saving || loading"
 							@click="openSubmitDialog"
 						>
@@ -129,13 +129,13 @@
 						</div>
 						<div class="mt-5 flex gap-3">
 							<button
-								class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
+								class="k-btn-secondary flex-1 border-[var(--k-hairline)]"
 								@click="showSubmitDialog = false"
 							>
 								{{ __("취소") }}
 							</button>
 							<button
-								class="flex-1 rounded-full bg-black py-2.5 text-sm font-bold text-white disabled:opacity-50"
+								class="k-btn-primary flex-1 font-bold disabled:opacity-50"
 								:disabled="submitting"
 								@click="doSubmit"
 							>

@@ -4,7 +4,7 @@
 			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-24">
 
 				<!-- 히어로 — 근태(mint) 색블록 + 핵심 스탯 -->
-				<section class="k-block k-block--mint">
+				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ATTENDANCE</p>
@@ -54,7 +54,7 @@
 					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
 
 					<!-- 실데이터 연결됐지만 근태 기록 0건 — 빈 상태 우선 (대시 나열 금지) -->
-					<div v-else-if="attendanceEmpty" class="mt-3 rounded-xl bg-[#f7f7f5] p-6 text-center" data-testid="attendance-empty-state">
+					<div v-else-if="attendanceEmpty" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-6 text-center" data-testid="attendance-empty-state">
 						<p class="text-sm font-semibold text-black">{{ __("근태 기록이 아직 없습니다") }}</p>
 						<p class="mt-1 text-xs text-black/50">{{ __("출퇴근 기록이 등록되면 이곳에 요약이 표시됩니다.") }}</p>
 					</div>
@@ -94,27 +94,27 @@
 						</div>
 
 						<div class="mt-3 grid grid-cols-2 gap-2">
-							<div class="rounded-xl bg-[#f7f7f5] p-3">
+							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-xs text-black/50">{{ __("출근일") }}</p>
 								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ empSummary?.present_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-[#f7f7f5] p-3">
+							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-xs text-black/50">{{ __("마감기준일") }}</p>
 								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ closingDays }}</p>
 							</div>
-							<div class="rounded-xl bg-[#f7f7f5] p-3">
+							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-xs text-black/50">{{ __("결근") }}</p>
 								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.absent_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-[#f7f7f5] p-3">
+							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-xs text-black/50">{{ __("휴가") }}</p>
 								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.leave_days ?? "—" }}{{ __("일") }}</p>
 							</div>
-							<div class="rounded-xl bg-[#f7f7f5] p-3">
+							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-xs text-black/50">{{ __("반차") }}</p>
 								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.half_day_count ?? "—" }}{{ __("회") }}</p>
 							</div>
-							<div class="rounded-xl p-3" :class="attendanceRatioLow ? 'bg-red-100' : 'bg-[#f7f7f5]'">
+							<div class="rounded-xl p-3" :class="attendanceRatioLow ? 'bg-red-100' : 'bg-[var(--k-surface-soft)]'">
 								<p class="text-xs" :class="attendanceRatioLow ? 'text-red-700' : 'text-black/50'">
 									{{ __("출근률") }}
 								</p>
@@ -138,13 +138,13 @@
 
 					<template v-else>
 						<div class="mt-3 flex flex-col gap-2">
-							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("정시근로") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ regularHours }}{{ __("시간") }}</p>
 							</div>
 							<div
 								class="flex items-center justify-between rounded-xl p-3"
-								:class="weeklyOvertimeExceeded ? 'bg-red-100' : 'bg-[#f7f7f5]'"
+								:class="weeklyOvertimeExceeded ? 'bg-red-100' : 'bg-[var(--k-surface-soft)]'"
 							>
 								<div>
 									<p class="text-sm" :class="weeklyOvertimeExceeded ? 'font-semibold text-red-700' : 'text-black'">
@@ -161,11 +161,11 @@
 									<p class="k-numeric text-xs text-black/40">/ {{ __("주 한도") }} 12h</p>
 								</div>
 							</div>
-							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("야간근로") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ nightHours }}{{ __("시간") }}</p>
 							</div>
-							<div class="flex items-center justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("휴일근로") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ holidayHours }}{{ __("시간") }}</p>
 							</div>
@@ -186,11 +186,11 @@
 								type="number"
 								min="0"
 								placeholder="예: 10030"
-								class="k-numeric flex-1 rounded-lg border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
+								class="k-numeric flex-1 rounded-lg border border-[var(--k-hairline)] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
 								@input="onHourlyRateInput"
 							/>
 							<button
-								class="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white"
+								class="k-btn-primary"
 								@click="loadPremiumPreview"
 							>
 								{{ __("계산") }}
@@ -202,19 +202,19 @@
 
 					<template v-else>
 						<div class="flex flex-col gap-2">
-							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("정시급 (정시 × 시급)") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumBasePay) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("연장수당 (50% 가산)") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumOvertime) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("야간수당 (50% 추가)") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumNight) }}</p>
 							</div>
-							<div class="flex justify-between rounded-xl bg-[#f7f7f5] p-3">
+							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 								<p class="text-sm text-black">{{ __("휴일수당 (50%/100%)") }}</p>
 								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumHoliday) }}</p>
 							</div>
@@ -236,17 +236,17 @@
 					<p class="mt-1 text-xs text-black/50">{{ __("사업장 단위 마감 진행 현황") }}</p>
 
 					<div class="mt-3 mb-4 grid grid-cols-2 gap-2">
-						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="k-numeric text-xl font-bold text-black">{{ closingProgress.total }}</p>
 							<p class="text-xs text-black/50">{{ __("전체") }}</p>
 						</div>
-						<div class="rounded-xl bg-[#f7f7f5] p-3 text-center">
+						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="k-numeric text-xl font-bold text-green-800">{{ closingProgress.completed }}</p>
 							<p class="text-xs text-black/50">{{ __("마감 완료") }}</p>
 						</div>
 					</div>
 
-					<div class="mb-4 rounded-xl bg-[#f7f7f5] p-3 text-sm">
+					<div class="mb-4 rounded-xl bg-[var(--k-surface-soft)] p-3 text-sm">
 						<p class="font-semibold text-black">{{ __("뮤테이션 경계") }}</p>
 						<p class="mt-1 text-xs text-black/60">
 							{{ __("마감 적용은 draft 저장 전용입니다. submit/cancel/approve/send는 별도 워크플로우에서 처리합니다.") }}
@@ -257,13 +257,13 @@
 
 					<div class="flex gap-2">
 						<button
-							class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
+							class="k-btn-secondary flex-1 border-[var(--k-hairline)]"
 							@click="loadAttendanceSummary"
 						>
 							{{ __("마감 미리보기") }}
 						</button>
 						<button
-							class="flex-1 rounded-full bg-black py-2.5 text-sm font-semibold text-white"
+							class="k-btn-primary flex-1"
 							@click="showApplyDialog = true"
 						>
 							{{ __("마감 임시저장(Draft)") }}
@@ -288,13 +288,13 @@
 						</div>
 						<div class="mt-5 flex gap-3">
 							<button
-								class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
+								class="k-btn-secondary flex-1 border-[var(--k-hairline)]"
 								@click="showApplyDialog = false"
 							>
 								{{ __("취소") }}
 							</button>
 							<button
-								class="flex-1 rounded-full bg-black py-2.5 text-sm font-bold text-white disabled:opacity-50"
+								class="k-btn-primary flex-1 font-bold disabled:opacity-50"
 								:disabled="applyLoading"
 								@click="doApplyClosing"
 							>

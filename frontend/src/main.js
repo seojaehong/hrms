@@ -33,12 +33,9 @@ import "./theme/variables.css"
 
 import "./main.css"
 
-// 다크모드 초기화 — 저장된 선호 > 시스템 prefers-color-scheme (DESIGN.md Phase 3)
-const storedTheme = localStorage.getItem("k-theme")
-if (
-	storedTheme === "dark" ||
-	(!storedTheme && window.matchMedia?.("(prefers-color-scheme: dark)").matches)
-) {
+// 다크모드 초기화 — v1은 수동 옵트인만(설정 화면 토글). 시각 QA 완료 후
+// 시스템 prefers-color-scheme 자동 추종을 켠다 (DESIGN.md Phase 3).
+if (localStorage.getItem("k-theme") === "dark") {
 	document.documentElement.dataset.theme = "dark"
 }
 

@@ -6,8 +6,8 @@
 					<div class="k-block k-block--lilac">
 						<div class="k-card p-8">
 							<div class="flex flex-col gap-3 items-center mb-8">
-								<FrappeHRLogo class="h-8 w-8" />
-								<div class="k-eyebrow">KOREA HRMS</div>
+								<SafeClawMark class="h-9 w-9" />
+								<div class="k-eyebrow">SAFECLAW HR</div>
 								<div class="text-2xl font-semibold text-[var(--k-ink)] text-center">
 									{{ __("Login to SafeClaw HR") }}
 								</div>
@@ -116,7 +116,7 @@ import { IonPage, IonContent } from "@ionic/vue"
 import { inject, reactive, ref } from "vue"
 import { Input, Button, ErrorMessage, Dialog, createResource } from "frappe-ui"
 
-import FrappeHRLogo from "@/components/icons/FrappeHRLogo.vue"
+import SafeClawMark from "@/components/icons/SafeClawMark.vue"
 
 const email = ref(null)
 const password = ref(null)

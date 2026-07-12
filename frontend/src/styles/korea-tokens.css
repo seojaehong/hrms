@@ -55,6 +55,8 @@
     --korea-primary: var(--k-ink);
     --korea-primary-hover: #262626;
     --korea-accent: var(--t-accent, #0d253d); /* v2: 단일 액센트 — magenta 폐기 */
+    /* 인터랙티브 액센트 서피스(버튼·세그먼트) — 테넌트 슬롯 경유. 다크에서 별도 밝기로 재정의 */
+    --k-accent-solid: var(--t-accent, #0d253d);
     --korea-success: var(--k-success);
     --korea-warn: var(--k-warn);
     --korea-error: var(--k-danger);
@@ -88,7 +90,7 @@
 .k-label {
     font-size: 12px;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--k-ink-muted);
     letter-spacing: -0.01em;
 }
 .k-block {
@@ -159,7 +161,7 @@
    pill·검정 버튼은 내러티브 전용 — 데이터 화면 버튼은 이 두 클래스만 쓴다.
    배경은 --t-accent 슬롯(테넌트 오버라이드 가능) — ledger-navy 변수 직접 참조 금지(돈의 색). */
 .k-btn-primary {
-    background: var(--t-accent, #0d253d);
+    background: var(--k-accent-solid);
     color: #f6f5f4;
     font-size: 14px;
     font-weight: 600;
@@ -193,7 +195,7 @@
 
 /* 세그먼트 토글(월급제/시급제 등) — 데이터 화면용, pill 금지 */
 .k-segment-active {
-    background: var(--t-accent, #0d253d);
+    background: var(--k-accent-solid);
     color: #f6f5f4;
     border-radius: 6px;
 }
@@ -227,6 +229,8 @@
     --k-block-mint: var(--t-block-4, #263b2b);
     --k-block-pink: var(--t-block-5, #3f2c2c);
     --k-block-navy: #14132b;
+    /* 다크 인터랙티브 액센트 — 카드(#1f1e1b) 위에서 구분되는 중간 네이비. 돈 잉크(#9db8d6)와 별개 */
+    --k-accent-solid: var(--t-accent-dark, #31517a);
     --k-success: #34c164;
     --k-danger: #ef6a6a;
     --k-warn: #f2c14e;

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 48" width="236" height="48" role="img" aria-label="SafeClaw HR">
+  <!-- 마크: 장부 네이비 라운드 스퀘어 + 클로(발톱) 3획 -->
+  <rect x="0" y="0" width="48" height="48" rx="12" fill="#0d253d"/>
+  <g stroke="#f6f5f4" stroke-width="4.6" stroke-linecap="round" fill="none">
+    <path d="M14 33 Q17 22 15.5 14"/>
+    <path d="M24 35 Q27 23 25.5 13"/>
+    <path d="M34 33 Q37 22 35.5 14"/>
+  </g>
+  <!-- 워드마크 -->
+  <text x="60" y="33" font-family="-apple-system,BlinkMacSystemFont,'Pretendard','Segoe UI',sans-serif" font-size="23" font-weight="700" letter-spacing="-0.5" fill="#171513">SafeClaw<tspan fill="#0d253d"> HR</tspan></text>
+</svg>

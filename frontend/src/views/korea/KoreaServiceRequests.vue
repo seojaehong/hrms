@@ -54,7 +54,7 @@
 					<button
 						@click="submitRequest"
 						:disabled="createRequest.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="createRequest.loading">{{ __('제출 중...') }}</span>
 						<span v-else>{{ __('요청 접수') }}</span>
@@ -114,7 +114,7 @@
 							<button
 								@click="changeStatus(req.name)"
 								:disabled="!statusDraft[req.name] || updateStatus.loading"
-								class="px-3 py-1.5 bg-black text-white text-xs rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+								class="k-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{{ __('변경') }}
 							</button>

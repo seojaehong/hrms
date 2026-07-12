@@ -55,7 +55,7 @@ class TestRules(unittest.TestCase):
         src = '<span class="text-sm">{{ formatKRW(total) }}</span>'
         found = [v for v in self._violations(src) if v["rule"] == "R3"]
         self.assertTrue(found)
-        self.assertEqual(found[0]["level"], "warn")
+        self.assertEqual(found[0]["level"], "error")
 
     def test_r3_amount_with_k_amount_ok(self):
         src = '<span class="k-amount">{{ formatKRW(total) }}</span>'
@@ -119,6 +119,16 @@ class TestRules(unittest.TestCase):
         codes = [v["rule"] for v in self._violations(src)]
         self.assertIn("R1", codes)
         self.assertIn("R2", codes)
+
+    def test_r3_multiline_element_with_class_on_previous_line(self):
+        """k-display 클래스가 윗줄, 바인딩이 다음 줄인 멀티라인 요소는 오탐하지 않는다."""
+        src = (
+            '<div class="k-display k-settled">\n'
+            "\t{{ formatKRW(statement.net_pay) }}\n"
+            "</div>"
+        )
+        codes = [v["rule"] for v in self._violations(src)]
+        self.assertNotIn("R3", codes)
 
     def test_violation_has_line_numbers(self):
         src = "<div>\n<button class=\"bg-black\">x</button>\n</div>"

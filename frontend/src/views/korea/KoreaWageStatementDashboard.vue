@@ -24,7 +24,7 @@
 					</div>
 					<button
 						@click="loadStatement"
-						class="px-5 py-2 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black transition-colors"
+						class="k-btn-primary"
 					>
 						{{ __('조회') }}
 					</button>
@@ -39,7 +39,7 @@
 						</div>
 					</div>
 
-					<div v-if="wageStatementPreview.loading" class="text-center py-8 text-gray-400 text-sm">
+					<div v-if="wageStatementPreview.loading" class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('불러오는 중...') }}
 					</div>
 					<div v-else-if="wageStatementPreview.error" class="text-center py-8 text-red-500 text-sm">
@@ -47,7 +47,7 @@
 					</div>
 					<template v-else-if="statement">
 						<!-- 히어로: 실수령액이 주인공 -->
-						<div class="k-block k-block--lime -mx-1">
+						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">NET PAY · {{ selectedYear }}.{{ String(selectedMonth).padStart(2, "0") }}</div>
 							<div class="mt-1 text-sm font-medium text-black/60">실수령액</div>
 							<div class="k-display k-settled">
@@ -65,7 +65,7 @@
 								</div>
 								<div class="rounded-lg bg-black px-3 py-2">
 									<p class="text-[11px] text-white/60">실수령</p>
-									<p class="text-sm font-bold text-white k-numeric">{{ formatKRW(statement.net_pay) }}</p>
+									<p class="text-sm font-bold text-white k-numeric k-amount">{{ formatKRW(statement.net_pay) }}</p>
 								</div>
 							</div>
 						</div>
@@ -112,7 +112,7 @@
 							<div class="text-sm font-bold text-black mb-2">지급 내역</div>
 							<div class="flex flex-col">
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
-									<span class="text-sm text-gray-600">기본급</span>
+									<span class="text-sm text-[var(--k-ink-muted)]">기본급</span>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.base_salary) }}</span>
 								</div>
 								<div
@@ -120,11 +120,11 @@
 									:key="item.code"
 									class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]"
 								>
-									<span class="text-sm text-gray-600">{{ item.label }}</span>
+									<span class="text-sm text-[var(--k-ink-muted)]">{{ item.label }}</span>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(item.amount) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
-									<span class="text-sm text-gray-600">비과세 합계</span>
+									<span class="text-sm text-[var(--k-ink-muted)]">비과세 합계</span>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.non_taxable_total) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
@@ -140,35 +140,35 @@
 							<div class="text-sm font-bold text-black mb-2">공제 내역</div>
 							<div class="flex flex-col">
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
-									<button class="text-sm text-gray-600 flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
-										4대보험 <span class="text-gray-400 text-xs">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
+									<button class="text-sm text-[var(--k-ink-muted)] flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
+										4대보험 <span class="text-[var(--k-ink-faint)] text-xs">{{ showInsuranceDetail ? "▾" : "▸" }}</span>
 									</button>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statementInsuranceTotal) }}</span>
 								</div>
 								<template v-if="showInsuranceDetail">
 									<div class="flex justify-between items-center py-1 pl-4">
-										<span class="text-xs text-gray-500">국민연금</span>
+										<span class="text-xs text-[var(--k-ink-muted)]">국민연금</span>
 										<span class="text-xs k-amount">{{ formatKRW(statement.national_pension) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
-										<span class="text-xs text-gray-500">건강보험</span>
+										<span class="text-xs text-[var(--k-ink-muted)]">건강보험</span>
 										<span class="text-xs k-amount">{{ formatKRW(statement.health_insurance) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
-										<span class="text-xs text-gray-500">장기요양보험</span>
+										<span class="text-xs text-[var(--k-ink-muted)]">장기요양보험</span>
 										<span class="text-xs k-amount">{{ formatKRW(statement.long_term_care_insurance) }}</span>
 									</div>
 									<div class="flex justify-between items-center py-1 pl-4">
-										<span class="text-xs text-gray-500">고용보험</span>
+										<span class="text-xs text-[var(--k-ink-muted)]">고용보험</span>
 										<span class="text-xs k-amount">{{ formatKRW(statement.employment_insurance) }}</span>
 									</div>
 								</template>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
-									<span class="text-sm text-gray-600">소득세</span>
+									<span class="text-sm text-[var(--k-ink-muted)]">소득세</span>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.income_tax) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
-									<span class="text-sm text-gray-600">주민세(지방소득세)</span>
+									<span class="text-sm text-[var(--k-ink-muted)]">주민세(지방소득세)</span>
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.local_income_tax) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
@@ -184,19 +184,19 @@
 						<div v-if="isAdmin" class="flex flex-row gap-2 pt-2">
 							<button
 								disabled
-								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+								class="k-btn-secondary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
 							>
 								PDF 다운로드 (준비 중)
 							</button>
 							<button
 								disabled
-								class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+								class="k-btn-secondary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
 							>
 								카톡 발송 (준비 중)
 							</button>
 						</div>
 					</template>
-					<div v-else class="text-center py-8 text-gray-400 text-sm">
+					<div v-else class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('조회 버튼을 눌러 명세서를 확인하세요.') }}
 					</div>
 				</div>
@@ -204,21 +204,21 @@
 				<!-- 지난 12개월 목록 -->
 				<div class="k-card p-4 flex flex-col gap-3">
 					<div class="text-base font-bold tracking-tight text-black">{{ __('최근 12개월') }}</div>
-					<div v-if="wageStatementHistory.loading" class="text-sm text-gray-400 py-4 text-center">
+					<div v-if="wageStatementHistory.loading" class="text-sm text-[var(--k-ink-faint)] py-4 text-center">
 						{{ __('불러오는 중...') }}
 					</div>
 					<template v-else-if="wageStatementHistory.data?.length">
 						<div
 							v-for="item in wageStatementHistory.data"
 							:key="item.pay_year_month"
-							class="flex justify-between items-center border-b border-gray-100 pb-2 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded transition-colors"
+							class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2 cursor-pointer hover:bg-[var(--k-surface-soft)] -mx-2 px-2 rounded transition-colors"
 							@click="selectHistoryItem(item)"
 						>
-							<span class="text-sm text-gray-700">{{ item.pay_year_month }}</span>
-							<span class="text-sm font-semibold text-gray-800">{{ formatKRW(item.net_pay) }}</span>
+							<span class="text-sm text-[var(--k-ink)]">{{ item.pay_year_month }}</span>
+							<span class="text-sm font-semibold text-[var(--k-ink)] k-amount">{{ formatKRW(item.net_pay) }}</span>
 						</div>
 					</template>
-					<div v-else class="text-sm text-gray-400 py-4 text-center">
+					<div v-else class="text-sm text-[var(--k-ink-faint)] py-4 text-center">
 						{{ __('명세서 내역이 없습니다.') }}
 					</div>
 				</div>

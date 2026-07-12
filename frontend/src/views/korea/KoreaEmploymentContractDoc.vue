@@ -128,7 +128,7 @@
 					>{{ __('+ 항목 추가') }}</button>
 					<div class="flex justify-between text-sm pt-2 border-t border-[var(--k-hairline)]">
 						<span class="text-black/60">{{ __('임금 합계') }}</span>
-						<span class="k-numeric font-semibold text-black">{{ formatKRW(wageTotal) }}</span>
+						<span class="k-numeric font-semibold k-amount">{{ formatKRW(wageTotal) }}</span>
 					</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -153,7 +153,7 @@
 				<button
 					@click="calculate"
 					:disabled="buildEmploymentContract.loading"
-					class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					class="k-btn-primary w-full"
 				>
 					<span v-if="buildEmploymentContract.loading">{{ __('검토 중...') }}</span>
 					<span v-else>{{ __('계약서 검토') }}</span>
@@ -187,7 +187,7 @@
 						<button
 							@click="generateMarkdown"
 							:disabled="renderContractMarkdown.loading"
-							class="w-full py-2.5 border border-black text-black text-sm rounded-full font-semibold hover:bg-black/5 transition-colors disabled:opacity-50"
+							class="k-btn-secondary w-full"
 						>
 							<span v-if="renderContractMarkdown.loading">{{ __('생성 중...') }}</span>
 							<span v-else>{{ __('마크다운 생성') }}</span>
@@ -196,7 +196,7 @@
 							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
 							<button
 								@click="copyMarkdown"
-								class="w-full py-2.5 border border-black text-black text-sm rounded-full font-semibold hover:bg-black/5 transition-colors"
+								class="k-btn-secondary w-full"
 							>{{ copied ? __('복사됨 ✓') : __('마크다운 복사') }}</button>
 						</template>
 					</div>

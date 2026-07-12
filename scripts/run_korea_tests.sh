@@ -78,7 +78,7 @@ PY
 fi
 
 # ── 디자인 규율 감사 (DESIGN.md v2) — 베이스라인 래칫: 위반이 늘면 실패
-DESIGN_AUDIT_BASELINE=370
+DESIGN_AUDIT_BASELINE=0
 DAOUT=$(PYTHONIOENCODING=utf-8 python3 scripts/design_audit.py --baseline $DESIGN_AUDIT_BASELINE 2>&1 | head -1)
 DARC=$?
 DESIGN_FAIL=0

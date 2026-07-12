@@ -7,7 +7,7 @@
 				</router-link>
 
 				<!-- 히어로 — 연차(lilac) 색블록 -->
-				<section class="k-block k-block--lilac">
+				<section class="k-block k-block--cream">
 					<p class="k-eyebrow">ANNUAL LEAVE</p>
 					<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("직원 연차 상세") }}</h1>
 					<p class="k-numeric mt-1 text-sm font-medium text-black/60">{{ employeeId }}</p>

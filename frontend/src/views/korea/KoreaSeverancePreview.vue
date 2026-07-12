@@ -40,7 +40,7 @@
 					<button
 						@click="calculate"
 						:disabled="severancePreview.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="severancePreview.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('퇴직금 계산') }}</span>
@@ -71,11 +71,11 @@
 									<p class="text-[11px] text-black/55">계속근로</p>
 								</div>
 								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
-									<p class="k-numeric text-sm font-bold text-black">{{ formatKRW(result.average_daily_wage) }}</p>
+									<p class="k-numeric text-sm font-bold k-amount">{{ formatKRW(result.average_daily_wage) }}</p>
 									<p class="text-[11px] text-black/55">1일 평균임금</p>
 								</div>
 								<div class="rounded-lg bg-black px-3 py-2 text-center">
-									<p class="k-numeric text-sm font-bold text-white">{{ formatKRW(result.severance_pay) }}</p>
+									<p class="k-numeric text-sm font-bold text-white k-amount">{{ formatKRW(result.severance_pay) }}</p>
 									<p class="text-[11px] text-white/60">퇴직금</p>
 								</div>
 							</div>
@@ -96,19 +96,19 @@
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">평균임금 / 일</span>
-								<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(result.average_daily_wage) }}</span>
+								<span class="text-sm font-semibold k-numeric k-amount">{{ formatKRW(result.average_daily_wage) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">통상임금 / 일</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(result.ordinary_daily_wage) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(result.ordinary_daily_wage) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">IRP 의무이체액</span>
-								<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(result.irp_transfer_amount) }}</span>
+								<span class="text-sm font-semibold k-numeric k-amount">{{ formatKRW(result.irp_transfer_amount) }}</span>
 							</div>
 							<div class="flex justify-between items-center">
 								<span class="text-sm text-black/60">IRP 이체 한도</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(result.irp_transfer_limit) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(result.irp_transfer_limit) }}</span>
 							</div>
 						</div>
 

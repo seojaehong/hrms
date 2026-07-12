@@ -6,7 +6,7 @@ frontend/src/views/**/*.vue 를 스캔해 규칙 위반을 리포트한다.
 규칙 (스펙: docs/design/2026-07-12-design-revision-v2-sweep.md §Phase 0):
   R1  데이터 화면 pill(rounded-full) 금지 — 내러티브 화이트리스트 제외
   R2  데이터 화면 검정(bg-black) 버튼 금지
-  R3  금액 표기에 k-amount/k-display/k-settled 의무 (warn — 휴리스틱)
+  R3  금액 표기에 k-amount/k-display/k-settled 의무 (error — 2026-07-12 승격)
   R4  하드코딩 색 금지 (text-gray-*/bg-gray-*/임의 #hex — var(--k-*) 토큰 제외)
   R5  파스텔 차터 — 데이터 화면 k-block--* 금지 (cream은 결과 히어로 관례로 예외)
   R6  ledger-navy 유용 금지 — 버튼 배경에 --k-ledger-navy 직접 사용 금지
@@ -29,6 +29,7 @@ NARRATIVE_VIEWS = {
     "InvalidEmployee.vue",
     "Login.vue",
     "KoreaLanding.vue",  # 마케팅 (Linear 다크 — 별도 문법)
+    "KoreaAIChat.vue",  # 대화형 챗 — 내러티브 분류(장부 데이터 없음, navy 히어로 유지)
 }
 
 _BUTTON_TAG = re.compile(r"<button\b[^>]*>", re.IGNORECASE)
@@ -71,10 +72,14 @@ def audit_source(source: str, filename: str, *, narrative: bool = False) -> list
                 })
 
     for idx, line in enumerate(lines, start=1):
-        # R3 — 금액 잉크 (warn 휴리스틱)
-        if _AMOUNT_BIND.search(line) and not any(c in line for c in _AMOUNT_OK_CLASSES):
+        # R3 — 금액 잉크 (warn 휴리스틱). 멀티라인 요소는 클래스가 윗줄에 올 수 있어
+        # 바인딩 줄에 class 속성이 없으면 직전 2줄까지 함께 본다.
+        context = line
+        if 'class="' not in line and _AMOUNT_BIND.search(line):
+            context = "\n".join(lines[max(0, idx - 3):idx])
+        if _AMOUNT_BIND.search(line) and not any(c in context for c in _AMOUNT_OK_CLASSES):
             violations.append({
-                "rule": "R3", "level": "warn", "line": idx,
+                "rule": "R3", "level": "error", "line": idx,
                 "detail": "금액 바인딩에 k-amount/k-display/k-settled 미적용",
             })
 

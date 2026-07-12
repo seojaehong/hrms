@@ -20,7 +20,7 @@
 						<label
 							v-for="item in items"
 							:key="item.ho"
-							class="flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-black/[0.03] cursor-pointer"
+							class="flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-[var(--k-surface-soft)] cursor-pointer"
 						>
 							<input type="checkbox" v-model="checked[item.ho]" class="mt-0.5" />
 							<span class="text-sm text-black">
@@ -31,7 +31,7 @@
 					<button
 						@click="checkCoverage"
 						:disabled="checkRequiredItems.loading || !items.length"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="checkRequiredItems.loading">{{ __('확인 중...') }}</span>
 						<span v-else>{{ __('커버리지 확인') }}</span>
@@ -96,7 +96,7 @@
 					<button
 						@click="checkProcedure"
 						:disabled="amendmentProcedure.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="amendmentProcedure.loading">{{ __('확인 중...') }}</span>
 						<span v-else>{{ __('절차 확인') }}</span>

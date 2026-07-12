@@ -44,7 +44,7 @@
 					<button
 						@click="calculateSchedule"
 						:disabled="promotionSchedule.loading || !canSubmitSchedule"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="promotionSchedule.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('촉진 기한 계산') }}</span>
@@ -140,15 +140,15 @@
 					</div>
 
 					<!-- 단계 토글 -->
-					<div class="flex rounded-full border border-[var(--k-hairline)] p-1 text-sm font-semibold">
+					<div class="flex rounded-lg border border-[var(--k-hairline)] p-1 text-sm font-semibold">
 						<button
-							class="flex-1 py-2 rounded-full transition-colors"
-							:class="noticeForm.stage === 1 ? 'bg-black text-white' : 'text-black/60'"
+							class="flex-1 py-2 rounded-md transition-colors"
+							:class="noticeForm.stage === 1 ? 'k-segment-active' : 'text-black/60'"
 							@click="noticeForm.stage = 1"
 						>{{ __('1차 촉구서') }}</button>
 						<button
-							class="flex-1 py-2 rounded-full transition-colors"
-							:class="noticeForm.stage === 2 ? 'bg-black text-white' : 'text-black/60'"
+							class="flex-1 py-2 rounded-md transition-colors"
+							:class="noticeForm.stage === 2 ? 'k-segment-active' : 'text-black/60'"
 							@click="noticeForm.stage = 2"
 						>{{ __('2차 지정 통보서') }}</button>
 					</div>
@@ -165,7 +165,7 @@
 					<button
 						@click="generateNotice"
 						:disabled="promotionNotice.loading || !canSubmitNotice"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="promotionNotice.loading">{{ __('생성 중...') }}</span>
 						<span v-else>{{ __('초안 생성') }}</span>
@@ -178,7 +178,7 @@
 						<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono">{{ noticeMarkdown }}</div>
 						<button
 							@click="copyNotice"
-							class="w-full py-2.5 border border-black text-black text-sm rounded-full font-semibold hover:bg-black/5 transition-colors"
+							class="k-btn-secondary w-full"
 						>{{ copied ? __('복사됨 ✓') : __('마크다운 복사') }}</button>
 					</template>
 				</div>
@@ -217,7 +217,7 @@
 					<button
 						@click="calculateAllowance"
 						:disabled="settleUnusedLeave.loading || !canSubmitAllowance"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="settleUnusedLeave.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('수당 계산') }}</span>

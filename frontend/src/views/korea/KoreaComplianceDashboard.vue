@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 히어로 — pink 색블록 -->
-				<div class="k-block k-block--pink">
+				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">COMPLIANCE</div>
 					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('컴플라이언스 진단') }}</div>
 					<p class="mt-2 text-sm text-black/60">
@@ -29,7 +29,7 @@
 							v-if="isAdmin"
 							@click="confirmRunDiagnosis"
 							:disabled="complianceDiagnosis.loading"
-							class="flex-1 py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							class="k-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							<span v-if="complianceDiagnosis.loading">{{ __('진단 중...') }}</span>
 							<span v-else>{{ __('전체 진단 실행') }}</span>
@@ -37,7 +37,7 @@
 						<button
 							v-if="diagnosisResult"
 							@click="refreshFromCache"
-							class="py-3 px-4 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
+							class="k-btn-secondary"
 						>
 							{{ __('새로고침') }}
 						</button>
@@ -158,7 +158,7 @@
 					<button
 						@click="handlePdfDownload"
 						:disabled="pdfDownloading"
-						class="w-full py-3 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="pdfDownloading">PDF 생성 중...</span>
 						<span v-else>{{ __('전체 PDF 리포트 다운로드') }}</span>
@@ -168,7 +168,7 @@
 					<button
 						@click="confirmGenerateActionPlan"
 						:disabled="complianceActionPlan.loading"
-						class="w-full py-3 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<span v-if="complianceActionPlan.loading">액션 플랜 생성 중...</span>
 						<span v-else>{{ __('개선 액션 플랜 생성') }}</span>
@@ -234,13 +234,13 @@
 					<div class="flex flex-row gap-3 mt-2">
 						<button
 							@click="showDiagnosisConfirm = false"
-							class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
+							class="k-btn-secondary flex-1"
 						>
 							취소
 						</button>
 						<button
 							@click="runDiagnosis"
-							class="flex-1 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/80 transition-colors"
+							class="k-btn-primary flex-1"
 						>
 							실행
 						</button>
@@ -263,13 +263,13 @@
 					<div class="flex flex-row gap-3 mt-2">
 						<button
 							@click="showActionPlanConfirm = false"
-							class="flex-1 py-2 border border-black/15 rounded-full text-sm text-black font-medium hover:bg-[var(--k-surface-soft)] transition-colors"
+							class="k-btn-secondary flex-1"
 						>
 							취소
 						</button>
 						<button
 							@click="generateActionPlan"
-							class="flex-1 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/80 transition-colors"
+							class="k-btn-primary flex-1"
 						>
 							생성
 						</button>
@@ -325,7 +325,7 @@ const overallConfig = computed(
 
 const overallStatusEmoji = computed(() => overallConfig.value?.emoji ?? "⬜")
 const overallStatusLabel = computed(() => overallConfig.value?.text ?? "-")
-const overallStatusTextClass = computed(() => overallConfig.value?.textClass ?? "text-gray-700")
+const overallStatusTextClass = computed(() => overallConfig.value?.textClass ?? "text-[var(--k-ink)]")
 
 const overallBannerClass = computed(() => {
 	const map = {
@@ -333,7 +333,7 @@ const overallBannerClass = computed(() => {
 		needs_attention: "bg-yellow-50",
 		high_risk: "bg-red-50",
 	}
-	return map[overallStatus.value] ?? "bg-gray-50"
+	return map[overallStatus.value] ?? "bg-[var(--k-surface-soft)]"
 })
 
 const categoryCards = computed(() => buildCategoryCards(diagnosisResult.value?.diagnoses))
@@ -431,7 +431,7 @@ function severityClass(severity) {
 		high: "text-red-700 bg-red-50",
 		medium: "text-yellow-700 bg-yellow-50",
 		low: "text-green-700 bg-green-50",
-	}[severity] ?? "text-gray-700 bg-gray-50"
+	}[severity] ?? "text-[var(--k-ink)] bg-[var(--k-surface-soft)]"
 }
 
 function severityLabel(severity) {

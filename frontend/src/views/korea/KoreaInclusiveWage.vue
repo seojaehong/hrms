@@ -57,7 +57,7 @@
 					<button
 						@click="runDesign"
 						:disabled="inclusiveWageDesign.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageDesign.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('총액 분해') }}</span>
@@ -92,23 +92,23 @@
 						<div class="flex flex-col gap-2">
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">기본급</span>
-								<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(designResult.base_pay) }}</span>
+								<span class="text-sm font-semibold k-numeric k-amount">{{ formatKRW(designResult.base_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">고정연장수당</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(designResult.fixed_ot_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(designResult.fixed_ot_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">야간수당 (가산분)</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(designResult.night_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(designResult.night_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">휴일수당</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(designResult.holiday_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(designResult.holiday_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center">
 								<span class="text-sm font-semibold text-black">합계 검산</span>
-								<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(designResult.total) }}</span>
+								<span class="text-sm font-bold k-numeric k-amount">{{ formatKRW(designResult.total) }}</span>
 							</div>
 						</div>
 					</template>
@@ -184,7 +184,7 @@
 					<button
 						@click="runAudit"
 						:disabled="inclusiveWageAudit.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageAudit.loading">{{ __('감사 중...') }}</span>
 						<span v-else>{{ __('역산 감사') }}</span>
@@ -213,31 +213,31 @@
 						<div class="flex flex-col gap-2">
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">통상시급 (기본급 ÷ 209h)</span>
-								<span class="text-sm font-semibold text-black k-numeric">{{ formatKRW(Math.round(auditResult.ordinary_hourly_wage)) }}</span>
+								<span class="text-sm font-semibold k-numeric k-amount">{{ formatKRW(Math.round(auditResult.ordinary_hourly_wage)) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">적정 연장수당</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(auditResult.expected_ot_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(auditResult.expected_ot_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">연장 부족분</span>
-								<span class="text-sm k-numeric" :class="auditResult.ot_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.ot_shortfall) }}</span>
+								<span class="text-sm k-numeric k-amount" :class="auditResult.ot_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.ot_shortfall) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">적정 야간수당</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(auditResult.expected_night_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(auditResult.expected_night_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">야간 부족분</span>
-								<span class="text-sm k-numeric" :class="auditResult.night_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.night_shortfall) }}</span>
+								<span class="text-sm k-numeric k-amount" :class="auditResult.night_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.night_shortfall) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">적정 휴일수당</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(auditResult.expected_holiday_pay) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(auditResult.expected_holiday_pay) }}</span>
 							</div>
 							<div class="flex justify-between items-center">
 								<span class="text-sm text-black/60">휴일 부족분</span>
-								<span class="text-sm k-numeric" :class="auditResult.holiday_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.holiday_shortfall) }}</span>
+								<span class="text-sm k-numeric k-amount" :class="auditResult.holiday_shortfall > 0 ? 'font-semibold text-red-600' : 'text-black'">{{ formatKRW(auditResult.holiday_shortfall) }}</span>
 							</div>
 						</div>
 					</template>
@@ -313,7 +313,7 @@
 					<button
 						@click="runReverse"
 						:disabled="inclusiveWageReverseNet.loading || !reverse.target_net"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageReverseNet.loading">{{ __('역산 중...') }}</span>
 						<span v-else>{{ __('세전 총액 역산') }}</span>
@@ -339,31 +339,31 @@
 						<div class="flex flex-col gap-2">
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">국민연금</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.pension) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.pension) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">건강보험</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.health) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.health) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">장기요양</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.longterm_care) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.longterm_care) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">고용보험</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.employment) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.employment) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">소득세</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.income_tax) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.income_tax) }}</span>
 							</div>
 							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
 								<span class="text-sm text-black/60">지방소득세</span>
-								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.local_income_tax) }}</span>
+								<span class="text-sm k-numeric k-amount">{{ formatKRW(reverseResult.deductions.local_income_tax) }}</span>
 							</div>
 							<div class="flex justify-between items-center">
 								<span class="text-sm font-semibold text-black">공제 합계</span>
-								<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(reverseResult.deductions.total) }}</span>
+								<span class="text-sm font-bold k-numeric k-amount">{{ formatKRW(reverseResult.deductions.total) }}</span>
 							</div>
 						</div>
 					</template>

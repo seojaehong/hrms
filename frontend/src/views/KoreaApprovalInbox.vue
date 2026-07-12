@@ -26,10 +26,10 @@
 						:key="tab.key"
 						@click="activeFilter = tab.key"
 						:class="[
-							'flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors',
+							'flex-shrink-0 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors',
 							activeFilter === tab.key
-								? 'bg-black text-white'
-								: 'bg-white text-black border border-[#e6e6e6] hover:bg-[#f7f7f5]',
+								? 'k-segment-active'
+								: 'bg-white text-black border border-[var(--k-hairline)] hover:bg-[var(--k-surface-soft)]',
 						]"
 					>
 						{{ tab.label }}
@@ -47,7 +47,7 @@
 
 				<!-- 로딩 상태 -->
 				<div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
-					<div class="w-8 h-8 border-2 border-[#e6e6e6] border-t-black rounded-full animate-spin"></div>
+					<div class="w-8 h-8 border-2 border-[var(--k-hairline)] border-t-black rounded-full animate-spin"></div>
 					<p class="text-sm text-black/50">{{ __("불러오는 중…") }}</p>
 				</div>
 
@@ -56,7 +56,7 @@
 					<FeatherIcon name="alert-circle" class="h-10 w-10 text-red-700" />
 					<p class="text-sm text-red-700 text-center">{{ error }}</p>
 					<button
-						class="rounded-full border border-[#e6e6e6] bg-white px-5 py-2 text-sm font-semibold text-black"
+						class="k-btn-secondary border-[var(--k-hairline)]"
 						@click="loadItems"
 					>
 						{{ __("다시 시도") }}
@@ -85,7 +85,7 @@
 					>
 						<!-- 카드 헤더 -->
 						<div class="flex items-start gap-3 p-4">
-							<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[#f7f7f5] flex items-center justify-center">
+							<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--k-surface-soft)] flex items-center justify-center">
 								<FeatherIcon
 									:name="doctypeStyle(item.doctype).icon"
 									class="h-5 w-5 text-black"
@@ -101,17 +101,17 @@
 						</div>
 
 						<!-- 액션 버튼 -->
-						<div class="flex border-t border-[#f1f1f1]">
+						<div class="flex border-t border-[var(--k-hairline-soft)]">
 							<a
 								:href="item.url_app"
 								target="_blank"
 								rel="noopener"
-								class="flex-1 py-2.5 text-center text-sm text-black/60 hover:bg-[#f7f7f5] transition-colors"
+								class="flex-1 py-2.5 text-center text-sm text-black/60 hover:bg-[var(--k-surface-soft)] transition-colors"
 							>
 								{{ __("상세 보기") }}
 							</a>
 							<button
-								class="flex-1 py-2.5 text-center text-sm font-semibold text-green-800 hover:bg-green-100 transition-colors border-l border-[#f1f1f1]"
+								class="flex-1 py-2.5 text-center text-sm font-semibold text-green-800 hover:bg-green-100 transition-colors border-l border-[var(--k-hairline-soft)]"
 								:disabled="mutatingName === item.name"
 								@click="handleApprove(item)"
 							>
@@ -121,7 +121,7 @@
 								<span v-else>{{ __("승인") }}</span>
 							</button>
 							<button
-								class="flex-1 py-2.5 text-center text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors border-l border-[#f1f1f1]"
+								class="flex-1 py-2.5 text-center text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors border-l border-[var(--k-hairline-soft)]"
 								:disabled="mutatingName === item.name"
 								@click="handleReject(item)"
 							>
@@ -148,18 +148,18 @@
 					<textarea
 						v-model="commentText"
 						:placeholder="pendingAction === 'reject' ? __('반려 사유를 입력하세요.') : __('코멘트를 입력하세요. (선택)')"
-						class="w-full border border-[#e6e6e6] rounded-lg p-3 text-sm text-black resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
+						class="w-full border border-[var(--k-hairline)] rounded-lg p-3 text-sm text-black resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
 						rows="4"
 					></textarea>
 					<div class="flex gap-2">
 						<button
-							class="flex-1 rounded-full border border-[#e6e6e6] bg-white py-2.5 text-sm font-semibold text-black"
+							class="k-btn-secondary flex-1 border-[var(--k-hairline)]"
 							@click="cancelComment"
 						>
 							{{ __("취소") }}
 						</button>
 						<button
-							class="flex-1 rounded-full bg-black py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+							class="k-btn-primary flex-1 disabled:opacity-50"
 							:disabled="pendingAction === 'reject' && !commentText.trim()"
 							@click="confirmAction"
 						>

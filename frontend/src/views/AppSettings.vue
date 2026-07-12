@@ -14,7 +14,7 @@
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
 							</Button>
-							<h2 class="text-xl font-semibold text-gray-900">{{ __("Settings") }} </h2>
+							<h2 class="text-xl font-semibold text-[var(--k-ink)]">{{ __("Settings") }} </h2>
 						</div>
 					</header>
 
@@ -35,8 +35,8 @@
 							v-if="isLoading"
 							class="flex -mt-2 items-center justify-center gap-2"
 						>
-							<LoadingIndicator class="w-3 h-3 text-gray-800" />
-							<span class="text-gray-900 text-sm">
+							<LoadingIndicator class="w-3 h-3 text-[var(--k-ink)]" />
+							<span class="text-[var(--k-ink)] text-sm">
 								{{ pushNotificationState ? __("Disabling Push Notifications...") : __("Enabling Push Notifications...") }}
 							</span>
 						</div>

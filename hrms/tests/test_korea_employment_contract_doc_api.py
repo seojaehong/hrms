@@ -94,6 +94,38 @@ class TestBuildEmploymentContractApi(unittest.TestCase):
 		json.dumps(result)
 
 
+class TestNewFieldsPassThroughApi(unittest.TestCase):
+	"""수습/스케줄/NET 참고 필드 — 코어 위임 + JSON-safe(Decimal → float) 검증."""
+
+	def _data_with_new_fields(self):
+		return _complete_data(
+			probation={"months": 3, "wage_percent": 90},
+			work_schedule=[
+				{"day": d, "start_time": "09:00", "end_time": "19:00", "break_minutes": 60}
+				for d in ("월", "화", "수", "목", "금")
+			],
+			net_preview={"enabled": True, "non_taxable": 200000, "dependents": 1},
+		)
+
+	def test_new_fields_json_safe_and_values(self):
+		result = _api.build_employment_contract_api(self._data_with_new_fields())
+		json.dumps(result)  # Decimal이 남아 있으면 실패
+		self.assertEqual(result["probation"], {"months": 3, "wage_percent": 90})
+		self.assertEqual(result["schedule_summary"]["weekly_overtime_hours"], 5)
+		self.assertEqual(result["schedule_summary"]["monthly_overtime_hours"], 21.73)
+		self.assertEqual(
+			result["net_preview"]["estimated_net"],
+			result["wage_total"] - result["net_preview"]["deductions"]["total"],
+		)
+
+	def test_render_includes_new_clauses(self):
+		contract = _api.build_employment_contract_api(self._data_with_new_fields())
+		md = _api.render_contract_markdown_api(contract)
+		self.assertIn("수습기간", md)
+		self.assertIn("월 연장근로시간", md)
+		self.assertIn("예상 실수령액", md)
+
+
 class TestRenderContractMarkdownApi(unittest.TestCase):
 	def test_matches_core(self):
 		data = _complete_data()

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import importlib.util as _ilu
 import pathlib as _pl
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -38,6 +39,25 @@ def _load_sibling(name: str):
 _employment_contract = _load_sibling("employment_contract")
 mask_rrn = _employment_contract.mask_rrn
 
+# NET(실수령액) 참고 표기 — net_to_gross.py의 forward 공제 로직 재사용 (요율 이중 정의 금지)
+_net_to_gross = _load_sibling("net_to_gross")
+
+# ---------------------------------------------------------------------------
+# 스케줄 → 근로시간 상수 (inclusive_wage.py와 동일값 — DI 원칙상 재정의, cross-import 금지)
+# ---------------------------------------------------------------------------
+
+# 주 법정 근로시간 한도 (근로기준법 §50①)
+WEEKLY_STATUTORY_HOURS = Decimal("40")
+# 주 연장근로 한도 (근로기준법 §53①)
+WEEKLY_OVERTIME_LIMIT_HOURS = Decimal("12")
+# 월평균 주 수 = 365 ÷ 12 ÷ 7 ≈ 4.345 (inclusive_wage.py:AVG_WEEKS_PER_MONTH와 동일값 — 재정의)
+AVG_WEEKS_PER_MONTH = Decimal("365") / Decimal("12") / Decimal("7")
+
+# 수습기간 감액 하한 90% (최저임금법 §5③ — 단순노무직 제외 취지)
+PROBATION_WAGE_PERCENT_FLOOR = 90
+# 수습 감액 허용 기간 3개월 (최저임금법 시행령 §3 — 수습 시작 후 3개월 이내만 감액 가능)
+PROBATION_REDUCTION_MONTH_LIMIT = 3
+
 # ---------------------------------------------------------------------------
 # 공개 API
 # ---------------------------------------------------------------------------
@@ -48,6 +68,69 @@ STATUTE_NOTE_17_1 = (
 )
 STATUTE_NOTE_17_2 = "근로기준법 제17조제2항: 이 계약서는 서면으로 명시하여 근로자에게 교부하여야 한다."
 STATUTE_NOTE_ENFORCEMENT_DECREE = "시행령 §8 — 검수 필요 (세부 기재사항은 사업장별 확인 후 보완)"
+
+
+def compute_schedule_hours(schedule: list[Any]) -> dict[str, Any]:
+	"""주간 근무 스케줄 블록 → 주 소정/연장·월 연장시간 산출 (포괄임금 설계용).
+
+	Parameters
+	----------
+	schedule: list of dict
+		[{"day": str, "start_time": "HH:MM", "end_time": "HH:MM", "break_minutes": int}, ...]
+		종업시각이 시업시각 이하이면 익일 종업(야간 교대)으로 본다.
+
+	Returns
+	-------
+	dict:
+		{
+		  "weekly_total_hours": Decimal,      # 휴게 제외 주 실근로시간
+		  "weekly_scheduled_hours": Decimal,  # 주 소정근로시간 (최대 40h — §50①)
+		  "weekly_overtime_hours": Decimal,   # 주 연장시간 (40h 초과분)
+		  "monthly_overtime_hours": Decimal,  # 주 연장 × 4.345 (365÷12÷7), 소수 둘째자리 반올림
+		  "warnings": list[str],              # §53① 주 12시간 한도 초과 경고 (raise 아님)
+		}
+	"""
+	if not isinstance(schedule, list):
+		raise TypeError(f"schedule must be a list, got {type(schedule).__name__}")
+
+	total_minutes = 0
+	for block in schedule:
+		if not isinstance(block, dict):
+			raise TypeError("schedule 항목은 dict여야 합니다")
+		start = _parse_hhmm(block.get("start_time"), "start_time")
+		end = _parse_hhmm(block.get("end_time"), "end_time")
+		if end <= start:
+			end += 24 * 60  # 익일 종업 (야간 교대)
+		try:
+			break_minutes = int(block.get("break_minutes") or 0)
+		except (TypeError, ValueError) as exc:
+			raise ValueError(f"break_minutes must be an integer: {block.get('break_minutes')!r}") from exc
+		if break_minutes < 0:
+			raise ValueError("break_minutes must be >= 0")
+		total_minutes += max(0, end - start - break_minutes)
+
+	weekly_total = (Decimal(total_minutes) / Decimal(60)).quantize(
+		Decimal("0.01"), rounding=ROUND_HALF_UP
+	)
+	weekly_scheduled = min(weekly_total, WEEKLY_STATUTORY_HOURS)
+	weekly_overtime = max(weekly_total - WEEKLY_STATUTORY_HOURS, Decimal("0"))
+	monthly_overtime = (weekly_overtime * AVG_WEEKS_PER_MONTH).quantize(
+		Decimal("0.01"), rounding=ROUND_HALF_UP
+	)
+
+	warnings: list[str] = []
+	if weekly_overtime > WEEKLY_OVERTIME_LIMIT_HOURS:
+		warnings.append(
+			f"주 연장근로 {weekly_overtime}h가 주 12시간 한도를 초과합니다 (근로기준법 §53①)."
+		)
+
+	return {
+		"weekly_total_hours": weekly_total,
+		"weekly_scheduled_hours": weekly_scheduled,
+		"weekly_overtime_hours": weekly_overtime,
+		"monthly_overtime_hours": monthly_overtime,
+		"warnings": warnings,
+	}
 
 
 def build_employment_contract(data: dict[str, Any]) -> dict[str, Any]:
@@ -122,6 +205,21 @@ def build_employment_contract(data: dict[str, Any]) -> dict[str, Any]:
 	wage_components = _sanitize_wage_components(wage_components_raw)
 	wage_total = sum(int(item["amount"]) for item in wage_components)
 
+	warnings: list[str] = []
+
+	# 수습기간 (최저임금법 §5③·시행령 §3) — 경고는 raise 아님 (판단은 노무사)
+	probation = _sanitize_probation(data.get("probation") or {}, warnings)
+
+	# 주간 스케줄 → 월 연장시간 (포괄임금 설계용) — 미입력 시 None
+	work_schedule_raw = data.get("work_schedule")
+	schedule_summary = None
+	if work_schedule_raw:
+		schedule_summary = compute_schedule_hours(work_schedule_raw)
+		warnings.extend(schedule_summary["warnings"])
+
+	# 예상 실수령액 참고 표기 — 옵션 (net_to_gross forward 공제 재사용)
+	net_preview = _build_net_preview(data.get("net_preview") or {}, wage_total)
+
 	workplace = str(data.get("workplace") or "").strip()
 	job_description = str(data.get("job_description") or "").strip()
 	holidays = str(data.get("holidays") or "").strip()
@@ -161,6 +259,10 @@ def build_employment_contract(data: dict[str, Any]) -> dict[str, Any]:
 		"wage_payment_method": wage_payment_method,
 		"social_insurance": social_insurance,
 		"other_terms": other_terms,
+		"probation": probation,
+		"schedule_summary": schedule_summary,
+		"net_preview": net_preview,
+		"warnings": warnings,
 		"missing": missing,
 		"required_fields_complete": len(missing) == 0,
 		"requires_human_approval": True,
@@ -183,6 +285,14 @@ def render_contract_markdown(contract: dict[str, Any]) -> str:
 			lines.append(f"> - {field}")
 		lines.append("")
 
+	warnings = contract.get("warnings") or []
+	if warnings:
+		lines.append("> ⚠️ **법정 기준 경고** — 서면 교부 전 아래 사항을 검토하십시오.")
+		lines.append(">")
+		for warning in warnings:
+			lines.append(f"> - {warning}")
+		lines.append("")
+
 	company = contract.get("company", {})
 	employee = contract.get("employee", {})
 	contract_period = contract.get("contract_period", {})
@@ -201,6 +311,13 @@ def render_contract_markdown(contract: dict[str, Any]) -> str:
 	lines.append("## 제1조 (근로계약기간)")
 	lines.append(f"- 계약 시작일: {_blank(contract_period.get('start_date'))}")
 	lines.append(f"- 계약 종료일: {_blank(contract_period.get('end_date'), '기간의 정함 없음')}")
+	probation = contract.get("probation") or {}
+	if int(probation.get("months") or 0) > 0:
+		lines.append(f"- 수습기간: 계약 시작일부터 {probation['months']}개월")
+		lines.append(
+			f"- 수습기간 중 임금: 이 계약 임금의 {probation.get('wage_percent', 100)}% "
+			"(최저임금법 제5조제3항·같은 법 시행령 제3조에 따른 범위 내)"
+		)
 	lines.append("")
 
 	lines.append("## 제2조 (근무장소 및 업무)")
@@ -215,6 +332,14 @@ def render_contract_markdown(contract: dict[str, Any]) -> str:
 		f"(휴게시간 {_blank(scheduled_work.get('break_time'), '1시간')})"
 	)
 	lines.append(f"- 근무일: {_blank(scheduled_work.get('work_days'))}")
+	schedule_summary = contract.get("schedule_summary")
+	if schedule_summary:
+		lines.append(f"- 주 소정근로시간: {schedule_summary['weekly_scheduled_hours']}시간")
+		lines.append(f"- 주 연장근로시간: {schedule_summary['weekly_overtime_hours']}시간")
+		lines.append(
+			f"- 월 연장근로시간: {schedule_summary['monthly_overtime_hours']}시간 "
+			"(주 연장 × 월평균 주수 4.345 — 포괄임금 설계용)"
+		)
 	lines.append("")
 
 	lines.append("## 제4조 (휴일) — 근로기준법 제55조")
@@ -232,6 +357,14 @@ def render_contract_markdown(contract: dict[str, Any]) -> str:
 		lines.append("- (임금 구성항목 미기재 — 보완 필요)")
 	lines.append(f"- 임금 지급일: {_blank(contract.get('wage_payment_date'))}")
 	lines.append(f"- 지급 방법: {_blank(contract.get('wage_payment_method'))}")
+	net_preview = contract.get("net_preview")
+	if net_preview:
+		lines.append(
+			f"- ※ 예상 실수령액(참고용): {net_preview['estimated_net']:,}원 — "
+			f"부양가족 {net_preview['dependents']}인(본인 포함)·"
+			f"월 비과세 {net_preview['non_taxable']:,}원 가정, 법정 요율 기준 추정치이며 "
+			"실제 공제액과 다를 수 있음 (계약 임금이 아님)"
+		)
 	lines.append("")
 
 	lines.append("## 제6조 (연차유급휴가) — 근로기준법 제60조")
@@ -280,6 +413,87 @@ def render_contract_markdown(contract: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # 내부 헬퍼
 # ---------------------------------------------------------------------------
+
+
+def _parse_hhmm(value: Any, name: str) -> int:
+	"""'HH:MM' → 자정 기준 분(minute). 형식 불일치 시 ValueError."""
+	text = str(value or "").strip()
+	parts = text.split(":")
+	if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
+		raise ValueError(f"{name} must be 'HH:MM': {value!r}")
+	hour, minute = int(parts[0]), int(parts[1])
+	if hour > 23 or minute > 59:
+		raise ValueError(f"{name} must be 'HH:MM': {value!r}")
+	return hour * 60 + minute
+
+
+def _sanitize_probation(probation: dict[str, Any], warnings: list[str]) -> dict[str, Any]:
+	"""수습기간 입력 검증 — 법정 기준 위반은 warnings에 누적 (raise 아님)."""
+	if not isinstance(probation, dict):
+		raise TypeError("data['probation'] must be a dict")
+	try:
+		months = int(probation.get("months") or 0)
+	except (TypeError, ValueError) as exc:
+		raise ValueError(f"probation.months must be an integer: {probation.get('months')!r}") from exc
+	if months < 0:
+		raise ValueError("probation.months must be >= 0")
+	try:
+		wage_percent = int(probation.get("wage_percent") or 100)
+	except (TypeError, ValueError) as exc:
+		raise ValueError(
+			f"probation.wage_percent must be an integer: {probation.get('wage_percent')!r}"
+		) from exc
+	if wage_percent <= 0 or wage_percent > 100:
+		raise ValueError("probation.wage_percent must be in 1..100")
+
+	if months > 0 and wage_percent < PROBATION_WAGE_PERCENT_FLOOR:
+		warnings.append(
+			f"수습기간 중 임금 {wage_percent}%가 감액 하한 {PROBATION_WAGE_PERCENT_FLOOR}% 미만입니다 "
+			"(최저임금법 §5③ — 단순노무직은 감액 불가)."
+		)
+	if months > PROBATION_REDUCTION_MONTH_LIMIT and wage_percent < 100:
+		warnings.append(
+			f"수습 감액은 수습 시작 후 {PROBATION_REDUCTION_MONTH_LIMIT}개월 이내만 가능합니다 "
+			f"(최저임금법 시행령 §3 — 수습 {months}개월 전체 감액 불가)."
+		)
+
+	return {"months": months, "wage_percent": wage_percent}
+
+
+def _build_net_preview(options: dict[str, Any], wage_total: int) -> dict[str, Any] | None:
+	"""예상 실수령액 참고 산출 — net_to_gross._employee_deductions (forward) 재사용.
+
+	참고용: 부양가족·비과세 가정을 결과에 명시하고, 미신청(enabled 아님)이거나
+	임금 합계가 0이면 None을 반환한다.
+	"""
+	if not isinstance(options, dict):
+		raise TypeError("data['net_preview'] must be a dict")
+	if not options.get("enabled") or wage_total <= 0:
+		return None
+
+	non_taxable = int(options.get("non_taxable") or 0)
+	if non_taxable < 0:
+		raise ValueError("net_preview.non_taxable must be >= 0")
+	dependents = max(1, int(options.get("dependents") or 1))
+
+	deductions = _net_to_gross._employee_deductions(
+		wage_total,
+		non_taxable=non_taxable,
+		dependents=dependents,
+		children_under_8=0,
+		include_pension=True,
+		include_health=True,
+		include_longterm_care=True,
+		include_employment=True,
+		pension_override=None,
+	)
+	return {
+		"gross": wage_total,
+		"non_taxable": non_taxable,
+		"dependents": dependents,
+		"deductions": deductions,
+		"estimated_net": wage_total - deductions["total"],
+	}
 
 
 def _blank(value: Any, default: str = "　　　　　　") -> str:
@@ -409,6 +623,7 @@ def _detect_missing(
 
 __all__ = [
 	"build_employment_contract",
+	"compute_schedule_hours",
 	"render_contract_markdown",
 	"STATUTE_NOTE_17_1",
 	"STATUTE_NOTE_17_2",

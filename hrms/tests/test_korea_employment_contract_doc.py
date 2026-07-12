@@ -180,5 +180,189 @@ class TestRenderContractMarkdown(unittest.TestCase):
 		self.assertNotIn("900101-1234567", md)
 
 
+class TestProbation(unittest.TestCase):
+	"""수습기간 조항 — 최저임금법 §5③(감액 하한 90%) + 시행령 §3(3개월 이내)."""
+
+	def setUp(self):
+		self.mod = load_module()
+
+	def test_no_probation_defaults(self):
+		contract = self.mod.build_employment_contract(_valid_data())
+		self.assertEqual(contract["probation"], {"months": 0, "wage_percent": 100})
+		self.assertEqual(contract["warnings"], [])
+
+	def test_probation_within_limits_no_warning(self):
+		data = _valid_data()
+		data["probation"] = {"months": 3, "wage_percent": 90}
+		contract = self.mod.build_employment_contract(data)
+		self.assertEqual(contract["probation"], {"months": 3, "wage_percent": 90})
+		self.assertEqual(contract["warnings"], [])
+
+	def test_wage_percent_below_90_warns(self):
+		data = _valid_data()
+		data["probation"] = {"months": 3, "wage_percent": 80}
+		contract = self.mod.build_employment_contract(data)
+		self.assertTrue(any("최저임금법" in w for w in contract["warnings"]))
+
+	def test_reduction_beyond_3_months_warns(self):
+		data = _valid_data()
+		data["probation"] = {"months": 6, "wage_percent": 90}
+		contract = self.mod.build_employment_contract(data)
+		self.assertTrue(any("3개월" in w for w in contract["warnings"]))
+
+	def test_long_probation_without_reduction_no_reduction_warning(self):
+		data = _valid_data()
+		data["probation"] = {"months": 6, "wage_percent": 100}
+		contract = self.mod.build_employment_contract(data)
+		self.assertFalse(any("3개월" in w for w in contract["warnings"]))
+
+	def test_negative_months_raises(self):
+		data = _valid_data()
+		data["probation"] = {"months": -1, "wage_percent": 100}
+		with self.assertRaises(ValueError):
+			self.mod.build_employment_contract(data)
+
+	def test_probation_clause_rendered(self):
+		data = _valid_data()
+		data["probation"] = {"months": 3, "wage_percent": 90}
+		contract = self.mod.build_employment_contract(data)
+		md = self.mod.render_contract_markdown(contract)
+		self.assertIn("수습기간", md)
+		self.assertIn("3개월", md)
+		self.assertIn("90%", md)
+
+	def test_no_probation_clause_when_zero_months(self):
+		contract = self.mod.build_employment_contract(_valid_data())
+		md = self.mod.render_contract_markdown(contract)
+		self.assertNotIn("수습기간", md)
+
+
+class TestComputeScheduleHours(unittest.TestCase):
+	"""주간 스케줄 블록 → 주 소정/연장·월 연장시간 산출."""
+
+	def setUp(self):
+		self.mod = load_module()
+
+	def _week(self, start, end, break_minutes, days=("월", "화", "수", "목", "금")):
+		return [
+			{"day": d, "start_time": start, "end_time": end, "break_minutes": break_minutes}
+			for d in days
+		]
+
+	def test_standard_40h_week_no_overtime(self):
+		result = self.mod.compute_schedule_hours(self._week("09:00", "18:00", 60))
+		self.assertEqual(float(result["weekly_total_hours"]), 40.0)
+		self.assertEqual(float(result["weekly_scheduled_hours"]), 40.0)
+		self.assertEqual(float(result["weekly_overtime_hours"]), 0.0)
+		self.assertEqual(float(result["monthly_overtime_hours"]), 0.0)
+		self.assertEqual(result["warnings"], [])
+
+	def test_45h_week_overtime_monthly_conversion(self):
+		# 9h × 5일 = 45h → 소정 40h + 연장 5h, 월 연장 = 5 × (365÷12÷7) ≈ 21.73
+		result = self.mod.compute_schedule_hours(self._week("09:00", "19:00", 60))
+		self.assertEqual(float(result["weekly_scheduled_hours"]), 40.0)
+		self.assertEqual(float(result["weekly_overtime_hours"]), 5.0)
+		self.assertEqual(float(result["monthly_overtime_hours"]), 21.73)
+
+	def test_overnight_shift_crosses_midnight(self):
+		# 22:00~07:00 휴게 60분 = 8h
+		result = self.mod.compute_schedule_hours(
+			[{"day": "월", "start_time": "22:00", "end_time": "07:00", "break_minutes": 60}]
+		)
+		self.assertEqual(float(result["weekly_total_hours"]), 8.0)
+
+	def test_weekly_overtime_over_12h_warns(self):
+		# 10h × 6일 = 60h → 연장 20h > 12h (§53①)
+		result = self.mod.compute_schedule_hours(
+			self._week("09:00", "20:00", 60, days=("월", "화", "수", "목", "금", "토"))
+		)
+		self.assertEqual(float(result["weekly_overtime_hours"]), 20.0)
+		self.assertTrue(any("12시간" in w for w in result["warnings"]))
+
+	def test_invalid_time_raises(self):
+		with self.assertRaises(ValueError):
+			self.mod.compute_schedule_hours(
+				[{"day": "월", "start_time": "9시", "end_time": "18:00", "break_minutes": 0}]
+			)
+
+	def test_build_includes_schedule_summary_and_render(self):
+		data = _valid_data()
+		data["work_schedule"] = self._week("09:00", "19:00", 60)
+		contract = self.mod.build_employment_contract(data)
+		summary = contract["schedule_summary"]
+		self.assertEqual(float(summary["weekly_overtime_hours"]), 5.0)
+		self.assertEqual(float(summary["monthly_overtime_hours"]), 21.73)
+		md = self.mod.render_contract_markdown(contract)
+		self.assertIn("월 연장근로시간", md)
+		self.assertIn("21.73", md)
+
+	def test_build_without_schedule_has_none_summary(self):
+		contract = self.mod.build_employment_contract(_valid_data())
+		self.assertIsNone(contract["schedule_summary"])
+
+	def test_schedule_overtime_warning_propagates_to_contract(self):
+		data = _valid_data()
+		data["work_schedule"] = self._week(
+			"09:00", "20:00", 60, days=("월", "화", "수", "목", "금", "토")
+		)
+		contract = self.mod.build_employment_contract(data)
+		self.assertTrue(any("12시간" in w for w in contract["warnings"]))
+
+
+class TestNetPreview(unittest.TestCase):
+	"""예상 실수령액 참고 표기 — net_to_gross forward 공제 로직 재사용."""
+
+	def setUp(self):
+		self.mod = load_module()
+
+	def _load_net_to_gross(self):
+		path = MODULE_PATH.parent / "net_to_gross.py"
+		spec = importlib.util.spec_from_file_location("korea_net_to_gross_ref", path)
+		module = importlib.util.module_from_spec(spec)
+		assert spec.loader is not None
+		spec.loader.exec_module(module)
+		return module
+
+	def test_disabled_by_default(self):
+		contract = self.mod.build_employment_contract(_valid_data())
+		self.assertIsNone(contract["net_preview"])
+		md = self.mod.render_contract_markdown(contract)
+		self.assertNotIn("예상 실수령액", md)
+
+	def test_net_preview_matches_net_to_gross_forward(self):
+		data = _valid_data()
+		data["net_preview"] = {"enabled": True, "non_taxable": 200_000, "dependents": 1}
+		contract = self.mod.build_employment_contract(data)
+		preview = contract["net_preview"]
+		gross = contract["wage_total"]
+
+		ntg = self._load_net_to_gross()
+		expected = ntg._employee_deductions(
+			gross,
+			non_taxable=200_000,
+			dependents=1,
+			children_under_8=0,
+			include_pension=True,
+			include_health=True,
+			include_longterm_care=True,
+			include_employment=True,
+			pension_override=None,
+		)
+		self.assertEqual(preview["gross"], gross)
+		self.assertEqual(preview["deductions"], expected)
+		self.assertEqual(preview["estimated_net"], gross - expected["total"])
+		self.assertEqual(preview["non_taxable"], 200_000)
+		self.assertEqual(preview["dependents"], 1)
+
+	def test_net_preview_rendered_as_reference_only(self):
+		data = _valid_data()
+		data["net_preview"] = {"enabled": True, "non_taxable": 0, "dependents": 1}
+		contract = self.mod.build_employment_contract(data)
+		md = self.mod.render_contract_markdown(contract)
+		self.assertIn("예상 실수령액", md)
+		self.assertIn("참고용", md)
+		self.assertIn("부양가족 1인", md)
+
+
 if __name__ == "__main__":
 	unittest.main(verbosity=2)

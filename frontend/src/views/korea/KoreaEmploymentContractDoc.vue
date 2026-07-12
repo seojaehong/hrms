@@ -104,6 +104,16 @@
 							<input type="text" v-model="form.scheduled_work.break_time" :placeholder="__('예: 12:00~13:00')" class="k-input" />
 						</div>
 					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('수습기간 (개월, 0=없음)') }}</label>
+							<input type="number" min="0" v-model.number="form.probation.months" class="k-input k-numeric" />
+						</div>
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('수습기간 중 임금 비율 (%, 최저 90)') }}</label>
+							<input type="number" min="1" max="100" v-model.number="form.probation.wage_percent" class="k-input k-numeric" />
+						</div>
+					</div>
 					<div class="flex flex-col gap-1">
 						<label class="k-label">{{ __('휴일 (§55)') }}</label>
 						<input type="text" v-model="form.holidays" :placeholder="__('예: 주휴일 매주 일요일')" class="k-input" />
@@ -112,6 +122,25 @@
 						<label class="k-label">{{ __('연차유급휴가 (§60)') }}</label>
 						<input type="text" v-model="form.annual_leave" :placeholder="__('예: 근로기준법 제60조에 따름')" class="k-input" />
 					</div>
+				</div>
+
+				<!-- 주간 근무 스케줄 (선택) — 월 연장시간 자동계산 -->
+				<div class="k-card p-4 flex flex-col gap-3">
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('주간 근무 스케줄 (선택)') }}</div>
+					<p class="text-xs text-[var(--k-ink-muted)]">
+						요일별 시업·종업·휴게를 입력하면 주 소정근로시간(최대 40h)과 월 연장시간(주 연장 × 4.345)을 자동 산출합니다 — 포괄임금 설계용.
+					</p>
+					<div v-for="(block, idx) in form.work_schedule" :key="idx" class="flex gap-2 items-center">
+						<input type="text" v-model="block.day" :placeholder="__('요일')" class="k-input w-16" />
+						<input type="time" v-model="block.start_time" class="k-input flex-1" />
+						<input type="time" v-model="block.end_time" class="k-input flex-1" />
+						<input type="number" min="0" v-model.number="block.break_minutes" :placeholder="__('휴게(분)')" class="k-input k-numeric w-24" />
+						<button @click="removeScheduleBlock(idx)" class="text-[var(--k-ink-faint)] hover:text-[var(--k-ink)] text-sm px-2">✕</button>
+					</div>
+					<button
+						@click="addScheduleBlock"
+						class="w-full py-2 border border-dashed border-[var(--k-hairline)] text-[var(--k-ink-muted)] text-sm rounded-lg hover:border-black/40 transition-colors"
+					>{{ __('+ 요일 추가') }}</button>
 				</div>
 
 				<!-- 임금 구성항목 -->
@@ -148,6 +177,22 @@
 						<label class="k-label">{{ __('기타 사항 (선택)') }}</label>
 						<textarea v-model="form.other_terms" rows="2" class="k-input"></textarea>
 					</div>
+					<div class="flex flex-col gap-2 pt-2 border-t border-[var(--k-hairline)]">
+						<label class="flex items-center gap-2 text-sm text-[var(--k-ink)]">
+							<input type="checkbox" v-model="form.net_preview.enabled" />
+							{{ __('예상 실수령액 참고 표기 (계약 임금 아님)') }}
+						</label>
+						<div v-if="form.net_preview.enabled" class="grid grid-cols-2 gap-2">
+							<div class="flex flex-col gap-1">
+								<label class="k-label">{{ __('부양가족 수 (본인 포함)') }}</label>
+								<input type="number" min="1" v-model.number="form.net_preview.dependents" class="k-input k-numeric" />
+							</div>
+							<div class="flex flex-col gap-1">
+								<label class="k-label">{{ __('월 비과세액 (식대 등)') }}</label>
+								<input type="number" min="0" v-model.number="form.net_preview.non_taxable" class="k-input k-numeric" />
+							</div>
+						</div>
+					</div>
 				</div>
 
 				<button
@@ -175,10 +220,43 @@
 						{{ __('✓ §17 필수기재 항목이 모두 입력되었습니다.') }}
 					</div>
 
+					<div v-if="contract.warnings && contract.warnings.length" class="k-card p-3 text-xs bg-amber-50 border border-amber-300 text-amber-800 leading-relaxed">
+						<div class="font-semibold mb-1">{{ __('⚠ 법정 기준 경고') }}</div>
+						<ul class="list-disc list-inside">
+							<li v-for="warning in contract.warnings" :key="warning">{{ warning }}</li>
+						</ul>
+					</div>
+
 					<div class="k-block k-block--cream -mx-1">
 						<div class="k-eyebrow">WAGE TOTAL</div>
 						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('계약서 임금 합계') }}</div>
 						<div class="k-display">{{ formatKRW(contract.wage_total) }}</div>
+					</div>
+
+					<div v-if="contract.schedule_summary" class="k-card p-4 flex flex-col gap-2">
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('스케줄 산출 (포괄임금 설계용)') }}</div>
+						<div class="flex justify-between text-sm">
+							<span class="text-[var(--k-ink-muted)]">{{ __('주 소정근로시간') }}</span>
+							<span class="k-numeric font-semibold">{{ contract.schedule_summary.weekly_scheduled_hours }}h</span>
+						</div>
+						<div class="flex justify-between text-sm">
+							<span class="text-[var(--k-ink-muted)]">{{ __('주 연장근로시간') }}</span>
+							<span class="k-numeric font-semibold">{{ contract.schedule_summary.weekly_overtime_hours }}h</span>
+						</div>
+						<div class="flex justify-between text-sm pt-2 border-t border-[var(--k-hairline)]">
+							<span class="text-[var(--k-ink-muted)]">{{ __('월 연장근로시간 (× 4.345)') }}</span>
+							<span class="k-numeric font-semibold">{{ contract.schedule_summary.monthly_overtime_hours }}h</span>
+						</div>
+					</div>
+
+					<div v-if="contract.net_preview" class="k-block k-block--cream -mx-1">
+						<div class="k-eyebrow">NET PREVIEW</div>
+						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('예상 실수령액 (참고용)') }}</div>
+						<div class="k-display">{{ formatKRW(contract.net_preview.estimated_net) }}</div>
+						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">
+							{{ __('부양가족') }} {{ contract.net_preview.dependents }}{{ __('인(본인 포함)') }} ·
+							{{ __('월 비과세') }} <span class="k-amount">{{ formatKRW(contract.net_preview.non_taxable) }}</span> {{ __('가정 — 실제 공제액과 다를 수 있습니다.') }}
+						</p>
 					</div>
 
 					<!-- 마크다운 미리보기 -->
@@ -240,6 +318,9 @@ const form = reactive({
 	scheduled_work: { start_time: "", end_time: "", work_days: "", break_time: "" },
 	holidays: "",
 	annual_leave: "",
+	probation: { months: 0, wage_percent: 100 },
+	work_schedule: [],
+	net_preview: { enabled: false, non_taxable: 0, dependents: 1 },
 	wage_components: [{ component: "기본급", amount: null }],
 	wage_payment_date: "",
 	wage_payment_method: "",
@@ -263,6 +344,14 @@ function removeWageComponent(idx) {
 	form.wage_components.splice(idx, 1)
 }
 
+function addScheduleBlock() {
+	form.work_schedule.push({ day: "", start_time: "", end_time: "", break_minutes: 60 })
+}
+
+function removeScheduleBlock(idx) {
+	form.work_schedule.splice(idx, 1)
+}
+
 function formatKRW(amount) {
 	if (amount == null) return "-"
 	return Number(amount).toLocaleString("ko-KR") + "원"
@@ -272,7 +361,11 @@ async function calculate() {
 	contract.value = null
 	markdown.value = null
 	copied.value = false
-	await buildEmploymentContract.submit(JSON.parse(JSON.stringify(form)))
+	const payload = JSON.parse(JSON.stringify(form))
+	// 시업·종업이 모두 입력된 행만 전송 (빈 행은 서버 검증 오류 방지 위해 제외)
+	payload.work_schedule = payload.work_schedule.filter((b) => b.start_time && b.end_time)
+	if (!payload.work_schedule.length) delete payload.work_schedule
+	await buildEmploymentContract.submit(payload)
 	if (!buildEmploymentContract.error) {
 		contract.value = buildEmploymentContract.data
 	}

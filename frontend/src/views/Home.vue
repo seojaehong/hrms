@@ -4,7 +4,7 @@
 			<div class="flex flex-col items-center my-7 p-4 gap-6 md:gap-10">
 				<!-- 데스크톱 인사 헤드라인 — 가이드 display 타이포 -->
 				<div class="hidden md:block w-full pt-2">
-					<p class="k-eyebrow">KOREA HRMS</p>
+					<p class="k-eyebrow">SAFECLAW HR</p>
 					<h1 class="mt-1 text-4xl xl:text-5xl font-bold tracking-[-0.02em] leading-[1.05] text-black">
 						{{ __("급여부터 근태까지,") }}<br />{{ __("오늘 할 일이 정리되어 있습니다") }}
 					</h1>
@@ -72,6 +72,8 @@ const sections = [
 		title: __("급여"),
 		links: [
 			{ title: __("임금명세서"), route: "KoreaWageStatementDashboard" },
+			{ title: __("임금명세서 분해 (§48②)"), route: "KoreaPayslipBreakdown" },
+			{ title: __("포괄임금 설계·역산"), route: "KoreaInclusiveWage" },
 			{ title: __("급여 엑셀 관리"), route: "KoreaPayrollExcel" },
 			{ title: __("급여 마감 센터"), route: "KoreaPayrollClosingDashboard" },
 			{ title: __("급여 검토 감사 로그"), route: "KoreaPayrollReviewAuditLogs" },
@@ -84,6 +86,7 @@ const sections = [
 		title: __("퇴직금"),
 		links: [
 			{ title: __("퇴직금 미리보기"), route: "KoreaSeverancePreview" },
+			{ title: __("퇴직정산 (통합)"), route: "KoreaSeveranceSettlement" },
 		],
 	},
 	{
@@ -93,6 +96,7 @@ const sections = [
 		title: __("연차"),
 		links: [
 			{ title: __("연차 대시보드"), route: "KoreaAnnualLeaveDashboard" },
+			{ title: __("연차 사용촉진 (§61)"), route: "KoreaLeavePromotion" },
 			{ title: __("휴가 신청"), route: "LeaveApplicationFormView" },
 		],
 	},
@@ -106,6 +110,18 @@ const sections = [
 			{ title: __("근태 대시보드"), route: "KoreaAttendanceDashboard" },
 			{ title: __("근무시간 제출"), route: "KoreaTimeInput" },
 			{ title: __("출근기록 신청"), route: "AttendanceRequestFormView" },
+		],
+	},
+	{
+		key: "labor",
+		block: "pink",
+		eyebrow: "LABOR COMPLIANCE",
+		title: __("노무"),
+		links: [
+			{ title: __("근로계약서 작성 (§17)"), route: "KoreaEmploymentContractDoc" },
+			{ title: __("취업규칙 점검 (§93·§94)"), route: "KoreaWorkRules" },
+			{ title: __("근로감독 대비 체크리스트"), route: "KoreaLaborInspection" },
+			{ title: __("컴플라이언스 진단"), route: "KoreaComplianceDashboard" },
 		],
 	},
 ]
@@ -140,11 +156,6 @@ const moreLinks = [
 		icon: markRaw(EmployeeAdvanceIcon),
 		title: __("선급금 신청"),
 		route: "EmployeeAdvanceFormView",
-	},
-	{
-		icon: markRaw(ShiftIcon),
-		title: __("컴플라이언스 진단"),
-		route: "KoreaComplianceDashboard",
 	},
 	{
 		icon: markRaw(AttendanceIcon),

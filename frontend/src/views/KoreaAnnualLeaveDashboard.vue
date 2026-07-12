@@ -1,15 +1,15 @@
 <template>
 	<BaseLayout :pageTitle="`연차 현황${display ? ' — ' + display.employeeName : ''}`">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-24">
+			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-card)] p-4 pb-24">
 
 				<!-- 히어로 — 연차(lilac) 색블록 + 핵심 스탯 -->
 				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ANNUAL LEAVE</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("연차 현황") }}</h1>
-							<p class="mt-1 text-sm font-medium text-black/60">
+							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("연차 현황") }}</h1>
+							<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">
 								{{ display ? display.employeeName || display.employee : __("직원 미선택") }}
 							</p>
 						</div>
@@ -18,13 +18,13 @@
 					<!-- 주인공: 잔여 연차 (+ 우측: 사용률 도넛 — 인라인 SVG) -->
 					<div v-if="display" class="mt-3 flex items-center justify-between gap-3">
 						<div>
-							<p class="text-sm font-medium text-black/60">{{ __("잔여 연차") }}</p>
-							<p class="k-display" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
+							<p class="text-sm font-medium text-[var(--k-ink-muted)]">{{ __("잔여 연차") }}</p>
+							<p class="k-display" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-[var(--k-ink)]'">
 								{{ display.remainingDays }}<span class="text-xl font-bold">일</span>
 							</p>
 						</div>
 						<div v-if="usageDonut" class="relative h-20 w-20 shrink-0" data-testid="leave-usage-donut">
-							<svg viewBox="0 0 96 96" class="h-full w-full -rotate-90 text-black" role="img" aria-label="연차 사용률">
+							<svg viewBox="0 0 96 96" class="h-full w-full -rotate-90 text-[var(--k-ink)]" role="img" aria-label="연차 사용률">
 								<!-- 트랙: 파스텔 배경 위 white/55 -->
 								<circle cx="48" cy="48" r="40" fill="none" stroke="white" stroke-opacity="0.55" stroke-width="10" />
 								<!-- 진행: 사용/총부여 -->
@@ -40,19 +40,19 @@
 								/>
 							</svg>
 							<div class="absolute inset-0 flex flex-col items-center justify-center">
-								<span class="k-numeric text-base font-bold leading-none text-black">{{ Math.round(usageDonut.percent) }}%</span>
-								<span class="mt-0.5 text-[10px] font-medium text-black/50">{{ __("사용률") }}</span>
+								<span class="k-numeric text-base font-bold leading-none text-[var(--k-ink)]">{{ Math.round(usageDonut.percent) }}%</span>
+								<span class="mt-0.5 text-[10px] font-medium text-[var(--k-ink-faint)]">{{ __("사용률") }}</span>
 							</div>
 						</div>
 					</div>
 					<div v-if="display" class="mt-4 grid grid-cols-3 gap-2">
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-xl font-bold text-black">{{ display.totalEntitlement }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("총 부여(일)") }}</p>
+							<p class="k-numeric text-xl font-bold text-[var(--k-ink)]">{{ display.totalEntitlement }}</p>
+							<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("총 부여(일)") }}</p>
 						</div>
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-xl font-bold text-black">{{ display.usedDays }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("사용(일)") }}</p>
+							<p class="k-numeric text-xl font-bold text-[var(--k-ink)]">{{ display.usedDays }}</p>
+							<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("사용(일)") }}</p>
 						</div>
 						<div class="rounded-xl bg-black p-3 text-center">
 							<p class="k-numeric text-xl font-bold text-white">{{ display.remainingDays }}</p>
@@ -63,22 +63,22 @@
 
 				<!-- 로딩 -->
 				<section v-if="loading" class="k-card p-6 text-center">
-					<p class="text-sm font-medium text-black/50">{{ __("연차 현황을 불러오는 중…") }}</p>
+					<p class="text-sm font-medium text-[var(--k-ink-faint)]">{{ __("연차 현황을 불러오는 중…") }}</p>
 				</section>
 
 				<!-- 실데이터 조회 실패 안내 -->
 				<section v-if="previewError" class="k-card p-4 text-sm">
 					<div class="flex items-center gap-2">
 						<span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">{{ __("예시 데이터") }}</span>
-						<p class="font-semibold text-black">{{ __("실데이터 조회 실패 — 정적 예시로 표시 중") }}</p>
+						<p class="font-semibold text-[var(--k-ink)]">{{ __("실데이터 조회 실패 — 정적 예시로 표시 중") }}</p>
 					</div>
-					<p class="mt-2 text-black/60">{{ previewError }}</p>
+					<p class="mt-2 text-[var(--k-ink-muted)]">{{ previewError }}</p>
 				</section>
 
 				<!-- 직원 미지정 (로그인 직원 폴백도 불가한 경우) -->
 				<section v-if="!employeeId && !loading" class="k-card p-6 text-center">
-					<p class="text-base font-bold text-black">{{ __("연차 정보를 불러올 수 없습니다") }}</p>
-					<p class="mt-1 text-sm text-black/60">{{ __("담당자에게 문의하세요.") }}</p>
+					<p class="text-base font-bold text-[var(--k-ink)]">{{ __("연차 정보를 불러올 수 없습니다") }}</p>
+					<p class="mt-1 text-sm text-[var(--k-ink-muted)]">{{ __("담당자에게 문의하세요.") }}</p>
 					<router-link
 						:to="{ name: 'Home' }"
 						class="mt-4 inline-flex justify-center rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white"
@@ -90,23 +90,23 @@
 				<!-- 기본 정보 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">PROFILE</p>
-					<p class="mt-0.5 text-base font-bold text-black">{{ __("기본 정보") }}</p>
+					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("기본 정보") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("입사일") }}</p>
-							<p class="k-numeric mt-1 text-sm font-semibold text-black">{{ display.dateOfJoining }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("입사일") }}</p>
+							<p class="k-numeric mt-1 text-sm font-semibold text-[var(--k-ink)]">{{ display.dateOfJoining }}</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("근속") }}</p>
-							<p class="mt-1 text-sm font-semibold text-black">{{ tenureLabel }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("근속") }}</p>
+							<p class="mt-1 text-sm font-semibold text-[var(--k-ink)]">{{ tenureLabel }}</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("산정 기준") }}</p>
-							<p class="mt-1 text-sm font-semibold text-black">{{ display.basis === 'Hire Date' ? __('입사일 기준') : __('회계연도 기준') }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("산정 기준") }}</p>
+							<p class="mt-1 text-sm font-semibold text-[var(--k-ink)]">{{ display.basis === 'Hire Date' ? __('입사일 기준') : __('회계연도 기준') }}</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("계산 기준일") }}</p>
-							<p class="k-numeric mt-1 text-sm font-semibold text-black">{{ display.asOfDate }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("계산 기준일") }}</p>
+							<p class="k-numeric mt-1 text-sm font-semibold text-[var(--k-ink)]">{{ display.asOfDate }}</p>
 						</div>
 					</div>
 				</section>
@@ -114,18 +114,18 @@
 				<!-- 부여 현황 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">ENTITLEMENT</p>
-					<p class="mt-0.5 text-base font-bold text-black">{{ __("부여 현황") }}</p>
+					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("부여 현황") }}</p>
 					<div class="mt-3 flex flex-col gap-2">
 						<div v-if="display.serviceYears < 1 && display.monthlyAccrual > 0" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<span class="text-sm text-black">{{ __("월차") }} <span class="text-xs text-black/40">{{ __("(1년 미만 월 단위)") }}</span></span>
-							<span class="k-numeric font-bold text-black">{{ display.monthlyAccrual }}{{ __("일") }}</span>
+							<span class="text-sm text-[var(--k-ink)]">{{ __("월차") }} <span class="text-xs text-[var(--k-ink-faint)]">{{ __("(1년 미만 월 단위)") }}</span></span>
+							<span class="k-numeric font-bold text-[var(--k-ink)]">{{ display.monthlyAccrual }}{{ __("일") }}</span>
 						</div>
 						<div v-if="display.serviceYears >= 1 || display.annualEntitlement > 0" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<span class="text-sm text-black">{{ __("연차") }} <span class="text-xs text-black/40">{{ __("(1년 이상)") }}</span></span>
-							<span class="k-numeric font-bold text-black">{{ display.annualEntitlement }}{{ __("일") }}</span>
+							<span class="text-sm text-[var(--k-ink)]">{{ __("연차") }} <span class="text-xs text-[var(--k-ink-faint)]">{{ __("(1년 이상)") }}</span></span>
+							<span class="k-numeric font-bold text-[var(--k-ink)]">{{ display.annualEntitlement }}{{ __("일") }}</span>
 						</div>
 						<div v-if="display.serviceYears >= 3" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<span class="text-sm text-black">{{ __("장기근속 가산 포함") }} <span class="text-xs text-black/40">{{ __("(3년 이상, 2년마다 +1일 · 최대 25일)") }}</span></span>
+							<span class="text-sm text-[var(--k-ink)]">{{ __("장기근속 가산 포함") }} <span class="text-xs text-[var(--k-ink-faint)]">{{ __("(3년 이상, 2년마다 +1일 · 최대 25일)") }}</span></span>
 							<span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">{{ __("합산 반영") }}</span>
 						</div>
 						<div class="flex items-center justify-between rounded-xl bg-black p-3 text-white">
@@ -133,7 +133,7 @@
 							<span class="k-numeric text-lg font-bold">{{ display.totalEntitlement }}{{ __("일") }}</span>
 						</div>
 					</div>
-					<div class="k-numeric mt-3 text-xs text-black/40">
+					<div class="k-numeric mt-3 text-xs text-[var(--k-ink-faint)]">
 						{{ __("적용 기간") }}: {{ display.fromDate }} ~ {{ display.toDate }}
 					</div>
 				</section>
@@ -143,7 +143,7 @@
 					<div class="flex items-center justify-between gap-2">
 						<div>
 							<p class="k-eyebrow">ATTENDANCE RULE</p>
-							<p class="mt-0.5 text-base font-bold text-black">{{ __("출근률 80% 룰 (근기법 60조 4항)") }}</p>
+							<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("출근률 80% 룰 (근기법 60조 4항)") }}</p>
 						</div>
 						<span
 							class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
@@ -154,14 +154,14 @@
 					</div>
 					<div class="mt-3 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("출근률") }}</p>
-							<p class="k-numeric mt-1 text-lg font-bold" :class="display.isBelowThreshold ? 'text-red-700' : 'text-black'">
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("출근률") }}</p>
+							<p class="k-numeric mt-1 text-lg font-bold" :class="display.isBelowThreshold ? 'text-red-700' : 'text-[var(--k-ink)]'">
 								{{ display.attendanceRatio !== null ? (display.attendanceRatio * 100).toFixed(1) + '%' : '—' }}
 							</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-							<p class="text-xs text-black/50">{{ __("기준선") }}</p>
-							<p class="k-numeric mt-1 text-lg font-bold text-black">{{ (display.threshold * 100).toFixed(0) }}%</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("기준선") }}</p>
+							<p class="k-numeric mt-1 text-lg font-bold text-[var(--k-ink)]">{{ (display.threshold * 100).toFixed(0) }}%</p>
 						</div>
 					</div>
 					<div v-if="display.isBelowThreshold" class="mt-3 rounded-xl bg-red-100 p-3 text-sm text-red-700">
@@ -176,24 +176,24 @@
 				<!-- 사용 / 잔여 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">USAGE</p>
-					<p class="mt-0.5 text-base font-bold text-black">{{ __("사용 / 잔여") }}</p>
+					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("사용 / 잔여") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
-							<p class="text-xs text-black/50">{{ __("사용") }}</p>
-							<p class="k-numeric mt-1 text-2xl font-bold text-black">{{ display.usedDays }}</p>
-							<p class="text-xs text-black/40">{{ __("일") }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("사용") }}</p>
+							<p class="k-numeric mt-1 text-2xl font-bold text-[var(--k-ink)]">{{ display.usedDays }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("일") }}</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
-							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black/50'">{{ __("잔여") }}</p>
-							<p class="k-numeric mt-1 text-2xl font-bold" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black'">
+							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-[var(--k-ink-faint)]'">{{ __("잔여") }}</p>
+							<p class="k-numeric mt-1 text-2xl font-bold" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-[var(--k-ink)]'">
 								{{ display.remainingDays }}
 							</p>
-							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-black/40'">{{ __("일") }}</p>
+							<p class="text-xs" :class="display.remainingDays <= 0 ? 'text-red-700' : 'text-[var(--k-ink-faint)]'">{{ __("일") }}</p>
 						</div>
 					</div>
 					<!-- 사용률 요약 (차트는 히어로 도넛 1개로 절제 — 화면당 차트 1개 원칙) -->
-					<p class="mt-3 text-xs text-black/40">
-						{{ __("사용률") }} <span class="k-numeric font-semibold text-black/60">{{ usagePercent }}%</span>
+					<p class="mt-3 text-xs text-[var(--k-ink-faint)]">
+						{{ __("사용률") }} <span class="k-numeric font-semibold text-[var(--k-ink-muted)]">{{ usagePercent }}%</span>
 						· {{ __("총") }} {{ display.allocatedDays }}{{ __("일 중") }} {{ display.usedDays }}{{ __("일 사용") }}
 					</p>
 				</section>
@@ -201,8 +201,8 @@
 				<!-- 조회 전용 안내 -->
 				<section class="k-card p-4 text-sm">
 					<p class="k-eyebrow">READ-ONLY</p>
-					<p class="mt-1 font-semibold text-black">{{ __("조회 전용 화면") }}</p>
-					<p class="mt-1 text-black/60">
+					<p class="mt-1 font-semibold text-[var(--k-ink)]">{{ __("조회 전용 화면") }}</p>
+					<p class="mt-1 text-[var(--k-ink-muted)]">
 						{{ __("이 화면은 연차 현황을 조회만 합니다. 연차 부여 적용은 관리자가 [신청 적용] 버튼으로 별도 승인하며, AI는 보조 역할만 합니다.") }}
 					</p>
 				</section>
@@ -227,11 +227,11 @@
 					</button>
 					<div v-if="applyError" class="k-card p-3 text-sm">
 						<p class="font-semibold text-red-700">{{ __("신청 적용 실패") }}</p>
-						<p class="mt-1 text-black/60">{{ applyError }}</p>
+						<p class="mt-1 text-[var(--k-ink-muted)]">{{ applyError }}</p>
 					</div>
 					<div v-if="applyResult" class="k-card p-3 text-sm">
 						<p class="font-semibold text-green-800">{{ __("신청 완료") }}</p>
-						<p class="k-numeric mt-1 text-black/60">Leave Allocation: {{ applyResult.data?.leave_allocation_name }}</p>
+						<p class="k-numeric mt-1 text-[var(--k-ink-muted)]">Leave Allocation: {{ applyResult.data?.leave_allocation_name }}</p>
 					</div>
 				</section>
 
@@ -240,19 +240,19 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">{{ dataSourceLabel }}</p>
-							<p class="mt-1 text-base font-bold text-black">
+							<p class="mt-1 text-base font-bold text-[var(--k-ink)]">
 								{{ display ? display.employeeName || display.employee : __('직원 미선택') }}
 							</p>
-							<p class="mt-1 text-xs text-black/40">
+							<p class="mt-1 text-xs text-[var(--k-ink-faint)]">
 								조회 전용 · 변경 없음 · 적용은 관리자 승인으로만 진행됩니다
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<div v-if="loading" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-black/50">
+					<div v-if="loading" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-[var(--k-ink-faint)]">
 						{{ __("읽기 전용 실데이터를 불러오는 중…") }}
 					</div>
-					<div v-else-if="previewError" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-black/60">
+					<div v-else-if="previewError" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-2 text-xs text-[var(--k-ink-muted)]">
 						{{ __("실데이터 조회에 실패해 정적 예시 데이터로 표시 중입니다.") }} {{ previewError }}
 					</div>
 				</section>
@@ -364,9 +364,9 @@ const dataSourceBadge = computed(() => {
 })
 
 const dataSourceBadgeClass = computed(() => {
-	if (loading.value) return "bg-black/10 text-black"
+	if (loading.value) return "bg-[var(--k-hairline)] text-[var(--k-ink)]"
 	if (hasKoreaAnnualLeavePreviewData(previewData.value)) return "bg-green-100 text-green-800"
-	return "bg-black/10 text-black"
+	return "bg-[var(--k-hairline)] text-[var(--k-ink)]"
 })
 
 // ---------------------------------------------------------------------------

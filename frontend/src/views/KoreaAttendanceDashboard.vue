@@ -1,33 +1,33 @@
 <template>
 	<BaseLayout :pageTitle="__('근태 현황')">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-24">
+			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-card)] p-4 pb-24">
 
 				<!-- 히어로 — 근태(mint) 색블록 + 핵심 스탯 -->
 				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ATTENDANCE</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("근태 현황") }}</h1>
-							<p class="k-numeric mt-1 text-sm font-medium text-black/60">{{ closingPeriodLabel }}</p>
+							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("근태 현황") }}</h1>
+							<p class="k-numeric mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ closingPeriodLabel }}</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
 					<!-- 주인공: 출근일수 -->
 					<div class="mt-3">
-						<p class="text-sm font-medium text-black/60">{{ __("이번 마감 출근") }}</p>
-						<p class="k-display text-black">
+						<p class="text-sm font-medium text-[var(--k-ink-muted)]">{{ __("이번 마감 출근") }}</p>
+						<p class="k-display text-[var(--k-ink)]">
 							{{ empSummary?.present_days ?? "—" }}<span class="text-xl font-bold">일</span>
 						</p>
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2">
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-xl font-bold text-black">{{ closingDays }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("마감기준일") }}</p>
+							<p class="k-numeric text-xl font-bold text-[var(--k-ink)]">{{ closingDays }}</p>
+							<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("마감기준일") }}</p>
 						</div>
 						<div class="rounded-xl bg-white/60 p-3 text-center">
-							<p class="k-numeric text-xl font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">{{ attendanceRatioFormatted }}</p>
-							<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("출근률") }}</p>
+							<p class="k-numeric text-xl font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-[var(--k-ink)]'">{{ attendanceRatioFormatted }}</p>
+							<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("출근률") }}</p>
 						</div>
 						<div class="rounded-xl bg-black p-3 text-center">
 							<p class="k-numeric text-xl font-bold text-white">{{ empSummary?.present_days ?? "—" }}</p>
@@ -39,24 +39,24 @@
 				<!-- 픽스처/오류 배너 -->
 				<div v-if="attendanceError || premiumError" class="k-card p-4 text-sm">
 					<div class="flex items-center gap-2">
-						<span class="rounded-full bg-black/10 px-2.5 py-0.5 text-xs font-semibold text-black">{{ __("예시 데이터") }}</span>
-						<p class="font-semibold text-black">{{ __("미리보기 모드 (픽스처)") }}</p>
+						<span class="rounded-full bg-[var(--k-hairline)] px-2.5 py-0.5 text-xs font-semibold text-[var(--k-ink)]">{{ __("예시 데이터") }}</span>
+						<p class="font-semibold text-[var(--k-ink)]">{{ __("미리보기 모드 (픽스처)") }}</p>
 					</div>
-					<p v-if="attendanceError" class="mt-2 text-black/60">{{ attendanceError }}</p>
-					<p v-if="premiumError" class="mt-1 text-black/60">{{ premiumError }}</p>
+					<p v-if="attendanceError" class="mt-2 text-[var(--k-ink-muted)]">{{ attendanceError }}</p>
+					<p v-if="premiumError" class="mt-1 text-[var(--k-ink-muted)]">{{ premiumError }}</p>
 				</div>
 
 				<!-- Card 1: 이번 달 출근 요약 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">MONTHLY SUMMARY</p>
-					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("이번 달 출근 요약") }}</h2>
+					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("이번 달 출근 요약") }}</h2>
 
-					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
+					<div v-if="attendanceLoading" class="mt-3 text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</div>
 
 					<!-- 실데이터 연결됐지만 근태 기록 0건 — 빈 상태 우선 (대시 나열 금지) -->
 					<div v-else-if="attendanceEmpty" class="mt-3 rounded-xl bg-[var(--k-surface-soft)] p-6 text-center" data-testid="attendance-empty-state">
-						<p class="text-sm font-semibold text-black">{{ __("근태 기록이 아직 없습니다") }}</p>
-						<p class="mt-1 text-xs text-black/50">{{ __("출퇴근 기록이 등록되면 이곳에 요약이 표시됩니다.") }}</p>
+						<p class="text-sm font-semibold text-[var(--k-ink)]">{{ __("근태 기록이 아직 없습니다") }}</p>
+						<p class="mt-1 text-xs text-[var(--k-ink-faint)]">{{ __("출퇴근 기록이 등록되면 이곳에 요약이 표시됩니다.") }}</p>
 					</div>
 
 					<template v-else>
@@ -64,7 +64,7 @@
 						<div v-if="compositionBar" class="mt-3" data-testid="attendance-composition-bar">
 							<svg
 								viewBox="0 0 280 12"
-								class="h-3 w-full overflow-hidden rounded-full text-black"
+								class="h-3 w-full overflow-hidden rounded-full text-[var(--k-ink)]"
 								role="img"
 								aria-label="출근·결근·휴가 구성"
 								preserveAspectRatio="none"
@@ -80,45 +80,45 @@
 									:fill-opacity="compositionOpacities[i]"
 								/>
 							</svg>
-							<div class="mt-1.5 flex gap-4 text-[11px] text-black/50">
+							<div class="mt-1.5 flex gap-4 text-[11px] text-[var(--k-ink-faint)]">
 								<span class="flex items-center gap-1">
-									<span class="h-2 w-2 rounded-full bg-black"></span>{{ __("출근") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[0] }}</span>
+									<span class="h-2 w-2 rounded-full bg-black"></span>{{ __("출근") }} <span class="k-numeric font-semibold text-[var(--k-ink-muted)]">{{ compositionValues[0] }}</span>
 								</span>
 								<span class="flex items-center gap-1">
-									<span class="h-2 w-2 rounded-full bg-black/35"></span>{{ __("결근") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[1] }}</span>
+									<span class="h-2 w-2 rounded-full bg-black/35"></span>{{ __("결근") }} <span class="k-numeric font-semibold text-[var(--k-ink-muted)]">{{ compositionValues[1] }}</span>
 								</span>
 								<span class="flex items-center gap-1">
-									<span class="h-2 w-2 rounded-full bg-black/15"></span>{{ __("휴가") }} <span class="k-numeric font-semibold text-black/70">{{ compositionValues[2] }}</span>
+									<span class="h-2 w-2 rounded-full bg-black/15"></span>{{ __("휴가") }} <span class="k-numeric font-semibold text-[var(--k-ink-muted)]">{{ compositionValues[2] }}</span>
 								</span>
 							</div>
 						</div>
 
 						<div class="mt-3 grid grid-cols-2 gap-2">
 							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-xs text-black/50">{{ __("출근일") }}</p>
-								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ empSummary?.present_days ?? "—" }}{{ __("일") }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)]">{{ __("출근일") }}</p>
+								<p class="k-numeric mt-1 text-xl font-bold text-[var(--k-ink)]">{{ empSummary?.present_days ?? "—" }}{{ __("일") }}</p>
 							</div>
 							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-xs text-black/50">{{ __("마감기준일") }}</p>
-								<p class="k-numeric mt-1 text-xl font-bold text-black">{{ closingDays }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)]">{{ __("마감기준일") }}</p>
+								<p class="k-numeric mt-1 text-xl font-bold text-[var(--k-ink)]">{{ closingDays }}</p>
 							</div>
 							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-xs text-black/50">{{ __("결근") }}</p>
-								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.absent_days ?? "—" }}{{ __("일") }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)]">{{ __("결근") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-[var(--k-ink)]">{{ empSummary?.absent_days ?? "—" }}{{ __("일") }}</p>
 							</div>
 							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-xs text-black/50">{{ __("휴가") }}</p>
-								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.leave_days ?? "—" }}{{ __("일") }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)]">{{ __("휴가") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-[var(--k-ink)]">{{ empSummary?.leave_days ?? "—" }}{{ __("일") }}</p>
 							</div>
 							<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-xs text-black/50">{{ __("반차") }}</p>
-								<p class="k-numeric mt-1 text-lg font-bold text-black">{{ empSummary?.half_day_count ?? "—" }}{{ __("회") }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)]">{{ __("반차") }}</p>
+								<p class="k-numeric mt-1 text-lg font-bold text-[var(--k-ink)]">{{ empSummary?.half_day_count ?? "—" }}{{ __("회") }}</p>
 							</div>
 							<div class="rounded-xl p-3" :class="attendanceRatioLow ? 'bg-red-100' : 'bg-[var(--k-surface-soft)]'">
-								<p class="text-xs" :class="attendanceRatioLow ? 'text-red-700' : 'text-black/50'">
+								<p class="text-xs" :class="attendanceRatioLow ? 'text-red-700' : 'text-[var(--k-ink-faint)]'">
 									{{ __("출근률") }}
 								</p>
-								<p class="k-numeric mt-1 text-lg font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-black'">
+								<p class="k-numeric mt-1 text-lg font-bold" :class="attendanceRatioLow ? 'text-red-700' : 'text-[var(--k-ink)]'">
 									{{ attendanceRatioFormatted }}
 								</p>
 								<p v-if="attendanceRatioLow" class="mt-0.5 text-xs font-semibold text-red-700">
@@ -132,22 +132,22 @@
 				<!-- Card 2: 연장/야간/휴일 시간 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">OVERTIME</p>
-					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("연장·야간·휴일 시간") }}</h2>
+					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("연장·야간·휴일 시간") }}</h2>
 
-					<div v-if="attendanceLoading" class="mt-3 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
+					<div v-if="attendanceLoading" class="mt-3 text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</div>
 
 					<template v-else>
 						<div class="mt-3 flex flex-col gap-2">
 							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("정시근로") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ regularHours }}{{ __("시간") }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("정시근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ regularHours }}{{ __("시간") }}</p>
 							</div>
 							<div
 								class="flex items-center justify-between rounded-xl p-3"
 								:class="weeklyOvertimeExceeded ? 'bg-red-100' : 'bg-[var(--k-surface-soft)]'"
 							>
 								<div>
-									<p class="text-sm" :class="weeklyOvertimeExceeded ? 'font-semibold text-red-700' : 'text-black'">
+									<p class="text-sm" :class="weeklyOvertimeExceeded ? 'font-semibold text-red-700' : 'text-[var(--k-ink)]'">
 										{{ __("연장근로") }}
 									</p>
 									<p v-if="weeklyOvertimeExceeded" class="mt-0.5 text-xs font-semibold text-red-700">
@@ -155,19 +155,19 @@
 									</p>
 								</div>
 								<div class="text-right">
-									<p class="k-numeric text-sm font-bold" :class="weeklyOvertimeExceeded ? 'text-red-700' : 'text-black'">
+									<p class="k-numeric text-sm font-bold" :class="weeklyOvertimeExceeded ? 'text-red-700' : 'text-[var(--k-ink)]'">
 										{{ overtimeHours }}{{ __("시간") }}
 									</p>
-									<p class="k-numeric text-xs text-black/40">/ {{ __("주 한도") }} 12h</p>
+									<p class="k-numeric text-xs text-[var(--k-ink-faint)]">/ {{ __("주 한도") }} 12h</p>
 								</div>
 							</div>
 							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("야간근로") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ nightHours }}{{ __("시간") }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("야간근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ nightHours }}{{ __("시간") }}</p>
 							</div>
 							<div class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("휴일근로") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ holidayHours }}{{ __("시간") }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("휴일근로") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ holidayHours }}{{ __("시간") }}</p>
 							</div>
 						</div>
 					</template>
@@ -176,17 +176,17 @@
 				<!-- Card 3: 가산수당 미리보기 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">PREMIUM PAY</p>
-					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("가산수당 미리보기 (근기법 56조)") }}</h2>
+					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("가산수당 미리보기 (근기법 56조)") }}</h2>
 
 					<div class="mt-3 mb-4 flex flex-col gap-2">
-						<label class="text-xs font-medium text-black/50">{{ __("통상시급 (원)") }}</label>
+						<label class="text-xs font-medium text-[var(--k-ink-faint)]">{{ __("통상시급 (원)") }}</label>
 						<div class="flex gap-2">
 							<input
 								v-model.number="hourlyRateInput"
 								type="number"
 								min="0"
 								placeholder="예: 10030"
-								class="k-numeric flex-1 rounded-lg border border-[var(--k-hairline)] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
+								class="k-numeric flex-1 rounded-lg border border-[var(--k-hairline)] bg-[var(--k-card)] px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20"
 								@input="onHourlyRateInput"
 							/>
 							<button
@@ -198,32 +198,32 @@
 						</div>
 					</div>
 
-					<div v-if="premiumLoading" class="text-sm text-black/40">{{ __("계산 중…") }}</div>
+					<div v-if="premiumLoading" class="text-sm text-[var(--k-ink-faint)]">{{ __("계산 중…") }}</div>
 
 					<template v-else>
 						<div class="flex flex-col gap-2">
 							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("정시급 (정시 × 시급)") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumBasePay) }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("정시급 (정시 × 시급)") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ formatWon(premiumBasePay) }}</p>
 							</div>
 							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("연장수당 (50% 가산)") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumOvertime) }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("연장수당 (50% 가산)") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ formatWon(premiumOvertime) }}</p>
 							</div>
 							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("야간수당 (50% 추가)") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumNight) }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("야간수당 (50% 추가)") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ formatWon(premiumNight) }}</p>
 							</div>
 							<div class="flex justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
-								<p class="text-sm text-black">{{ __("휴일수당 (50%/100%)") }}</p>
-								<p class="k-numeric text-sm font-bold text-black">{{ formatWon(premiumHoliday) }}</p>
+								<p class="text-sm text-[var(--k-ink)]">{{ __("휴일수당 (50%/100%)") }}</p>
+								<p class="k-numeric text-sm font-bold text-[var(--k-ink)]">{{ formatWon(premiumHoliday) }}</p>
 							</div>
 							<div class="flex justify-between rounded-xl bg-black p-3 text-white">
 								<p class="text-sm font-bold">{{ __("합계") }}</p>
 								<p class="k-numeric text-base font-bold">{{ formatWon(premiumTotal) }}</p>
 							</div>
 						</div>
-						<p class="mt-2 text-xs text-black/40">
+						<p class="mt-2 text-xs text-[var(--k-ink-faint)]">
 							{{ __("* 통상시급 미입력 시 가산금액은 0원입니다. 정확한 계산을 위해 시급을 입력하세요.") }}
 						</p>
 					</template>
@@ -232,27 +232,27 @@
 				<!-- Card 4: 마감 상태 (관리자용) -->
 				<section v-if="isAdminUser" class="k-card p-4">
 					<p class="k-eyebrow">CLOSING · ADMIN</p>
-					<h2 class="mt-0.5 text-base font-bold text-black">{{ __("마감 상태 (관리자)") }}</h2>
-					<p class="mt-1 text-xs text-black/50">{{ __("사업장 단위 마감 진행 현황") }}</p>
+					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("마감 상태 (관리자)") }}</h2>
+					<p class="mt-1 text-xs text-[var(--k-ink-faint)]">{{ __("사업장 단위 마감 진행 현황") }}</p>
 
 					<div class="mt-3 mb-4 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
-							<p class="k-numeric text-xl font-bold text-black">{{ closingProgress.total }}</p>
-							<p class="text-xs text-black/50">{{ __("전체") }}</p>
+							<p class="k-numeric text-xl font-bold text-[var(--k-ink)]">{{ closingProgress.total }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("전체") }}</p>
 						</div>
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="k-numeric text-xl font-bold text-green-800">{{ closingProgress.completed }}</p>
-							<p class="text-xs text-black/50">{{ __("마감 완료") }}</p>
+							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("마감 완료") }}</p>
 						</div>
 					</div>
 
 					<div class="mb-4 rounded-xl bg-[var(--k-surface-soft)] p-3 text-sm">
-						<p class="font-semibold text-black">{{ __("뮤테이션 경계") }}</p>
-						<p class="mt-1 text-xs text-black/60">
+						<p class="font-semibold text-[var(--k-ink)]">{{ __("뮤테이션 경계") }}</p>
+						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">
 							{{ __("마감 적용은 draft 저장 전용입니다. submit/cancel/approve/send는 별도 워크플로우에서 처리합니다.") }}
 						</p>
 						<!-- mutation_boundary: draft_only_no_submit_no_approve_no_send -->
-						<p class="k-numeric mt-1 text-xs text-black/30">boundary: draft_only_no_submit_no_approve_no_send</p>
+						<p class="k-numeric mt-1 text-xs text-[var(--k-ink-faint)]">boundary: draft_only_no_submit_no_approve_no_send</p>
 					</div>
 
 					<div class="flex gap-2">
@@ -277,9 +277,9 @@
 					class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4"
 					@click.self="showApplyDialog = false"
 				>
-					<div class="w-full max-w-sm rounded-2xl bg-white p-6">
-						<h3 class="text-base font-bold text-black">{{ __("마감 임시저장 확인") }}</h3>
-						<p class="mt-2 text-sm text-black/60">
+					<div class="w-full max-w-sm rounded-2xl bg-[var(--k-card)] p-6">
+						<h3 class="text-base font-bold text-[var(--k-ink)]">{{ __("마감 임시저장 확인") }}</h3>
+						<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 							{{ closingPeriodLabel }} {{ __("근태 마감을 임시저장(Draft)합니다.") }}<br />
 							{{ __("이 작업은 Draft 저장이며 승인·발송은 포함하지 않습니다.") }}
 						</p>
@@ -404,7 +404,7 @@ const attendanceEmpty = computed(() => {
 const dataSourceBadgeClass = computed(() =>
 	attendanceSource.value === "runtime"
 		? "bg-green-100 text-green-800"
-		: "bg-black/10 text-black"
+		: "bg-[var(--k-hairline)] text-[var(--k-ink)]"
 )
 
 // ── 가산수당 상태 ────────────────────────────────────────────────

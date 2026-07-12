@@ -1,7 +1,7 @@
 <template>
 	<ion-page>
 		<ion-header class="ion-no-border">
-			<div class="w-full bg-white shadow-sm">
+			<div class="w-full bg-[var(--k-card)] shadow-sm">
 				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">

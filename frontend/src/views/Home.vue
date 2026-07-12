@@ -5,7 +5,7 @@
 				<!-- 데스크톱 인사 헤드라인 — 가이드 display 타이포 -->
 				<div class="hidden md:block w-full pt-2">
 					<p class="k-eyebrow">SAFECLAW HR</p>
-					<h1 class="mt-1 text-4xl xl:text-5xl font-bold tracking-[-0.02em] leading-[1.05] text-black">
+					<h1 class="mt-1 text-4xl xl:text-5xl font-bold tracking-[-0.02em] leading-[1.05] text-[var(--k-ink)]">
 						{{ __("급여부터 근태까지,") }}<br />{{ __("오늘 할 일이 정리되어 있습니다") }}
 					</h1>
 				</div>
@@ -24,16 +24,16 @@
 							<div class="k-eyebrow mb-0.5">{{ section.eyebrow }}</div>
 							<span class="k-eyebrow opacity-40">{{ String(idx + 1).padStart(2, "0") }}</span>
 						</div>
-						<div class="k-block-title text-black mb-2">{{ section.title }}</div>
+						<div class="k-block-title text-[var(--k-ink)] mb-2">{{ section.title }}</div>
 						<div class="flex flex-col">
 							<router-link
 								v-for="link in section.links"
 								:key="link.route"
 								:to="{ name: link.route }"
-								class="group flex flex-row items-center justify-between py-2.5 md:py-3 border-t border-black/10"
+								class="group flex flex-row items-center justify-between py-2.5 md:py-3 border-t border-[var(--k-hairline)]"
 							>
-								<span class="text-sm md:text-base font-medium text-black">{{ link.title }}</span>
-								<FeatherIcon name="chevron-right" class="h-4 w-4 text-black/40 transition-transform group-hover:translate-x-0.5" />
+								<span class="text-sm md:text-base font-medium text-[var(--k-ink)]">{{ link.title }}</span>
+								<FeatherIcon name="chevron-right" class="h-4 w-4 text-[var(--k-ink-faint)] transition-transform group-hover:translate-x-0.5" />
 							</router-link>
 						</div>
 					</div>

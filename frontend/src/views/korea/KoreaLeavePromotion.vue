@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">ANNUAL LEAVE PROMOTION</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('연차 사용촉진 (§61)') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('연차 사용촉진 (§61)') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						근로기준법 제61조 사용촉진 기한을 계산하고, 서면 촉구·통보 초안과 미사용 연차수당을 확인합니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('촉진 기한 계산') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('촉진 기한 계산') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -21,7 +21,7 @@
 							<input
 								type="date"
 								v-model="form.hire_date"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 						<div class="flex flex-col gap-1">
@@ -29,14 +29,14 @@
 							<input
 								type="date"
 								v-model="form.as_of"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 					</div>
 
 					<div class="flex items-center gap-2">
 						<input id="first-year-toggle" type="checkbox" v-model="form.is_first_year" class="accent-black" />
-						<label for="first-year-toggle" class="text-sm text-black/70">
+						<label for="first-year-toggle" class="text-sm text-[var(--k-ink-muted)]">
 							{{ __('근속 1년 미만 (§60② 특칙 — 3개월 전/1개월 전 스케줄)') }}
 						</label>
 					</div>
@@ -53,9 +53,9 @@
 
 				<!-- 타임라인 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('촉진 시한 타임라인') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('촉진 시한 타임라인') }}</div>
 
-					<div v-if="promotionSchedule.loading" class="text-center py-8 text-black/40 text-sm">
+					<div v-if="promotionSchedule.loading" class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('계산 중...') }}
 					</div>
 					<div v-else-if="promotionSchedule.error" class="text-center py-6 text-red-600 text-sm">
@@ -65,9 +65,9 @@
 						<!-- 현재 단계 (cream 블록) -->
 						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">CURRENT STAGE</div>
-							<div class="mt-1 text-sm font-medium text-black/60">현재 단계 ({{ schedule.as_of }} 기준)</div>
+							<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">현재 단계 ({{ schedule.as_of }} 기준)</div>
 							<div class="k-display">{{ stageLabel(schedule.stage) }}</div>
-							<p class="mt-2 text-xs text-black/55">{{ stageHint(schedule.stage) }}</p>
+							<p class="mt-2 text-xs text-[var(--k-ink-muted)]">{{ stageHint(schedule.stage) }}</p>
 						</div>
 
 						<!-- 타임라인 -->
@@ -87,37 +87,37 @@
 								</div>
 								<!-- 내용 -->
 								<div class="pb-4 flex-1" :class="step.current ? '' : 'opacity-60'">
-									<div class="text-sm font-semibold text-black flex items-center gap-2">
+									<div class="text-sm font-semibold text-[var(--k-ink)] flex items-center gap-2">
 										{{ step.label }}
 										<span
 											v-if="step.current"
 											class="text-[10px] font-bold uppercase tracking-wide bg-black text-white rounded-full px-2 py-0.5"
 										>{{ __('현재') }}</span>
 									</div>
-									<div class="text-xs text-black/60 k-numeric mt-0.5">{{ step.period }}</div>
-									<div class="text-xs text-black/45 mt-0.5">{{ step.note }}</div>
+									<div class="text-xs text-[var(--k-ink-muted)] k-numeric mt-0.5">{{ step.period }}</div>
+									<div class="text-xs text-[var(--k-ink-faint)] mt-0.5">{{ step.note }}</div>
 								</div>
 							</div>
 						</div>
 
 						<!-- 1년 미만 특칙 단서분 -->
-						<div v-if="schedule.proviso_stage" class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/60 leading-relaxed flex flex-col gap-1">
+						<div v-if="schedule.proviso_stage" class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed flex flex-col gap-1">
 							<div class="k-label mb-1">단서분 — 촉구 후 발생 휴가 (§61② 단서)</div>
 							<div class="flex justify-between"><span>1차 촉구 기간</span><span class="k-numeric">{{ schedule.proviso_notice_window_start }} ~ {{ schedule.proviso_notice_deadline }}</span></div>
 							<div class="flex justify-between"><span>2차 통보 기한</span><span class="k-numeric">{{ schedule.proviso_second_deadline }}까지</span></div>
-							<div class="flex justify-between font-semibold text-black"><span>단서분 현재 단계</span><span>{{ stageLabel(schedule.proviso_stage) }}</span></div>
+							<div class="flex justify-between font-semibold text-[var(--k-ink)]"><span>단서분 현재 단계</span><span>{{ stageLabel(schedule.proviso_stage) }}</span></div>
 						</div>
 
-						<div class="text-xs text-black/45">근거: {{ (schedule.legal_basis || []).join(', ') }}</div>
+						<div class="text-xs text-[var(--k-ink-faint)]">근거: {{ (schedule.legal_basis || []).join(', ') }}</div>
 					</template>
-					<div v-else class="text-center py-8 text-black/40 text-sm">
+					<div v-else class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('입사일과 기준일을 입력하고 계산 버튼을 눌러주세요.') }}
 					</div>
 				</div>
 
 				<!-- 촉구문 미리보기 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('서면 촉구·통보 초안') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('서면 촉구·통보 초안') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -126,7 +126,7 @@
 								type="text"
 								v-model="noticeForm.worker_name"
 								:placeholder="__('예: 김가상')"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 						<div class="flex flex-col gap-1">
@@ -134,7 +134,7 @@
 							<input
 								type="number"
 								v-model.number="noticeForm.unused_days"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 					</div>
@@ -143,12 +143,12 @@
 					<div class="flex rounded-lg border border-[var(--k-hairline)] p-1 text-sm font-semibold">
 						<button
 							class="flex-1 py-2 rounded-md transition-colors"
-							:class="noticeForm.stage === 1 ? 'k-segment-active' : 'text-black/60'"
+							:class="noticeForm.stage === 1 ? 'k-segment-active' : 'text-[var(--k-ink-muted)]'"
 							@click="noticeForm.stage = 1"
 						>{{ __('1차 촉구서') }}</button>
 						<button
 							class="flex-1 py-2 rounded-md transition-colors"
-							:class="noticeForm.stage === 2 ? 'k-segment-active' : 'text-black/60'"
+							:class="noticeForm.stage === 2 ? 'k-segment-active' : 'text-[var(--k-ink-muted)]'"
 							@click="noticeForm.stage = 2"
 						>{{ __('2차 지정 통보서') }}</button>
 					</div>
@@ -158,7 +158,7 @@
 						<input
 							type="date"
 							v-model="noticeForm.deadline"
-							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 						/>
 					</div>
 
@@ -175,7 +175,7 @@
 						{{ __('초안 생성에 실패했습니다. 입력값을 확인해 주세요.') }}
 					</div>
 					<template v-else-if="noticeMarkdown">
-						<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono">{{ noticeMarkdown }}</div>
+						<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed whitespace-pre-wrap font-mono">{{ noticeMarkdown }}</div>
 						<button
 							@click="copyNotice"
 							class="k-btn-secondary w-full"
@@ -185,7 +185,7 @@
 
 				<!-- 미사용 수당 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('미사용 연차수당 정산') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('미사용 연차수당 정산') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -194,7 +194,7 @@
 								type="number"
 								v-model.number="allowanceForm.monthly_base_salary"
 								:placeholder="__('예: 2090000')"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 						<div class="flex flex-col gap-1">
@@ -202,14 +202,14 @@
 							<input
 								type="number"
 								v-model.number="noticeForm.unused_days"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 					</div>
 
 					<div class="flex items-center gap-2">
 						<input id="promo-done-toggle" type="checkbox" v-model="allowanceForm.promotion_completed" class="accent-black" />
-						<label for="promo-done-toggle" class="text-sm text-black/70">
+						<label for="promo-done-toggle" class="text-sm text-[var(--k-ink-muted)]">
 							{{ __('§61 촉진 조치(1·2차) 모두 적법하게 이행함') }}
 						</label>
 					</div>
@@ -229,9 +229,9 @@
 					<template v-else-if="allowance">
 						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">UNUSED LEAVE ALLOWANCE</div>
-							<div class="mt-1 text-sm font-medium text-black/60">미사용 연차수당</div>
+							<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">미사용 연차수당</div>
 							<div class="k-display">{{ formatKRW(allowance.allowance_won) }}</div>
-							<p class="mt-2 text-xs" :class="allowance.compensation_exempt ? 'text-black/55' : 'text-black/70'">
+							<p class="mt-2 text-xs" :class="allowance.compensation_exempt ? 'text-[var(--k-ink-muted)]' : 'text-[var(--k-ink-muted)]'">
 								{{ allowance.reason }}
 							</p>
 						</div>
@@ -239,8 +239,8 @@
 				</div>
 
 				<!-- 면책 고지 -->
-				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
-					<span class="font-semibold text-black">참고용 계산입니다.</span>
+				<div class="k-card p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed">
+					<span class="font-semibold text-[var(--k-ink)]">참고용 계산입니다.</span>
 					§61 면책은 서면 촉구·통보의 형식과 시기를 모두 충족해야 인정됩니다.
 					확정 판단은 노무사 검토를 거쳐 확정하시기 바랍니다.
 				</div>

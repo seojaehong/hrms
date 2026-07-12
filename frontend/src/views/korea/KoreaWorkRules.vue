@@ -5,17 +5,17 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">WORK RULES REVIEW</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('취업규칙 점검 (§93·§94)') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('취업규칙 점검 (§93·§94)') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						근로기준법 제93조 필수기재 14개 항목의 커버리지를 점검하고, 제94조 변경 절차(의견청취/동의)를 확인합니다.
 					</p>
 				</div>
 
 				<!-- 필수항목 체크리스트 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('§93 필수기재 14개 항목') }}</div>
-					<p class="text-xs text-black/50">{{ __('현재 취업규칙에 규정되어 있는 항목을 체크하세요.') }}</p>
-					<div v-if="listRequiredItems.loading && !items.length" class="text-sm text-black/50 py-2">{{ __('불러오는 중...') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§93 필수기재 14개 항목') }}</div>
+					<p class="text-xs text-[var(--k-ink-faint)]">{{ __('현재 취업규칙에 규정되어 있는 항목을 체크하세요.') }}</p>
+					<div v-if="listRequiredItems.loading && !items.length" class="text-sm text-[var(--k-ink-faint)] py-2">{{ __('불러오는 중...') }}</div>
 					<div class="flex flex-col gap-2">
 						<label
 							v-for="item in items"
@@ -23,8 +23,8 @@
 							class="flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-[var(--k-surface-soft)] cursor-pointer"
 						>
 							<input type="checkbox" v-model="checked[item.ho]" class="mt-0.5" />
-							<span class="text-sm text-black">
-								<span class="text-black/40 mr-1">{{ item.ho }}호</span>{{ item.label }}
+							<span class="text-sm text-[var(--k-ink)]">
+								<span class="text-[var(--k-ink-faint)] mr-1">{{ item.ho }}호</span>{{ item.label }}
 							</span>
 						</label>
 					</div>
@@ -45,20 +45,20 @@
 				<template v-if="coverage">
 					<div class="k-block k-block--cream -mx-1">
 						<div class="k-eyebrow">COVERAGE</div>
-						<div class="mt-1 text-sm font-medium text-black/60">{{ __('필수기재 커버리지') }}</div>
+						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('필수기재 커버리지') }}</div>
 						<div class="k-display">{{ coveragePercent }}%</div>
-						<div class="mt-2 h-2 rounded-full bg-black/10 overflow-hidden">
+						<div class="mt-2 h-2 rounded-full bg-[var(--k-hairline)] overflow-hidden">
 							<div
 								class="h-full rounded-full transition-all"
 								:class="coveragePercent === 100 ? 'bg-green-600' : 'bg-black'"
 								:style="{ width: coveragePercent + '%' }"
 							></div>
 						</div>
-						<div class="mt-1 text-xs text-black/50">{{ coverage.covered.length }} / {{ items.length }} {{ __('항목 커버') }}</div>
+						<div class="mt-1 text-xs text-[var(--k-ink-faint)]">{{ coverage.covered.length }} / {{ items.length }} {{ __('항목 커버') }}</div>
 					</div>
 
 					<div v-if="coverage.missing.length" class="k-card p-4 flex flex-col gap-2">
-						<div class="text-base font-bold tracking-tight text-black">{{ __('누락 항목') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('누락 항목') }}</div>
 						<ul class="flex flex-col gap-1">
 							<li v-for="m in coverage.missing" :key="m.ho" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
 								<span class="text-red-400 mr-1">{{ m.ho }}호</span>{{ m.label }}
@@ -69,15 +69,15 @@
 						{{ __('✓ §93 필수기재 항목이 모두 커버되었습니다.') }}
 					</div>
 
-					<div class="k-card p-3 text-xs text-black/50 leading-relaxed">{{ coverage.note }}</div>
+					<div class="k-card p-3 text-xs text-[var(--k-ink-faint)] leading-relaxed">{{ coverage.note }}</div>
 				</template>
 
 				<!-- 변경 절차 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('§94 변경 절차 안내') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§94 변경 절차 안내') }}</div>
 					<label class="flex items-center gap-2 cursor-pointer">
 						<input type="checkbox" v-model="form.is_disadvantageous" />
-						<span class="text-sm text-black">{{ __('불이익 변경입니다 (근로조건을 근로자에게 불리하게 변경)') }}</span>
+						<span class="text-sm text-[var(--k-ink)]">{{ __('불이익 변경입니다 (근로조건을 근로자에게 불리하게 변경)') }}</span>
 					</label>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -110,7 +110,7 @@
 				<template v-if="procedure">
 					<div class="k-card p-4 flex flex-col gap-3">
 						<div class="flex items-center justify-between">
-							<div class="text-base font-bold tracking-tight text-black">{{ __('진행 단계') }}</div>
+							<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('진행 단계') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
 								:class="procedure.requirement === 'consent' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'"
@@ -118,12 +118,12 @@
 								{{ procedure.requirement === 'consent' ? __('동의 필요') : __('의견청취') }}
 							</span>
 						</div>
-						<div class="text-sm text-black/60">{{ __('대상') }}: {{ procedure.subject }}</div>
+						<div class="text-sm text-[var(--k-ink-muted)]">{{ __('대상') }}: {{ procedure.subject }}</div>
 						<ol class="flex flex-col gap-2">
 							<li
 								v-for="(step, idx) in procedure.steps"
 								:key="idx"
-								class="flex gap-2 text-sm text-black items-start"
+								class="flex gap-2 text-sm text-[var(--k-ink)] items-start"
 							>
 								<span class="k-numeric shrink-0 w-5 h-5 rounded-full bg-black text-white text-[11px] font-semibold flex items-center justify-center">{{ idx + 1 }}</span>
 								<span>{{ step }}</span>
@@ -133,21 +133,21 @@
 
 					<div class="k-card p-4 flex flex-col gap-2">
 						<div class="flex items-center justify-between">
-							<div class="text-base font-bold tracking-tight text-black">{{ __('§93 신고의무') }}</div>
+							<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§93 신고의무') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
-								:class="procedure.filing_obligation.required ? 'bg-red-100 text-red-700' : 'bg-black/10 text-black/60'"
+								:class="procedure.filing_obligation.required ? 'bg-red-100 text-red-700' : 'bg-[var(--k-hairline)] text-[var(--k-ink-muted)]'"
 							>
 								{{ procedure.filing_obligation.required ? __('신고 대상') : __('신고 의무 없음') }}
 							</span>
 						</div>
-						<p class="text-sm text-black/60">{{ procedure.filing_obligation.note }}</p>
+						<p class="text-sm text-[var(--k-ink-muted)]">{{ procedure.filing_obligation.note }}</p>
 					</div>
 				</template>
 
 				<!-- 면책 고지 -->
-				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
-					<span class="font-semibold text-black">키워드 candidate 판정입니다.</span>
+				<div class="k-card p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed">
+					<span class="font-semibold text-[var(--k-ink)]">키워드 candidate 판정입니다.</span>
 					있음/불충분의 최종 확정과 불이익변경 해당 여부 판단은 반드시 노무사가 원문을 검수하시기 바랍니다.
 				</div>
 			</div>

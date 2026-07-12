@@ -130,6 +130,23 @@ class TestRules(unittest.TestCase):
         codes = [v["rule"] for v in self._violations(src)]
         self.assertNotIn("R3", codes)
 
+    def test_r7_raw_black_white_utilities(self):
+        """다크모드 전제: text-black/bg-white 원시 유틸리티는 토큰 유틸로 대체해야 한다."""
+        src = '<span class="text-black">라벨</span><div class="bg-white">x</div>'
+        codes = [v["rule"] for v in self._violations(src)]
+        self.assertIn("R7", codes)
+
+    def test_r7_token_utilities_ok(self):
+        src = '<span class="text-[var(--k-ink)]">라벨</span><div class="bg-[var(--k-card)]">x</div>'
+        codes = [v["rule"] for v in self._violations(src)]
+        self.assertNotIn("R7", codes)
+
+    def test_r7_white_overlay_exempt(self):
+        """bg-white/55 등 알파 오버레이는 1차 예외(cream 히어로 관례)."""
+        src = '<div class="rounded-xl bg-white/55 p-3">x</div>'
+        codes = [v["rule"] for v in self._violations(src)]
+        self.assertNotIn("R7", codes)
+
     def test_violation_has_line_numbers(self):
         src = "<div>\n<button class=\"bg-black\">x</button>\n</div>"
         found = [v for v in self._violations(src) if v["rule"] == "R2"]

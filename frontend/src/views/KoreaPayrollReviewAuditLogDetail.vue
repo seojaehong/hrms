@@ -27,7 +27,7 @@
 				</section>
 
 				<section class="grid grid-cols-1 gap-3 md:grid-cols-2">
-					<div class="rounded-2xl bg-white p-4 shadow-sm">
+					<div class="rounded-2xl bg-[var(--k-card)] p-4 shadow-sm">
 						<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">검토 액션</p>
 						<dl class="mt-3 space-y-2 text-sm text-[var(--k-ink)]">
 							<div class="flex justify-between gap-3"><dt>액션</dt><dd class="font-semibold text-[var(--k-ink)]">{{ detail.action }}</dd></div>
@@ -37,7 +37,7 @@
 						</dl>
 					</div>
 
-					<div class="rounded-2xl bg-white p-4 shadow-sm">
+					<div class="rounded-2xl bg-[var(--k-card)] p-4 shadow-sm">
 						<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">급여 범위</p>
 						<dl class="mt-3 space-y-2 text-sm text-[var(--k-ink)]">
 							<div class="flex justify-between gap-3"><dt>초안</dt><dd>{{ detail.draft_name }}</dd></div>
@@ -48,14 +48,14 @@
 					</div>
 				</section>
 
-				<section class="rounded-2xl bg-white p-4 shadow-sm">
+				<section class="rounded-2xl bg-[var(--k-card)] p-4 shadow-sm">
 					<details>
 						<summary class="cursor-pointer text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">기술 상세(JSON) — source_runtime_apply</summary>
 						<pre class="mt-3 overflow-x-auto rounded-xl bg-[var(--k-ink)] p-3 text-xs text-[var(--k-hairline-soft)]">{{ JSON.stringify(detail.source_runtime_apply, null, 2) }}</pre>
 					</details>
 				</section>
 
-				<section class="rounded-2xl bg-white p-4 shadow-sm">
+				<section class="rounded-2xl bg-[var(--k-card)] p-4 shadow-sm">
 					<details>
 						<summary class="cursor-pointer text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">기술 상세(JSON) — source_audit_log</summary>
 						<pre class="mt-3 overflow-x-auto rounded-xl bg-[var(--k-ink)] p-3 text-xs text-[var(--k-hairline-soft)]">{{ JSON.stringify(detail.source_audit_log, null, 2) }}</pre>

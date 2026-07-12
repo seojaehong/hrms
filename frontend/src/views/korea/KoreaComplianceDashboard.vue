@@ -5,8 +5,8 @@
 				<!-- 히어로 — pink 색블록 -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">COMPLIANCE</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('컴플라이언스 진단') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('컴플라이언스 진단') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						{{ employee.data?.company || "-" }} · {{ employee.data?.branch || "전사" }}
 					</p>
 				</div>
@@ -19,7 +19,7 @@
 						<input
 							type="date"
 							v-model="asOfDate"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 					</div>
 
@@ -44,16 +44,16 @@
 					</div>
 
 					<!-- 비관리자 안내 — 기준일만 보이는 죽은 화면 방지 -->
-					<p v-if="!isAdmin" class="text-xs text-black/40">
+					<p v-if="!isAdmin" class="text-xs text-[var(--k-ink-faint)]">
 						{{ __('진단 실행은 관리자(HR Manager) 권한이 필요합니다. 결과 공유는 관리자에게 요청하세요.') }}
 					</p>
 
 					<!-- 마지막 진단 정보 -->
 					<div v-if="lastDiagnosisTime" class="flex flex-col gap-0.5">
-						<div class="text-xs text-black/40">
+						<div class="text-xs text-[var(--k-ink-faint)]">
 							마지막 진단: {{ lastDiagnosisTime }}
 						</div>
-						<div v-if="diagnosisResult?.as_of_date" class="text-xs text-black/40">
+						<div v-if="diagnosisResult?.as_of_date" class="text-xs text-[var(--k-ink-faint)]">
 							진단 기준일: {{ diagnosisResult.as_of_date }}
 						</div>
 					</div>
@@ -70,7 +70,7 @@
 						<div class="text-base font-bold tracking-tight" :class="overallStatusTextClass">
 							{{ overallStatusLabel }}
 						</div>
-						<div class="text-xs text-black/60">
+						<div class="text-xs text-[var(--k-ink-muted)]">
 							<template v-if="diagnosisResult.high_severity_findings > 0">
 								즉시 조치 필요 항목 {{ diagnosisResult.high_severity_findings }}건
 							</template>
@@ -94,8 +94,8 @@
 							<div class="flex items-center gap-2">
 								<span class="text-base">{{ cat.statusEmoji }}</span>
 								<div class="flex flex-col">
-									<span class="text-sm font-semibold text-black">{{ cat.label }}</span>
-									<span class="text-xs text-black/40">{{ cat.law }}</span>
+									<span class="text-sm font-semibold text-[var(--k-ink)]">{{ cat.label }}</span>
+									<span class="text-xs text-[var(--k-ink-faint)]">{{ cat.law }}</span>
 								</div>
 							</div>
 							<span
@@ -108,7 +108,7 @@
 						</div>
 
 						<!-- 발견 수 요약 -->
-						<div class="text-xs text-black/50 pl-7">
+						<div class="text-xs text-[var(--k-ink-faint)] pl-7">
 							<template v-if="cat.affectedEmployees > 0">
 								{{ cat.affectedEmployees }}명 영향 / {{ cat.findingCount }}건 발견
 							</template>
@@ -127,7 +127,7 @@
 						<div class="pl-7 pt-1">
 							<router-link
 								:to="{ name: 'KoreaComplianceCategoryDetail', params: { categoryKey: cat.key }, query: { diagnosisId: currentDiagnosisId } }"
-								class="text-xs text-black font-semibold hover:underline"
+								class="text-xs text-[var(--k-ink)] font-semibold hover:underline"
 							>
 								상세 보기 →
 							</router-link>
@@ -141,15 +141,15 @@
 					class="k-card p-8 flex flex-col items-center gap-3 text-center"
 				>
 					<span class="text-4xl">📋</span>
-					<div class="text-sm text-black/50">{{ __('아직 진단 결과가 없습니다.') }}</div>
-					<div v-if="isAdmin" class="text-xs text-black/40">
+					<div class="text-sm text-[var(--k-ink-faint)]">{{ __('아직 진단 결과가 없습니다.') }}</div>
+					<div v-if="isAdmin" class="text-xs text-[var(--k-ink-faint)]">
 						위의 "전체 진단 실행" 버튼을 눌러 진단을 시작하세요.
 					</div>
 				</div>
 
 				<!-- 로딩 -->
 				<div v-if="complianceDiagnosis.loading" class="flex flex-col items-center py-10 gap-3">
-					<div class="text-black/40 text-sm">{{ __('진단 중입니다. 잠시 기다려 주세요...') }}</div>
+					<div class="text-[var(--k-ink-faint)] text-sm">{{ __('진단 중입니다. 잠시 기다려 주세요...') }}</div>
 				</div>
 
 				<!-- Actions bar (admin only) -->
@@ -177,15 +177,15 @@
 
 				<!-- 액션 플랜 결과 -->
 				<div v-if="actionPlanResult" class="k-card p-4 flex flex-col gap-3">
-					<div class="text-sm font-bold tracking-tight text-black">개선 액션 플랜</div>
-					<div class="text-xs text-black/50">완료 기한: {{ actionPlanResult.deadline_date }}</div>
+					<div class="text-sm font-bold tracking-tight text-[var(--k-ink)]">개선 액션 플랜</div>
+					<div class="text-xs text-[var(--k-ink-faint)]">완료 기한: {{ actionPlanResult.deadline_date }}</div>
 					<div
 						v-for="(action, idx) in actionPlanResult.actions"
 						:key="idx"
 						class="border border-[var(--k-hairline)] rounded-lg p-3 flex flex-col gap-1"
 					>
 						<div class="flex items-center justify-between">
-							<span class="text-xs font-semibold text-black">{{ action.category_label }}</span>
+							<span class="text-xs font-semibold text-[var(--k-ink)]">{{ action.category_label }}</span>
 							<span
 								class="text-xs px-2 py-0.5 rounded-full font-medium"
 								:class="severityClass(action.severity)"
@@ -193,13 +193,13 @@
 								{{ severityLabel(action.severity) }}
 							</span>
 						</div>
-						<div class="text-xs text-black/60">{{ action.issue }}</div>
-						<div class="text-xs text-black font-medium mt-1">{{ action.recommended_action }}</div>
-						<div class="text-xs text-black/40 mt-1">
+						<div class="text-xs text-[var(--k-ink-muted)]">{{ action.issue }}</div>
+						<div class="text-xs text-[var(--k-ink)] font-medium mt-1">{{ action.recommended_action }}</div>
+						<div class="text-xs text-[var(--k-ink-faint)] mt-1">
 							담당: {{ action.assignee_role }} | 예상 {{ action.estimated_effort_hours }}h | 기한 {{ action.deadline }}
 						</div>
 					</div>
-					<div class="text-xs text-black/40 border-t border-[var(--k-hairline-soft)] pt-2 mt-1">
+					<div class="text-xs text-[var(--k-ink-faint)] border-t border-[var(--k-hairline-soft)] pt-2 mt-1">
 						{{ actionPlanResult.summary }}
 					</div>
 					<div class="text-xs text-red-600">
@@ -219,12 +219,12 @@
 			<!-- Confirm: 진단 실행 -->
 			<div
 				v-if="showDiagnosisConfirm"
-				class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+				class="fixed inset-0 bg-[var(--k-surface-soft)]0 flex items-center justify-center z-50"
 				@click.self="showDiagnosisConfirm = false"
 			>
-				<div class="bg-white rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
-					<div class="text-base font-bold tracking-tight text-black">전체 진단 실행</div>
-					<div class="text-sm text-black/60 leading-relaxed">
+				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">전체 진단 실행</div>
+					<div class="text-sm text-[var(--k-ink-muted)] leading-relaxed">
 						회사 전체 컴플라이언스 진단을 실행합니다.<br />
 						모든 직원의 근무·급여·연차 데이터를 분석합니다. 계속하시겠습니까?
 					</div>
@@ -251,12 +251,12 @@
 			<!-- Confirm: 액션 플랜 생성 -->
 			<div
 				v-if="showActionPlanConfirm"
-				class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+				class="fixed inset-0 bg-[var(--k-surface-soft)]0 flex items-center justify-center z-50"
 				@click.self="showActionPlanConfirm = false"
 			>
-				<div class="bg-white rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
-					<div class="text-base font-bold tracking-tight text-black">개선 액션 플랜 생성</div>
-					<div class="text-sm text-black/60 leading-relaxed">
+				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">개선 액션 플랜 생성</div>
+					<div class="text-sm text-[var(--k-ink-muted)] leading-relaxed">
 						현재 진단 결과를 기반으로 개선 액션 플랜을 생성합니다.<br />
 						생성된 플랜은 human-review 대상이며 즉시 실행되지 않습니다.
 					</div>

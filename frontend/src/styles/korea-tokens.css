@@ -197,3 +197,38 @@
     color: #f6f5f4;
     border-radius: 6px;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   다크모드 — Linear 래더 × claude 웜 다크 (DESIGN.md Phase 3)
+   활성화: <html data-theme="dark"> (수동) 또는 시스템 다크 + data-theme 미지정.
+   금액 잉크는 밝은 네이비 틴트(#9db8d6) — "다크에서도 돈의 색은 네이비"(사용자 확정 2026-07-12).
+   ══════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+    --k-ink: #ece9e4;
+    --k-canvas: #181715;
+    --k-card: #1f1e1b;
+    --k-inverse-canvas: #f6f5f4;
+    --k-inverse-ink: #171513;
+    --k-hairline: #33302c;
+    --k-hairline-soft: #292824;
+    --k-surface-soft: #252320;
+    --k-surface-1: #181715;
+    --k-surface-2: #1f1e1b;
+    --k-surface-3: #252320;
+    --k-ledger-navy: #9db8d6; /* 다크 장부 잉크 — 밝은 네이비 틴트 */
+    --k-ink-muted: #a39e98;
+    --k-ink-faint: #6f6a64;
+    --k-shadow-modal: 0 8px 16px -4px rgba(0,0,0,.4), 0 24px 32px -8px rgba(0,0,0,.5);
+    --k-focus-ring: 0 0 0 2px #181715, 0 0 0 4px rgba(157,184,214,.6);
+    /* 파스텔 → 다크 딥 틴트 (내러티브 블록) */
+    --k-block-lime: var(--t-block-1, #333d22);
+    --k-block-lilac: var(--t-block-2, #352b4d);
+    --k-block-cream: var(--t-block-3, #3a3427);
+    --k-block-mint: var(--t-block-4, #263b2b);
+    --k-block-pink: var(--t-block-5, #3f2c2c);
+    --k-block-navy: #14132b;
+    --k-success: #34c164;
+    --k-danger: #ef6a6a;
+    --k-warn: #f2c14e;
+    color-scheme: dark;
+}

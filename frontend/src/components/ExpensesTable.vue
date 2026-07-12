@@ -20,7 +20,7 @@
 	<!-- Table -->
 	<div
 		v-if="expenseClaim.expenses"
-		class="flex flex-col bg-white mt-5 rounded border overflow-auto"
+		class="flex flex-col bg-[var(--k-card)] mt-5 rounded border overflow-auto"
 	>
 		<div
 			class="flex flex-row p-3.5 items-center justify-between border-b cursor-pointer"
@@ -67,7 +67,7 @@
 		<template #actionSheet>
 			<!-- Add Expense Action Sheet -->
 			<div
-				class="bg-white w-full flex flex-col items-center justify-center pb-5"
+				class="bg-[var(--k-card)] w-full flex flex-col items-center justify-center pb-5"
 			>
 				<div class="w-full pt-8 pb-5 border-b text-center">
 					<span class="text-gray-900 font-bold text-lg">

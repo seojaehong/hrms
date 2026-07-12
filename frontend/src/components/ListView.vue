@@ -2,10 +2,10 @@
 	<ion-header class="ion-no-border">
 		<div class="w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 			<div
-				class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b"
+				class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center justify-between border-b"
 			>
 				<div class="flex flex-row items-center">
-					<Button variant="ghost" class="!px-1 mr-1 hover:bg-white" @click="router.back()">
+					<Button variant="ghost" class="!px-1 mr-1 hover:bg-[var(--k-card)]" @click="router.back()">
 						<FeatherIcon name="chevron-left" class="h-5 w-5" />
 					</Button>
 					<h2 class="text-xl font-semibold text-gray-900">{{ pageTitle }}</h2>
@@ -18,7 +18,7 @@
 						variant="subtle"
 						:class="[
 							areFiltersApplied
-								? '!border !border-gray-800 !bg-white !text-gray-900 !font-semibold'
+								? '!border !border-gray-800 !bg-[var(--k-card)] !text-gray-900 !font-semibold'
 								: '',
 						]"
 					/>
@@ -58,7 +58,7 @@
 				/>
 
 				<div
-					class="flex flex-col bg-white rounded mt-5"
+					class="flex flex-col bg-[var(--k-card)] rounded mt-5"
 					v-if="!documents.loading && documents.data?.length"
 				>
 					<div

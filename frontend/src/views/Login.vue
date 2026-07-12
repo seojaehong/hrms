@@ -1,7 +1,7 @@
 <template>
 	<ion-page>
 		<ion-content class="ion-padding">
-			<div class="flex h-screen w-screen flex-col justify-center bg-white">
+			<div class="flex h-screen w-screen flex-col justify-center bg-[var(--k-card)]">
 				<div class="mx-auto w-full px-6 sm:w-[26rem]">
 					<div class="k-block k-block--lilac">
 						<div class="k-card p-8">

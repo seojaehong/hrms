@@ -38,7 +38,7 @@
 					<article
 						v-for="item in fixture.items"
 						:key="item.name"
-						class="rounded-2xl border bg-white p-4 shadow-sm"
+						class="rounded-2xl border bg-[var(--k-card)] p-4 shadow-sm"
 						:class="statusClass(item.status)"
 					>
 						<router-link :to="item.route" class="block">
@@ -62,7 +62,7 @@
 						</div>
 
 
-							<div class="mt-3 flex items-center justify-between rounded-xl border border-[var(--k-hairline-soft)] bg-white px-3 py-2 text-xs font-semibold text-[var(--k-ink)]">
+							<div class="mt-3 flex items-center justify-between rounded-xl border border-[var(--k-hairline-soft)] bg-[var(--k-card)] px-3 py-2 text-xs font-semibold text-[var(--k-ink)]">
 								<span>Open detail</span>
 								<span aria-hidden="true">→</span>
 							</div>

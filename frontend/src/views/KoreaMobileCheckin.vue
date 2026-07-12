@@ -17,7 +17,7 @@
 				</div>
 
 				<!-- Status Card -->
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
+				<div class="bg-[var(--k-card)] rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
 					<div class="flex items-center justify-between">
 						<div>
 							<p class="text-sm text-[var(--k-ink-muted)]">{{ __("Current Time") }}</p>
@@ -40,7 +40,7 @@
 
 				<!-- GPS Status Card -->
 				<div
-					class="bg-white rounded-xl p-4 shadow-sm border"
+					class="bg-[var(--k-card)] rounded-xl p-4 shadow-sm border"
 					:class="{
 						'border-green-200': gpsStatus === 'ok',
 						'border-yellow-200': gpsStatus === 'warn',
@@ -90,7 +90,7 @@
 				</div>
 
 				<!-- Selfie Section -->
-				<div class="bg-white rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
+				<div class="bg-[var(--k-card)] rounded-xl p-4 shadow-sm border border-[var(--k-hairline-soft)]">
 					<div class="flex items-center justify-between mb-3">
 						<p class="text-sm font-medium text-[var(--k-ink)]">{{ __("Selfie (Optional)") }}</p>
 						<span class="text-xs text-[var(--k-ink-faint)]">{{ __("Privacy protected") }}</span>

@@ -23,7 +23,7 @@
 		</div>
 
 		<!-- 캐시 페이지 바로가기 -->
-		<div class="w-full max-w-sm bg-white rounded-2xl border border-[var(--k-hairline-soft)] shadow-sm p-4 text-left">
+		<div class="w-full max-w-sm bg-[var(--k-card)] rounded-2xl border border-[var(--k-hairline-soft)] shadow-sm p-4 text-left">
 			<p class="text-xs font-semibold text-[var(--k-ink-faint)] uppercase tracking-wide mb-3">
 				오프라인에서 이용 가능한 메뉴
 			</p>

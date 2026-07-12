@@ -5,8 +5,8 @@
 				<!-- 히어로 — cream 색블록 (직원/사업장 계열) -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">ONBOARDING</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('입사자 등록 요청') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('입사자 등록 요청') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						{{ __('신규 입사자 정보를 표준 폼으로 제출하면 4대보험 취득신고까지 연결됩니다.') }}
 					</p>
 				</div>
@@ -15,12 +15,12 @@
 				<div v-if="submitted" class="k-card p-4 flex flex-col gap-3">
 					<div class="flex items-center gap-2">
 						<span class="text-2xl">✅</span>
-						<div class="text-base font-bold tracking-tight text-black">{{ __('등록 요청이 접수되었습니다') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('등록 요청이 접수되었습니다') }}</div>
 					</div>
 					<div class="flex flex-col divide-y divide-[var(--k-hairline-soft)]">
 						<div v-for="row in successSummaryRows" :key="row.label" class="flex justify-between py-2">
-							<span class="text-xs text-black/50">{{ row.label }}</span>
-							<span class="text-xs font-medium text-black">{{ row.value }}</span>
+							<span class="text-xs text-[var(--k-ink-faint)]">{{ row.label }}</span>
+							<span class="text-xs font-medium text-[var(--k-ink)]">{{ row.value }}</span>
 						</div>
 					</div>
 					<button
@@ -40,7 +40,7 @@
 							type="text"
 							v-model="form.company"
 							:placeholder="__('예: 노호')"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span v-if="errors.company" class="text-xs text-red-600">{{ errors.company }}</span>
 					</div>
@@ -51,7 +51,7 @@
 						<input
 							type="text"
 							v-model="form.full_name"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span v-if="errors.full_name" class="text-xs text-red-600">{{ errors.full_name }}</span>
 					</div>
@@ -65,7 +65,7 @@
 							autocomplete="off"
 							inputmode="numeric"
 							:placeholder="__('13자리 (하이픈 허용)')"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span class="k-label">{{ __('암호화 저장 · 4대보험 취득신고에만 사용') }}</span>
 						<span v-if="errors.rrn" class="text-xs text-red-600">{{ errors.rrn }}</span>
@@ -77,7 +77,7 @@
 						<input
 							type="date"
 							v-model="form.join_date"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span v-if="errors.join_date" class="text-xs text-red-600">{{ errors.join_date }}</span>
 					</div>
@@ -91,7 +91,7 @@
 							min="0"
 							step="1"
 							:placeholder="__('예: 2800000')"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span v-if="errors.reported_monthly_wage" class="text-xs text-red-600">{{ errors.reported_monthly_wage }}</span>
 					</div>
@@ -101,7 +101,7 @@
 						<label class="k-label">{{ __('계약형태') }} *</label>
 						<select
 							v-model="form.contract_type"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] bg-[var(--k-card)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						>
 							<option value="" disabled>{{ __('선택하세요') }}</option>
 							<option v-for="type in CONTRACT_TYPES" :key="type" :value="type">{{ type }}</option>
@@ -116,7 +116,7 @@
 							type="tel"
 							v-model="form.phone"
 							:placeholder="__('010-0000-0000')"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 					</div>
 
@@ -126,7 +126,7 @@
 						<textarea
 							v-model="form.note"
 							rows="2"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 					</div>
 
@@ -157,7 +157,7 @@
 						class="k-card p-6 flex flex-col items-center gap-2 text-center"
 					>
 						<span class="text-2xl">📋</span>
-						<div class="text-xs text-black/50">{{ __('아직 등록 요청이 없습니다.') }}</div>
+						<div class="text-xs text-[var(--k-ink-faint)]">{{ __('아직 등록 요청이 없습니다.') }}</div>
 					</div>
 
 					<div
@@ -166,7 +166,7 @@
 						class="k-card p-4 flex flex-col gap-1.5"
 					>
 						<div class="flex justify-between items-center">
-							<span class="text-sm font-semibold text-black">{{ req.full_name }}</span>
+							<span class="text-sm font-semibold text-[var(--k-ink)]">{{ req.full_name }}</span>
 							<span
 								class="text-xs font-medium px-2 py-0.5 rounded-full"
 								:class="[req.badge.textClass, req.badge.badgeClass]"
@@ -174,10 +174,10 @@
 								{{ req.badge.text }}
 							</span>
 						</div>
-						<div class="text-xs text-black/50">
+						<div class="text-xs text-[var(--k-ink-faint)]">
 							{{ req.company }} · {{ __('입사일') }} {{ req.join_date }} · {{ req.contract_type }}
 						</div>
-						<div class="text-xs text-black/50">
+						<div class="text-xs text-[var(--k-ink-faint)]">
 							{{ req.masked_rrn }} · {{ formatWage(req.reported_monthly_wage) }}
 						</div>
 					</div>

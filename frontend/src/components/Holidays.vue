@@ -11,7 +11,7 @@
 			</div>
 		</div>
 
-		<div class="flex flex-col bg-white rounded" v-if="upcomingHolidays?.length">
+		<div class="flex flex-col bg-[var(--k-card)] rounded" v-if="upcomingHolidays?.length">
 			<div
 				class="flex flex-row flex-start p-4 items-center justify-between border-b"
 				v-for="holiday in upcomingHolidays"
@@ -39,7 +39,7 @@
 		:initial-breakpoint="1"
 		:breakpoints="[0, 1]"
 	>
-		<div class="bg-white w-full flex flex-col items-center justify-center pb-5">
+		<div class="bg-[var(--k-card)] w-full flex flex-col items-center justify-center pb-5">
 			<div class="w-full pt-8 pb-5 border-b text-center">
 				<span class="text-gray-900 font-bold text-lg">{{ __("Holiday List") }}</span>
 			</div>

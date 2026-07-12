@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex flex-col bg-white rounded mt-5 overflow-auto"
+		class="flex flex-col bg-[var(--k-card)] rounded mt-5 overflow-auto"
 		v-if="props.items?.length"
 	>
 		<router-link
@@ -16,7 +16,7 @@
 			:to="{ name: 'EmployeeAdvanceFormView' }"
 			v-slot="{ navigate }"
 		>
-			<div class="flex flex-col bg-white w-full py-5 px-3.5 mt-0 border-none">
+			<div class="flex flex-col bg-[var(--k-card)] w-full py-5 px-3.5 mt-0 border-none">
 				<Button @click="navigate" variant="subtle" class="py-5 text-base">
 					{{ __("Request an Advance") }}
 				</Button>

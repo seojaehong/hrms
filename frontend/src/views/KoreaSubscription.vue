@@ -5,12 +5,12 @@
 			<div class="flex flex-col h-full w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 				<!-- Header -->
 				<header
-					class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
+					class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
 				>
 					<div class="flex flex-row items-center gap-2">
 						<Button
 							variant="ghost"
-							class="!pl-0 hover:bg-white"
+							class="!pl-0 hover:bg-[var(--k-card)]"
 							@click="router.back()"
 						>
 							<FeatherIcon name="chevron-left" class="h-5 w-5" />
@@ -37,7 +37,7 @@
 					<!-- 현재 플랜 요약 -->
 					<section
 						v-if="currentPlan"
-						class="rounded-xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm"
+						class="rounded-xl border border-[var(--k-hairline)] bg-[var(--k-card)] p-4 shadow-sm"
 					>
 						<p class="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--k-ink-muted)]">
 							{{ __("현재 플랜") }}
@@ -74,8 +74,8 @@
 								class="rounded-xl border p-4 transition-shadow hover:shadow-md"
 								:class="
 									activeTier === tier
-										? 'border-black bg-[var(--k-surface-soft)]'
-										: 'border-[var(--k-hairline)] bg-white'
+										? 'border-[var(--k-ink)] bg-[var(--k-surface-soft)]'
+										: 'border-[var(--k-hairline)] bg-[var(--k-card)]'
 								"
 							>
 								<div class="flex items-start justify-between">
@@ -141,7 +141,7 @@
 
 						<div
 							v-if="invoices.length === 0"
-							class="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--k-hairline)] bg-white py-10 text-sm text-[var(--k-ink-faint)]"
+							class="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--k-hairline)] bg-[var(--k-card)] py-10 text-sm text-[var(--k-ink-faint)]"
 						>
 							<FeatherIcon name="file-text" class="mb-2 h-8 w-8" />
 							{{ __("청구 내역이 없습니다.") }}
@@ -149,7 +149,7 @@
 
 						<div
 							v-else
-							class="overflow-hidden rounded-xl border border-[var(--k-hairline)] bg-white"
+							class="overflow-hidden rounded-xl border border-[var(--k-hairline)] bg-[var(--k-card)]"
 						>
 							<table class="w-full text-sm">
 								<thead class="bg-[var(--k-surface-soft)] text-xs uppercase tracking-wide text-[var(--k-ink-muted)]">
@@ -182,7 +182,7 @@
 
 					<!-- 결제 수단 안내 -->
 					<section
-						class="rounded-xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm"
+						class="rounded-xl border border-[var(--k-hairline)] bg-[var(--k-card)] p-4 shadow-sm"
 					>
 						<h3 class="mb-2 text-sm font-semibold text-[var(--k-ink)]">
 							{{ __("결제 수단") }}

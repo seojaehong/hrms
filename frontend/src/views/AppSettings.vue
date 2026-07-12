@@ -4,12 +4,12 @@
 			<div class="flex flex-col h-screen w-screen">
 				<div class="w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<header
-						class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
+						class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
 					>
 						<div class="flex flex-row items-center">
 							<Button
 								variant="ghost"
-								class="!pl-0 hover:bg-white"
+								class="!pl-0 hover:bg-[var(--k-card)]"
 								@click="router.back()"
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
@@ -19,7 +19,17 @@
 					</header>
 
 					<div class="flex flex-col gap-5 my-4 w-full p-4">
-						<div class="flex flex-col bg-white rounded">
+						<div class="flex flex-col bg-[var(--k-card)] rounded">
+							<Switch
+								size="md"
+								:label="__('다크 모드')"
+								:description="__('시스템 설정과 무관하게 어두운 테마를 사용합니다')"
+								class="p-2"
+								:model-value="isDarkTheme"
+								@update:model-value="toggleDarkTheme"
+							/>
+						</div>
+						<div class="flex flex-col bg-[var(--k-card)] rounded">
 							<Switch
 								size="md"
 								:label="__('Enable Push Notifications')"
@@ -62,6 +72,14 @@ const pushNotificationState = ref(
 	window.frappePushNotification?.isNotificationEnabled()
 )
 const isLoading = ref(false)
+
+// 다크모드 토글 — main.js 초기화와 짝. 저장 선호가 시스템 설정보다 우선.
+const isDarkTheme = ref(document.documentElement.dataset.theme === "dark")
+const toggleDarkTheme = (value) => {
+	isDarkTheme.value = value
+	document.documentElement.dataset.theme = value ? "dark" : "light"
+	localStorage.setItem("k-theme", value ? "dark" : "light")
+}
 
 const disablePushSetting = computed(() => {
 	return (

@@ -18,8 +18,8 @@
 					<!-- Welcome message -->
 					<div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
 						<div>
-							<p class="text-lg font-bold tracking-tight text-black">{{ __('무엇을 도와드릴까요?') }}</p>
-							<p class="text-sm text-black/50 mt-1">
+							<p class="text-lg font-bold tracking-tight text-[var(--k-ink)]">{{ __('무엇을 도와드릴까요?') }}</p>
+							<p class="text-sm text-[var(--k-ink-faint)] mt-1">
 								근로기준법, 연차, 급여, 해고 등 HR 관련 질문을 입력하세요.
 							</p>
 						</div>
@@ -41,7 +41,7 @@
 									AI
 								</div>
 								<div class="bg-[var(--k-surface-soft)] border border-[var(--k-hairline)] rounded-3xl rounded-tl-md px-4 py-3 max-w-[85%]">
-									<p class="text-sm text-black whitespace-pre-wrap">{{ msg.content }}</p>
+									<p class="text-sm text-[var(--k-ink)] whitespace-pre-wrap">{{ msg.content }}</p>
 								</div>
 							</div>
 
@@ -54,10 +54,10 @@
 										:key="ci"
 										class="k-card px-3 py-2"
 									>
-										<div class="text-xs font-semibold text-black">
+										<div class="text-xs font-semibold text-[var(--k-ink)]">
 											[{{ citationTypeLabel(cite.type) }}] {{ cite.ref }}
 										</div>
-										<div class="text-xs text-black/60 mt-0.5 line-clamp-2">{{ cite.snippet }}</div>
+										<div class="text-xs text-[var(--k-ink-muted)] mt-0.5 line-clamp-2">{{ cite.snippet }}</div>
 									</div>
 								</div>
 							</div>
@@ -73,7 +73,7 @@
 										v-bind="isExternalUrl(action.url)
 											? { href: action.url, target: '_blank', rel: 'noopener noreferrer' }
 											: { to: action.url }"
-										class="inline-flex items-center gap-1 text-xs font-medium bg-white border border-black/15 rounded-full px-3 py-1.5 text-black hover:bg-black hover:text-white transition-colors"
+										class="inline-flex items-center gap-1 text-xs font-medium bg-[var(--k-card)] border border-[var(--k-hairline)] rounded-full px-3 py-1.5 text-[var(--k-ink)] hover:bg-black hover:text-white transition-colors"
 									>
 										{{ action.label }}
 									</component>
@@ -82,7 +82,7 @@
 
 							<!-- Disclaimer per message -->
 							<div v-if="msg.disclaimer" class="ml-9">
-								<p class="font-mono text-[10px] uppercase tracking-[0.08em] text-black/40">{{ msg.disclaimer }}</p>
+								<p class="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--k-ink-faint)]">{{ msg.disclaimer }}</p>
 							</div>
 						</div>
 					</template>
@@ -110,7 +110,7 @@
 							v-for="(q, qi) in suggestedQuestions"
 							:key="qi"
 							@click="sendSuggestedQuestion(q)"
-							class="shrink-0 whitespace-nowrap text-xs font-medium bg-white border border-black/15 rounded-full px-3 py-1.5 text-black hover:bg-black hover:text-white transition-colors"
+							class="shrink-0 whitespace-nowrap text-xs font-medium bg-[var(--k-card)] border border-[var(--k-hairline)] rounded-full px-3 py-1.5 text-[var(--k-ink)] hover:bg-black hover:text-white transition-colors"
 						>
 							{{ q }}
 						</button>
@@ -118,7 +118,7 @@
 				</div>
 
 				<!-- Input Area -->
-				<div class="px-4 py-3 border-t border-[var(--k-hairline-soft)] bg-white">
+				<div class="px-4 py-3 border-t border-[var(--k-hairline-soft)] bg-[var(--k-card)]">
 					<div class="flex items-end gap-2">
 						<textarea
 							v-model="inputText"
@@ -140,7 +140,7 @@
 							</svg>
 						</button>
 					</div>
-					<p class="mt-1.5 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-black/40">
+					<p class="mt-1.5 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--k-ink-faint)]">
 						AI 보조 답변 · 법률 자문이 아닙니다
 					</p>
 				</div>

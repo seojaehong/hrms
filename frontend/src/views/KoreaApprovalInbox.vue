@@ -1,26 +1,26 @@
 <template>
 	<BaseLayout :pageTitle="__('결재 인박스')">
 		<template #body>
-			<div class="flex flex-col h-full bg-white">
+			<div class="flex flex-col h-full bg-[var(--k-card)]">
 				<!-- 히어로 — 결재함(cream) 색블록 -->
 				<div class="p-4 pb-0">
 					<section class="k-block k-block--cream">
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="k-eyebrow">APPROVALS</p>
-								<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("결재 인박스") }}</h1>
-								<p class="mt-1 text-sm font-medium text-black/60">{{ __("승인·반려가 필요한 요청을 한곳에서 처리합니다") }}</p>
+								<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("결재 인박스") }}</h1>
+								<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __("승인·반려가 필요한 요청을 한곳에서 처리합니다") }}</p>
 							</div>
 							<div class="rounded-xl bg-white/70 px-4 py-3 text-center">
-								<p class="k-numeric text-2xl font-bold text-black">{{ items.length }}</p>
-								<p class="mt-0.5 text-xs font-medium text-black/60">{{ __("대기") }}</p>
+								<p class="k-numeric text-2xl font-bold text-[var(--k-ink)]">{{ items.length }}</p>
+								<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("대기") }}</p>
 							</div>
 						</div>
 					</section>
 				</div>
 
 				<!-- 필터 탭 -->
-				<div class="flex overflow-x-auto gap-2 px-4 py-3 bg-white sticky top-0 z-10">
+				<div class="flex overflow-x-auto gap-2 px-4 py-3 bg-[var(--k-card)] sticky top-0 z-10">
 					<button
 						v-for="tab in filterTabs"
 						:key="tab.key"
@@ -29,7 +29,7 @@
 							'flex-shrink-0 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors',
 							activeFilter === tab.key
 								? 'k-segment-active'
-								: 'bg-white text-black border border-[var(--k-hairline)] hover:bg-[var(--k-surface-soft)]',
+								: 'bg-[var(--k-card)] text-[var(--k-ink)] border border-[var(--k-hairline)] hover:bg-[var(--k-surface-soft)]',
 						]"
 					>
 						{{ tab.label }}
@@ -37,7 +37,7 @@
 							v-if="filterCount(tab.key) > 0"
 							:class="[
 								'ml-1 text-xs rounded-full px-1.5 k-numeric',
-								activeFilter === tab.key ? 'bg-white text-black' : 'bg-black/10 text-black',
+								activeFilter === tab.key ? 'bg-[var(--k-card)] text-[var(--k-ink)]' : 'bg-[var(--k-hairline)] text-[var(--k-ink)]',
 							]"
 						>
 							{{ filterCount(tab.key) }}
@@ -48,7 +48,7 @@
 				<!-- 로딩 상태 -->
 				<div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
 					<div class="w-8 h-8 border-2 border-[var(--k-hairline)] border-t-black rounded-full animate-spin"></div>
-					<p class="text-sm text-black/50">{{ __("불러오는 중…") }}</p>
+					<p class="text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</p>
 				</div>
 
 				<!-- 에러 상태 -->
@@ -66,11 +66,11 @@
 				<!-- 빈 상태 — 결재는 지정 결재자에게만 배정되므로 0건이 정상일 수 있음 -->
 				<div v-else-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-20 gap-3 px-4">
 					<FeatherIcon name="check-circle" class="h-12 w-12 text-green-700" />
-					<p class="text-base font-bold text-black">{{ __("내게 배정된 결재가 없습니다") }}</p>
-					<p class="text-sm text-black/50">{{ __("결재는 지정된 결재자에게만 표시됩니다") }}</p>
+					<p class="text-base font-bold text-[var(--k-ink)]">{{ __("내게 배정된 결재가 없습니다") }}</p>
+					<p class="text-sm text-[var(--k-ink-faint)]">{{ __("결재는 지정된 결재자에게만 표시됩니다") }}</p>
 					<p
 						v-if="isAdmin && othersPendingCount > 0"
-						class="rounded-full bg-black/5 px-4 py-1.5 text-xs font-semibold text-black/70"
+						class="rounded-full bg-[var(--k-surface-soft)] px-4 py-1.5 text-xs font-semibold text-[var(--k-ink-muted)]"
 					>
 						{{ __("다른 결재자에게 배정된 대기 {0}건", [othersPendingCount]) }}
 					</p>
@@ -88,15 +88,15 @@
 							<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--k-surface-soft)] flex items-center justify-center">
 								<FeatherIcon
 									:name="doctypeStyle(item.doctype).icon"
-									class="h-5 w-5 text-black"
+									class="h-5 w-5 text-[var(--k-ink)]"
 								/>
 							</div>
 							<div class="flex-1 min-w-0">
-								<p class="text-sm font-semibold text-black truncate">{{ item.title }}</p>
-								<p class="text-xs text-black/50 mt-0.5">
+								<p class="text-sm font-semibold text-[var(--k-ink)] truncate">{{ item.title }}</p>
+								<p class="text-xs text-[var(--k-ink-faint)] mt-0.5">
 									{{ item.applicant_name }} · {{ formatDate(item.requested_at) }}
 								</p>
-								<p class="k-numeric text-xs text-black/60 mt-1 line-clamp-2">{{ detailSummary(item) }}</p>
+								<p class="k-numeric text-xs text-[var(--k-ink-muted)] mt-1 line-clamp-2">{{ detailSummary(item) }}</p>
 							</div>
 						</div>
 
@@ -106,7 +106,7 @@
 								:href="item.url_app"
 								target="_blank"
 								rel="noopener"
-								class="flex-1 py-2.5 text-center text-sm text-black/60 hover:bg-[var(--k-surface-soft)] transition-colors"
+								class="flex-1 py-2.5 text-center text-sm text-[var(--k-ink-muted)] hover:bg-[var(--k-surface-soft)] transition-colors"
 							>
 								{{ __("상세 보기") }}
 							</a>
@@ -141,14 +141,14 @@
 				class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
 				@click.self="cancelComment"
 			>
-				<div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto p-6 flex flex-col gap-4">
-					<h3 class="text-base font-bold text-black">
+				<div class="bg-[var(--k-card)] rounded-t-2xl sm:rounded-2xl w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto p-6 flex flex-col gap-4">
+					<h3 class="text-base font-bold text-[var(--k-ink)]">
 						{{ pendingAction === 'reject' ? __('반려 사유') : __('코멘트 (선택)') }}
 					</h3>
 					<textarea
 						v-model="commentText"
 						:placeholder="pendingAction === 'reject' ? __('반려 사유를 입력하세요.') : __('코멘트를 입력하세요. (선택)')"
-						class="w-full border border-[var(--k-hairline)] rounded-lg p-3 text-sm text-black resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
+						class="w-full border border-[var(--k-hairline)] rounded-lg p-3 text-sm text-[var(--k-ink)] resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
 						rows="4"
 					></textarea>
 					<div class="flex gap-2">

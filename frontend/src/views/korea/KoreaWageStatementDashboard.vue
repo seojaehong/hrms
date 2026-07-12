@@ -8,7 +8,7 @@
 						<label class="k-label">{{ __('연도') }}</label>
 						<select
 							v-model="selectedYear"
-							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						>
 							<option v-for="y in yearOptions" :key="y" :value="y">{{ y }}년</option>
 						</select>
@@ -17,7 +17,7 @@
 						<label class="k-label">{{ __('월') }}</label>
 						<select
 							v-model="selectedMonth"
-							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						>
 							<option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
 						</select>
@@ -34,7 +34,7 @@
 				<div class="k-card p-4 flex flex-col gap-4">
 					<div>
 						<div class="k-eyebrow">WAGE STATEMENT</div>
-						<div class="mt-0.5 text-base font-bold tracking-tight text-black">
+						<div class="mt-0.5 text-base font-bold tracking-tight text-[var(--k-ink)]">
 							{{ selectedYear }}년 {{ selectedMonth }}월 임금명세서
 						</div>
 					</div>
@@ -49,18 +49,18 @@
 						<!-- 히어로: 실수령액이 주인공 -->
 						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">NET PAY · {{ selectedYear }}.{{ String(selectedMonth).padStart(2, "0") }}</div>
-							<div class="mt-1 text-sm font-medium text-black/60">실수령액</div>
+							<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">실수령액</div>
 							<div class="k-display k-settled">
 								{{ formatKRW(statement.net_pay) }}
 							</div>
 							<!-- 요약 3스탯: 지급 → 공제 → 실수령 흐름 -->
 							<div class="mt-4 grid grid-cols-3 gap-2">
 								<div class="rounded-lg bg-white/55 px-3 py-2">
-									<p class="text-[11px] text-black/55">지급 합계</p>
+									<p class="text-[11px] text-[var(--k-ink-muted)]">지급 합계</p>
 									<p class="text-sm font-bold k-amount">{{ formatKRW(statementGrossTotal) }}</p>
 								</div>
 								<div class="rounded-lg bg-white/55 px-3 py-2">
-									<p class="text-[11px] text-black/55">공제 합계</p>
+									<p class="text-[11px] text-[var(--k-ink-muted)]">공제 합계</p>
 									<p class="text-sm font-bold k-amount">−{{ formatKRW(statement.total_deduction) }}</p>
 								</div>
 								<div class="rounded-lg bg-black px-3 py-2">
@@ -73,10 +73,10 @@
 						<!-- 최근 6개월 실수령 추이 — 인라인 SVG 스파크라인 (history 리소스 재사용) -->
 						<div v-if="netPayTrend" class="k-card p-4" data-testid="net-pay-sparkline">
 							<div class="k-eyebrow mb-2">TREND</div>
-							<div class="text-sm font-bold text-black">최근 6개월 실수령 추이</div>
+							<div class="text-sm font-bold text-[var(--k-ink)]">최근 6개월 실수령 추이</div>
 							<svg
 								:viewBox="`0 0 ${sparkW + 10} ${sparkH + 10}`"
-								class="mt-2 h-14 w-full text-black"
+								class="mt-2 h-14 w-full text-[var(--k-ink)]"
 								role="img"
 								aria-label="최근 6개월 실수령 추이"
 							>
@@ -100,7 +100,7 @@
 									/>
 								</g>
 							</svg>
-							<div class="mt-1 flex justify-between text-[11px] text-black/40 k-numeric">
+							<div class="mt-1 flex justify-between text-[11px] text-[var(--k-ink-faint)] k-numeric">
 								<span>{{ trendRows[0].pay_year_month }}</span>
 								<span>{{ trendRows[trendRows.length - 1].pay_year_month }} · {{ formatTick(trendRows[trendRows.length - 1].net_pay) }}원</span>
 							</div>
@@ -109,7 +109,7 @@
 						<!-- 지급 내역 -->
 						<div class="k-card p-4">
 							<div class="k-eyebrow mb-2">EARNINGS</div>
-							<div class="text-sm font-bold text-black mb-2">지급 내역</div>
+							<div class="text-sm font-bold text-[var(--k-ink)] mb-2">지급 내역</div>
 							<div class="flex flex-col">
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<span class="text-sm text-[var(--k-ink-muted)]">기본급</span>
@@ -128,7 +128,7 @@
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.non_taxable_total) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
-									<span class="text-sm font-bold text-black">지급 합계</span>
+									<span class="text-sm font-bold text-[var(--k-ink)]">지급 합계</span>
 									<span class="text-sm font-bold k-amount">{{ formatKRW(statementGrossTotal) }}</span>
 								</div>
 							</div>
@@ -137,7 +137,7 @@
 						<!-- 공제 내역 -->
 						<div class="k-card p-4">
 							<div class="k-eyebrow mb-2">DEDUCTIONS</div>
-							<div class="text-sm font-bold text-black mb-2">공제 내역</div>
+							<div class="text-sm font-bold text-[var(--k-ink)] mb-2">공제 내역</div>
 							<div class="flex flex-col">
 								<div class="flex justify-between items-center py-2 border-t border-[var(--k-hairline-soft)]">
 									<button class="text-sm text-[var(--k-ink-muted)] flex items-center gap-1" @click="showInsuranceDetail = !showInsuranceDetail">
@@ -172,7 +172,7 @@
 									<span class="text-sm font-semibold k-amount">{{ formatKRW(statement.local_income_tax) }}</span>
 								</div>
 								<div class="flex justify-between items-center py-2.5 mt-1 rounded-lg bg-[var(--k-surface-soft)] px-3">
-									<span class="text-sm font-bold text-black">공제 합계</span>
+									<span class="text-sm font-bold text-[var(--k-ink)]">공제 합계</span>
 									<span class="text-sm font-bold k-amount">−{{ formatKRW(statement.total_deduction) }}</span>
 								</div>
 							</div>
@@ -203,7 +203,7 @@
 
 				<!-- 지난 12개월 목록 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('최근 12개월') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('최근 12개월') }}</div>
 					<div v-if="wageStatementHistory.loading" class="text-sm text-[var(--k-ink-faint)] py-4 text-center">
 						{{ __('불러오는 중...') }}
 					</div>

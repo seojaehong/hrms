@@ -12,7 +12,7 @@
 						v-model="rawQuery"
 						type="search"
 						:placeholder="__('검색어 입력 (2자 이상)')"
-						class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--k-hairline)] bg-white text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-gray-800 transition"
+						class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--k-hairline)] bg-[var(--k-card)] text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-gray-800 transition"
 						autocomplete="off"
 						@keydown.esc="clearQuery"
 					/>
@@ -35,7 +35,7 @@
 							'px-3 py-1 rounded-md text-xs font-medium border transition',
 							selectedPills.has(pill.key)
 								? 'k-segment-active border-transparent'
-								: 'bg-white text-[var(--k-ink-muted)] border-[var(--k-hairline)] hover:border-[var(--k-ink-faint)]',
+								: 'bg-[var(--k-card)] text-[var(--k-ink-muted)] border-[var(--k-hairline)] hover:border-[var(--k-ink-faint)]',
 						]"
 						@click="onTogglePill(pill.key)"
 					>
@@ -67,7 +67,7 @@
 									v-for="item in group.items"
 									:key="item.name"
 									v-bind="linkProps(item)"
-									class="flex flex-col bg-white rounded-lg border border-[var(--k-hairline)] px-3.5 py-3 hover:border-[var(--k-ink-faint)] transition cursor-pointer"
+									class="flex flex-col bg-[var(--k-card)] rounded-lg border border-[var(--k-hairline)] px-3.5 py-3 hover:border-[var(--k-ink-faint)] transition cursor-pointer"
 									@click="onResultClick(item)"
 								>
 									<span class="text-sm font-medium text-[var(--k-ink)] leading-5">

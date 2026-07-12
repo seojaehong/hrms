@@ -4,12 +4,12 @@
 			<div class="flex flex-col h-screen w-screen">
 				<div class="w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<header
-						class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
+						class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
 					>
 						<div class="flex flex-row items-center">
 							<Button
 								variant="ghost"
-								class="!pl-0 hover:bg-white"
+								class="!pl-0 hover:bg-[var(--k-card)]"
 								@click="router.back()"
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
@@ -52,7 +52,7 @@
 						</div>
 
 						<div
-							class="flex flex-col bg-white rounded"
+							class="flex flex-col bg-[var(--k-card)] rounded"
 							v-if="notifications.data?.length"
 						>
 							<router-link

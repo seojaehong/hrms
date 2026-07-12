@@ -1,15 +1,15 @@
 <template>
 	<BaseLayout :pageTitle="__('근무시간 제출')">
 		<template #body>
-			<div class="flex flex-col gap-4 overflow-y-auto bg-white p-4 pb-40">
+			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-card)] p-4 pb-40">
 
 				<!-- 히어로 — 근태(mint) 색블록 + 월 선택 -->
 				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">TIME INPUT</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-black">{{ __("근무시간 제출") }}</h1>
-							<p class="mt-1 text-sm font-medium text-black/60">
+							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("근무시간 제출") }}</h1>
+							<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">
 								{{ __("초과·야간·휴일·파트 시간을 직접 입력해 채팅 전달 누락을 막습니다.") }}
 							</p>
 						</div>
@@ -18,18 +18,18 @@
 						</span>
 					</div>
 					<div class="mt-4">
-						<label class="text-xs font-medium text-black/50">{{ __("대상 월") }}</label>
+						<label class="text-xs font-medium text-[var(--k-ink-faint)]">{{ __("대상 월") }}</label>
 						<input
 							v-model="period"
 							type="month"
-							class="k-numeric mt-1 w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-black/20"
+							class="k-numeric mt-1 w-full rounded-lg border border-[var(--k-hairline)] bg-white/70 px-3 py-2 text-sm font-semibold text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20"
 							@change="loadGrid"
 						/>
 					</div>
 					<div class="mt-3 grid grid-cols-4 gap-2">
 						<div v-for="field in HOUR_FIELDS" :key="field" class="rounded-xl bg-white/60 p-2 text-center">
-							<p class="k-numeric text-lg font-bold text-black">{{ totals[field] }}</p>
-							<p class="text-xs font-medium text-black/60">{{ FIELD_LABELS[field] }}(h)</p>
+							<p class="k-numeric text-lg font-bold text-[var(--k-ink)]">{{ totals[field] }}</p>
+							<p class="text-xs font-medium text-[var(--k-ink-muted)]">{{ FIELD_LABELS[field] }}(h)</p>
 						</div>
 					</div>
 				</section>
@@ -37,7 +37,7 @@
 				<!-- 제출 완료 배지 -->
 				<div v-if="allSubmitted" class="k-card flex items-center gap-2 p-4">
 					<span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">{{ __("읽기 전용") }}</span>
-					<p class="text-sm font-semibold text-black">
+					<p class="text-sm font-semibold text-[var(--k-ink)]">
 						{{ __("제출 완료") }} · {{ submittedAtLabel }}
 					</p>
 				</div>
@@ -51,21 +51,21 @@
 				</div>
 
 				<!-- 직원 그리드 — 모바일: 직원별 카드 스택 -->
-				<div v-if="loading" class="k-card p-4 text-sm text-black/40">{{ __("불러오는 중…") }}</div>
+				<div v-if="loading" class="k-card p-4 text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</div>
 				<section v-else class="flex flex-col gap-3">
 					<div v-for="row in rows" :key="row.employee" class="k-card p-4">
 						<div class="flex items-center justify-between">
-							<p class="text-sm font-bold text-black">{{ row.employee_name || row.employee }}</p>
+							<p class="text-sm font-bold text-[var(--k-ink)]">{{ row.employee_name || row.employee }}</p>
 							<span
 								class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-								:class="row.status === 'submitted' ? 'bg-green-100 text-green-800' : 'bg-black/10 text-black'"
+								:class="row.status === 'submitted' ? 'bg-green-100 text-green-800' : 'bg-[var(--k-hairline)] text-[var(--k-ink)]'"
 							>
 								{{ row.status === "submitted" ? __("제출됨") : __("작성 중") }}
 							</span>
 						</div>
 						<div class="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
 							<div v-for="field in HOUR_FIELDS" :key="field">
-								<label class="text-xs text-black/50">{{ FIELD_LABELS[field] }}({{ __("시간") }})</label>
+								<label class="text-xs text-[var(--k-ink-faint)]">{{ FIELD_LABELS[field] }}({{ __("시간") }})</label>
 								<input
 									v-model="row[field]"
 									type="number"
@@ -74,8 +74,8 @@
 									step="0.5"
 									inputmode="decimal"
 									:disabled="isRowReadonly(row)"
-									class="k-numeric mt-1 w-full rounded-lg border px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-black/40"
-									:class="fieldInvalid(row, field) ? 'border-red-400 bg-red-50' : 'border-[var(--k-hairline)] bg-white'"
+									class="k-numeric mt-1 w-full rounded-lg border px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-[var(--k-ink-faint)]"
+									:class="fieldInvalid(row, field) ? 'border-red-400 bg-red-50' : 'border-[var(--k-hairline)] bg-[var(--k-card)]'"
 								/>
 							</div>
 						</div>
@@ -85,10 +85,10 @@
 							type="text"
 							:placeholder="__('메모 (예: 5월 누락분 소급)')"
 							:disabled="isRowReadonly(row)"
-							class="mt-2 w-full rounded-lg border border-[var(--k-hairline)] bg-white px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-black/40"
+							class="mt-2 w-full rounded-lg border border-[var(--k-hairline)] bg-[var(--k-card)] px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20 disabled:bg-[var(--k-surface-soft)] disabled:text-[var(--k-ink-faint)]"
 						/>
 					</div>
-					<div v-if="!rows.length" class="k-card p-4 text-sm text-black/40">
+					<div v-if="!rows.length" class="k-card p-4 text-sm text-[var(--k-ink-faint)]">
 						{{ __("재직 중인 직원이 없습니다.") }}
 					</div>
 				</section>
@@ -119,9 +119,9 @@
 					class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4"
 					@click.self="showSubmitDialog = false"
 				>
-					<div class="w-full max-w-sm rounded-2xl bg-white p-6">
-						<h3 class="text-base font-bold text-black">{{ __("근무시간 제출 확인") }}</h3>
-						<p class="mt-2 text-sm text-black/60">
+					<div class="w-full max-w-sm rounded-2xl bg-[var(--k-card)] p-6">
+						<h3 class="text-base font-bold text-[var(--k-ink)]">{{ __("근무시간 제출 확인") }}</h3>
+						<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 							{{ periodLabel }} {{ __("근무시간을 제출합니다.") }}
 						</p>
 						<div class="mt-4 rounded-xl bg-red-100 p-3 text-xs font-semibold text-red-700">

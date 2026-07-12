@@ -10,6 +10,7 @@ frontend/src/views/**/*.vue 를 스캔해 규칙 위반을 리포트한다.
   R4  하드코딩 색 금지 (text-gray-*/bg-gray-*/임의 #hex — var(--k-*) 토큰 제외)
   R5  파스텔 차터 — 데이터 화면 k-block--* 금지 (cream은 결과 히어로 관례로 예외)
   R6  ledger-navy 유용 금지 — 버튼 배경에 --k-ledger-navy 직접 사용 금지
+  R7  다크모드 전제 — text-black·bg-white 원시 유틸 금지(토큰 유틸로), 알파 오버레이는 예외
 
 사용:
   python3 scripts/design_audit.py            # 리포트 출력, error>0이면 exit 1
@@ -39,6 +40,7 @@ _AMOUNT_OK_CLASSES = ("k-amount", "k-display", "k-settled", "linear")
 _HEX_IN_CLASS = re.compile(r"class=\"[^\"]*\[#(?:[0-9a-fA-F]{3,8})\]")
 _GRAY_UTIL = re.compile(r"\b(?:text|bg|border)-gray-\d+")
 _PASTEL = re.compile(r"k-block--(\w+)")
+_RAW_BW = re.compile(r"\b(?:text-black|bg-white|border-black)(?![/\w-])")
 _NAVY_BTN = re.compile(r"<button\b[^>]*(?:bg-\[var\(--k-ledger-navy\)\]|background:\s*var\(--k-ledger-navy\))")
 
 
@@ -88,6 +90,14 @@ def audit_source(source: str, filename: str, *, narrative: bool = False) -> list
             violations.append({
                 "rule": "R4", "level": "error", "line": idx,
                 "detail": "하드코딩 색 — 토큰(var(--k-*))으로 교체",
+            })
+
+        # R7 — 다크모드 전제: 원시 흑백 유틸 금지 (알파 변형 text-black/60 등은 별도 단계)
+        # KoreaLanding은 .linear 다크 전용 표면 — 제외
+        if filename != "KoreaLanding.vue" and _RAW_BW.search(line):
+            violations.append({
+                "rule": "R7", "level": "error", "line": idx,
+                "detail": "원시 text-black/bg-white — 토큰 유틸(text-[var(--k-ink)]/bg-[var(--k-card)])로 교체",
             })
 
         # R5 — 파스텔 차터 (데이터 화면, cream 예외)

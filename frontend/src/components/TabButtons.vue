@@ -6,7 +6,7 @@
 			class="px-8 py-2.5 transition-all rounded-[7px] flex-auto font-medium text-base"
 			:class="
 				modelValue === (button.key ?? button.label ?? button)
-					? 'bg-white drop-shadow text-gray-900'
+					? 'bg-[var(--k-card)] drop-shadow text-gray-900'
 					: 'text-gray-600'
 			"
 			@click="$emit('update:modelValue', button.key ?? button.label ?? button)"

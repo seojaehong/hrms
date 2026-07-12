@@ -2,7 +2,7 @@
 	<div class="flex flex-col w-full gap-5" v-if="summary.data">
 		<div class="text-lg text-gray-800 font-bold">{{ __("Expense Claim Summary") }}</div>
 		<div
-			class="flex flex-col gap-4 bg-white py-3 px-3.5 rounded-lg border-none"
+			class="flex flex-col gap-4 bg-[var(--k-card)] py-3 px-3.5 rounded-lg border-none"
 		>
 			<div class="flex flex-col gap-1.5">
 				<span class="text-gray-600 text-base font-medium leading-5">

@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">EMPLOYMENT CONTRACT</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('근로계약서 작성 (§17)') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('근로계약서 작성 (§17)') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						근로기준법 제17조 필수기재사항을 빠짐없이 입력하고, 누락 항목을 확인한 뒤 서면 교부용 초안을 생성합니다.
 					</p>
 				</div>
 
 				<!-- 회사 정보 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('사업주(회사) 정보') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('사업주(회사) 정보') }}</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('사업체명') }}</label>
@@ -42,7 +42,7 @@
 
 				<!-- 근로자 정보 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('근로자 정보') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('근로자 정보') }}</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('근로자 이름') }}</label>
@@ -65,7 +65,7 @@
 
 				<!-- 근무 조건 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('근무 조건') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('근무 조건') }}</div>
 					<div class="flex flex-col gap-1">
 						<label class="k-label">{{ __('근무장소') }}</label>
 						<input type="text" v-model="form.workplace" class="k-input" />
@@ -116,18 +116,18 @@
 
 				<!-- 임금 구성항목 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('임금 구성항목') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('임금 구성항목') }}</div>
 					<div v-for="(item, idx) in form.wage_components" :key="idx" class="flex gap-2 items-center">
 						<input type="text" v-model="item.component" :placeholder="__('예: 기본급')" class="k-input flex-1" />
 						<input type="number" v-model.number="item.amount" :placeholder="__('금액')" class="k-input k-numeric w-32" />
-						<button @click="removeWageComponent(idx)" class="text-black/40 hover:text-black text-sm px-2">✕</button>
+						<button @click="removeWageComponent(idx)" class="text-[var(--k-ink-faint)] hover:text-[var(--k-ink)] text-sm px-2">✕</button>
 					</div>
 					<button
 						@click="addWageComponent"
-						class="w-full py-2 border border-dashed border-[var(--k-hairline)] text-black/60 text-sm rounded-lg hover:border-black/40 transition-colors"
+						class="w-full py-2 border border-dashed border-[var(--k-hairline)] text-[var(--k-ink-muted)] text-sm rounded-lg hover:border-black/40 transition-colors"
 					>{{ __('+ 항목 추가') }}</button>
 					<div class="flex justify-between text-sm pt-2 border-t border-[var(--k-hairline)]">
-						<span class="text-black/60">{{ __('임금 합계') }}</span>
+						<span class="text-[var(--k-ink-muted)]">{{ __('임금 합계') }}</span>
 						<span class="k-numeric font-semibold k-amount">{{ formatKRW(wageTotal) }}</span>
 					</div>
 					<div class="grid grid-cols-2 gap-2">
@@ -177,13 +177,13 @@
 
 					<div class="k-block k-block--cream -mx-1">
 						<div class="k-eyebrow">WAGE TOTAL</div>
-						<div class="mt-1 text-sm font-medium text-black/60">{{ __('계약서 임금 합계') }}</div>
+						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('계약서 임금 합계') }}</div>
 						<div class="k-display">{{ formatKRW(contract.wage_total) }}</div>
 					</div>
 
 					<!-- 마크다운 미리보기 -->
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-black">{{ __('계약서 초안 미리보기') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('계약서 초안 미리보기') }}</div>
 						<button
 							@click="generateMarkdown"
 							:disabled="renderContractMarkdown.loading"
@@ -193,7 +193,7 @@
 							<span v-else>{{ __('마크다운 생성') }}</span>
 						</button>
 						<template v-if="markdown">
-							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
+							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
 							<button
 								@click="copyMarkdown"
 								class="k-btn-secondary w-full"
@@ -203,8 +203,8 @@
 				</template>
 
 				<!-- 면책 고지 -->
-				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
-					<span class="font-semibold text-black">참고용 초안입니다.</span>
+				<div class="k-card p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed">
+					<span class="font-semibold text-[var(--k-ink)]">참고용 초안입니다.</span>
 					실제 서면 교부 전 반드시 시행령 세부 항목과 사업장별 사정을 검토하시기 바랍니다.
 				</div>
 			</div>

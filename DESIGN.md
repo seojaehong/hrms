@@ -441,3 +441,18 @@ radius가 곧 모드 선언이다: 24px/pill이 보이면 내러티브, 8px이 �
 - mono로 한글 렌더 금지. weight 300 금지. 본문 LH 1.5 미만 금지.
 - 테넌트 오버라이드가 잉크·캔버스·헤어라인·결산선에 닿게 하지 말 것.
 - 두 번째 액센트 색 도입 금지 — 인터랙티브 신호는 --t-accent 하나다.
+
+## 다크모드 (Phase 3 확정 — 2026-07-12)
+
+Linear 래더 구조 × claude 웜 다크 온도. 활성화: 저장 선호(`localStorage.k-theme`) > 시스템 `prefers-color-scheme`. 수동 토글은 설정 화면.
+
+| 토큰 | 라이트 | 다크 |
+|---|---|---|
+| canvas / card / surface-3 | #f6f5f4 / #ffffff / #fbfaf9 | **#181715 / #1f1e1b / #252320** |
+| ink / muted / faint | #171513 / #615d59 / #a39e98 | **#ece9e4 / #a39e98 / #6f6a64** |
+| hairline / soft | #e8e5e1 / #f0eeeb | **#33302c / #292824** |
+| **ledger-navy (돈의 색)** | #0d253d | **#9db8d6 — 밝은 네이비 틴트** (사용자 확정: 다크에서도 돈의 색은 네이비 정체성 유지, 결산선 동일) |
+| success / danger / warn | #1ea64a / #dc2626 / #f0b429 | #34c164 / #ef6a6a / #f2c14e |
+| 파스텔 블록 | 라이트 파스텔 5종 | 딥 틴트(#333d22 / #352b4d / #3a3427 / #263b2b / #3f2c2c) |
+
+**전제 규율 (R7)**: 원시 `text-black`/`bg-white`/`border-black` 유틸 금지 — 토큰 유틸(`text-[var(--k-ink)]` 등)만. 알파 오버레이(`bg-white/55`)는 cream 히어로 관례로 1차 예외. KoreaLanding(.linear 다크 전용 표면)은 제외.

@@ -33,6 +33,15 @@ import "./theme/variables.css"
 
 import "./main.css"
 
+// 다크모드 초기화 — 저장된 선호 > 시스템 prefers-color-scheme (DESIGN.md Phase 3)
+const storedTheme = localStorage.getItem("k-theme")
+if (
+	storedTheme === "dark" ||
+	(!storedTheme && window.matchMedia?.("(prefers-color-scheme: dark)").matches)
+) {
+	document.documentElement.dataset.theme = "dark"
+}
+
 const app = createApp(App)
 const socket = initSocket()
 

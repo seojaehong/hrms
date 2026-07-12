@@ -4,12 +4,12 @@
 			<div class="flex flex-col h-screen w-screen">
 				<div class="w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<header
-						class="flex flex-row bg-white shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
+						class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center justify-between border-b sticky top-0 z-10"
 					>
 						<div class="flex flex-row items-center">
 							<Button
 								variant="ghost"
-								class="!pl-0 hover:bg-white"
+								class="!pl-0 hover:bg-[var(--k-card)]"
 								@click="router.back()"
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
@@ -44,7 +44,7 @@
 
 						<!-- Profile Links -->
 						<div class="flex flex-col gap-5 my-4 w-full">
-							<div class="flex flex-col bg-white rounded">
+							<div class="flex flex-col bg-[var(--k-card)] rounded">
 								<div
 									class="flex flex-row cursor-pointer flex-start p-4 items-center justify-between border-b"
 									v-for="link in profileLinks"
@@ -73,7 +73,7 @@
 							class="flex flex-col gap-5 my-4 w-full"
 							v-if="allowPushNotifications"
 						>
-							<div class="flex flex-col bg-white rounded">
+							<div class="flex flex-col bg-[var(--k-card)] rounded">
 								<router-link
 									:to="{ name: 'Settings' }"
 									class="flex flex-row cursor-pointer flex-start p-4 items-center justify-between border-b"

@@ -2,7 +2,7 @@
 	<BaseLayout pageTitle="Korea Payroll Closing">
 		<template #body>
 			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
-				<section v-if="selectedSession" class="rounded-2xl border border-[var(--k-hairline)] bg-white p-4 shadow-sm">
+				<section v-if="selectedSession" class="rounded-2xl border border-[var(--k-hairline)] bg-[var(--k-card)] p-4 shadow-sm">
 					<router-link to="/dashboard/korea-payroll-closing" class="text-sm font-semibold text-[var(--k-ink-muted)]">← 마감 목록으로</router-link>
 					<div class="mt-4 flex items-start justify-between gap-3">
 						<div>
@@ -48,19 +48,19 @@
 								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">증빙 패킷</p>
 								<p class="mt-1 text-sm font-bold text-[var(--k-ink)]">{{ selectedSession.evidence_packet.contract_type }}</p>
 							</div>
-							<span class="rounded-full bg-white px-2 py-1 text-xs font-semibold text-[var(--k-ink)]">미리보기 전용</span>
+							<span class="rounded-full bg-[var(--k-card)] px-2 py-1 text-xs font-semibold text-[var(--k-ink)]">미리보기 전용</span>
 						</div>
 						<div class="mt-3 grid grid-cols-1 gap-2">
 							<div
 								v-for="item in selectedSession.evidence_packet.evidence_items"
 								:key="`${selectedSession.name}-${item.key}`"
-								class="rounded-lg bg-white p-2 text-sm"
+								class="rounded-lg bg-[var(--k-card)] p-2 text-sm"
 							>
 								<p class="font-semibold text-[var(--k-ink)]">{{ item.label }}</p>
 								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ formatEvidenceSummary(item.summary) }}</p>
 							</div>
 						</div>
-						<div class="mt-3 rounded-lg bg-white p-2 text-xs text-[var(--k-ink-muted)]">
+						<div class="mt-3 rounded-lg bg-[var(--k-card)] p-2 text-xs text-[var(--k-ink-muted)]">
 							담당자 체크리스트 {{ selectedSession.evidence_packet.review_checklist.length }}건 · 증빙은 조회 전용으로 보존됩니다
 						</div>
 					</div>
@@ -86,15 +86,15 @@
 				<section class="k-block k-block--cream">
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-black/55">{{ dataSourceLabel }}</p>
+							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-muted)]">{{ dataSourceLabel }}</p>
 							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
-							<p class="mt-2 text-sm text-black/55">
+							<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 								{{ activeCompany }} · {{ summaryCards.total_employees ?? '실시간' }}명 · {{ activeWorklist.updated_at || '실시간 조회' }}
 							</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-black/55">
+					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-[var(--k-ink-muted)]">
 						실데이터를 불러오는 중…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
@@ -104,10 +104,10 @@
 					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
 						마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}
 					</div>
-					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-black/55">
+					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-[var(--k-ink-muted)]">
 						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
-					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/70 p-3 text-sm text-black">
+					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/70 p-3 text-sm text-[var(--k-ink)]">
 						실데이터 대시보드 연결됨 (읽기 전용)
 						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
@@ -117,7 +117,7 @@
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
 						<div class="rounded-xl bg-white/55 p-3">
 							<p class="text-2xl font-bold">{{ summaryCards.total_count }}</p>
-							<p class="text-xs text-black/55">사업장</p>
+							<p class="text-xs text-[var(--k-ink-muted)]">사업장</p>
 						</div>
 						<div class="rounded-xl bg-red-50 p-3">
 							<p class="text-2xl font-bold text-red-700">{{ summaryCards.blocked_count }}</p>
@@ -142,7 +142,7 @@
 					<div class="k-eyebrow mb-2">HOURLY PROPOSALS</div>
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<h2 class="text-lg font-bold text-black">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
+							<h2 class="text-lg font-bold text-[var(--k-ink)]">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
 							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">근무시간 입력 × 시급 프로파일로 계산한 제안입니다 — 반영은 결재 승인으로만 이뤄집니다.</p>
 						</div>
 						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">계산 전용</span>
@@ -154,7 +154,7 @@
 							class="flex items-center justify-between gap-3 border-t border-[var(--k-hairline-soft)] py-2"
 						>
 							<div>
-								<p class="text-sm font-semibold text-black">{{ p.employee_name || p.employee }}</p>
+								<p class="text-sm font-semibold text-[var(--k-ink)]">{{ p.employee_name || p.employee }}</p>
 								<p class="text-xs text-[var(--k-ink-muted)]">
 									시급 {{ formatWonPlain(p.hourly_rate) }} · 주 {{ p.weekly_hours }}h
 									<span v-if="p.below_minimum_wage" class="ml-1 font-semibold text-red-600">최저임금 미달</span>
@@ -176,7 +176,7 @@
 					<div class="k-eyebrow mb-2">INSURANCE RECONCILIATION</div>
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<h2 class="text-lg font-bold text-black">고지 대사</h2>
+							<h2 class="text-lg font-bold text-[var(--k-ink)]">고지 대사</h2>
 							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ insuranceReconSummary }}</p>
 						</div>
 						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">읽기 전용</span>
@@ -205,7 +205,7 @@
 								:key="`${d.employee}-${d.field}`"
 								class="border-t border-[var(--k-hairline-soft)]"
 							>
-								<td class="py-2 font-semibold text-black">{{ d.employee }}</td>
+								<td class="py-2 font-semibold text-[var(--k-ink)]">{{ d.employee }}</td>
 								<td class="py-2 text-[var(--k-ink)]">{{ d.label || d.field }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.computed) }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.notified) }}</td>
@@ -221,7 +221,7 @@
 					<article
 						v-for="item in activeWorklist.items"
 						:key="item.name"
-						class="rounded-2xl border bg-white p-4 shadow-sm"
+						class="rounded-2xl border bg-[var(--k-card)] p-4 shadow-sm"
 						:class="item.status === 'blocked' ? 'border-red-100' : 'border-green-100'"
 					>
 						<div class="flex items-start justify-between gap-3">

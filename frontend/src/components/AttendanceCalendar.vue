@@ -2,7 +2,7 @@
 	<div class="flex flex-col w-full gap-5" v-if="calendarEvents.data">
 		<div class="text-lg text-gray-800 font-bold">{{ __("Attendance Calendar") }}</div>
 
-		<div class="flex flex-col gap-6 bg-white py-6 px-3.5 rounded-lg border-none">
+		<div class="flex flex-col gap-6 bg-[var(--k-card)] py-6 px-3.5 rounded-lg border-none">
 			<!-- Month Change -->
 			<div class="flex flex-row justify-between items-center px-4">
 				<Button

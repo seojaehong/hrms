@@ -5,8 +5,8 @@
 				<!-- 히어로 — lime 색블록 (급여 계열) -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">PAYROLL EXCEL</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('급여 엑셀 업로드/다운로드') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('급여 엑셀 업로드/다운로드') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						{{ __('급여대장을 시스템에서 내려받고, 수정본을 올려 검증한 뒤 승인 시에만 반영합니다.') }}
 					</p>
 				</div>
@@ -19,7 +19,7 @@
 						<input
 							type="month"
 							v-model="period"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
 						/>
 						<span v-if="!periodValid" class="text-xs text-red-600">{{ __('YYYY-MM 형식의 월을 선택하세요.') }}</span>
 					</div>
@@ -39,7 +39,7 @@
 				<!-- ② 업로드 + 검증 -->
 				<div class="k-card p-4 flex flex-col gap-3">
 					<div class="k-label px-0.5">{{ __('수정본 업로드 · 검증') }}</div>
-					<p class="text-xs text-black/50">
+					<p class="text-xs text-[var(--k-ink-faint)]">
 						{{ __('선택한 대상 월 기준으로 업로드한 급여대장을 파싱·무결성 검증하고, 현재 데이터와의 차이만 미리보기로 보여줍니다. (이 단계에서는 저장하지 않습니다)') }}
 					</p>
 
@@ -61,7 +61,7 @@
 						</template>
 					</FileUploader>
 
-					<div v-if="uploadedFileName" class="text-xs text-black/50">
+					<div v-if="uploadedFileName" class="text-xs text-[var(--k-ink-faint)]">
 						{{ __('업로드 파일') }}: {{ uploadedFileName }}
 					</div>
 
@@ -81,8 +81,8 @@
 						<div v-else class="flex flex-col gap-3">
 							<div class="grid grid-cols-4 gap-2">
 								<div v-for="stat in diffStats" :key="stat.label" class="k-card p-2 flex flex-col items-center gap-0.5">
-									<span class="text-lg font-bold text-black">{{ stat.value }}</span>
-									<span class="text-[11px] text-black/50">{{ stat.label }}</span>
+									<span class="text-lg font-bold text-[var(--k-ink)]">{{ stat.value }}</span>
+									<span class="text-[11px] text-[var(--k-ink-faint)]">{{ stat.label }}</span>
 								</div>
 							</div>
 
@@ -91,9 +91,9 @@
 								<div
 									v-for="row in validationView.changedRows"
 									:key="row.name"
-									class="flex justify-between items-center py-1.5 border-t border-black/10"
+									class="flex justify-between items-center py-1.5 border-t border-[var(--k-hairline)]"
 								>
-									<span class="text-sm text-black">{{ row.name }}</span>
+									<span class="text-sm text-[var(--k-ink)]">{{ row.name }}</span>
 									<span
 										class="text-xs font-semibold"
 										:class="row.netDelta >= 0 ? 'text-green-700' : 'text-red-600'"
@@ -103,13 +103,13 @@
 								</div>
 							</div>
 
-							<div v-if="validationView.newRows.length" class="text-xs text-black/60">
+							<div v-if="validationView.newRows.length" class="text-xs text-[var(--k-ink-muted)]">
 								{{ __('신규') }}: {{ validationView.newRows.map((r) => r.name).join(', ') }}
 							</div>
-							<div v-if="validationView.missingRows.length" class="text-xs text-black/60">
+							<div v-if="validationView.missingRows.length" class="text-xs text-[var(--k-ink-muted)]">
 								{{ __('누락') }}: {{ validationView.missingRows.map((r) => r.name).join(', ') }}
 							</div>
-							<div v-if="!hasChanges" class="text-xs text-black/50">
+							<div v-if="!hasChanges" class="text-xs text-[var(--k-ink-faint)]">
 								{{ __('현재 데이터와 차이가 없습니다.') }}
 							</div>
 						</div>
@@ -121,7 +121,7 @@
 					<div class="k-label px-0.5">{{ __('반영') }}</div>
 					<label class="flex items-start gap-2 cursor-pointer">
 						<input type="checkbox" v-model="approved" class="mt-0.5" />
-						<span class="text-sm text-black/70">{{ __('검토했으며 반영을 승인합니다.') }}</span>
+						<span class="text-sm text-[var(--k-ink-muted)]">{{ __('검토했으며 반영을 승인합니다.') }}</span>
 					</label>
 					<button
 						@click="showConfirm = true"

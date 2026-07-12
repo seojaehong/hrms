@@ -5,26 +5,26 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">PAYSLIP BREAKDOWN</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-black">{{ __('임금명세서 분해 (§48②)') }}</div>
-					<p class="mt-2 text-sm text-black/60">
+					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('임금명세서 분해 (§48②)') }}</div>
+					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
 						근로기준법 시행령 제27조의2·제48조제2항에 따라 임금 구성항목별 계산방법을 표기한 명세서 초안을 만듭니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-black">{{ __('명세서 입력') }}</div>
+					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('명세서 입력') }}</div>
 
 					<!-- 급여형태 토글 -->
 					<div class="flex rounded-lg border border-[var(--k-hairline)] p-1 text-sm font-semibold">
 						<button
 							class="flex-1 py-2 rounded-md transition-colors"
-							:class="form.wage_type === 'monthly' ? 'k-segment-active' : 'text-black/60'"
+							:class="form.wage_type === 'monthly' ? 'k-segment-active' : 'text-[var(--k-ink-muted)]'"
 							@click="form.wage_type = 'monthly'"
 						>{{ __('월급제') }}</button>
 						<button
 							class="flex-1 py-2 rounded-md transition-colors"
-							:class="form.wage_type === 'hourly' ? 'k-segment-active' : 'text-black/60'"
+							:class="form.wage_type === 'hourly' ? 'k-segment-active' : 'text-[var(--k-ink-muted)]'"
 							@click="form.wage_type = 'hourly'"
 						>{{ __('시급제') }}</button>
 					</div>
@@ -36,7 +36,7 @@
 								type="text"
 								v-model="form.employee"
 								:placeholder="__('예: 김가상')"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 						<div class="flex flex-col gap-1">
@@ -44,7 +44,7 @@
 							<input
 								type="month"
 								v-model="form.period"
-								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 							/>
 						</div>
 					</div>
@@ -54,7 +54,7 @@
 						<input
 							type="date"
 							v-model="form.payment_date"
-							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 						/>
 					</div>
 
@@ -65,7 +65,7 @@
 							type="number"
 							v-model.number="form.base_salary"
 							:placeholder="__('예: 2156880')"
-							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 						/>
 					</div>
 
@@ -78,7 +78,7 @@
 									type="number"
 									v-model.number="form.hourly_rate"
 									:placeholder="__('예: 10320')"
-									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 								/>
 							</div>
 							<div class="flex flex-col gap-1">
@@ -86,7 +86,7 @@
 								<input
 									type="number"
 									v-model.number="form.regular_hours"
-									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 								/>
 							</div>
 						</div>
@@ -97,34 +97,34 @@
 									type="number"
 									v-model.number="form.contracted_weekly_hours"
 									:placeholder="__('예: 40')"
-									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+									class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
 								/>
 							</div>
 							<div class="flex items-center gap-2 pt-5">
 								<input id="perfect-attendance" type="checkbox" v-model="form.perfect_attendance" class="accent-black" />
-								<label for="perfect-attendance" class="text-sm text-black/70">{{ __('개근') }}</label>
+								<label for="perfect-attendance" class="text-sm text-[var(--k-ink-muted)]">{{ __('개근') }}</label>
 							</div>
 						</div>
 					</template>
 
 					<!-- 가산 시간 -->
-					<div class="text-xs font-semibold text-black/50 uppercase tracking-wide mt-1">{{ __('가산 시간 (선택)') }}</div>
+					<div class="text-xs font-semibold text-[var(--k-ink-faint)] uppercase tracking-wide mt-1">{{ __('가산 시간 (선택)') }}</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('연장근로 (h)') }}</label>
-							<input type="number" v-model.number="form.overtime_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
+							<input type="number" v-model.number="form.overtime_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
 						</div>
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('야간근로 (h)') }}</label>
-							<input type="number" v-model.number="form.night_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
+							<input type="number" v-model.number="form.night_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
 						</div>
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('휴일근로 (h)') }}</label>
-							<input type="number" v-model.number="form.holiday_work_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
+							<input type="number" v-model.number="form.holiday_work_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
 						</div>
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('연차수당 (h)') }}</label>
-							<input type="number" v-model.number="form.annual_leave_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
+							<input type="number" v-model.number="form.annual_leave_hours" class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full" />
 						</div>
 					</div>
 
@@ -149,10 +149,10 @@
 					</div>
 
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-black">{{ __('지급내역') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('지급내역') }}</div>
 						<table class="w-full text-sm">
 							<thead>
-								<tr class="text-left text-black/50 text-xs uppercase tracking-wide">
+								<tr class="text-left text-[var(--k-ink-faint)] text-xs uppercase tracking-wide">
 									<th class="pb-2 font-semibold">{{ __('항목') }}</th>
 									<th class="pb-2 font-semibold text-right">{{ __('금액') }}</th>
 									<th class="pb-2 font-semibold">{{ __('계산방법') }}</th>
@@ -160,24 +160,24 @@
 							</thead>
 							<tbody>
 								<tr v-for="(line, idx) in breakdown.earnings" :key="'e' + idx" class="border-t border-[var(--k-hairline)]">
-									<td class="py-2 font-medium text-black">{{ line.label }}</td>
+									<td class="py-2 font-medium text-[var(--k-ink)]">{{ line.label }}</td>
 									<td class="py-2 text-right k-numeric k-amount">{{ formatKRW(line.amount) }}</td>
-									<td class="py-2 text-xs text-black/60">{{ line.basis || __('(계산방법 미기재)') }}</td>
+									<td class="py-2 text-xs text-[var(--k-ink-muted)]">{{ line.basis || __('(계산방법 미기재)') }}</td>
 								</tr>
 							</tbody>
 						</table>
 						<div class="k-block k-block--cream -mx-1 mt-1">
 							<div class="k-eyebrow">GROSS PAY</div>
-							<div class="mt-1 text-sm font-medium text-black/60">{{ __('지급합계') }}</div>
+							<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('지급합계') }}</div>
 							<div class="k-display">{{ formatKRW(breakdown.gross_pay) }}</div>
 						</div>
 					</div>
 
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-black">{{ __('공제내역') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('공제내역') }}</div>
 						<table class="w-full text-sm">
 							<thead>
-								<tr class="text-left text-black/50 text-xs uppercase tracking-wide">
+								<tr class="text-left text-[var(--k-ink-faint)] text-xs uppercase tracking-wide">
 									<th class="pb-2 font-semibold">{{ __('항목') }}</th>
 									<th class="pb-2 font-semibold text-right">{{ __('금액') }}</th>
 									<th class="pb-2 font-semibold">{{ __('산출근거') }}</th>
@@ -185,27 +185,27 @@
 							</thead>
 							<tbody>
 								<tr v-for="(line, idx) in breakdown.deductions" :key="'d' + idx" class="border-t border-[var(--k-hairline)]">
-									<td class="py-2 font-medium text-black">{{ line.label }}</td>
+									<td class="py-2 font-medium text-[var(--k-ink)]">{{ line.label }}</td>
 									<td class="py-2 text-right k-numeric k-amount">{{ formatKRW(line.amount) }}</td>
-									<td class="py-2 text-xs text-black/60">{{ line.basis || __('(산출근거 미기재)') }}</td>
+									<td class="py-2 text-xs text-[var(--k-ink-muted)]">{{ line.basis || __('(산출근거 미기재)') }}</td>
 								</tr>
 							</tbody>
 						</table>
 						<div class="flex justify-between text-sm pt-2 border-t border-[var(--k-hairline)]">
-							<span class="text-black/60">{{ __('공제합계') }}</span>
+							<span class="text-[var(--k-ink-muted)]">{{ __('공제합계') }}</span>
 							<span class="k-numeric font-semibold k-amount">{{ formatKRW(breakdown.total_deductions) }}</span>
 						</div>
 					</div>
 
 					<div class="k-block k-block--cream -mx-1">
 						<div class="k-eyebrow">NET PAY</div>
-						<div class="mt-1 text-sm font-medium text-black/60">{{ __('실지급액') }}</div>
+						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('실지급액') }}</div>
 						<div class="k-display">{{ formatKRW(breakdown.net_pay) }}</div>
 					</div>
 
 					<!-- 마크다운 미리보기 -->
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-black">{{ __('교부용 마크다운 미리보기') }}</div>
+						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('교부용 마크다운 미리보기') }}</div>
 						<button
 							@click="generateMarkdown"
 							:disabled="renderPayslipMarkdown.loading"
@@ -215,7 +215,7 @@
 							<span v-else>{{ __('마크다운 생성') }}</span>
 						</button>
 						<template v-if="markdown">
-							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-black/70 leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
+							<div class="bg-[var(--k-surface-soft)] rounded-lg p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">{{ markdown }}</div>
 							<button
 								@click="copyMarkdown"
 								class="k-btn-secondary w-full"
@@ -225,8 +225,8 @@
 				</template>
 
 				<!-- 면책 고지 -->
-				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
-					<span class="font-semibold text-black">참고용 초안입니다.</span>
+				<div class="k-card p-3 text-xs text-[var(--k-ink-muted)] leading-relaxed">
+					<span class="font-semibold text-[var(--k-ink)]">참고용 초안입니다.</span>
 					실제 교부 전 항목별 금액·계산방법과 공제내역을 반드시 검토하시기 바랍니다.
 				</div>
 			</div>

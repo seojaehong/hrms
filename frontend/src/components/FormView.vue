@@ -1,12 +1,12 @@
 <template>
 	<div class="flex flex-col h-full w-full" v-if="isFormReady">
-		<div class="w-full h-full bg-white sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto flex flex-col">
+		<div class="w-full h-full bg-[var(--k-card)] sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto flex flex-col">
 			<header
-				class="flex flex-row bg-white shadow-sm py-4 px-3 items-center sticky top-0 z-[1000]"
+				class="flex flex-row bg-[var(--k-card)] shadow-sm py-4 px-3 items-center sticky top-0 z-[1000]"
 			>
 				<Button
 					variant="ghost"
-					class="!pl-0 hover:bg-white"
+					class="!pl-0 hover:bg-[var(--k-card)]"
 					@click="router.back()"
 				>
 					<FeatherIcon name="chevron-left" class="h-5 w-5" />
@@ -60,11 +60,11 @@
 			</header>
 
 			<!-- Form -->
-			<div class="bg-white grow overflow-y-auto">
+			<div class="bg-[var(--k-card)] grow overflow-y-auto">
 				<!-- Tabs -->
 				<template v-if="tabbedView">
 					<div
-						class="px-4 sticky top-0 z-[100] bg-white text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700"
+						class="px-4 sticky top-0 z-[100] bg-[var(--k-card)] text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700"
 					>
 						<ul class="flex -mb-px overflow-auto hide-scrollbar">
 							<li class="mr-2 whitespace-nowrap" v-for="tab in tabs">
@@ -176,7 +176,7 @@
 			<!-- custom form button eg: Download button in salary slips -->
 			<div
 				v-if="!showFormButton"
-				class="px-4 pt-4 pb-4 standalone:pb-safe-bottom sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto bg-white sticky bottom-0 w-full drop-shadow-xl z-40 border-t rounded-t-lg"
+				class="px-4 pt-4 pb-4 standalone:pb-safe-bottom sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto bg-[var(--k-card)] sticky bottom-0 w-full drop-shadow-xl z-40 border-t rounded-t-lg"
 			>
 				<slot name="formButton"></slot>
 			</div>
@@ -192,7 +192,7 @@
 			<!-- save/submit/cancel -->
 			<div
 				v-else-if="isFormDirty || (!workflow?.hasWorkflow && formButton)"
-				class="px-4 pt-4 pb-4 standalone:pb-safe-bottom sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto bg-white sticky bottom-0 w-full drop-shadow-xl z-40 border-t rounded-t-lg"
+				class="px-4 pt-4 pb-4 standalone:pb-safe-bottom sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto bg-[var(--k-card)] sticky bottom-0 w-full drop-shadow-xl z-40 border-t rounded-t-lg"
 			>
 				<ErrorMessage
 					class="mb-2"

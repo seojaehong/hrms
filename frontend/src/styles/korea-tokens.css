@@ -150,3 +150,39 @@
     letter-spacing: -0.01em;
     color: var(--k-ledger-navy);
 }
+
+/* ── v2 데이터 화면 표준 버튼 (DESIGN.md §Components button-primary/secondary)
+   pill·검정 버튼은 내러티브 전용 — 데이터 화면 버튼은 이 두 클래스만 쓴다.
+   배경은 --t-accent 슬롯(테넌트 오버라이드 가능) — ledger-navy 변수 직접 참조 금지(돈의 색). */
+.k-btn-primary {
+    background: var(--t-accent, #0d253d);
+    color: #f6f5f4;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    border-radius: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.k-btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.k-btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.k-btn-primary:focus-visible { outline: none; box-shadow: var(--k-focus-ring); }
+.k-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.k-btn-secondary {
+    background: var(--k-card);
+    color: var(--k-ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid var(--k-hairline);
+    border-radius: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+.k-btn-secondary:hover:not(:disabled) { background: var(--k-surface-soft); }
+.k-btn-secondary:active:not(:disabled) { transform: scale(0.97); }
+.k-btn-secondary:focus-visible { outline: none; box-shadow: var(--k-focus-ring); }
+.k-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }

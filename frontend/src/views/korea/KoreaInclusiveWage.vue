@@ -57,7 +57,7 @@
 					<button
 						@click="runDesign"
 						:disabled="inclusiveWageDesign.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageDesign.loading">{{ __('계산 중...') }}</span>
 						<span v-else>{{ __('총액 분해') }}</span>
@@ -184,7 +184,7 @@
 					<button
 						@click="runAudit"
 						:disabled="inclusiveWageAudit.loading"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageAudit.loading">{{ __('감사 중...') }}</span>
 						<span v-else>{{ __('역산 감사') }}</span>
@@ -313,7 +313,7 @@
 					<button
 						@click="runReverse"
 						:disabled="inclusiveWageReverseNet.loading || !reverse.target_net"
-						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						class="k-btn-primary w-full"
 					>
 						<span v-if="inclusiveWageReverseNet.loading">{{ __('역산 중...') }}</span>
 						<span v-else>{{ __('세전 총액 역산') }}</span>

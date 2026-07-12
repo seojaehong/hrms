@@ -4,7 +4,9 @@ http://ionicframework.com/docs/theming/ */
 /** Ionic CSS Variables **/
 
 :root {
-	--ion-background-color: #f4f5f6;
+	/* 캔버스/잉크는 korea-tokens.css 토큰을 따른다 — 다크모드 [data-theme=dark]에서 자동 반전 */
+	--ion-background-color: var(--k-canvas, #f4f5f6);
+	--ion-text-color: var(--k-ink, #171513);
 	--ion-font-family: "InterVar", sans-serif;
 	--ion-tab-bar-color-selected: #525252;
 	--ion-tab-bar-background-focused: #e2e2e2;

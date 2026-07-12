@@ -235,4 +235,27 @@
     --k-danger: #ef6a6a;
     --k-warn: #f2c14e;
     color-scheme: dark;
+    /* Ionic 셸 브리지 — ion-content/탭바가 토큰 래더를 따르게 */
+    --ion-tab-bar-background: #1f1e1b;
+    --ion-tab-bar-color: #a39e98;
+    --ion-tab-bar-color-selected: #ece9e4;
+    --ion-tab-bar-background-focused: #252320;
 }
+
+/* ── 다크 v1 브리지 쉼 — 컴포넌트 전반의 Tailwind gray 하드코딩을 다크에서만 토큰으로 리매핑.
+   실앱 QA(2026-07-13)로 검증. 장기적으로는 components/ 감사 확대 후 개별 토큰화로 대체·제거. ── */
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-black { color: var(--k-ink); }
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500 { color: var(--k-ink-muted); }
+:root[data-theme="dark"] .text-gray-400,
+:root[data-theme="dark"] .text-gray-300 { color: var(--k-ink-faint); }
+:root[data-theme="dark"] .bg-white { background-color: var(--k-card); }
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-gray-100 { background-color: var(--k-surface-soft); }
+:root[data-theme="dark"] .border-gray-100,
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border { border-color: var(--k-hairline); }
+:root[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: var(--k-surface-soft); }

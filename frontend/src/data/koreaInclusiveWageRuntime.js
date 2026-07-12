@@ -18,6 +18,22 @@ export const inclusiveWageDesign = createResource({
 	},
 })
 
+export const inclusiveWageReverseNet = createResource({
+	url: "hrms.regional.south_korea.inclusive_wage_api.reverse_net_api",
+	makeParams(values) {
+		return {
+			target_net: values?.target_net,
+			non_taxable: values?.non_taxable ?? 0,
+			dependents: values?.dependents ?? 1,
+			include_pension: values?.include_pension ? 1 : 0,
+			include_health: values?.include_health ? 1 : 0,
+			include_longterm_care: values?.include_longterm_care ? 1 : 0,
+			include_employment: values?.include_employment ? 1 : 0,
+			pension_override: values?.pension_override || null,
+		}
+	},
+})
+
 export const inclusiveWageAudit = createResource({
 	url: "hrms.regional.south_korea.inclusive_wage_api.audit_inclusive_wage_api",
 	makeParams(values) {

@@ -50,6 +50,18 @@ def _load_core(name: str, sub: str = ""):
 
 _core = _load_core("inclusive_wage")
 _stat = _load_core("statutory_ontology", "ontology/")
+_ntg = _load_core("net_to_gross")
+
+
+def _as_bool(value: Any, default: bool = True) -> bool:
+	"""Frappe RPC 문자열('0'/'false'/'true')·불리언 혼용 입력을 안전 해석."""
+	if value is None or value == "":
+		return default
+	if isinstance(value, bool):
+		return value
+	if isinstance(value, (int, float)):
+		return bool(value)
+	return str(value).strip().lower() not in ("0", "false", "no", "off")
 
 # wiki 루트 = repo (hrms/regional/south_korea → parents[3])
 _WIKI_ROOT = _pl.Path(__file__).resolve().parents[3] / "wiki" / "ontology"
@@ -130,3 +142,36 @@ def audit_inclusive_wage_api(
 		minimum_hourly_wage=min_wage,
 	)
 	return _json_safe(result, min_wage)
+
+
+@_whitelist
+def reverse_net_api(
+	target_net: Any,
+	non_taxable: Any = 0,
+	dependents: Any = 1,
+	children_under_8: Any = 0,
+	include_pension: Any = True,
+	include_health: Any = True,
+	include_longterm_care: Any = True,
+	include_employment: Any = True,
+	pension_override: Any = None,
+) -> dict[str, Any]:
+	"""NET(실수령액) → GROSS(세전 총액) 역산 (코어 net_to_gross 위임).
+
+	계산 전용 — 저장 없음. 공제 규칙은 statutory_2026 엔진 단일 소스.
+
+	Returns:
+		net_to_gross.reverse_net_to_gross 결과 그대로
+		(gross, achieved_net, diff, exact, deductions{...}).
+	"""
+	return _ntg.reverse_net_to_gross(
+		target_net,
+		non_taxable=non_taxable,
+		dependents=dependents,
+		children_under_8=children_under_8,
+		include_pension=_as_bool(include_pension),
+		include_health=_as_bool(include_health),
+		include_longterm_care=_as_bool(include_longterm_care),
+		include_employment=_as_bool(include_employment),
+		pension_override=pension_override,
+	)

@@ -115,5 +115,33 @@ class TestAuditApi(unittest.TestCase):
 		self.assertIsInstance(result["ordinary_hourly_wage"], float)
 
 
+class TestReverseNetApi(unittest.TestCase):
+	"""NET → GROSS 역산 API — 코어(net_to_gross) 위임 계약."""
+
+	def test_delegates_to_core(self):
+		core_ntg = _load("net_to_gross")
+		api_result = _api.reverse_net_api(3_000_000, non_taxable=200_000, dependents=2)
+		core_result = core_ntg.reverse_net_to_gross(
+			3_000_000, non_taxable=200_000, dependents=2
+		)
+		self.assertEqual(api_result["gross"], core_result["gross"])
+		self.assertEqual(api_result["deductions"], core_result["deductions"])
+		self.assertEqual(api_result["achieved_net"], core_result["achieved_net"])
+
+	def test_string_inputs_coerced(self):
+		"""Frappe RPC는 문자열로 넘어온다 — 문자열 입력도 동작."""
+		result = _api.reverse_net_api("3000000", non_taxable="200000",
+		                              dependents="1", include_pension="1")
+		self.assertGreater(result["gross"], 3_000_000)
+		self.assertGreaterEqual(result["achieved_net"], 3_000_000)
+
+	def test_toggle_falsy_strings(self):
+		"""'0'/'false'는 미가입으로 해석."""
+		result = _api.reverse_net_api(3_000_000, include_pension="0",
+		                              include_employment="false")
+		self.assertEqual(result["deductions"]["pension"], 0)
+		self.assertEqual(result["deductions"]["employment"], 0)
+
+
 if __name__ == "__main__":
 	unittest.main()

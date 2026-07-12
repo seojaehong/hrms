@@ -243,6 +243,132 @@
 					</template>
 				</div>
 
+				<!-- NET 역산 섹션 -->
+				<div class="k-card p-4 flex flex-col gap-4">
+					<div>
+						<div class="k-eyebrow">NET REVERSE</div>
+						<div class="text-base font-bold tracking-tight text-black">{{ __('NET 역산 — 세후 → 세전') }}</div>
+						<p class="mt-1 text-xs text-black/55">
+							목표 실수령액을 만족하는 최소 세전 총액을 4대보험·간이세액표 기준으로 찾습니다.
+						</p>
+					</div>
+
+					<div class="grid grid-cols-2 gap-2">
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('목표 실수령액 (원)') }}</label>
+							<input
+								type="number"
+								v-model.number="reverse.target_net"
+								:placeholder="__('예: 3000000')"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							/>
+						</div>
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('월 비과세 (식대 등)') }}</label>
+							<input
+								type="number"
+								v-model.number="reverse.non_taxable"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							/>
+						</div>
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('부양가족 수 (본인 포함)') }}</label>
+							<input
+								type="number"
+								v-model.number="reverse.dependents"
+								min="1"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							/>
+						</div>
+						<div class="flex flex-col gap-1">
+							<label class="k-label">{{ __('국민연금 수동액 (선택)') }}</label>
+							<input
+								type="number"
+								v-model.number="reverse.pension_override"
+								:placeholder="__('기준소득월액 결정분')"
+								class="border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-black k-numeric focus:outline-none focus:ring-2 focus:ring-black/60 w-full"
+							/>
+						</div>
+					</div>
+
+					<div class="flex flex-wrap gap-x-4 gap-y-2">
+						<label class="flex items-center gap-1.5 text-sm text-black/70">
+							<input type="checkbox" v-model="reverse.include_pension" class="accent-black" />
+							{{ __('국민연금') }}
+						</label>
+						<label class="flex items-center gap-1.5 text-sm text-black/70">
+							<input type="checkbox" v-model="reverse.include_health" class="accent-black" />
+							{{ __('건강보험') }}
+						</label>
+						<label class="flex items-center gap-1.5 text-sm text-black/70">
+							<input type="checkbox" v-model="reverse.include_longterm_care" class="accent-black" />
+							{{ __('장기요양') }}
+						</label>
+						<label class="flex items-center gap-1.5 text-sm text-black/70">
+							<input type="checkbox" v-model="reverse.include_employment" class="accent-black" />
+							{{ __('고용보험') }}
+						</label>
+					</div>
+
+					<button
+						@click="runReverse"
+						:disabled="inclusiveWageReverseNet.loading || !reverse.target_net"
+						class="w-full py-3 bg-black text-white text-sm rounded-full font-semibold hover:bg-black/80 active:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					>
+						<span v-if="inclusiveWageReverseNet.loading">{{ __('역산 중...') }}</span>
+						<span v-else>{{ __('세전 총액 역산') }}</span>
+					</button>
+
+					<div v-if="inclusiveWageReverseNet.error" class="text-center py-3 text-red-600 text-sm">
+						{{ __('역산에 실패했습니다. 입력값을 확인해 주세요.') }}
+					</div>
+					<template v-else-if="reverseResult">
+						<!-- 세전 총액 (cream 블록) -->
+						<div class="k-block k-block--cream -mx-1">
+							<div class="k-eyebrow">REQUIRED GROSS</div>
+							<div class="mt-1 text-sm font-medium text-black/60">필요 세전 총액</div>
+							<div class="k-display">{{ formatKRW(reverseResult.gross) }}</div>
+							<p class="mt-1 text-[11px] text-black/55 k-numeric">
+								실수령 {{ formatKRW(reverseResult.achieved_net) }}
+								<template v-if="!reverseResult.exact">
+									(목표 대비 +{{ reverseResult.diff.toLocaleString("ko-KR") }}원 — 절사 경계로 정확 일치 불가)
+								</template>
+							</p>
+						</div>
+
+						<div class="flex flex-col gap-2">
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">국민연금</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.pension) }}</span>
+							</div>
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">건강보험</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.health) }}</span>
+							</div>
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">장기요양</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.longterm_care) }}</span>
+							</div>
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">고용보험</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.employment) }}</span>
+							</div>
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">소득세</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.income_tax) }}</span>
+							</div>
+							<div class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2">
+								<span class="text-sm text-black/60">지방소득세</span>
+								<span class="text-sm text-black k-numeric">{{ formatKRW(reverseResult.deductions.local_income_tax) }}</span>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-sm font-semibold text-black">공제 합계</span>
+								<span class="text-sm font-bold text-black k-numeric">{{ formatKRW(reverseResult.deductions.total) }}</span>
+							</div>
+						</div>
+					</template>
+				</div>
+
 				<!-- 면책 고지 -->
 				<div class="k-card p-3 text-xs text-black/60 leading-relaxed">
 					<span class="font-semibold text-black">참고용 계산입니다.</span>
@@ -258,7 +384,11 @@
 import { reactive, ref, inject } from "vue"
 
 import BaseLayout from "@/components/BaseLayout.vue"
-import { inclusiveWageDesign, inclusiveWageAudit } from "@/data/koreaInclusiveWageRuntime"
+import {
+	inclusiveWageDesign,
+	inclusiveWageAudit,
+	inclusiveWageReverseNet,
+} from "@/data/koreaInclusiveWageRuntime"
 
 const __ = inject("$translate")
 
@@ -277,8 +407,19 @@ const audit = reactive({
 	fixed_holiday_pay: 0,
 	fixed_holiday_hours: 0,
 })
+const reverse = reactive({
+	target_net: null,
+	non_taxable: 200000,
+	dependents: 1,
+	pension_override: null,
+	include_pension: true,
+	include_health: true,
+	include_longterm_care: true,
+	include_employment: true,
+})
 const designResult = ref(null)
 const auditResult = ref(null)
+const reverseResult = ref(null)
 
 function formatKRW(amount) {
 	if (amount == null) return "-"
@@ -290,6 +431,14 @@ async function runDesign() {
 	await inclusiveWageDesign.submit({ ...design })
 	if (!inclusiveWageDesign.error) {
 		designResult.value = inclusiveWageDesign.data
+	}
+}
+
+async function runReverse() {
+	reverseResult.value = null
+	await inclusiveWageReverseNet.submit({ ...reverse })
+	if (!inclusiveWageReverseNet.error) {
+		reverseResult.value = inclusiveWageReverseNet.data
 	}
 }
 

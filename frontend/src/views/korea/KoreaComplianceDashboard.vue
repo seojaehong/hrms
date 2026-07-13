@@ -140,7 +140,7 @@
 					v-if="!diagnosisResult && !complianceDiagnosis.loading"
 					class="k-card p-8 flex flex-col items-center gap-3 text-center"
 				>
-					<span class="text-4xl">📋</span>
+					<span style="font-size: 2.25rem">📋</span>
 					<div class="text-sm text-[var(--k-ink-faint)]">{{ __('아직 진단 결과가 없습니다.') }}</div>
 					<div v-if="isAdmin" class="text-xs text-[var(--k-ink-faint)]">
 						위의 "전체 진단 실행" 버튼을 눌러 진단을 시작하세요.

@@ -5,7 +5,7 @@
 				<!-- 데스크톱 인사 헤드라인 — 가이드 display 타이포 -->
 				<div class="hidden md:block w-full pt-2">
 					<p class="k-eyebrow">SAFECLAW HR</p>
-					<h1 class="mt-2 text-5xl xl:text-6xl font-extrabold tracking-[-0.03em] leading-[1.04] text-[var(--k-ink)]">
+					<h1 class="mt-2 k-t-display-xl text-[var(--k-ink)]">
 						{{ __("급여부터 근태까지,") }}<br />{{ __("오늘 할 일이 정리되어 있습니다") }}
 					</h1>
 				</div>

@@ -161,6 +161,14 @@
 
 /* ── 타이포 스케일 (DESIGN.md §typography 1:1 — 화면의 모든 제목/본문은 이 클래스로) ──
    전역 body 자간 -0.025em(사용자 확정 2026-07-13)이 베이스, 스케일 클래스가 필요 시 재정의. */
+/* 홈/온보딩 히어로 전용 최대 스케일 — ⚠️ frappe-ui 프리셋은 text-3xl+ 유틸을 생성하지 않으므로
+   대형 타이포는 반드시 이 클래스를 쓴다 (2026-07-13 라이브에서 16px 폴백 확인) */
+.k-t-display-xl {
+    font-size: 2.5rem;    /* 40px → 데스크톱 56px, 와이드 64px */
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+}
 .k-t-display {
     font-size: 1.75rem;   /* 28px → 데스크톱 40px */
     font-weight: 600;
@@ -195,9 +203,13 @@
     line-height: 1.4;
 }
 @media (min-width: 768px) {
+    .k-t-display-xl { font-size: 3.5rem; } /* 56px */
     .k-t-display { font-size: 2.5rem; }    /* 40px */
     .k-t-title { font-size: 1.625rem; }    /* 26px */
     .k-t-body { font-size: 0.9375rem; }    /* 15px */
+}
+@media (min-width: 1280px) {
+    .k-t-display-xl { font-size: 4rem; }   /* 64px */
 }
 
 /* ── v2 데이터 화면 표준 버튼 (DESIGN.md §Components button-primary/secondary)

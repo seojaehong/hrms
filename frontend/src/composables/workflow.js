@@ -83,7 +83,6 @@ export default function useWorkflow(doctype) {
 					position: "bottom-center",
 					iconClasses: "text-red-500",
 				})
-				console.log(`Error applying workflow action: ${action}`)
 			},
 		})
 		await applyWorkflow.reload()

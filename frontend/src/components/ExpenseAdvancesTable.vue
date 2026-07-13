@@ -12,7 +12,7 @@
 			:key="advance.name"
 			class="flex flex-col bg-[var(--k-card)] border shadow-sm rounded p-3.5"
 			:class="[
-				advance.selected ? 'border-gray-500' : '',
+				advance.selected ? 'border-[var(--k-hairline)]' : '',
 				isReadOnly ? '' : 'cursor-pointer',
 			]"
 			@click="toggleAdvanceSelection(advance)"

@@ -56,10 +56,12 @@ import QuickLinks from "@/components/QuickLinks.vue"
 import BaseLayout from "@/components/BaseLayout.vue"
 import RequestPanel from "@/components/RequestPanel.vue"
 import { FeatherIcon } from "frappe-ui"
-import AttendanceIcon from "@/components/icons/AttendanceIcon.vue"
 import ShiftIcon from "@/components/icons/ShiftIcon.vue"
 import ExpenseIcon from "@/components/icons/ExpenseIcon.vue"
 import EmployeeAdvanceIcon from "@/components/icons/EmployeeAdvanceIcon.vue"
+import BoardIcon from "@/components/icons/BoardIcon.vue"
+import UserPlusIcon from "@/components/icons/UserPlusIcon.vue"
+import AiIcon from "@/components/icons/AiIcon.vue"
 
 const __ = inject("$translate")
 
@@ -95,7 +97,7 @@ const sections = [
 		eyebrow: "ANNUAL LEAVE",
 		title: __("연차"),
 		links: [
-			{ title: __("연차 대시보드"), route: "KoreaAnnualLeaveDashboard" },
+			{ title: __("연차 현황"), route: "KoreaAnnualLeaveDashboard" },
 			{ title: __("연차 사용촉진 (§61)"), route: "KoreaLeavePromotion" },
 			{ title: __("휴가 신청"), route: "LeaveApplicationFormView" },
 		],
@@ -128,19 +130,14 @@ const sections = [
 
 const moreLinks = [
 	{
-		icon: markRaw(AttendanceIcon),
+		icon: markRaw(BoardIcon),
 		title: __("요청 보드"),
 		route: "KoreaServiceRequests",
 	},
 	{
-		icon: markRaw(EmployeeAdvanceIcon),
+		icon: markRaw(UserPlusIcon),
 		title: __("입사자 등록 요청"),
 		route: "KoreaOnboardingRequest",
-	},
-	{
-		icon: markRaw(AttendanceIcon),
-		title: __("결재 인박스"),
-		route: "KoreaApprovalInbox",
 	},
 	{
 		icon: markRaw(ShiftIcon),
@@ -158,7 +155,7 @@ const moreLinks = [
 		route: "EmployeeAdvanceFormView",
 	},
 	{
-		icon: markRaw(AttendanceIcon),
+		icon: markRaw(AiIcon),
 		title: __("AI HR 담당자"),
 		route: "KoreaAIChat",
 	},

@@ -4,7 +4,7 @@
 		class="bg-[var(--k-card)] w-full flex flex-col items-center justify-center pb-5 max-h-[calc(100vh-5rem)]"
 	>
 		<div class="w-full pt-8 pb-5 border-b text-center sticky top-0 z-[100]">
-			<span class="text-gray-900 font-bold text-lg">{{ __("Filters") }} </span>
+			<span class="k-t-title text-gray-900">{{ __("Filters") }} </span>
 		</div>
 
 		<div class="w-full p-4 overflow-auto">
@@ -30,7 +30,7 @@
 								class="text-sm text-gray-800"
 								:class="[
 									option === filters[filter.fieldname].value
-										? '!border !border-gray-800 !text-gray-900 !bg-gray-50 !font-medium'
+										? '!border !border-gray-800 !text-[var(--k-ink)] !bg-[var(--k-surface-soft)] !font-medium'
 										: '!font-normal',
 								]"
 							>

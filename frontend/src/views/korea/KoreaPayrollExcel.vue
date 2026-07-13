@@ -1,11 +1,11 @@
 <template>
-	<BaseLayout :pageTitle="__('급여 엑셀 업로드/다운로드')">
+	<BaseLayout :pageTitle="__('급여 엑셀 관리')">
 		<template #body>
 			<div class="flex flex-col my-7 p-4 gap-5">
 				<!-- 히어로 — lime 색블록 (급여 계열) -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">PAYROLL EXCEL</div>
-					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('급여 엑셀 업로드/다운로드') }}</div>
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('급여 엑셀 관리') }}</div>
 					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						{{ __('급여대장을 시스템에서 내려받고, 수정본을 올려 검증한 뒤 승인 시에만 반영합니다.') }}
 					</p>

@@ -2,7 +2,7 @@
 	<!-- 앱 설치 다이얼로그 (Android / Chrome) -->
 	<Dialog v-model="showDialog">
 		<template #body-title>
-			<h2 class="text-lg font-bold">SafeClaw HR 앱 설치</h2>
+			<h2 class="k-t-title">SafeClaw HR 앱 설치</h2>
 		</template>
 		<template #body-content>
 			<p class="text-sm text-gray-700">
@@ -26,7 +26,7 @@
 	<Popover :show="iosInstallMessage" placement="bottom">
 		<template #body>
 			<div
-				class="mt-[calc(100vh-15rem)] flex flex-col gap-3 mx-2 rounded py-5 bg-blue-50 drop-shadow-xl border border-blue-200"
+				class="mt-[calc(100vh-15rem)] flex flex-col gap-3 mx-2 rounded py-5 bg-[var(--k-surface-3)] drop-shadow-xl border border-[var(--k-hairline)]"
 			>
 				<div
 					class="flex flex-row text-center items-center justify-between mb-1 px-3"

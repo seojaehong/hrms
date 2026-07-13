@@ -65,9 +65,9 @@ import { FeatherIcon } from "frappe-ui"
 
 const cachedLinks = [
 	{ route: "Home", label: "홈", icon: "home" },
-	{ route: "AttendanceDashboard", label: "근태 현황", icon: "clock" },
-	{ route: "SalarySlipsDashboard", label: "급여명세서", icon: "credit-card" },
-	{ route: "LeavesDashboard", label: "휴가 현황", icon: "calendar" },
+	{ route: "KoreaAttendanceDashboard", label: "근태 현황", icon: "clock" },
+	{ route: "KoreaWageStatementDashboard", label: "급여명세서", icon: "credit-card" },
+	{ route: "KoreaAnnualLeaveDashboard", label: "휴가 현황", icon: "calendar" },
 	{ route: "ExpenseClaimsDashboard", label: "경비 청구", icon: "file-text" },
 ]
 

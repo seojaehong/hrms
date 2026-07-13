@@ -9,10 +9,10 @@
 			:tab="item.title"
 			:href="item.route"
 			:class="[
-				'bg-[var(--k-card)] text-xs space-y-1.5 !hover:border-gray-300 !hover:text-gray-700 transition active:scale-95',
-				route.path === item.route
-					? 'border-gray-900 text-gray-800 font-semibold'
-					: 'text-gray-600 font-normal',
+				'bg-[var(--k-card)] text-xs space-y-1.5 transition active:scale-95',
+				route.path.startsWith(item.route)
+					? 'k-tab-active text-[var(--k-ink)] font-semibold'
+					: 'text-[var(--k-ink-muted)] font-normal',
 			]"
 		>
 			<component :is="item.icon" class="h-5 w-5" />
@@ -24,7 +24,7 @@
 <script setup>
 import { useRoute } from "vue-router"
 
-import { IonTabBar, IonTabButton, IonLabel } from "@ionic/vue"
+import { IonTabBar, IonTabButton } from "@ionic/vue"
 
 import HomeIcon from "@/components/icons/HomeIcon.vue"
 import LeaveIcon from "@/components/icons/LeaveIcon.vue"

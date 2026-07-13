@@ -32,7 +32,7 @@
 								<Button
 									:loading="session.login.loading"
 									variant="solid"
-									class="!mt-6 w-full !h-10 !rounded-full !bg-black !text-white hover:!bg-[var(--k-ink)] active:!bg-[var(--k-ink)] disabled:!bg-[var(--k-ink-muted)] disabled:!text-white"
+									class="!mt-6 w-full !h-10 !rounded-full !bg-[var(--k-inverse-canvas)] !text-[var(--k-inverse-ink)] hover:!bg-[var(--k-inverse-canvas)] active:!bg-[var(--k-inverse-canvas)] disabled:!bg-[var(--k-ink-muted)] disabled:!text-[var(--k-inverse-ink)]"
 								>
 									{{ __("Login") }}
 								</Button>
@@ -70,7 +70,7 @@
 				</template>
 				<template #actions>
 					<a
-						class="inline-flex items-center justify-center gap-2 transition-colors focus:outline-none text-white bg-[var(--k-ink)] hover:bg-[var(--k-ink)] active:bg-[var(--k-ink)] focus-visible:ring focus-visible:ring-[var(--k-ink-faint)] h-7 text-base px-2 rounded"
+						class="inline-flex items-center justify-center gap-2 transition-colors focus:outline-none text-[var(--k-inverse-ink)] bg-[var(--k-inverse-canvas)] hover:bg-[var(--k-inverse-canvas)] active:bg-[var(--k-inverse-canvas)] focus-visible:ring focus-visible:ring-[var(--k-ink-faint)] h-7 text-base px-2 rounded"
 						:href="resetPassword.link"
 						target="_blank"
 					>

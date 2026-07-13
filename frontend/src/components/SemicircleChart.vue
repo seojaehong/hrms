@@ -4,9 +4,9 @@
 		preserveAspectRatio="xMidYMin slice"
 		class="h-[84px] w-[84px] -mt-10"
 	>
-		<circle cx="24" cy="24" r="9" fill="#fff"></circle>
+		<circle cx="24" cy="24" r="9" fill="var(--k-card)"></circle>
 		<circle
-			class="stroke-current text-gray-200"
+			class="stroke-current text-[var(--k-hairline)]"
 			cx="24"
 			cy="24"
 			r="9"

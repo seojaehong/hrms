@@ -1,5 +1,5 @@
 <template>
-	<BaseLayout pageTitle="Korea Payroll Closing">
+	<BaseLayout pageTitle="급여 마감 센터">
 		<template #body>
 			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
 				<section v-if="selectedSession" class="rounded-2xl border border-[var(--k-hairline)] bg-[var(--k-card)] p-4 shadow-sm">
@@ -37,7 +37,7 @@
 						<p class="mt-1 k-t-headline text-[var(--k-ink)]">{{ selectedSession.primary_action.label }}</p>
 						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ selectedSession.payroll_entry }} · 미리보기에서는 저장·승인·발송이 일어나지 않습니다</p>
 					</div>
-					<div class="mt-4 rounded-xl bg-[var(--k-ink)] p-3 text-white">
+					<div class="mt-4 rounded-xl bg-[var(--k-inverse-canvas)] p-3 text-[var(--k-inverse-ink)]">
 						<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-faint)]">감사 미리보기</p>
 						<p class="mt-2 text-sm">{{ selectedSession.audit_preview.event_type }}</p>
 						<p class="mt-1 text-xs text-[var(--k-ink-faint)]">차단 사유: {{ selectedSession.audit_preview.blocker_codes.length ? selectedSession.audit_preview.blocker_codes.join(', ') : '없음' }}</p>

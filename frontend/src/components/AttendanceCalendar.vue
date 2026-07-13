@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col w-full gap-5" v-if="calendarEvents.data">
-		<div class="text-lg text-gray-800 font-bold">{{ __("Attendance Calendar") }}</div>
+		<div class="k-t-title text-gray-800">{{ __("Attendance Calendar") }}</div>
 
 		<div class="flex flex-col gap-6 bg-[var(--k-card)] py-6 px-3.5 rounded-lg border-none">
 			<!-- Month Change -->
@@ -10,7 +10,7 @@
 					variant="ghost"
 					@click="firstOfMonth = firstOfMonth.subtract(1, 'M')"
 				/>
-				<span class="text-lg text-gray-800 font-bold">
+				<span class="k-t-headline text-gray-800">
 					{{ firstOfMonth.format("YYYY년 M월") }}
 				</span>
 				<Button
@@ -73,7 +73,7 @@ const colorMap = {
 	"Half Day": "bg-yellow-200",
 	Absent: "bg-red-200",
 	"On Leave": "bg-blue-300",
-	Holiday: "bg-gray-300",
+	Holiday: "bg-[var(--k-hairline)]",
 }
 
 // __("Present"), __("Half Day"), __("Absent"), __("On Leave"), __("Work From Home")

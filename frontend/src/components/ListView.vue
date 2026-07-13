@@ -8,7 +8,7 @@
 					<Button variant="ghost" class="!px-1 mr-1 hover:bg-[var(--k-card)]" @click="router.back()">
 						<FeatherIcon name="chevron-left" class="h-5 w-5" />
 					</Button>
-					<h2 class="text-xl font-semibold text-gray-900">{{ pageTitle }}</h2>
+					<h2 class="k-t-title text-gray-900">{{ pageTitle }}</h2>
 				</div>
 
 				<div class="flex flex-row gap-2">
@@ -18,7 +18,7 @@
 						variant="subtle"
 						:class="[
 							areFiltersApplied
-								? '!border !border-gray-800 !bg-[var(--k-card)] !text-gray-900 !font-semibold'
+								? '!border !border-gray-800 !bg-[var(--k-card)] !text-[var(--k-ink)] !font-semibold'
 								: '',
 						]"
 					/>

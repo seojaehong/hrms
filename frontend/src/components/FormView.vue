@@ -16,7 +16,7 @@
 					class="flex flex-row items-center gap-2 overflow-hidden grow"
 				>
 					<h2
-						class="text-xl font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis"
+						class="k-t-title text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis"
 					>
 						{{ __(props.doctype) }}
 					</h2>
@@ -54,7 +54,7 @@
 						}"
 					/>
 				</div>
-				<h2 v-else class="text-2xl font-semibold text-gray-900">
+				<h2 v-else class="k-t-title text-gray-900">
 					{{ __('New {0}', [__(doctype)], props.doctype) }}
 				</h2>
 			</header>
@@ -73,7 +73,7 @@
 									class="inline-block py-4 px-2 border-b-2 border-transparent rounded-t-lg"
 									:class="[
 										activeTab === tab.name
-											? '!text-gray-800 !border-gray-800'
+											? '!text-[var(--k-ink)] !border-[var(--k-ink)]'
 											: 'hover:text-gray-600 hover:border-gray-300',
 									]"
 								>
@@ -221,7 +221,7 @@
 	<!-- Confirmation Dialogs -->
 	<Dialog v-model="showDeleteDialog">
 		<template #body-title>
-			<h2 class="text-xl font-bold">{{ __("Delete {0}", [__(props.doctype)]) }}</h2>
+			<h2 class="k-t-title">{{ __("Delete {0}", [__(props.doctype)]) }}</h2>
 		</template>
 		<template #body-content>
 			<p>
@@ -253,7 +253,7 @@
 
 	<Dialog v-model="showSubmitDialog">
 		<template #body-title>
-			<h2 class="text-xl font-bold">{{ __("Confirm") }} </h2>
+			<h2 class="k-t-title">{{ __("Confirm") }} </h2>
 		</template>
 		<template #body-content>
 			<p>
@@ -284,7 +284,7 @@
 
 	<Dialog v-model="showCancelDialog">
 		<template #body-title>
-			<h2 class="text-xl font-bold">{{ __("Confirm") }} </h2>
+			<h2 class="k-t-title">{{ __("Confirm") }} </h2>
 		</template>
 		<template #body-content>
 			<p>
@@ -545,7 +545,6 @@ const docList = createListResource({
 				position: "bottom-center",
 				iconClasses: "text-red-500",
 			})
-			console.log(`Error creating ${props.doctype}`)
 		},
 	},
 })
@@ -571,7 +570,6 @@ const documentResource = createDocumentResource({
 				position: "bottom-center",
 				iconClasses: "text-red-500",
 			})
-			console.log(`Error updating ${props.doctype}`)
 		},
 	},
 	delete: {
@@ -593,7 +591,6 @@ const documentResource = createDocumentResource({
 				position: "bottom-center",
 				iconClasses: "text-red-500",
 			})
-			console.log(`Error deleting ${props.doctype}`)
 		},
 	},
 })

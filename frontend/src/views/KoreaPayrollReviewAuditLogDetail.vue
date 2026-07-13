@@ -6,7 +6,7 @@
 					← 감사 로그 목록으로
 				</router-link>
 
-				<section class="rounded-2xl bg-[var(--k-ink)] p-5 text-white shadow-sm">
+				<section class="rounded-2xl bg-[var(--k-inverse-canvas)] p-5 text-[var(--k-inverse-ink)] shadow-sm">
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-faint)]">감사 로그 상세</p>
 					<h1 class="mt-2 break-words k-t-display">{{ detail.name }}</h1>
 					<p class="mt-2 text-sm text-[var(--k-ink-faint)]">{{ detail.company }} · {{ detail.workplace }}</p>

@@ -34,7 +34,6 @@ export async function requestNotificationPermission() {
 	}
 
 	const permission = await Notification.requestPermission()
-	console.log(`[NBP Push] 권한 상태: ${permission}`)
 	return permission
 }
 

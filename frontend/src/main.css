@@ -46,3 +46,8 @@ body {
 button.inline-flex.items-center.justify-center {
 	border-radius: var(--k-radius-pill);
 }
+
+/* 하단탭 활성 인디케이터 — 상단 2px 액센트 바 (2026-07-14) */
+ion-tab-button.k-tab-active {
+	box-shadow: inset 0 2px 0 0 var(--k-accent-solid);
+}

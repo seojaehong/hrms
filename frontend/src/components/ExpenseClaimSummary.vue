@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col w-full gap-5" v-if="summary.data">
-		<div class="text-lg text-gray-800 font-bold">{{ __("Expense Claim Summary") }}</div>
+		<div class="k-t-title text-gray-800">{{ __("Expense Claim Summary") }}</div>
 		<div
 			class="flex flex-col gap-4 bg-[var(--k-card)] py-3 px-3.5 rounded-lg border-none"
 		>

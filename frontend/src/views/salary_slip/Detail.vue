@@ -31,7 +31,7 @@
 				<template #formButton>
 					<ErrorMessage :message="downloadError" class="mt-2" />
 					<Button
-						class="w-full rounded py-5 text-base disabled:bg-[var(--k-ink-muted)] disabled:text-white"
+						class="w-full rounded py-5 text-base disabled:bg-[var(--k-ink-muted)] disabled:text-[var(--k-inverse-ink)]"
 						@click="downloadPDF"
 						variant="solid"
 						:loading="loading"

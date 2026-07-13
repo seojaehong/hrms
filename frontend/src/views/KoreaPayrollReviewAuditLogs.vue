@@ -1,8 +1,8 @@
 <template>
-	<BaseLayout pageTitle="Korea Payroll Review Audit Logs">
+	<BaseLayout pageTitle="급여 검토 감사 로그">
 		<template #body>
 			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
-				<section class="rounded-2xl bg-[var(--k-ink)] p-5 text-white shadow-sm">
+				<section class="rounded-2xl bg-[var(--k-inverse-canvas)] p-5 text-[var(--k-inverse-ink)] shadow-sm">
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-faint)]">Human review audit trail</p>
 					<h1 class="mt-2 k-t-display">{{ fixture.period_label }}</h1>
 					<p class="mt-2 text-sm text-[var(--k-ink-faint)]">

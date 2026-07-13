@@ -1,5 +1,5 @@
 <template>
-	<div class="flex p-1 bg-gray-200 rounded">
+	<div class="flex p-1 bg-[var(--k-hairline-soft)] rounded">
 		<button
 			v-for="button in buttons"
 			:key="button.key ?? button.label ?? button"

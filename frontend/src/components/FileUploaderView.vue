@@ -46,7 +46,7 @@
 
 			<Dialog v-model="showDialog">
 				<template #body-title>
-					<h2 class="text-lg font-bold">{{ __("Delete Attachment") }} </h2>
+					<h2 class="k-t-title">{{ __("Delete Attachment") }} </h2>
 				</template>
 				<template #body-content>
 					<p>

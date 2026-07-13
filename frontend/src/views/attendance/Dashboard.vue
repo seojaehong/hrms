@@ -16,7 +16,7 @@
 						:component="markRaw(AttendanceRequestItem)"
 						:items="myAttendanceRequests?.data?.slice(0, 5)"
 						:addListButton="true"
-						:listButtonRoute="__('AttendanceRequestListView')"
+						listButtonRoute="AttendanceRequestListView"
 					/>
 				</div>
 				<div>

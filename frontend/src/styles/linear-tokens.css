@@ -32,7 +32,7 @@
   /* ── 서체 (한글 네이티브: Pretendard → Noto Sans KR) ── */
   --ln-font-display: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
   --ln-font-text: "Pretendard Variable", "Pretendard", "Noto Sans KR", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-  --ln-font-mono: ui-monospace, "JetBrains Mono", "D2Coding", "SF Mono", Menlo, monospace;
+  --ln-font-mono: "JetBrains Mono", "D2Coding", ui-monospace, "SF Mono", Menlo, monospace;
 
   background: var(--ln-canvas);
   color: var(--ln-ink);

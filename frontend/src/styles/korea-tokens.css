@@ -350,6 +350,8 @@
     background: var(--k-signal);
     vertical-align: 1px;
 }
+/* 같은 행의 두 번째 아이브로우(블록 번호 01 등)에는 도트 생략 */
+:root[data-theme="dark"] .k-block .k-eyebrow ~ .k-eyebrow::before { content: none; }
 
 /* ── 다크 v1 브리지 쉼 — 컴포넌트 전반의 Tailwind gray 하드코딩을 다크에서만 토큰으로 리매핑.
    실앱 QA(2026-07-13)로 검증. 장기적으로는 components/ 감사 확대 후 개별 토큰화로 대체·제거. ── */

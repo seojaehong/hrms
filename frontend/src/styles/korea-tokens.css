@@ -159,6 +159,47 @@
     color: var(--k-ledger-navy);
 }
 
+/* ── 타이포 스케일 (DESIGN.md §typography 1:1 — 화면의 모든 제목/본문은 이 클래스로) ──
+   전역 body 자간 -0.025em(사용자 확정 2026-07-13)이 베이스, 스케일 클래스가 필요 시 재정의. */
+.k-t-display {
+    font-size: 1.75rem;   /* 28px → 데스크톱 40px */
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+}
+.k-t-title {
+    font-size: 1.25rem;   /* 20px → 데스크톱 26px */
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+.k-t-headline {
+    font-size: 1.0625rem; /* 17px */
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+.k-t-body {
+    font-size: 0.875rem;  /* 14px → 데스크톱 15px */
+    font-weight: 400;
+    line-height: 1.6;
+}
+.k-t-body-strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.6;
+}
+.k-t-caption {
+    font-size: 0.75rem;   /* 12px */
+    font-weight: 500;
+    line-height: 1.4;
+}
+@media (min-width: 768px) {
+    .k-t-display { font-size: 2.5rem; }    /* 40px */
+    .k-t-title { font-size: 1.625rem; }    /* 26px */
+    .k-t-body { font-size: 0.9375rem; }    /* 15px */
+}
+
 /* ── v2 데이터 화면 표준 버튼 (DESIGN.md §Components button-primary/secondary)
    pill·검정 버튼은 내러티브 전용 — 데이터 화면 버튼은 이 두 클래스만 쓴다.
    배경은 --t-accent 슬롯(테넌트 오버라이드 가능) — ledger-navy 변수 직접 참조 금지(돈의 색). */

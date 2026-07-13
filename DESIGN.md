@@ -75,7 +75,7 @@ typography:
     fontSize: 14px            # 데스크톱 15px
     fontWeight: 400
     lineHeight: 1.6
-    letterSpacing: 0
+    letterSpacing: -0.025em   # 전역 base(자간 -25) 상속 — 사용자 확정 2026-07-13
   body-strong:
     fontFamily: appSans
     fontSize: 14px

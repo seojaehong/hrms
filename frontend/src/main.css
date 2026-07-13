@@ -30,10 +30,17 @@ body {
 	scrollbar-width: none; /* Firefox */
 }
 
-/* ── DESIGN-figma 시스템: 전역 베이스 (2026-07 리팩토링) ── */
+/* ── DESIGN-figma 시스템: 전역 베이스 (2026-07 리팩토링) ──
+   자간 -0.025em(자간 -25)·행간 1.55·keep-all = 한글 본문 표준 (사용자 확정 2026-07-13).
+   숫자(.k-amount/.k-numeric)는 tabular-nums + -0.01em 개별 오버라이드 유지. */
 body {
 	font-family: var(--k-font);
-	color: #1a1d21;
+	color: var(--k-ink);
+	letter-spacing: -0.025em;
+	line-height: 1.55;
+	word-break: keep-all;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 /* frappe-ui Button → pill (Figma: 모든 텍스트 CTA는 pill, 사각 버튼 금지) */
 button.inline-flex.items-center.justify-center {

@@ -9,6 +9,18 @@ export default {
 	],
 	theme: {
 		extend: {
+			// frappe-ui 프리셋의 sans=Inter를 Pretendard로 교체 — preflight(html)·font-sans 유틸 모두 통일
+			fontFamily: {
+				sans: [
+					'"Pretendard Variable"',
+					"Pretendard",
+					"-apple-system",
+					"BlinkMacSystemFont",
+					'"Apple SD Gothic Neo"',
+					'"Noto Sans KR"',
+					"sans-serif",
+				],
+			},
 			screens: {
 				standalone: {
 					raw: "(display-mode: standalone)",

@@ -128,12 +128,12 @@
 /* 블록 타이틀 — 가이드 headline 26px/540 */
 .k-block-title {
     font-weight: 700;
-    letter-spacing: -0.01em;
-    font-size: 1.25rem;
-    line-height: 1.25;
+    letter-spacing: -0.015em;
+    font-size: 1.375rem;
+    line-height: 1.2;
 }
 @media (min-width: 768px) {
-    .k-block-title { font-size: 1.625rem; font-weight: 600; } /* 26px/semibold ≈ 540 */
+    .k-block-title { font-size: 1.75rem; } /* 28px/bold — 리스트 대비 위계 강화 (2026-07-13) */
 }
 .k-block--lime   { background: var(--k-block-lime); }
 .k-block--lilac  { background: var(--k-block-lilac); }

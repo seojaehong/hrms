@@ -45,9 +45,11 @@ NET = """
  </div>
 </div>"""
 
-TPL = """<!doctype html><html><head><meta charset="utf-8"><style>
+TPL = """<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
 *{{margin:0;box-sizing:border-box}} button{{border:none;cursor:pointer;font-family:inherit}}
-body{{background:transparent;font-family:var(--k-font);color:var(--k-ink)}}
+body{{background:transparent;font-family:var(--k-font);color:var(--k-ink);letter-spacing:-0.025em;line-height:1.55;word-break:keep-all;-webkit-font-smoothing:antialiased}}
 .win{{border-radius:12px;overflow:hidden;box-shadow:0 20px 48px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)}}
 .bar{{background:#25232f;display:flex;align-items:center;gap:7px;padding:11px 14px}}
 .dot{{width:11px;height:11px;border-radius:50%;display:inline-block}}

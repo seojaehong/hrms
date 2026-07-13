@@ -5,8 +5,8 @@
 				<!-- 히어로 — cream 색블록 -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">REQUESTS</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('요청 보드') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('요청 보드') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						{{ __('급여·4대보험·증명서·연차/근태 요청을 채팅 대신 표준 폼으로 접수하고 처리 현황을 추적합니다.') }}
 					</p>
 				</div>

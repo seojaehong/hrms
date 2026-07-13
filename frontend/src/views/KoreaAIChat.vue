@@ -6,7 +6,7 @@
 				<div class="p-4 pb-0">
 					<div class="k-block k-block--navy">
 						<div class="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">AI HR</div>
-						<div class="mt-1 text-xl font-bold tracking-tight text-white">{{ __('AI HR 담당자') }}</div>
+						<div class="mt-1 k-t-display text-white">{{ __('AI HR 담당자') }}</div>
 						<p class="mt-2 font-mono text-[10px] uppercase tracking-[0.08em] text-white/50 leading-relaxed">
 							AI 보조 답변 — 법률 자문이 아니며, 실제 결정은 담당자 또는 공인노무사의 검토를 거쳐 주세요.
 						</p>
@@ -18,7 +18,7 @@
 					<!-- Welcome message -->
 					<div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
 						<div>
-							<p class="text-lg font-bold tracking-tight text-[var(--k-ink)]">{{ __('무엇을 도와드릴까요?') }}</p>
+							<p class="k-t-title text-[var(--k-ink)]">{{ __('무엇을 도와드릴까요?') }}</p>
 							<p class="text-sm text-[var(--k-ink-faint)] mt-1">
 								근로기준법, 연차, 급여, 해고 등 HR 관련 질문을 입력하세요.
 							</p>

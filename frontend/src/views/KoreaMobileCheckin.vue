@@ -13,7 +13,7 @@
 							</svg>
 						</button>
 					</router-link>
-					<h1 class="text-lg font-bold text-[var(--k-ink)]">{{ __("Korea Mobile Check-In") }}</h1>
+					<h1 class="k-t-title text-[var(--k-ink)]">{{ __("Korea Mobile Check-In") }}</h1>
 				</div>
 
 				<!-- Status Card -->

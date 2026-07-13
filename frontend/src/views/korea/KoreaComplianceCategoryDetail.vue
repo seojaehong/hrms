@@ -8,7 +8,7 @@
 					<div class="flex items-center gap-3">
 						<span class="text-2xl">{{ categoryDetail?.statusEmoji ?? '⬜' }}</span>
 						<div class="flex flex-col gap-0.5">
-							<div class="text-xl font-bold tracking-tight text-[var(--k-ink)]">
+							<div class="k-t-display text-[var(--k-ink)]">
 								{{ categoryDetail?.label ?? '-' }}
 							</div>
 							<div class="text-xs text-[var(--k-ink-faint)]">{{ categoryDetail?.law ?? '' }}</div>
@@ -206,7 +206,7 @@
 				@click.self="showResolveConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">발견 사항 해결 표시</div>
+					<div class="k-t-headline text-[var(--k-ink)]">발견 사항 해결 표시</div>
 					<div class="text-sm text-[var(--k-ink-muted)] leading-relaxed">
 						이 발견 사항을 해결됨으로 표시합니다.<br />
 						실제 조치가 완료된 경우에만 진행하세요.

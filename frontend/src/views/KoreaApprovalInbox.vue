@@ -8,7 +8,7 @@
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="k-eyebrow">APPROVALS</p>
-								<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("결재 인박스") }}</h1>
+								<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("결재 인박스") }}</h1>
 								<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __("승인·반려가 필요한 요청을 한곳에서 처리합니다") }}</p>
 							</div>
 							<div class="rounded-xl bg-white/70 px-4 py-3 text-center">
@@ -66,7 +66,7 @@
 				<!-- 빈 상태 — 결재는 지정 결재자에게만 배정되므로 0건이 정상일 수 있음 -->
 				<div v-else-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-20 gap-3 px-4">
 					<FeatherIcon name="check-circle" class="h-12 w-12 text-green-700" />
-					<p class="text-base font-bold text-[var(--k-ink)]">{{ __("내게 배정된 결재가 없습니다") }}</p>
+					<p class="k-t-headline text-[var(--k-ink)]">{{ __("내게 배정된 결재가 없습니다") }}</p>
 					<p class="text-sm text-[var(--k-ink-faint)]">{{ __("결재는 지정된 결재자에게만 표시됩니다") }}</p>
 					<p
 						v-if="isAdmin && othersPendingCount > 0"
@@ -142,7 +142,7 @@
 				@click.self="cancelComment"
 			>
 				<div class="bg-[var(--k-card)] rounded-t-2xl sm:rounded-2xl w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto p-6 flex flex-col gap-4">
-					<h3 class="text-base font-bold text-[var(--k-ink)]">
+					<h3 class="k-t-headline text-[var(--k-ink)]">
 						{{ pendingAction === 'reject' ? __('반려 사유') : __('코멘트 (선택)') }}
 					</h3>
 					<textarea

@@ -8,7 +8,7 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ANNUAL LEAVE</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("연차 현황") }}</h1>
+							<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("연차 현황") }}</h1>
 							<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">
 								{{ display ? display.employeeName || display.employee : __("직원 미선택") }}
 							</p>
@@ -77,7 +77,7 @@
 
 				<!-- 직원 미지정 (로그인 직원 폴백도 불가한 경우) -->
 				<section v-if="!employeeId && !loading" class="k-card p-6 text-center">
-					<p class="text-base font-bold text-[var(--k-ink)]">{{ __("연차 정보를 불러올 수 없습니다") }}</p>
+					<p class="k-t-headline text-[var(--k-ink)]">{{ __("연차 정보를 불러올 수 없습니다") }}</p>
 					<p class="mt-1 text-sm text-[var(--k-ink-muted)]">{{ __("담당자에게 문의하세요.") }}</p>
 					<router-link
 						:to="{ name: 'Home' }"
@@ -90,7 +90,7 @@
 				<!-- 기본 정보 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">PROFILE</p>
-					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("기본 정보") }}</p>
+					<p class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("기본 정보") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("입사일") }}</p>
@@ -114,7 +114,7 @@
 				<!-- 부여 현황 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">ENTITLEMENT</p>
-					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("부여 현황") }}</p>
+					<p class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("부여 현황") }}</p>
 					<div class="mt-3 flex flex-col gap-2">
 						<div v-if="display.serviceYears < 1 && display.monthlyAccrual > 0" class="flex items-center justify-between rounded-xl bg-[var(--k-surface-soft)] p-3">
 							<span class="text-sm text-[var(--k-ink)]">{{ __("월차") }} <span class="text-xs text-[var(--k-ink-faint)]">{{ __("(1년 미만 월 단위)") }}</span></span>
@@ -143,7 +143,7 @@
 					<div class="flex items-center justify-between gap-2">
 						<div>
 							<p class="k-eyebrow">ATTENDANCE RULE</p>
-							<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("출근률 80% 룰 (근기법 60조 4항)") }}</p>
+							<p class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("출근률 80% 룰 (근기법 60조 4항)") }}</p>
 						</div>
 						<span
 							class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
@@ -176,7 +176,7 @@
 				<!-- 사용 / 잔여 -->
 				<section v-if="display" class="k-card p-4">
 					<p class="k-eyebrow">USAGE</p>
-					<p class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("사용 / 잔여") }}</p>
+					<p class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("사용 / 잔여") }}</p>
 					<div class="mt-3 grid grid-cols-2 gap-2">
 						<div class="rounded-xl bg-[var(--k-surface-soft)] p-3 text-center">
 							<p class="text-xs text-[var(--k-ink-faint)]">{{ __("사용") }}</p>
@@ -240,7 +240,7 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">{{ dataSourceLabel }}</p>
-							<p class="mt-1 text-base font-bold text-[var(--k-ink)]">
+							<p class="mt-1 k-t-headline text-[var(--k-ink)]">
 								{{ display ? display.employeeName || display.employee : __('직원 미선택') }}
 							</p>
 							<p class="mt-1 text-xs text-[var(--k-ink-faint)]">

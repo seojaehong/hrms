@@ -4,7 +4,7 @@
 			<div class="flex flex-col gap-4 overflow-y-auto bg-[var(--k-surface-soft)] p-4 pb-24">
 				<section class="rounded-2xl bg-[var(--k-ink)] p-5 text-white shadow-sm">
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-faint)]">Human review audit trail</p>
-					<h1 class="mt-2 text-2xl font-bold leading-tight">{{ fixture.period_label }}</h1>
+					<h1 class="mt-2 k-t-display">{{ fixture.period_label }}</h1>
 					<p class="mt-2 text-sm text-[var(--k-ink-faint)]">
 						{{ fixture.company }} · {{ fixture.summary.total_count }} audit rows · updated {{ fixture.updated_at }}
 					</p>
@@ -45,7 +45,7 @@
 							<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">{{ item.workplace }}</p>
-								<h2 class="mt-1 text-lg font-bold text-[var(--k-ink)]">{{ item.name }}</h2>
+								<h2 class="mt-1 k-t-title text-[var(--k-ink)]">{{ item.name }}</h2>
 								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ item.period_start }} → {{ item.period_end }} · {{ item.draft_name }}</p>
 							</div>
 							<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(item.status)">

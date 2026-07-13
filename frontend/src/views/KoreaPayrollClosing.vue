@@ -7,7 +7,7 @@
 					<div class="mt-4 flex items-start justify-between gap-3">
 						<div>
 							<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">세션 미리보기</p>
-							<h1 class="mt-1 text-2xl font-bold text-[var(--k-ink)]">{{ selectedSession.workplace }}</h1>
+							<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ selectedSession.workplace }}</h1>
 							<p class="mt-1 text-sm text-[var(--k-ink-muted)]">{{ selectedSession.name }} · {{ selectedSession.period_start }} → {{ selectedSession.period_end }}</p>
 						</div>
 						<span
@@ -34,7 +34,7 @@
 					</div>
 					<div class="mt-4 rounded-xl bg-[var(--k-surface-soft)] p-3">
 						<p class="text-xs font-semibold text-[var(--k-ink-muted)]">다음 작업</p>
-						<p class="mt-1 text-base font-bold text-[var(--k-ink)]">{{ selectedSession.primary_action.label }}</p>
+						<p class="mt-1 k-t-headline text-[var(--k-ink)]">{{ selectedSession.primary_action.label }}</p>
 						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ selectedSession.payroll_entry }} · 미리보기에서는 저장·승인·발송이 일어나지 않습니다</p>
 					</div>
 					<div class="mt-4 rounded-xl bg-[var(--k-ink)] p-3 text-white">
@@ -87,8 +87,8 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-muted)]">{{ dataSourceLabel }}</p>
-							<h1 class="mt-2 text-2xl font-bold leading-tight">{{ activePeriodLabel }}</h1>
-							<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+							<h1 class="mt-2 k-t-display">{{ activePeriodLabel }}</h1>
+							<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 								{{ activeCompany }} · {{ summaryCards.total_employees ?? '실시간' }}명 · {{ activeWorklist.updated_at || '실시간 조회' }}
 							</p>
 						</div>
@@ -142,7 +142,7 @@
 					<div class="k-eyebrow mb-2">HOURLY PROPOSALS</div>
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<h2 class="text-lg font-bold text-[var(--k-ink)]">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
+							<h2 class="k-t-title text-[var(--k-ink)]">시급제 급여 제안 · {{ hourlyProposals.data.period }}</h2>
 							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">근무시간 입력 × 시급 프로파일로 계산한 제안입니다 — 반영은 결재 승인으로만 이뤄집니다.</p>
 						</div>
 						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">계산 전용</span>
@@ -176,7 +176,7 @@
 					<div class="k-eyebrow mb-2">INSURANCE RECONCILIATION</div>
 					<div class="flex items-start justify-between gap-3">
 						<div>
-							<h2 class="text-lg font-bold text-[var(--k-ink)]">고지 대사</h2>
+							<h2 class="k-t-title text-[var(--k-ink)]">고지 대사</h2>
 							<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ insuranceReconSummary }}</p>
 						</div>
 						<span class="rounded-full bg-[var(--k-hairline-soft)] px-3 py-1 text-xs font-semibold text-[var(--k-ink)]">읽기 전용</span>
@@ -227,7 +227,7 @@
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<p class="text-xs font-semibold uppercase tracking-wide text-[var(--k-ink-muted)]">{{ item.role }}</p>
-								<h2 class="mt-1 text-lg font-bold text-[var(--k-ink)]">{{ item.workplace }}</h2>
+								<h2 class="mt-1 k-t-title text-[var(--k-ink)]">{{ item.workplace }}</h2>
 								<p class="mt-1 text-xs text-[var(--k-ink-muted)]">{{ item.period_start }} → {{ item.period_end }} · {{ item.employee_count ?? '실시간' }}명</p>
 							</div>
 							<span

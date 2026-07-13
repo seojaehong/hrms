@@ -1,6 +1,6 @@
 <template>
 	<div class="flex flex-col bg-[var(--k-card)] rounded w-full py-6 px-4 border-none">
-		<h2 class="text-lg font-bold text-gray-900">
+		<h2 class="k-t-title text-gray-900">
 			{{ __("Hey, {0} 👋", [employee?.data?.first_name]) }}
 		</h2>
 

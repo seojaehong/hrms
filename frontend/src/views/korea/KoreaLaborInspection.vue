@@ -5,8 +5,8 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">LABOR INSPECTION READINESS</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('근로감독 대비 체크리스트') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('근로감독 대비 체크리스트') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						고용노동부 근로감독관 자율점검표 기반 15항목을 근거 조항·증빙서류·리스크와 함께 점검합니다.
 					</p>
 				</div>
@@ -38,7 +38,7 @@
 						class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--k-surface-soft)] transition-colors"
 					>
 						<div class="flex items-center gap-2">
-							<span class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ group.category }}</span>
+							<span class="k-t-headline text-[var(--k-ink)]">{{ group.category }}</span>
 							<span class="text-xs text-[var(--k-ink-faint)]">({{ group.items.length }})</span>
 						</div>
 						<div class="flex items-center gap-2">

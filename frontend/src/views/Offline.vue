@@ -13,7 +13,7 @@
 
 		<!-- 제목 + 설명 -->
 		<div class="flex flex-col gap-2">
-			<h1 class="text-xl font-bold text-[var(--k-ink)] tracking-tight">
+			<h1 class="k-t-display text-[var(--k-ink)]">
 				인터넷에 연결되어 있지 않아요
 			</h1>
 			<p class="text-sm text-[var(--k-ink-muted)] leading-relaxed max-w-xs">

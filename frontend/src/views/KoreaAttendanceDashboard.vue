@@ -8,7 +8,7 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">ATTENDANCE</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("근태 현황") }}</h1>
+							<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("근태 현황") }}</h1>
 							<p class="k-numeric mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ closingPeriodLabel }}</p>
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
@@ -49,7 +49,7 @@
 				<!-- Card 1: 이번 달 출근 요약 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">MONTHLY SUMMARY</p>
-					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("이번 달 출근 요약") }}</h2>
+					<h2 class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("이번 달 출근 요약") }}</h2>
 
 					<div v-if="attendanceLoading" class="mt-3 text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</div>
 
@@ -132,7 +132,7 @@
 				<!-- Card 2: 연장/야간/휴일 시간 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">OVERTIME</p>
-					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("연장·야간·휴일 시간") }}</h2>
+					<h2 class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("연장·야간·휴일 시간") }}</h2>
 
 					<div v-if="attendanceLoading" class="mt-3 text-sm text-[var(--k-ink-faint)]">{{ __("불러오는 중…") }}</div>
 
@@ -176,7 +176,7 @@
 				<!-- Card 3: 가산수당 미리보기 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">PREMIUM PAY</p>
-					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("가산수당 미리보기 (근기법 56조)") }}</h2>
+					<h2 class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("가산수당 미리보기 (근기법 56조)") }}</h2>
 
 					<div class="mt-3 mb-4 flex flex-col gap-2">
 						<label class="text-xs font-medium text-[var(--k-ink-faint)]">{{ __("통상시급 (원)") }}</label>
@@ -232,7 +232,7 @@
 				<!-- Card 4: 마감 상태 (관리자용) -->
 				<section v-if="isAdminUser" class="k-card p-4">
 					<p class="k-eyebrow">CLOSING · ADMIN</p>
-					<h2 class="mt-0.5 text-base font-bold text-[var(--k-ink)]">{{ __("마감 상태 (관리자)") }}</h2>
+					<h2 class="mt-0.5 k-t-headline text-[var(--k-ink)]">{{ __("마감 상태 (관리자)") }}</h2>
 					<p class="mt-1 text-xs text-[var(--k-ink-faint)]">{{ __("사업장 단위 마감 진행 현황") }}</p>
 
 					<div class="mt-3 mb-4 grid grid-cols-2 gap-2">
@@ -278,8 +278,8 @@
 					@click.self="showApplyDialog = false"
 				>
 					<div class="w-full max-w-sm rounded-2xl bg-[var(--k-card)] p-6">
-						<h3 class="text-base font-bold text-[var(--k-ink)]">{{ __("마감 임시저장 확인") }}</h3>
-						<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+						<h3 class="k-t-headline text-[var(--k-ink)]">{{ __("마감 임시저장 확인") }}</h3>
+						<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 							{{ closingPeriodLabel }} {{ __("근태 마감을 임시저장(Draft)합니다.") }}<br />
 							{{ __("이 작업은 Draft 저장이며 승인·발송은 포함하지 않습니다.") }}
 						</p>

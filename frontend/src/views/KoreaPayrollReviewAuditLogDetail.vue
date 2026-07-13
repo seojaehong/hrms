@@ -8,7 +8,7 @@
 
 				<section class="rounded-2xl bg-[var(--k-ink)] p-5 text-white shadow-sm">
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--k-ink-faint)]">감사 로그 상세</p>
-					<h1 class="mt-2 break-words text-2xl font-bold leading-tight">{{ detail.name }}</h1>
+					<h1 class="mt-2 break-words k-t-display">{{ detail.name }}</h1>
 					<p class="mt-2 text-sm text-[var(--k-ink-faint)]">{{ detail.company }} · {{ detail.workplace }}</p>
 					<div class="mt-4 rounded-xl bg-white/10 p-3 text-sm">
 						<p class="font-semibold">{{ statusLabel(detail.status) }}</p>

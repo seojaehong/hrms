@@ -5,8 +5,8 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">INCLUSIVE WAGE</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('포괄임금 설계·역산') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('포괄임금 설계·역산') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						총액을 통상시급 기준으로 분해하거나, 기존 계약의 적법 최소 지급액을 검증합니다.
 					</p>
 				</div>
@@ -15,7 +15,7 @@
 				<div class="k-card p-4 flex flex-col gap-4">
 					<div>
 						<div class="k-eyebrow">DESIGN</div>
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('설계 — 총액 분해') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('설계 — 총액 분해') }}</div>
 					</div>
 
 					<div class="flex flex-col gap-1">
@@ -118,7 +118,7 @@
 				<div class="k-card p-4 flex flex-col gap-4">
 					<div>
 						<div class="k-eyebrow">AUDIT</div>
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('역산 감사 — 기존 계약 검증') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('역산 감사 — 기존 계약 검증') }}</div>
 					</div>
 
 					<div class="flex flex-col gap-1">
@@ -247,7 +247,7 @@
 				<div class="k-card p-4 flex flex-col gap-4">
 					<div>
 						<div class="k-eyebrow">NET REVERSE</div>
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('NET 역산 — 세후 → 세전') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('NET 역산 — 세후 → 세전') }}</div>
 						<p class="mt-1 text-xs text-[var(--k-ink-muted)]">
 							목표 실수령액을 만족하는 최소 세전 총액을 4대보험·간이세액표 기준으로 찾습니다.
 						</p>

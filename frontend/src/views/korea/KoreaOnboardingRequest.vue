@@ -5,8 +5,8 @@
 				<!-- 히어로 — cream 색블록 (직원/사업장 계열) -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">ONBOARDING</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('입사자 등록 요청') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('입사자 등록 요청') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						{{ __('신규 입사자 정보를 표준 폼으로 제출하면 4대보험 취득신고까지 연결됩니다.') }}
 					</p>
 				</div>
@@ -15,7 +15,7 @@
 				<div v-if="submitted" class="k-card p-4 flex flex-col gap-3">
 					<div class="flex items-center gap-2">
 						<span class="text-2xl">✅</span>
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('등록 요청이 접수되었습니다') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('등록 요청이 접수되었습니다') }}</div>
 					</div>
 					<div class="flex flex-col divide-y divide-[var(--k-hairline-soft)]">
 						<div v-for="row in successSummaryRows" :key="row.label" class="flex justify-between py-2">

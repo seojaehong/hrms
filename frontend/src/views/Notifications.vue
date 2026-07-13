@@ -14,14 +14,14 @@
 							>
 								<FeatherIcon name="chevron-left" class="h-5 w-5" />
 							</Button>
-							<h2 class="text-xl font-semibold text-[var(--k-ink)]">{{ __("Notifications") }} </h2>
+							<h2 class="k-t-title text-[var(--k-ink)]">{{ __("Notifications") }} </h2>
 						</div>
 					</header>
 
 					<div class="flex flex-col gap-4 mt-5 p-4">
 						<div class="flex flex-row justify-between items-center">
 							<div
-								class="text-lg text-[var(--k-ink)] font-semibold"
+								class="k-t-title text-[var(--k-ink)]"
 								v-if="unreadNotificationsCount.data"
 							>
 								{{ __("{0} Unread", [unreadNotificationsCount.data]) }}

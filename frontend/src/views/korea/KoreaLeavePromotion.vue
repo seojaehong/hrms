@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">ANNUAL LEAVE PROMOTION</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('연차 사용촉진 (§61)') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('연차 사용촉진 (§61)') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						근로기준법 제61조 사용촉진 기한을 계산하고, 서면 촉구·통보 초안과 미사용 연차수당을 확인합니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('촉진 기한 계산') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('촉진 기한 계산') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -53,7 +53,7 @@
 
 				<!-- 타임라인 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('촉진 시한 타임라인') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('촉진 시한 타임라인') }}</div>
 
 					<div v-if="promotionSchedule.loading" class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('계산 중...') }}
@@ -117,7 +117,7 @@
 
 				<!-- 촉구문 미리보기 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('서면 촉구·통보 초안') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('서면 촉구·통보 초안') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -185,7 +185,7 @@
 
 				<!-- 미사용 수당 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('미사용 연차수당 정산') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('미사용 연차수당 정산') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">

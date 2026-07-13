@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">SEVERANCE SETTLEMENT</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('퇴직정산 (통합)') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('퇴직정산 (통합)') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						퇴직금·미사용연차수당·퇴직소득세·건보정산을 한 번에 계산해 실지급액을 확인합니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('정산 조건 입력') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('정산 조건 입력') }}</div>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
@@ -126,7 +126,7 @@
 
 				<!-- 결과 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('정산 결과') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('정산 결과') }}</div>
 
 					<div v-if="severanceSettlement.loading" class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('정산 중...') }}

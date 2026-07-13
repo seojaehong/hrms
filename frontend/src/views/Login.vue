@@ -8,7 +8,7 @@
 							<div class="flex flex-col gap-3 items-center mb-8">
 								<SafeClawMark class="h-9 w-9" />
 								<div class="k-eyebrow">SAFECLAW HR</div>
-								<div class="text-2xl font-semibold text-[var(--k-ink)] text-center">
+								<div class="k-t-display text-[var(--k-ink)] text-center">
 									{{ __("Login to SafeClaw HR") }}
 								</div>
 							</div>
@@ -61,7 +61,7 @@
 
 			<Dialog v-model="resetPassword.showDialog">
 				<template #body-title>
-					<h2 class="text-lg font-bold">{{ __("Reset Password") }} </h2>
+					<h2 class="k-t-title">{{ __("Reset Password") }} </h2>
 				</template>
 				<template #body-content>
 					<p>
@@ -81,7 +81,7 @@
 
 			<Dialog v-model="otp.showDialog">
 				<template #body-title>
-					<h2 class="text-lg font-bold">{{ __("OTP Verification") }}</h2>
+					<h2 class="k-t-title">{{ __("OTP Verification") }}</h2>
 				</template>
 				<template #body-content>
 					<p class="mb-4" v-if="otp.verification.prompt">

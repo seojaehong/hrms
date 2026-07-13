@@ -9,14 +9,14 @@
 				<!-- 히어로 — 연차(lilac) 색블록 -->
 				<section class="k-block k-block--cream">
 					<p class="k-eyebrow">ANNUAL LEAVE</p>
-					<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("직원 연차 상세") }}</h1>
+					<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("직원 연차 상세") }}</h1>
 					<p class="k-numeric mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ employeeId }}</p>
 				</section>
 
 				<!-- 대시보드 이동 -->
 				<section class="k-card p-4">
 					<p class="k-eyebrow">DASHBOARD</p>
-					<p class="mt-1 text-base font-bold text-[var(--k-ink)]">{{ __("연차 현황 대시보드") }}</p>
+					<p class="mt-1 k-t-headline text-[var(--k-ink)]">{{ __("연차 현황 대시보드") }}</p>
 					<p class="mt-1 text-sm text-[var(--k-ink-muted)]">
 						{{ __("상세 연차 현황은 대시보드 화면에서 확인할 수 있습니다.") }}
 					</p>

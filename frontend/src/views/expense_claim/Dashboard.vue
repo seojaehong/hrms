@@ -20,7 +20,7 @@
 				</div>
 
 				<div>
-					<div class="text-lg text-[var(--k-ink)] font-bold">{{ __("Recent Expenses") }}</div>
+					<div class="k-t-title text-[var(--k-ink)]">{{ __("Recent Expenses") }}</div>
 					<RequestList
 						:component="markRaw(ExpenseClaimItem)"
 						:items="myClaims.data"
@@ -31,7 +31,7 @@
 
 				<div>
 					<div class="flex flex-row justify-between items-center">
-						<div class="text-lg text-[var(--k-ink)] font-bold">
+						<div class="k-t-title text-[var(--k-ink)]">
 							{{ __("Employee Advance Balance") }}
 						</div>
 						<router-link

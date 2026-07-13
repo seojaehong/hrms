@@ -5,15 +5,15 @@
 				<!-- 히어로 — cream 색블록 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">SEVERANCE</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('퇴직금 미리보기') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('퇴직금 미리보기') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						가정 퇴직일 기준으로 예상 퇴직금을 미리 확인합니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('가정 조건 입력') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('가정 조건 입력') }}</div>
 
 					<div class="flex flex-col gap-1">
 						<label class="k-label">{{ __('가정 퇴직일') }}</label>
@@ -49,7 +49,7 @@
 
 				<!-- 계산 결과 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('계산 결과') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('계산 결과') }}</div>
 
 					<div v-if="severancePreview.loading" class="text-center py-8 text-[var(--k-ink-faint)] text-sm">
 						{{ __('계산 중...') }}

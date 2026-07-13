@@ -14,7 +14,7 @@
 							>
 								<FeatherIcon name="chevron-left" class="h-6 w-6" />
 							</button>
-							<h2 class="text-xl font-bold text-gray-900">
+							<h2 class="k-t-title text-gray-900">
 								{{ props.pageTitle || __("SafeClaw HR") }}
 							</h2>
 						</div>

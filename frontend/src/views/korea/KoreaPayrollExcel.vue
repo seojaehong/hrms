@@ -5,8 +5,8 @@
 				<!-- 히어로 — lime 색블록 (급여 계열) -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">PAYROLL EXCEL</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('급여 엑셀 업로드/다운로드') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('급여 엑셀 업로드/다운로드') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						{{ __('급여대장을 시스템에서 내려받고, 수정본을 올려 검증한 뒤 승인 시에만 반영합니다.') }}
 					</p>
 				</div>

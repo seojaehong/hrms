@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">PAYSLIP BREAKDOWN</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('임금명세서 분해 (§48②)') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('임금명세서 분해 (§48②)') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						근로기준법 시행령 제27조의2·제48조제2항에 따라 임금 구성항목별 계산방법을 표기한 명세서 초안을 만듭니다.
 					</p>
 				</div>
 
 				<!-- 입력 카드 -->
 				<div class="k-card p-4 flex flex-col gap-4">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('명세서 입력') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('명세서 입력') }}</div>
 
 					<!-- 급여형태 토글 -->
 					<div class="flex rounded-lg border border-[var(--k-hairline)] p-1 text-sm font-semibold">
@@ -149,7 +149,7 @@
 					</div>
 
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('지급내역') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('지급내역') }}</div>
 						<table class="w-full text-sm">
 							<thead>
 								<tr class="text-left text-[var(--k-ink-faint)] text-xs uppercase tracking-wide">
@@ -174,7 +174,7 @@
 					</div>
 
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('공제내역') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('공제내역') }}</div>
 						<table class="w-full text-sm">
 							<thead>
 								<tr class="text-left text-[var(--k-ink-faint)] text-xs uppercase tracking-wide">
@@ -205,7 +205,7 @@
 
 					<!-- 마크다운 미리보기 -->
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('교부용 마크다운 미리보기') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('교부용 마크다운 미리보기') }}</div>
 						<button
 							@click="generateMarkdown"
 							:disabled="renderPayslipMarkdown.loading"

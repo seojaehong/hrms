@@ -15,7 +15,7 @@
 						>
 							<FeatherIcon name="chevron-left" class="h-5 w-5" />
 						</Button>
-						<h2 class="text-xl font-semibold text-[var(--k-ink)]">
+						<h2 class="k-t-title text-[var(--k-ink)]">
 							{{ __("구독 플랜") }}
 						</h2>
 					</div>
@@ -43,7 +43,7 @@
 							{{ __("현재 플랜") }}
 						</p>
 						<div class="flex items-center justify-between">
-							<span class="text-lg font-semibold text-[var(--k-ink)]">
+							<span class="k-t-headline text-[var(--k-ink)]">
 								{{ currentPlan.name }}
 							</span>
 							<span
@@ -64,7 +64,7 @@
 
 					<!-- 플랜 그리드 -->
 					<section>
-						<h3 class="mb-3 text-base font-semibold text-[var(--k-ink)]">
+						<h3 class="mb-3 k-t-headline text-[var(--k-ink)]">
 							{{ __("플랜 비교") }}
 						</h3>
 						<div class="flex flex-col gap-3">
@@ -135,7 +135,7 @@
 
 					<!-- 청구 내역 -->
 					<section>
-						<h3 class="mb-3 text-base font-semibold text-[var(--k-ink)]">
+						<h3 class="mb-3 k-t-headline text-[var(--k-ink)]">
 							{{ __("청구 내역") }}
 						</h3>
 
@@ -206,7 +206,7 @@
 		>
 			<template #actionSheet>
 				<div class="flex flex-col gap-4 p-6">
-					<h3 class="text-lg font-semibold text-[var(--k-ink)]">
+					<h3 class="k-t-title text-[var(--k-ink)]">
 						{{ __("플랜 변경 확인") }}
 					</h3>
 					<p class="text-sm text-[var(--k-ink-muted)]">

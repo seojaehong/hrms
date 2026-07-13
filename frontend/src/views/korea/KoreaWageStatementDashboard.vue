@@ -34,7 +34,7 @@
 				<div class="k-card p-4 flex flex-col gap-4">
 					<div>
 						<div class="k-eyebrow">WAGE STATEMENT</div>
-						<div class="mt-0.5 text-base font-bold tracking-tight text-[var(--k-ink)]">
+						<div class="mt-0.5 k-t-headline text-[var(--k-ink)]">
 							{{ selectedYear }}년 {{ selectedMonth }}월 임금명세서
 						</div>
 					</div>
@@ -203,7 +203,7 @@
 
 				<!-- 지난 12개월 목록 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('최근 12개월') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('최근 12개월') }}</div>
 					<div v-if="wageStatementHistory.loading" class="text-sm text-[var(--k-ink-faint)] py-4 text-center">
 						{{ __('불러오는 중...') }}
 					</div>

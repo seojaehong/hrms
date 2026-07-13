@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">WORK RULES REVIEW</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('취업규칙 점검 (§93·§94)') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('취업규칙 점검 (§93·§94)') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						근로기준법 제93조 필수기재 14개 항목의 커버리지를 점검하고, 제94조 변경 절차(의견청취/동의)를 확인합니다.
 					</p>
 				</div>
 
 				<!-- 필수항목 체크리스트 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§93 필수기재 14개 항목') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('§93 필수기재 14개 항목') }}</div>
 					<p class="text-xs text-[var(--k-ink-faint)]">{{ __('현재 취업규칙에 규정되어 있는 항목을 체크하세요.') }}</p>
 					<div v-if="listRequiredItems.loading && !items.length" class="text-sm text-[var(--k-ink-faint)] py-2">{{ __('불러오는 중...') }}</div>
 					<div class="flex flex-col gap-2">
@@ -58,7 +58,7 @@
 					</div>
 
 					<div v-if="coverage.missing.length" class="k-card p-4 flex flex-col gap-2">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('누락 항목') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('누락 항목') }}</div>
 						<ul class="flex flex-col gap-1">
 							<li v-for="m in coverage.missing" :key="m.ho" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
 								<span class="text-red-400 mr-1">{{ m.ho }}호</span>{{ m.label }}
@@ -74,7 +74,7 @@
 
 				<!-- 변경 절차 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§94 변경 절차 안내') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('§94 변경 절차 안내') }}</div>
 					<label class="flex items-center gap-2 cursor-pointer">
 						<input type="checkbox" v-model="form.is_disadvantageous" />
 						<span class="text-sm text-[var(--k-ink)]">{{ __('불이익 변경입니다 (근로조건을 근로자에게 불리하게 변경)') }}</span>
@@ -110,7 +110,7 @@
 				<template v-if="procedure">
 					<div class="k-card p-4 flex flex-col gap-3">
 						<div class="flex items-center justify-between">
-							<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('진행 단계') }}</div>
+							<div class="k-t-headline text-[var(--k-ink)]">{{ __('진행 단계') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
 								:class="procedure.requirement === 'consent' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'"
@@ -133,7 +133,7 @@
 
 					<div class="k-card p-4 flex flex-col gap-2">
 						<div class="flex items-center justify-between">
-							<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('§93 신고의무') }}</div>
+							<div class="k-t-headline text-[var(--k-ink)]">{{ __('§93 신고의무') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
 								:class="procedure.filing_obligation.required ? 'bg-red-100 text-red-700' : 'bg-[var(--k-hairline)] text-[var(--k-ink-muted)]'"

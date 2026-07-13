@@ -5,8 +5,8 @@
 				<!-- 히어로 — pink 색블록 -->
 				<div class="k-block k-block--cream">
 					<div class="k-eyebrow">COMPLIANCE</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('컴플라이언스 진단') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('컴플라이언스 진단') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						{{ employee.data?.company || "-" }} · {{ employee.data?.branch || "전사" }}
 					</p>
 				</div>
@@ -223,7 +223,7 @@
 				@click.self="showDiagnosisConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">전체 진단 실행</div>
+					<div class="k-t-headline text-[var(--k-ink)]">전체 진단 실행</div>
 					<div class="text-sm text-[var(--k-ink-muted)] leading-relaxed">
 						회사 전체 컴플라이언스 진단을 실행합니다.<br />
 						모든 직원의 근무·급여·연차 데이터를 분석합니다. 계속하시겠습니까?
@@ -255,7 +255,7 @@
 				@click.self="showActionPlanConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">개선 액션 플랜 생성</div>
+					<div class="k-t-headline text-[var(--k-ink)]">개선 액션 플랜 생성</div>
 					<div class="text-sm text-[var(--k-ink-muted)] leading-relaxed">
 						현재 진단 결과를 기반으로 개선 액션 플랜을 생성합니다.<br />
 						생성된 플랜은 human-review 대상이며 즉시 실행되지 않습니다.

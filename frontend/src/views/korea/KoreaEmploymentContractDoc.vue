@@ -5,15 +5,15 @@
 				<!-- 히어로 -->
 				<div class="pt-1">
 					<div class="k-eyebrow">EMPLOYMENT CONTRACT</div>
-					<div class="mt-1 text-xl font-bold tracking-tight text-[var(--k-ink)]">{{ __('근로계약서 작성 (§17)') }}</div>
-					<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+					<div class="mt-1 k-t-display text-[var(--k-ink)]">{{ __('근로계약서 작성 (§17)') }}</div>
+					<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 						근로기준법 제17조 필수기재사항을 빠짐없이 입력하고, 누락 항목을 확인한 뒤 서면 교부용 초안을 생성합니다.
 					</p>
 				</div>
 
 				<!-- 회사 정보 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('사업주(회사) 정보') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('사업주(회사) 정보') }}</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('사업체명') }}</label>
@@ -42,7 +42,7 @@
 
 				<!-- 근로자 정보 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('근로자 정보') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('근로자 정보') }}</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
 							<label class="k-label">{{ __('근로자 이름') }}</label>
@@ -65,7 +65,7 @@
 
 				<!-- 근무 조건 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('근무 조건') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('근무 조건') }}</div>
 					<div class="flex flex-col gap-1">
 						<label class="k-label">{{ __('근무장소') }}</label>
 						<input type="text" v-model="form.workplace" class="k-input" />
@@ -126,7 +126,7 @@
 
 				<!-- 주간 근무 스케줄 (선택) — 월 연장시간 자동계산 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('주간 근무 스케줄 (선택)') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('주간 근무 스케줄 (선택)') }}</div>
 					<p class="text-xs text-[var(--k-ink-muted)]">
 						요일별 시업·종업·휴게를 입력하면 주 소정근로시간(최대 40h)과 월 연장시간(주 연장 × 4.345)을 자동 산출합니다 — 포괄임금 설계용.
 					</p>
@@ -145,7 +145,7 @@
 
 				<!-- 임금 구성항목 -->
 				<div class="k-card p-4 flex flex-col gap-3">
-					<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('임금 구성항목') }}</div>
+					<div class="k-t-headline text-[var(--k-ink)]">{{ __('임금 구성항목') }}</div>
 					<div v-for="(item, idx) in form.wage_components" :key="idx" class="flex gap-2 items-center">
 						<input type="text" v-model="item.component" :placeholder="__('예: 기본급')" class="k-input flex-1" />
 						<input type="number" v-model.number="item.amount" :placeholder="__('금액')" class="k-input k-numeric w-32" />
@@ -234,7 +234,7 @@
 					</div>
 
 					<div v-if="contract.schedule_summary" class="k-card p-4 flex flex-col gap-2">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('스케줄 산출 (포괄임금 설계용)') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('스케줄 산출 (포괄임금 설계용)') }}</div>
 						<div class="flex justify-between text-sm">
 							<span class="text-[var(--k-ink-muted)]">{{ __('주 소정근로시간') }}</span>
 							<span class="k-numeric font-semibold">{{ contract.schedule_summary.weekly_scheduled_hours }}h</span>
@@ -261,7 +261,7 @@
 
 					<!-- 마크다운 미리보기 -->
 					<div class="k-card p-4 flex flex-col gap-3">
-						<div class="text-base font-bold tracking-tight text-[var(--k-ink)]">{{ __('계약서 초안 미리보기') }}</div>
+						<div class="k-t-headline text-[var(--k-ink)]">{{ __('계약서 초안 미리보기') }}</div>
 						<button
 							@click="generateMarkdown"
 							:disabled="renderContractMarkdown.loading"

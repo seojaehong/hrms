@@ -8,7 +8,7 @@
 					<div class="flex items-start justify-between gap-3">
 						<div>
 							<p class="k-eyebrow">TIME INPUT</p>
-							<h1 class="mt-1 text-2xl font-bold tracking-tight text-[var(--k-ink)]">{{ __("근무시간 제출") }}</h1>
+							<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("근무시간 제출") }}</h1>
 							<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">
 								{{ __("초과·야간·휴일·파트 시간을 직접 입력해 채팅 전달 누락을 막습니다.") }}
 							</p>
@@ -120,8 +120,8 @@
 					@click.self="showSubmitDialog = false"
 				>
 					<div class="w-full max-w-sm rounded-2xl bg-[var(--k-card)] p-6">
-						<h3 class="text-base font-bold text-[var(--k-ink)]">{{ __("근무시간 제출 확인") }}</h3>
-						<p class="mt-2 text-sm text-[var(--k-ink-muted)]">
+						<h3 class="k-t-headline text-[var(--k-ink)]">{{ __("근무시간 제출 확인") }}</h3>
+						<p class="mt-2 k-t-body text-[var(--k-ink-muted)]">
 							{{ periodLabel }} {{ __("근무시간을 제출합니다.") }}
 						</p>
 						<div class="mt-4 rounded-xl bg-red-100 p-3 text-xs font-semibold text-red-700">

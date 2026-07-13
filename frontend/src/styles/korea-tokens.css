@@ -297,6 +297,60 @@
     --ion-tab-bar-background-focused: #252320;
 }
 
+/* ── 다크 파스텔 블록 = B안 서피스 카드 + 컬러 시그널 (사용자 확정 2026-07-13).
+   라이트는 파스텔 포스터(정체성) 유지 — 다크에서만 카드 서피스 + 상단 3px 컬러바 + 아이브로우 도트. ── */
+:root[data-theme="dark"] {
+    --k-signal-lime: #a3c96a;
+    --k-signal-lilac: #b8a5f0;
+    --k-signal-cream: #d9c37e;
+    --k-signal-mint: #7fc98f;
+    --k-signal-pink: #e39c9c;
+    --k-signal-coral: #e8a888;
+}
+:root[data-theme="dark"] .k-block--lime,
+:root[data-theme="dark"] .k-block--lilac,
+:root[data-theme="dark"] .k-block--cream,
+:root[data-theme="dark"] .k-block--mint,
+:root[data-theme="dark"] .k-block--pink,
+:root[data-theme="dark"] .k-block--coral {
+    background: var(--k-card);
+    border: 1px solid var(--k-hairline);
+    position: relative;
+    overflow: hidden;
+}
+:root[data-theme="dark"] .k-block--lime::before,
+:root[data-theme="dark"] .k-block--lilac::before,
+:root[data-theme="dark"] .k-block--cream::before,
+:root[data-theme="dark"] .k-block--mint::before,
+:root[data-theme="dark"] .k-block--pink::before,
+:root[data-theme="dark"] .k-block--coral::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--k-signal);
+}
+:root[data-theme="dark"] .k-block--lime   { --k-signal: var(--k-signal-lime); }
+:root[data-theme="dark"] .k-block--lilac  { --k-signal: var(--k-signal-lilac); }
+:root[data-theme="dark"] .k-block--cream  { --k-signal: var(--k-signal-cream); }
+:root[data-theme="dark"] .k-block--mint   { --k-signal: var(--k-signal-mint); }
+:root[data-theme="dark"] .k-block--pink   { --k-signal: var(--k-signal-pink); }
+:root[data-theme="dark"] .k-block--coral  { --k-signal: var(--k-signal-coral); }
+:root[data-theme="dark"] .k-block--lime .k-eyebrow::before,
+:root[data-theme="dark"] .k-block--lilac .k-eyebrow::before,
+:root[data-theme="dark"] .k-block--cream .k-eyebrow::before,
+:root[data-theme="dark"] .k-block--mint .k-eyebrow::before,
+:root[data-theme="dark"] .k-block--pink .k-eyebrow::before,
+:root[data-theme="dark"] .k-block--coral .k-eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 8px;
+    background: var(--k-signal);
+    vertical-align: 1px;
+}
+
 /* ── 다크 v1 브리지 쉼 — 컴포넌트 전반의 Tailwind gray 하드코딩을 다크에서만 토큰으로 리매핑.
    실앱 QA(2026-07-13)로 검증. 장기적으로는 components/ 감사 확대 후 개별 토큰화로 대체·제거. ── */
 :root[data-theme="dark"] .text-gray-900,

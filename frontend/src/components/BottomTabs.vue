@@ -28,7 +28,7 @@ import { IonTabBar, IonTabButton, IonLabel } from "@ionic/vue"
 
 import HomeIcon from "@/components/icons/HomeIcon.vue"
 import LeaveIcon from "@/components/icons/LeaveIcon.vue"
-import ExpenseIcon from "@/components/icons/ExpenseIcon.vue"
+import RequestIcon from "@/components/icons/RequestIcon.vue"
 import SalaryIcon from "@/components/icons/SalaryIcon.vue"
 import AttendanceIcon from "@/components/icons/AttendanceIcon.vue"
 import { inject } from "vue"
@@ -54,10 +54,11 @@ const tabItems = [
 		title: __("연차"),
 		route: "/dashboard/korea-annual-leave",
 	},
+	// 비용은 홈 더보기(경비 청구·선급금)로 이동 — 사업주 멘탈모델상 요청(결재)이 1차 탭 (2026-07-13)
 	{
-		icon: ExpenseIcon,
-		title: __("비용"),
-		route: "/dashboard/expense-claims",
+		icon: RequestIcon,
+		title: __("요청"),
+		route: "/dashboard/korea-approval-inbox",
 	},
 	{
 		icon: SalaryIcon,

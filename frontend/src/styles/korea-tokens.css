@@ -353,6 +353,36 @@
 /* 같은 행의 두 번째 아이브로우(블록 번호 01 등)에는 도트 생략 */
 :root[data-theme="dark"] .k-block .k-eyebrow ~ .k-eyebrow::before { content: none; }
 
+/* 다크 폼 요소 통일 — UA 흰 배경 + 밝은 잉크 조합(판독 불가) 방지. 실앱 QA 2026-07-13 */
+:root[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+    background-color: var(--k-surface-3);
+    color: var(--k-ink);
+    border-color: var(--k-hairline);
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+    color: var(--k-ink-faint);
+}
+
+/* 다크 — 파스텔 블록 내부 흰 알파 타일(bg-white/NN)을 은은한 프로스트로 반전 (감사 C-2, 17곳) */
+:root[data-theme="dark"] [class*="bg-white/"] {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+/* 다크 — 저알파 검정 인디케이터(범례·스텝 도트)를 잉크 알파로 반전 (감사 C-4).
+   bg-black/40(모달 오버레이·솔리드 CTA)은 의도적으로 제외. */
+:root[data-theme="dark"] .bg-black\/15,
+:root[data-theme="dark"] .bg-black\/20 {
+    background-color: rgba(236, 233, 228, 0.18);
+}
+:root[data-theme="dark"] .bg-black\/35 {
+    background-color: rgba(236, 233, 228, 0.38);
+}
+:root[data-theme="dark"] .before\:bg-black::before {
+    background-color: var(--k-ink);
+}
+
 /* ── 다크 v1 브리지 쉼 — 컴포넌트 전반의 Tailwind gray 하드코딩을 다크에서만 토큰으로 리매핑.
    실앱 QA(2026-07-13)로 검증. 장기적으로는 components/ 감사 확대 후 개별 토큰화로 대체·제거. ── */
 :root[data-theme="dark"] .text-gray-900,

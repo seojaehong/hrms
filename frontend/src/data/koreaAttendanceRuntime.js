@@ -382,8 +382,13 @@ export function assertKoreaAttendanceSummary(data) {
  * @returns {Object|null}
  */
 export function extractEmployeeSummary(previewData, employee) {
-	const rows = previewData?.snapshot?.summary_by_employee || []
-	return rows.find((row) => row.employee === employee) || rows[0] || null
+	const raw = previewData?.snapshot?.summary_by_employee
+	if (!raw) return null
+	// 서버가 배열 또는 {employee: row} 딕셔너리 둘 다 반환할 수 있다 (2026-07-13 라이브 TypeError: t.find is not a function)
+	if (Array.isArray(raw)) {
+		return raw.find((row) => row.employee === employee) || raw[0] || null
+	}
+	return raw[employee] || Object.values(raw)[0] || null
 }
 
 /**

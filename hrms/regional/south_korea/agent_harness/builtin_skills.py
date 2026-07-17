@@ -5,13 +5,14 @@
 순수 데이터(dict)이며, step["tool"] 이름은 tool_registry에 등록된 도구명과 매칭된다.
 빌트인 스킬은 조회/대사(read-only) 성격이라 requires_approval=False다(확정 행위 아님).
 
-정의된 스킬:
-- hourly_closing_prep : 시급 마감 준비. list_hourly_payroll_proposals 도구로 제안을
-  조회하고 output_summary_template로 요약(1 step).
-- insurance_reconcile : 4대보험 고지 대사. reconcile_contributions로 대사한 뒤
-  summarize_reconciliation_ko로 사람용 요약을 만든다(2 step, 둘 다 도구).
-- hr_freeform_qa      : 자유 질의. 고정 steps 없이(freeform) 자연어 HR 질문에 답한다.
-  에이전트가 조회 도구를 필요시에만 호출한다(steps 강제 아님).
+정의된 스킬(모두 freeform — 스텝 간 데이터 흐름이 필요해 고정 steps 대신 에이전트가
+실 MCP 도구를 오케스트레이션):
+- hourly_closing_prep : 시급 마감 준비. get_tenant_records→get_attendance_closing_period
+  →summarize_attendance→estimate_hourly_pay로 시급직원 마감을 요약한다.
+- insurance_reconcile : 4대보험 고지 대사. build_statutory_payroll로 computed 산출 후
+  args의 공단 고지(notified)와 check_insurance_reconciliation으로 1원 단위 대조한다.
+- hr_freeform_qa      : 자유 질의. 자연어 HR 질문에 실 도구(get_tenant_records·
+  calculate_annual_leave·estimate_hourly_pay 등)를 필요시에만 호출해 답한다.
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """

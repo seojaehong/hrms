@@ -76,10 +76,30 @@ class TestSkillDefinitions(unittest.TestCase):
 		for defn in get_builtin_skills():
 			self.assertFalse(defn["requires_approval"])
 
-	def test_insurance_reconcile_is_two_step(self):
+	def test_insurance_reconcile_is_freeform(self):
+		# 스텝 간 데이터 흐름(computed→대사)이 필요해 freeform으로 전환됨.
 		defn = {s["name"]: s for s in get_builtin_skills()}["insurance_reconcile"]
-		tools = [step["tool"] for step in defn["steps"]]
-		self.assertEqual(tools, ["reconcile_contributions", "summarize_reconciliation_ko"])
+		self.assertEqual(defn["steps"], [])
+		self.assertTrue(defn["freeform"])
+		# 실제 MCP 도구를 참조해야 함.
+		self.assertIn("check_insurance_reconciliation", defn["description"])
+
+	def test_hourly_closing_prep_is_freeform(self):
+		defn = {s["name"]: s for s in get_builtin_skills()}["hourly_closing_prep"]
+		self.assertEqual(defn["steps"], [])
+		self.assertTrue(defn["freeform"])
+		self.assertIn("get_tenant_records", defn["description"])
+
+	def test_no_phantom_tool_names(self):
+		# 실재하지 않는 레거시 도구명이 남으면 에이전트가 fail-closed로 막힌다(회귀 가드).
+		phantom = (
+			"list_hourly_payroll_proposals",
+			"reconcile_contributions",
+			"summarize_reconciliation_ko",
+		)
+		blob = repr(get_builtin_skills())
+		for name in phantom:
+			self.assertNotIn(name, blob)
 
 	def test_get_builtin_skills_returns_copies(self):
 		# 반환값을 변형해도 다음 호출 원본이 오염되지 않아야 함
@@ -111,74 +131,73 @@ class TestRegisterBuiltinSkills(unittest.TestCase):
 
 
 class TestE2EHourlyClosingPrep(unittest.TestCase):
-	def test_prep_summary_reflects_two_proposals(self):
+	def test_freeform_prep_drives_real_tool(self):
+		# freeform 스킬: 에이전트가 실 도구(get_tenant_records)를 호출하고,
+		# agent_loop이 도구 결과를 대화에 되먹여야 최종 수치가 맞는다.
 		skills = SkillRegistry()
 		register_builtin_skills(skills)
 		defn = skills.get("hourly_closing_prep")
+		self.assertTrue(defn["freeform"])
 
 		reg = ToolRegistry()
-		# fake list_hourly_payroll_proposals: 제안 2명 반환
 		reg.register_tool(
-			"list_hourly_payroll_proposals",
-			lambda **kw: {"proposals": [{"emp": "A"}, {"emp": "B"}]},
+			"get_tenant_records",
+			lambda **kw: {"records": [{"emp": "A"}, {"emp": "B"}]},
 			{},
 			read_only=True,
 		)
 
 		def provider(convo):
-			# 아직 도구 결과가 없으면 스킬 step대로 도구 호출
 			results = _tool_results(convo)
-			if "list_hourly_payroll_proposals" not in results:
-				step = defn["steps"][0]
-				return {"tool_call": {"name": step["tool"], "args": step["args"]}}
-			# 도구 결과가 대화에 반영됨 → 실제 수치로 요약 포맷
-			count = len(results["list_hourly_payroll_proposals"]["proposals"])
-			return {"text": defn["output_summary_template"].format(proposal_count=count)}
+			if "get_tenant_records" not in results:
+				return {"tool_call": {"name": "get_tenant_records", "args": {}}}
+			count = len(results["get_tenant_records"]["records"])
+			return {"text": f"시급 마감 검토 대상 {count}명"}
 
 		out = run_agent_loop(provider, [{"role": "user", "text": "시급 마감 준비"}], reg)
 
 		self.assertEqual(out["status"], "completed")
-		self.assertEqual([c["tool"] for c in out["tool_calls"]], ["list_hourly_payroll_proposals"])
-		self.assertIn("제안 2명", out["final_text"])
+		self.assertEqual([c["tool"] for c in out["tool_calls"]], ["get_tenant_records"])
+		self.assertIn("2명", out["final_text"])
 
 
 class TestE2EInsuranceReconcile(unittest.TestCase):
-	def test_reconcile_summary_reflects_one_diff(self):
+	def test_freeform_reconcile_drives_real_tool(self):
+		# freeform 스킬: 에이전트가 실 도구(check_insurance_reconciliation)를 호출하고,
+		# 그 결과를 대화에 되먹여 최종 요약을 만든다.
 		skills = SkillRegistry()
 		register_builtin_skills(skills)
 		defn = skills.get("insurance_reconcile")
+		self.assertTrue(defn["freeform"])
 
 		reg = ToolRegistry()
-		# fake reconcile_contributions: diff 1건 반환
-		recon_result = {"ok": False, "match_count": 1, "diffs": [{"emp": "A", "delta": 1}]}
-		reg.register_tool("reconcile_contributions", lambda **kw: recon_result, {}, read_only=True)
-		# fake summarize_reconciliation_ko: 대사 결과 dict를 받아 사람용 요약 문자열
+		recon_result = {"ok": False, "diffs": [{"emp": "A", "delta": 1}]}
 		reg.register_tool(
-			"summarize_reconciliation_ko",
-			lambda **kw: f"고지 대사 불일치 — diff {len(recon_result['diffs'])}건",
+			"check_insurance_reconciliation",
+			lambda **kw: recon_result,
 			{},
 			read_only=True,
 		)
 
 		def provider(convo):
 			results = _tool_results(convo)
-			# 스킬 steps를 순서대로 소진
-			for step in defn["steps"]:
-				if step["tool"] not in results:
-					return {"tool_call": {"name": step["tool"], "args": step["args"]}}
-			# 두 도구 결과 모두 대화에 반영됨 → 수치로 최종 요약
-			diff_count = len(results["reconcile_contributions"]["diffs"])
-			return {"text": defn["output_summary_template"].format(diff_count=diff_count)}
+			if "check_insurance_reconciliation" not in results:
+				return {
+					"tool_call": {
+						"name": "check_insurance_reconciliation",
+						"args": {"computed": [], "notified": []},
+					}
+				}
+			diff_count = len(results["check_insurance_reconciliation"]["diffs"])
+			return {"text": f"고지 대사 불일치 {diff_count}건"}
 
 		out = run_agent_loop(provider, [{"role": "user", "text": "4대보험 대사"}], reg)
 
 		self.assertEqual(out["status"], "completed")
 		self.assertEqual(
 			[c["tool"] for c in out["tool_calls"]],
-			["reconcile_contributions", "summarize_reconciliation_ko"],
+			["check_insurance_reconciliation"],
 		)
-		# summarize 도구 결과가 대화에 반영됐는지도 확인
-		self.assertIn("diff 1건", _tool_results(out["messages"])["summarize_reconciliation_ko"])
 		self.assertIn("불일치 1건", out["final_text"])
 
 

@@ -107,15 +107,17 @@ class TestUnknownSkill(unittest.TestCase):
 
 
 class TestNoTools(unittest.TestCase):
-	def test_provider_injected_but_no_tools(self):
-		# provider가 주입돼도 tool_registry 없으면 실행하지 않는다(도구 바인딩 필요).
+	def test_freeform_skill_binds_calc_fallback_and_runs(self):
+		# freeform 스킬은 고정 required 도구가 없어(steps=[]) calc 폴백 도구가
+		# 바인딩되고 실행된다. 데이터 결측 시 안전은 no_tools 하드게이트가 아니라
+		# 에이전트 fail-close(근거 없는 값 생성 거부)가 담당한다.
 		mod = load_api(fake_frappe=None)
 
 		def provider(convo):
-			return {"text": "should not run"}
+			return {"text": "done"}
 
 		result = mod.run_agent_skill("hourly_closing_prep", provider=provider)
-		self.assertEqual(result["status"], "no_tools")
+		self.assertEqual(result["status"], "completed")
 
 
 class TestInjectedRun(unittest.TestCase):
@@ -452,16 +454,17 @@ class TestBuildCalcToolRegistry(unittest.TestCase):
 		)
 		self.assertEqual(result["status"], "completed")
 
-	def test_hourly_closing_prep_still_no_tools_when_frappe_tool_unmet(self):
-		"""hourly_closing_prep은 frappe 전용 list_hourly_payroll_proposals가 필요해
-		calc 폴백으로 충족되지 않으므로 여전히 no_tools여야 한다(기존 의미 불변)."""
+	def test_hourly_closing_prep_freeform_binds_calc_and_runs(self):
+		"""hourly_closing_prep은 freeform으로 전환됨(실 MCP 도구를 에이전트가
+		오케스트레이션). 고정 required 도구가 없어 calc 폴백이 바인딩되고 실행되며,
+		데이터 결측 시엔 에이전트가 fail-close로 근거 없는 값을 만들지 않는다."""
 		mod = load_api(fake_frappe=None)
 
 		def provider(convo):
-			return {"text": "should not run"}
+			return {"text": "done"}
 
 		result = mod.run_agent_skill("hourly_closing_prep", provider=provider)
-		self.assertEqual(result["status"], "no_tools")
+		self.assertEqual(result["status"], "completed")
 
 
 class TestResolveProviderToolSpecs(unittest.TestCase):

@@ -41,3 +41,9 @@ docker/frappe.env
 # 로컬 작업용 계획·보고서 — 고객사명 등 민감정보 포함 (public repo 노출 금지)
 .superpowers/
 docs/superpowers/
+
+ralph.sh
+ralph-prompt.md
+prd.json
+progress.txt
+archive/

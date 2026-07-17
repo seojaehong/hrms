@@ -19,6 +19,8 @@
   build_statutory_payroll로 법정공제를 산출한다.
 - payroll_build       : 급여계산·명세서검산. get_salary_component_presets로 급여항목
   구성을 확인하고 build_statutory_payroll로 법정공제를 계산해 명세서를 검산한다.
+- insurance_filing    : 4대보험 신고. get_tenant_records로 입·퇴사자를 조회하고
+  prepare_insurance_filing으로 취득/상실 신고 대상 명단을 뽑는다(제출은 담당자 확인 후).
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """
@@ -130,6 +132,24 @@ PAYROLL_BUILD = {
 }
 
 
+# 4대보험 신고 — 입·퇴사자 조회→취득/상실 신고 대상 명단 추출(freeform).
+# 명단 추출까지만 하고 제출은 하지 않는다(자동 제출 금지). 조회/추출 전용이라 승인 불필요.
+INSURANCE_FILING = {
+	"name": "insurance_filing",
+	"description": (
+		"4대보험 취득·상실 신고 준비. get_tenant_records로 대상 기간의 입사자·퇴사자와 "
+		"기초 정보를 조회하고, prepare_insurance_filing으로 취득/상실 신고 대상 명단을 "
+		"뽑아 한국어로 요약한다. 명단은 담당자가 확인한 뒤에만 신고서로 만들며, "
+		"에이전트가 공단에 자동 제출하지 않는다. 입사일·퇴사일 등 확인되지 않은 기초 "
+		"데이터는 지어내지 않고 무엇이 필요한지 안내한다."
+	),
+	"steps": [],
+	"freeform": True,
+	"requires_approval": False,
+	"output_summary_template": "",
+}
+
+
 def get_builtin_skills() -> list[dict]:
 	"""빌트인 스킬 정의 목록을 반환한다(호출자가 변형해도 원본 불변하도록 복사)."""
 	import copy
@@ -141,6 +161,7 @@ def get_builtin_skills() -> list[dict]:
 		copy.deepcopy(LEAVE_MANAGE),
 		copy.deepcopy(SEVERANCE_SETTLE),
 		copy.deepcopy(PAYROLL_BUILD),
+		copy.deepcopy(INSURANCE_FILING),
 	]
 
 

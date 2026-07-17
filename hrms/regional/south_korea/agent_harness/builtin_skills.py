@@ -15,6 +15,8 @@
   calculate_annual_leave·estimate_hourly_pay 등)를 필요시에만 호출해 답한다.
 - leave_manage        : 연차 관리. get_tenant_records로 기초 정보를 조회하고
   calculate_annual_leave로 직원별 연차 발생일수를 산정한다.
+- severance_settle    : 퇴직 정산. calculate_severance로 퇴직금을 산정하고
+  build_statutory_payroll로 법정공제를 산출한다.
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """
@@ -91,6 +93,23 @@ LEAVE_MANAGE = {
 }
 
 
+# 퇴직 정산 — 퇴직금 산정→법정공제 산출(freeform).
+# 평균임금·재직기간 등 확인 안 된 값은 지어내지 않는다. 조회/계산 전용이라 승인 불필요.
+SEVERANCE_SETTLE = {
+	"name": "severance_settle",
+	"description": (
+		"퇴직 정산. calculate_severance로 재직기간·평균임금 기준 퇴직금을 산정하고, "
+		"build_statutory_payroll로 해당 지급액의 법정공제를 산출해 한국어로 요약한다. "
+		"입·퇴사일이나 평균임금 산정 기초가 불명확하면 확인 필요 항목으로 노출하고, "
+		"확인되지 않은 값은 지어내지 않는다."
+	),
+	"steps": [],
+	"freeform": True,
+	"requires_approval": False,
+	"output_summary_template": "",
+}
+
+
 def get_builtin_skills() -> list[dict]:
 	"""빌트인 스킬 정의 목록을 반환한다(호출자가 변형해도 원본 불변하도록 복사)."""
 	import copy
@@ -100,6 +119,7 @@ def get_builtin_skills() -> list[dict]:
 		copy.deepcopy(INSURANCE_RECONCILE),
 		copy.deepcopy(HR_FREEFORM_QA),
 		copy.deepcopy(LEAVE_MANAGE),
+		copy.deepcopy(SEVERANCE_SETTLE),
 	]
 
 

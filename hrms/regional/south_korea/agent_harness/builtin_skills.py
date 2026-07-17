@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""빌트인 스킬 정의 3종 — framework-free 코어.
+"""빌트인 스킬 정의 — framework-free 코어.
 
 실무 스킬을 US-001 스킬 스키마(skill_registry) 그대로 정의한다. 스킬 정의는
 순수 데이터(dict)이며, step["tool"] 이름은 tool_registry에 등록된 도구명과 매칭된다.
@@ -13,6 +13,8 @@
   args의 공단 고지(notified)와 check_insurance_reconciliation으로 1원 단위 대조한다.
 - hr_freeform_qa      : 자유 질의. 자연어 HR 질문에 실 도구(get_tenant_records·
   calculate_annual_leave·estimate_hourly_pay 등)를 필요시에만 호출해 답한다.
+- leave_manage        : 연차 관리. get_tenant_records로 기초 정보를 조회하고
+  calculate_annual_leave로 직원별 연차 발생일수를 산정한다.
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """
@@ -72,6 +74,23 @@ HR_FREEFORM_QA = {
 }
 
 
+# 연차 관리 — 직원 명단 조회→직원별 연차 발생일수 산정(freeform).
+# 입사일 등 확인 안 된 값은 지어내지 않는다. 조회/계산 전용이라 승인 불필요.
+LEAVE_MANAGE = {
+	"name": "leave_manage",
+	"description": (
+		"직원 연차 관리. get_tenant_records로 대상 직원(Employee)의 입사일 등 기초 "
+		"정보를 조회하고, calculate_annual_leave로 직원별 연차 발생일수를 산정해 "
+		"한국어로 요약한다. 입사일이 없거나 산정 기준이 불명확한 직원은 명단으로 "
+		"노출하고, 확인되지 않은 값은 지어내지 않는다."
+	),
+	"steps": [],
+	"freeform": True,
+	"requires_approval": False,
+	"output_summary_template": "",
+}
+
+
 def get_builtin_skills() -> list[dict]:
 	"""빌트인 스킬 정의 목록을 반환한다(호출자가 변형해도 원본 불변하도록 복사)."""
 	import copy
@@ -80,6 +99,7 @@ def get_builtin_skills() -> list[dict]:
 		copy.deepcopy(HOURLY_CLOSING_PREP),
 		copy.deepcopy(INSURANCE_RECONCILE),
 		copy.deepcopy(HR_FREEFORM_QA),
+		copy.deepcopy(LEAVE_MANAGE),
 	]
 
 

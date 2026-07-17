@@ -34,7 +34,7 @@ SIGNUP_QUEUE = os.environ.get("KCHRMS_SIGNUP_QUEUE", "")
 
 # 브리지 허용 DocType (읽기 전용). PII 최소화: 필드도 화이트리스트.
 BRIDGE_DOCTYPES: dict[str, list[str]] = {
-    "Employee": ["name", "employee_name", "company", "date_of_joining", "relieving_date", "status", "department", "designation", "employment_type", "employment_type_kr"],
+    "Employee": ["name", "employee_name", "company", "date_of_joining", "relieving_date", "status", "department", "designation", "employment_type", "employment_type_kr", "custom_hourly_rate", "custom_monthly_hours"],
     "Attendance": ["name", "employee", "attendance_date", "status", "working_hours"],
     "Leave Application": ["name", "employee", "leave_type", "from_date", "to_date", "status"],
     "Holiday List": ["name", "from_date", "to_date", "total_holidays"],

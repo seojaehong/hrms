@@ -34,11 +34,14 @@ from __future__ import annotations
 HOURLY_CLOSING_PREP = {
 	"name": "hourly_closing_prep",
 	"description": (
-		"시급 근로자 월 마감 준비. 실제 도구로 수행한다: get_tenant_records로 시급제 "
-		"직원(Employee) 명단을 조회하고, get_attendance_closing_period로 대상 월 마감 "
-		"기간을 확인한 뒤, summarize_attendance로 직원별 근태를 마감 요약하고, "
-		"estimate_hourly_pay로 개별 월 gross를 산정해 검토 대상을 요약한다. 시급 미설정·"
-		"근태 결측 직원은 명단으로 노출하고, 확인되지 않은 값은 지어내지 않는다."
+		"시급 근로자 월 마감 준비. get_tenant_records로 employment_type=Part-time 직원과 "
+		"custom_hourly_rate(주휴포함 시급)·custom_monthly_hours(월 확정근무시간)를 조회한다. "
+		"이 테넌트는 주휴포함 시급 방식이므로 gross = custom_monthly_hours × custom_hourly_rate "
+		"로 직원별 월 급여를 산정해 검토 대상을 요약한다(시급·시간이 모두 있는 직원만). "
+		"일별 근태(Attendance)가 있으면 get_attendance_closing_period·summarize_attendance로 "
+		"실근무를 대조하고, 법정 주휴·가산 분해가 필요하면 estimate_hourly_pay(주휴 별도 가산 — "
+		"주휴포함 시급과 결과가 다를 수 있음 주의)를 쓴다. 시급/시간 미설정 직원은 명단으로 "
+		"노출하고, 확인되지 않은 값은 지어내지 않는다."
 	),
 	"steps": [],
 	"freeform": True,

@@ -21,6 +21,8 @@
   구성을 확인하고 build_statutory_payroll로 법정공제를 계산해 명세서를 검산한다.
 - insurance_filing    : 4대보험 신고. get_tenant_records로 입·퇴사자를 조회하고
   prepare_insurance_filing으로 취득/상실 신고 대상 명단을 뽑는다(제출은 담당자 확인 후).
+- compliance_check    : 컴플라이언스 진단. run_compliance_diagnosis로 노동법 준수 여부를
+  점검하고 위반·미비 항목을 요약한다.
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """
@@ -150,6 +152,20 @@ INSURANCE_FILING = {
 }
 
 
+COMPLIANCE_CHECK = {
+	"name": "compliance_check",
+	"description": (
+		"노동법 컴플라이언스 진단. run_compliance_diagnosis로 사업장의 법령 준수 여부를 "
+		"결정적으로 점검하고, 위반·미비 항목과 근거를 한국어로 요약한다. 진단 결과에 "
+		"없는 위반 사항이나 법령 근거는 지어내지 않는다."
+	),
+	"steps": [],
+	"freeform": True,
+	"requires_approval": False,
+	"output_summary_template": "",
+}
+
+
 def get_builtin_skills() -> list[dict]:
 	"""빌트인 스킬 정의 목록을 반환한다(호출자가 변형해도 원본 불변하도록 복사)."""
 	import copy
@@ -162,6 +178,7 @@ def get_builtin_skills() -> list[dict]:
 		copy.deepcopy(SEVERANCE_SETTLE),
 		copy.deepcopy(PAYROLL_BUILD),
 		copy.deepcopy(INSURANCE_FILING),
+		copy.deepcopy(COMPLIANCE_CHECK),
 	]
 
 

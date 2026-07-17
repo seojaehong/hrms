@@ -52,12 +52,11 @@ def _tool_results(messages):
 
 
 class TestSkillDefinitions(unittest.TestCase):
-	def test_three_builtin_skills(self):
-		skills = get_builtin_skills()
-		names = [s["name"] for s in skills]
-		self.assertEqual(
-			names, ["hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"]
-		)
+	def test_core_builtin_skills_present(self):
+		# 스킬은 계속 추가되므로 정확일치 대신 핵심 3종 존재만 단언(additive-safe).
+		names = [s["name"] for s in get_builtin_skills()]
+		for name in ("hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"):
+			self.assertIn(name, names)
 
 	def test_freeform_qa_is_freeform_with_empty_steps(self):
 		# 자유 질의 스킬은 고정 steps 없이(freeform=True) validate를 통과해야 함.
@@ -111,9 +110,8 @@ class TestRegisterBuiltinSkills(unittest.TestCase):
 	def test_register_into_registry(self):
 		reg = SkillRegistry()
 		names = register_builtin_skills(reg)
-		self.assertEqual(
-			names, ["hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"]
-		)
+		for name in ("hourly_closing_prep", "insurance_reconcile", "hr_freeform_qa"):
+			self.assertIn(name, names)
 		self.assertTrue(reg.has("hourly_closing_prep"))
 		self.assertTrue(reg.has("insurance_reconcile"))
 		self.assertTrue(reg.has("hr_freeform_qa"))

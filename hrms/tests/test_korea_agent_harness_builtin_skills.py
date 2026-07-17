@@ -107,6 +107,15 @@ class TestSkillDefinitions(unittest.TestCase):
 		self.assertTrue(defn["freeform"])
 		self.assertIn("calculate_severance", defn["description"])
 
+	def test_payroll_build_is_freeform(self):
+		reg = SkillRegistry()
+		register_builtin_skills(reg)
+		self.assertTrue(reg.has("payroll_build"))
+		defn = reg.get("payroll_build")
+		self.assertEqual(defn["steps"], [])
+		self.assertTrue(defn["freeform"])
+		self.assertIn("build_statutory_payroll", defn["description"])
+
 	def test_no_phantom_tool_names(self):
 		# 실재하지 않는 레거시 도구명이 남으면 에이전트가 fail-closed로 막힌다(회귀 가드).
 		phantom = (

@@ -17,6 +17,8 @@
   calculate_annual_leave로 직원별 연차 발생일수를 산정한다.
 - severance_settle    : 퇴직 정산. calculate_severance로 퇴직금을 산정하고
   build_statutory_payroll로 법정공제를 산출한다.
+- payroll_build       : 급여계산·명세서검산. get_salary_component_presets로 급여항목
+  구성을 확인하고 build_statutory_payroll로 법정공제를 계산해 명세서를 검산한다.
 
 frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_skills.py` 직접 실행 검증.
 """
@@ -110,6 +112,24 @@ SEVERANCE_SETTLE = {
 }
 
 
+# 급여계산·명세서검산 — 급여항목 구성 확인→과세보수·요율로 법정공제 계산→명세서 검산(freeform).
+# 요율은 호출자가 명시한 값만 쓴다(요율을 지어내면 1원 단위로 틀린다). 계산/검산 전용이라 승인 불필요.
+PAYROLL_BUILD = {
+	"name": "payroll_build",
+	"description": (
+		"급여계산 및 명세서 검산. get_salary_component_presets로 급여항목(과세/비과세) "
+		"구성을 확인하고, build_statutory_payroll로 과세보수와 요율을 적용해 법정공제를 "
+		"계산한 뒤 명세서 금액과 1원 단위로 검산해 한국어로 요약한다. 요율은 호출자가 "
+		"명시한 값만 사용하며 지어내지 않는다. 요율이나 과세보수가 제공되지 않으면 "
+		"무엇이 필요한지 안내하고, 검산 불일치는 항목별로 노출한다."
+	),
+	"steps": [],
+	"freeform": True,
+	"requires_approval": False,
+	"output_summary_template": "",
+}
+
+
 def get_builtin_skills() -> list[dict]:
 	"""빌트인 스킬 정의 목록을 반환한다(호출자가 변형해도 원본 불변하도록 복사)."""
 	import copy
@@ -120,6 +140,7 @@ def get_builtin_skills() -> list[dict]:
 		copy.deepcopy(HR_FREEFORM_QA),
 		copy.deepcopy(LEAVE_MANAGE),
 		copy.deepcopy(SEVERANCE_SETTLE),
+		copy.deepcopy(PAYROLL_BUILD),
 	]
 
 

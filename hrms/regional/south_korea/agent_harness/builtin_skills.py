@@ -18,40 +18,51 @@ frappe 의존 없음 → `python3 hrms/tests/test_korea_agent_harness_builtin_sk
 from __future__ import annotations
 
 
-# 시급 마감 준비 — 제안 조회 후 요약(1 step). 조회 전용이라 승인 불필요.
+# 시급 마감 준비 — 실 도구로 시급직원 조회→근태 마감→gross 산정 후 요약(freeform).
+# 스텝 간 데이터 흐름이 필요해 고정 steps 대신 freeform으로 오케스트레이션. 조회/계산 전용이라 승인 불필요.
 HOURLY_CLOSING_PREP = {
 	"name": "hourly_closing_prep",
-	"description": "시급 근로자 월 마감 준비 — 급여 제안을 조회해 검토 대상을 요약한다.",
-	"steps": [
-		{"tool": "list_hourly_payroll_proposals", "args": {}},
-	],
+	"description": (
+		"시급 근로자 월 마감 준비. 실제 도구로 수행한다: get_tenant_records로 시급제 "
+		"직원(Employee) 명단을 조회하고, get_attendance_closing_period로 대상 월 마감 "
+		"기간을 확인한 뒤, summarize_attendance로 직원별 근태를 마감 요약하고, "
+		"estimate_hourly_pay로 개별 월 gross를 산정해 검토 대상을 요약한다. 시급 미설정·"
+		"근태 결측 직원은 명단으로 노출하고, 확인되지 않은 값은 지어내지 않는다."
+	),
+	"steps": [],
+	"freeform": True,
 	"requires_approval": False,
-	"output_summary_template": "시급 마감 준비 완료 — 제안 {proposal_count}명 검토 대상",
+	"output_summary_template": "",
 }
 
 
-# 4대보험 고지 대사 — 대사 후 사람용 요약(2 step). 대사(비교) 전용이라 승인 불필요.
+# 4대보험 고지 대사 — 우리 계산(computed) vs 공단 고지(notified) 대조(freeform).
+# 고지 데이터 없으면 지어내지 않고 필요사항 안내. 대사(비교) 전용이라 승인 불필요.
 INSURANCE_RECONCILE = {
 	"name": "insurance_reconcile",
-	"description": "4대보험 고지내역 대사 — 엔진 계산 vs 공단 고지를 1원 단위로 대사하고 요약한다.",
-	"steps": [
-		{"tool": "reconcile_contributions", "args": {}},
-		{"tool": "summarize_reconciliation_ko", "args": {}},
-	],
+	"description": (
+		"4대보험 고지내역 대사. build_statutory_payroll로 우리 계산(computed) 공제액을 "
+		"산출하고, args로 제공된 공단 고지내역(notified)과 check_insurance_reconciliation "
+		"으로 1원 단위 대조해 과다/과소·양방향 누락을 한국어로 요약한다. 공단 고지 "
+		"데이터가 제공되지 않으면 무엇이 필요한지 안내하고 임의 값을 지어내지 않는다."
+	),
+	"steps": [],
+	"freeform": True,
 	"requires_approval": False,
-	"output_summary_template": "4대보험 대사 완료 — 불일치 {diff_count}건",
+	"output_summary_template": "",
 }
 
 
-# 자유 질의 — 고정 steps 없이(freeform) 자연어 HR 질문에 답한다. 에이전트가
-# 조회 도구(list_hourly_payroll_proposals·reconcile_period_contributions)를 필요시에만
-# 호출해 근거와 함께 답변한다. 조회 전용이라 승인 불필요. steps 강제가 아니므로
-# 최종 답변은 output_summary_template가 아니라 에이전트 응답 text에서 나온다(빈 템플릿).
+# 자유 질의 — 고정 steps 없이(freeform) 자연어 HR 질문에 답한다. 에이전트가 실제
+# 조회/계산 도구(get_tenant_records·calculate_annual_leave·estimate_hourly_pay·
+# check_insurance_reconciliation 등)를 필요시에만 호출해 근거와 함께 답변한다. 조회 전용이라
+# 승인 불필요. steps 강제가 아니므로 최종 답변은 template가 아니라 에이전트 응답 text에서 나온다.
 HR_FREEFORM_QA = {
 	"name": "hr_freeform_qa",
 	"description": (
-		"사용자의 자연어 HR 질문에 도구(list_hourly_payroll_proposals·"
-		"reconcile_period_contributions)를 필요시에만 호출해 근거와 함께 답변한다."
+		"사용자의 자연어 HR 질문에 실제 도구(get_tenant_records·calculate_annual_leave·"
+		"estimate_hourly_pay·check_insurance_reconciliation 등)를 필요시에만 호출해 "
+		"근거와 함께 답변한다."
 	),
 	"steps": [],
 	"freeform": True,

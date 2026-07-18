@@ -200,7 +200,7 @@
 					<div class="k-block k-block--cream -mx-1">
 						<div class="k-eyebrow">NET PAY</div>
 						<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __('실지급액') }}</div>
-						<div class="k-display">{{ formatKRW(breakdown.net_pay) }}</div>
+						<div class="k-display k-settled">{{ formatKRW(breakdown.net_pay) }}</div>
 					</div>
 
 					<!-- 마크다운 미리보기 -->

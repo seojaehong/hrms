@@ -52,6 +52,12 @@ typography:
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: -0.01em
+  display-xl:                 # 홈/온보딩 히어로 전용 (2026-07-14 편입 — 유일한 800 허용처.
+    fontFamily: appSans       #  ⚠️ frappe-ui 프리셋은 text-3xl+ 유틸 미생성 → 반드시 .k-t-display-xl 사용)
+    fontSize: 40px            # 데스크톱 56px, 와이드 64px
+    fontWeight: 800
+    lineHeight: 1.04
+    letterSpacing: -0.03em
   display:
     fontFamily: appSans
     fontSize: 28px            # 데스크톱 40px
@@ -81,7 +87,7 @@ typography:
     fontSize: 14px
     fontWeight: 600
     lineHeight: 1.6
-    letterSpacing: 0
+    letterSpacing: -0.025em   # 전역 base 상속 (2026-07-14 구현 정합화)
   amount:
     fontFamily: appSans
     fontSize: 15px
@@ -107,7 +113,7 @@ typography:
     fontSize: 12px
     fontWeight: 500
     lineHeight: 1.4
-    letterSpacing: 0
+    letterSpacing: -0.025em   # 전역 base 상속 (2026-07-14 구현 정합화)
   eyebrow:
     fontFamily: appMono
     fontSize: 11px            # 데스크톱 13px

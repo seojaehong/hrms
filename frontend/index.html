@@ -15,21 +15,30 @@
 		<!-- DESIGN_TOKEN_THEME_COLOR: #0066ff — 2026-07 sprint에서 교체 가능 -->
 		<meta name="theme-color" content="#0066ff" />
 
-		<!-- Pretendard Variable (dynamic subset — 한글은 쓰인 글자 블록만 로드) -->
+		<!-- Pretendard Variable(dynamic subset) + JetBrains Mono — 렌더블로킹 방지 위해 비동기 로드
+		     (CDN 지연/차단 시에도 첫 페인트 유지, 폴백 스택 양호. 리뷰 2026-07-14) -->
 		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 		<link
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+			media="print"
+			onload="this.media='all'"
 		/>
-		<!-- JetBrains Mono (아이브로우·숫자 라벨 등 모노 시그니처) -->
 		<link
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.2.5/400.css"
+			media="print"
+			onload="this.media='all'"
 		/>
 		<link
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.2.5/500.css"
+			media="print"
+			onload="this.media='all'"
 		/>
+		<noscript>
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+		</noscript>
 
 		<!-- PWA -->
 		<link

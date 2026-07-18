@@ -36,7 +36,7 @@
 						<span v-if="checkRequiredItems.loading">{{ __('확인 중...') }}</span>
 						<span v-else>{{ __('커버리지 확인') }}</span>
 					</button>
-					<div v-if="checkRequiredItems.error" class="text-center py-2 text-red-600 text-sm">
+					<div v-if="checkRequiredItems.error" class="text-center py-2 text-[var(--k-danger)] text-sm">
 						{{ __('확인에 실패했습니다. 잠시 후 다시 시도해 주세요.') }}
 					</div>
 				</div>
@@ -50,7 +50,7 @@
 						<div class="mt-2 h-2 rounded-full bg-[var(--k-hairline)] overflow-hidden">
 							<div
 								class="h-full rounded-full transition-all"
-								:class="coveragePercent === 100 ? 'bg-green-600' : 'bg-black'"
+								:class="coveragePercent === 100 ? 'bg-[var(--k-success)]' : 'bg-[var(--k-accent-solid)]'"
 								:style="{ width: coveragePercent + '%' }"
 							></div>
 						</div>
@@ -60,12 +60,12 @@
 					<div v-if="coverage.missing.length" class="k-card p-4 flex flex-col gap-2">
 						<div class="k-t-headline text-[var(--k-ink)]">{{ __('누락 항목') }}</div>
 						<ul class="flex flex-col gap-1">
-							<li v-for="m in coverage.missing" :key="m.ho" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
-								<span class="text-red-400 mr-1">{{ m.ho }}호</span>{{ m.label }}
+							<li v-for="m in coverage.missing" :key="m.ho" class="text-sm text-[var(--k-danger)] bg-[var(--k-surface-3)] border border-[var(--k-hairline)] rounded-lg px-3 py-1.5">
+								<span class="text-[var(--k-danger)] mr-1">{{ m.ho }}호</span>{{ m.label }}
 							</li>
 						</ul>
 					</div>
-					<div v-else class="k-card p-3 text-xs bg-green-50 border border-green-300 text-green-800 leading-relaxed">
+					<div v-else class="k-card p-3 text-xs text-[var(--k-success)] leading-relaxed">
 						{{ __('✓ §93 필수기재 항목이 모두 커버되었습니다.') }}
 					</div>
 
@@ -101,7 +101,7 @@
 						<span v-if="amendmentProcedure.loading">{{ __('확인 중...') }}</span>
 						<span v-else>{{ __('절차 확인') }}</span>
 					</button>
-					<div v-if="amendmentProcedure.error" class="text-center py-2 text-red-600 text-sm">
+					<div v-if="amendmentProcedure.error" class="text-center py-2 text-[var(--k-danger)] text-sm">
 						{{ __('확인에 실패했습니다. 상시 근로자 수를 확인해 주세요.') }}
 					</div>
 				</div>
@@ -113,7 +113,7 @@
 							<div class="k-t-headline text-[var(--k-ink)]">{{ __('진행 단계') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
-								:class="procedure.requirement === 'consent' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'"
+								:class="procedure.requirement === 'consent' ? 'bg-[var(--k-surface-3)] text-[var(--k-warn)]' : 'bg-[var(--k-surface-3)] text-[var(--k-ink-muted)]'"
 							>
 								{{ procedure.requirement === 'consent' ? __('동의 필요') : __('의견청취') }}
 							</span>
@@ -125,7 +125,7 @@
 								:key="idx"
 								class="flex gap-2 text-sm text-[var(--k-ink)] items-start"
 							>
-								<span class="k-numeric shrink-0 w-5 h-5 rounded-full bg-black text-white text-[11px] font-semibold flex items-center justify-center">{{ idx + 1 }}</span>
+								<span class="k-numeric shrink-0 w-5 h-5 rounded-full bg-[var(--k-accent-solid)] text-white text-[11px] font-semibold flex items-center justify-center">{{ idx + 1 }}</span>
 								<span>{{ step }}</span>
 							</li>
 						</ol>
@@ -136,7 +136,7 @@
 							<div class="k-t-headline text-[var(--k-ink)]">{{ __('§93 신고의무') }}</div>
 							<span
 								class="text-xs font-semibold px-2.5 py-1 rounded-full"
-								:class="procedure.filing_obligation.required ? 'bg-red-100 text-red-700' : 'bg-[var(--k-hairline)] text-[var(--k-ink-muted)]'"
+								:class="procedure.filing_obligation.required ? 'bg-[var(--k-surface-3)] text-[var(--k-danger)]' : 'bg-[var(--k-hairline)] text-[var(--k-ink-muted)]'"
 							>
 								{{ procedure.filing_obligation.required ? __('신고 대상') : __('신고 의무 없음') }}
 							</span>
@@ -222,11 +222,11 @@ async function checkProcedure() {
 	border-radius: 0.5rem;
 	padding: 0.5rem 0.75rem;
 	font-size: 0.875rem;
-	color: black;
+	color: var(--k-ink);
 	width: 100%;
 }
 .k-input:focus {
 	outline: none;
-	box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
+	box-shadow: var(--k-focus-ring);
 }
 </style>

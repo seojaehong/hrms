@@ -38,7 +38,7 @@
 					<article
 						v-for="item in fixture.items"
 						:key="item.name"
-						class="rounded-2xl border bg-[var(--k-card)] p-4 shadow-sm"
+						class="k-interactive rounded-2xl border bg-[var(--k-card)] p-4 shadow-sm"
 						:class="statusClass(item.status)"
 					>
 						<router-link :to="item.route" class="block">

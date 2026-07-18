@@ -10,6 +10,7 @@
     --k-inverse-ink: #ffffff;
     --k-hairline: #e8e5e1; /* v2 웜 */
     --k-hairline-soft: #f0eeeb;
+    --k-hairline-strong: #d8d3cd; /* 구조 엣지 (라이트) */
     --k-surface-soft: #fbfaf9; /* = surface-3 */
     /* Linear 서피스 래더 (DESIGN.md Migration 표) — 1=캔버스, 2=카드, 3=카드 내 삽입 패널 */
     --k-surface-1: #f6f5f4;
@@ -21,7 +22,7 @@
     --k-surface-dark-3: #252320;
     --k-ledger-navy: #0d253d; /* Stripe — 금액 잉크 */
     --k-ink-muted: #615d59;
-    --k-ink-faint: #a39e98;
+    --k-ink-faint: #726b62; /* AA 수정 2026-07-19: a39e98(3.1)→726b62(4.83:1 on canvas, 5.26 on white) 실측 */
     --k-font-serif: "Noto Serif KR", "Nanum Myeongjo", serif; /* 리포트 히어로 전용 */
     --k-shadow-modal: 0 8px 16px -4px rgba(0,0,0,.04), 0 24px 32px -8px rgba(0,0,0,.06);
     --k-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px rgba(13,37,61,.5);
@@ -58,11 +59,31 @@
     --korea-accent: var(--t-accent, #0d253d); /* v2: 단일 액센트 — magenta 폐기 */
     /* 인터랙티브 액센트 서피스(버튼·세그먼트) — 테넌트 슬롯 경유. 다크에서 별도 밝기로 재정의 */
     --k-accent-solid: var(--t-accent, #0d253d);
+    --k-accent-link: var(--t-accent, #0d253d); /* 라이트 링크=네이비(화이트 위 고대비). 다크서 밝은 라벤더로 재정의 */
     --korea-success: var(--k-success);
     --korea-warn: var(--k-warn);
     --korea-error: var(--k-danger);
     --korea-font-family: var(--k-font);
     --korea-font-mono: var(--k-font-mono);
+
+    /* ── B안 bare-name alias 어휘 레이어 (2026-07-19) — getdesign.md/신규 컴포넌트가 짧은 이름을 쓰되
+       값은 기존 --k-*로 해석(테마별 지연 해석). rename 아님 → 기존 ~2,000 참조 무손상. ── */
+    --canvas: var(--k-canvas);
+    --surface-1: var(--k-surface-1);
+    --surface-2: var(--k-surface-2);
+    --surface-3: var(--k-surface-3);
+    --hairline: var(--k-hairline);
+    --hairline-strong: var(--k-hairline-strong);
+    --ink: var(--k-ink);
+    --ink-muted: var(--k-ink-muted);
+    --ink-faint: var(--k-ink-faint);
+    --money: var(--k-ledger-navy);      /* 절대 액센트 아님 */
+    --accent: var(--k-accent-solid);    /* 버튼/포커스 전용 */
+    --accent-link: var(--k-accent-link);/* 인라인 링크 텍스트 전용 */
+
+    /* ── 마이크로인터랙션 표준 (Linear 100~200ms 스냅) ── */
+    --k-transition: 140ms cubic-bezier(.2, 0, 0, 1);
+    --k-transition-fast: 100ms cubic-bezier(.2, 0, 0, 1);
     --korea-spacing-xs: 4px;
     --korea-spacing-sm: 8px;
     --korea-spacing-md: 16px;
@@ -159,6 +180,32 @@
     color: var(--k-ledger-navy);
 }
 
+/* ── 링크 + 마이크로인터랙션 (전 화면 공통, 2026-07-19 B안) ── */
+/* 인라인 링크 텍스트 — 밝은 라벤더(다크)/네이비(라이트). 돈 색과 분리. */
+.k-link {
+    color: var(--k-accent-link);
+    text-decoration: none;
+    transition: color var(--k-transition-fast), opacity var(--k-transition-fast);
+}
+.k-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+/* 클릭 가능한 카드/행 — Linear식 명도 리프트(hover 시 서피스 밝아지고 보더 강조 + 미세 부양) */
+.k-interactive {
+    transition: background-color var(--k-transition), border-color var(--k-transition),
+                transform var(--k-transition), box-shadow var(--k-transition);
+    cursor: pointer;
+}
+.k-interactive:hover {
+    background: var(--k-surface-3);
+    border-color: var(--k-hairline-strong);
+    transform: translateY(-1px);
+}
+.k-interactive:active { transform: translateY(0); }
+/* 테이블 행 hover — 명도 리프트만(부양 없음, 밀도 유지) */
+.k-row-hover { transition: background-color var(--k-transition-fast); }
+.k-row-hover:hover { background: var(--k-surface-3); }
+/* 카드 기본 트랜지션(테마 전환·hover 대비) */
+.k-card { transition: background-color var(--k-transition), border-color var(--k-transition); }
+
 /* ── 타이포 스케일 (DESIGN.md §typography 1:1 — 화면의 모든 제목/본문은 이 클래스로) ──
    전역 body 자간 -0.025em(사용자 확정 2026-07-13)이 베이스, 스케일 클래스가 필요 시 재정의. */
 /* 홈/온보딩 히어로 전용 최대 스케일 — ⚠️ frappe-ui 프리셋은 text-3xl+ 유틸을 생성하지 않으므로
@@ -224,10 +271,10 @@
     border-radius: 8px;
     min-height: 44px;
     padding: 10px 18px;
-    transition: opacity 0.15s ease, transform 0.1s ease;
+    transition: transform var(--k-transition-fast), filter var(--k-transition-fast), box-shadow var(--k-transition);
 }
-.k-btn-primary:hover:not(:disabled) { opacity: 0.9; }
-.k-btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.k-btn-primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.k-btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.99); filter: brightness(1); }
 .k-btn-primary:focus-visible { outline: none; box-shadow: var(--k-focus-ring); }
 .k-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -261,22 +308,25 @@
    금액 잉크는 밝은 네이비 틴트(#9db8d6) — "다크에서도 돈의 색은 네이비"(사용자 확정 2026-07-12).
    ══════════════════════════════════════════════════════════════ */
 :root[data-theme="dark"] {
-    --k-ink: #ece9e4;
-    --k-canvas: #181715;
-    --k-card: #1f1e1b;
+    /* 2026-07-19 B안(Linear 모던 다크) — canvas를 딥 니어블랙으로, hairline은 알파-화이트 오버레이.
+       돈(--k-ledger-navy)은 유지, 인터랙티브 액센트만 라벤더로 분리. */
+    --k-ink: #f7f8f8;              /* Linear ink */
+    --k-canvas: #08090A;           /* Linear-side deep */
+    --k-card: #141516;             /* raised surface (=surface-2) */
     --k-inverse-canvas: #f6f5f4;
     --k-inverse-ink: #171513;
-    --k-hairline: #33302c;
-    --k-hairline-soft: #292824;
-    --k-surface-soft: #252320;
-    --k-surface-1: #181715;
-    --k-surface-2: #1f1e1b;
-    --k-surface-3: #252320;
-    --k-ledger-navy: #9db8d6; /* 다크 장부 잉크 — 밝은 네이비 틴트 */
-    --k-ink-muted: #a39e98;
-    --k-ink-faint: #6f6a64;
-    --k-shadow-modal: 0 8px 16px -4px rgba(0,0,0,.4), 0 24px 32px -8px rgba(0,0,0,.5);
-    --k-focus-ring: 0 0 0 2px #181715, 0 0 0 4px rgba(157,184,214,.6);
+    --k-hairline: rgba(255,255,255,.08);   /* B: 알파-화이트 오버레이 — 모든 서피스층에서 정합 */
+    --k-hairline-soft: rgba(255,255,255,.05);
+    --k-hairline-strong: rgba(255,255,255,.14);  /* NEW: 구조 엣지 */
+    --k-surface-soft: #191a1c;
+    --k-surface-1: #0f1011;        /* Linear 명도 스택 */
+    --k-surface-2: #141516;
+    --k-surface-3: #191a1c;
+    --k-ledger-navy: #9db8d6; /* 다크 장부 잉크 — 밝은 네이비 틴트 (돈, 유지) */
+    --k-ink-muted: #8a8f98;
+    --k-ink-faint: #7d838c;        /* AA 수정: 6f6a64→7d838c (≈4.5:1 on surface-1) */
+    --k-shadow-modal: 0 8px 16px -4px rgba(0,0,0,.55), 0 24px 40px -8px rgba(0,0,0,.65);
+    --k-focus-ring: 0 0 0 2px #08090A, 0 0 0 4px rgba(94,106,210,.6);  /* 라벤더 링 */
     /* 파스텔 → 다크 딥 틴트 (내러티브 블록) */
     --k-block-lime: var(--t-block-1, #333d22);
     --k-block-lilac: var(--t-block-2, #352b4d);
@@ -284,17 +334,18 @@
     --k-block-mint: var(--t-block-4, #263b2b);
     --k-block-pink: var(--t-block-5, #3f2c2c);
     --k-block-navy: #14132b;
-    /* 다크 인터랙티브 액센트 — 카드(#1f1e1b) 위에서 구분되는 중간 네이비. 돈 잉크(#9db8d6)와 별개 */
-    --k-accent-solid: var(--t-accent-dark, #31517a);
-    --k-success: #34c164;
-    --k-danger: #ef6a6a;
-    --k-warn: #f2c14e;
+    /* 다크 인터랙티브 액센트 — Linear 라벤더. 돈 잉크(#9db8d6)와 별개 hue(파랑 과부하 해소) */
+    --k-accent-solid: var(--t-accent-dark, #5e6ad2);
+    --k-accent-link: #828fff; /* 인라인 링크 텍스트 — 밝은 라벤더(6.6:1, AA). 버튼배경 라벤더(4.05)와 분리 */
+    --k-success: #3fb27f;
+    --k-danger: #eb6a63;
+    --k-warn: #e0a93b;
     color-scheme: dark;
     /* Ionic 셸 브리지 — ion-content/탭바가 토큰 래더를 따르게 */
-    --ion-tab-bar-background: #1f1e1b;
-    --ion-tab-bar-color: #a39e98;
-    --ion-tab-bar-color-selected: #ece9e4;
-    --ion-tab-bar-background-focused: #252320;
+    --ion-tab-bar-background: #141516;
+    --ion-tab-bar-color: #8a8f98;
+    --ion-tab-bar-color-selected: #f7f8f8;
+    --ion-tab-bar-background-focused: #191a1c;
 }
 
 /* ── 다크 파스텔 블록 = B안 서피스 카드 + 컬러 시그널 (사용자 확정 2026-07-13).
@@ -366,9 +417,14 @@
     color: var(--k-ink-faint);
 }
 
-/* 다크 — 파스텔 블록 내부 흰 알파 타일(bg-white/NN)을 은은한 프로스트로 반전 (감사 C-2, 17곳) */
-:root[data-theme="dark"] [class*="bg-white/"] {
+/* 다크 — 파스텔 블록 내부 흰 알파 타일(bg-white/NN)을 은은한 프로스트로 반전 (감사 C-2).
+   ⚠️ .k-block 스코프 한정 — 전역 매칭은 bg-white/95 액션바·bg-white/10 틴트까지 오폭(리뷰 2026-07-14) */
+:root[data-theme="dark"] .k-block [class*="bg-white/"] {
     background-color: rgba(255, 255, 255, 0.07);
+}
+/* 시간입력 하단 고정 액션바(bg-white/95 backdrop-blur) — 다크는 다크 프로스트로 */
+:root[data-theme="dark"] .bg-white\/95 {
+    background-color: rgba(31, 30, 27, 0.92);
 }
 /* 다크 — 저알파 검정 인디케이터(범례·스텝 도트)를 잉크 알파로 반전 (감사 C-4).
    bg-black/40(모달 오버레이·솔리드 CTA)은 의도적으로 제외. */
@@ -397,6 +453,74 @@
 :root[data-theme="dark"] .bg-gray-50,
 :root[data-theme="dark"] .bg-gray-100 { background-color: var(--k-surface-soft); }
 :root[data-theme="dark"] .border-gray-100,
-:root[data-theme="dark"] .border-gray-200,
-:root[data-theme="dark"] .border { border-color: var(--k-hairline); }
+:root[data-theme="dark"] .border-gray-200 { border-color: var(--k-hairline); }
+/* ⚠️ bare `.border`는 리매핑 금지 — border-red-200 등 시맨틱 보더를 이겨버림(리뷰 2026-07-14).
+   기본 보더색은 tailwind.config.js borderColor.DEFAULT=var(--k-hairline)가 담당. */
 :root[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: var(--k-surface-soft); }
+
+/* ── 다크 시맨틱 상태 브리지 (2026-07-19 B안) — 라이트 파스텔 배지/배너(bg-green-100·bg-red-50·bg-amber-50…)가
+   니어블랙 캔버스에서 밝은 파스텔로 튀는 문제. 다크에서만 배경=저알파 틴트·텍스트=시맨틱 토큰·보더=중알파 틴트.
+   ⚠️ text-*-50(솔리드 컬러버튼 위 밝은 라벨)·bg-*-700(솔리드 버튼)은 remap 금지 — 미포함. ── */
+:root[data-theme="dark"] {
+    --k-tint-success: 63, 178, 127;
+    --k-tint-danger: 235, 106, 99;
+    --k-tint-warn: 224, 169, 59;
+    --k-tint-info: 94, 106, 210;
+}
+:root[data-theme="dark"] .bg-green-50,
+:root[data-theme="dark"] .bg-green-100,
+:root[data-theme="dark"] .bg-green-200,
+:root[data-theme="dark"] .bg-emerald-50,
+:root[data-theme="dark"] .bg-emerald-100 { background-color: rgba(var(--k-tint-success), .15); }
+:root[data-theme="dark"] .text-green-700,
+:root[data-theme="dark"] .text-green-800,
+:root[data-theme="dark"] .text-emerald-700,
+:root[data-theme="dark"] .text-emerald-800 { color: var(--k-success); }
+:root[data-theme="dark"] .border-green-100,
+:root[data-theme="dark"] .border-green-200 { border-color: rgba(var(--k-tint-success), .3); }
+:root[data-theme="dark"] .bg-red-50,
+:root[data-theme="dark"] .bg-red-100,
+:root[data-theme="dark"] .bg-red-200,
+:root[data-theme="dark"] .bg-rose-50,
+:root[data-theme="dark"] .bg-rose-100 { background-color: rgba(var(--k-tint-danger), .15); }
+:root[data-theme="dark"] .text-red-700,
+:root[data-theme="dark"] .text-red-800 { color: var(--k-danger); }
+:root[data-theme="dark"] .border-red-100,
+:root[data-theme="dark"] .border-red-200 { border-color: rgba(var(--k-tint-danger), .3); }
+:root[data-theme="dark"] .bg-amber-50,
+:root[data-theme="dark"] .bg-amber-100,
+:root[data-theme="dark"] .bg-yellow-50,
+:root[data-theme="dark"] .bg-yellow-100,
+:root[data-theme="dark"] .bg-yellow-200,
+:root[data-theme="dark"] .bg-orange-50,
+:root[data-theme="dark"] .bg-orange-100 { background-color: rgba(var(--k-tint-warn), .15); }
+:root[data-theme="dark"] .text-amber-700,
+:root[data-theme="dark"] .text-amber-800,
+:root[data-theme="dark"] .text-yellow-700,
+:root[data-theme="dark"] .text-yellow-800,
+:root[data-theme="dark"] .text-orange-700 { color: var(--k-warn); }
+:root[data-theme="dark"] .border-amber-100,
+:root[data-theme="dark"] .border-amber-200,
+:root[data-theme="dark"] .border-yellow-200 { border-color: rgba(var(--k-tint-warn), .3); }
+:root[data-theme="dark"] .bg-blue-50,
+:root[data-theme="dark"] .bg-blue-100 { background-color: rgba(var(--k-tint-info), .15); }
+:root[data-theme="dark"] .text-blue-700,
+:root[data-theme="dark"] .text-blue-800 { color: #828fff; }
+/* -500/-600 음영도 커버 — 런타임 모듈(koreaComplianceRuntime.js 등)이 JS로 뿜는 상태 텍스트 클래스 대응 */
+:root[data-theme="dark"] .text-green-500,
+:root[data-theme="dark"] .text-green-600,
+:root[data-theme="dark"] .text-emerald-600 { color: var(--k-success); }
+:root[data-theme="dark"] .text-red-500,
+:root[data-theme="dark"] .text-red-600,
+:root[data-theme="dark"] .text-rose-600 { color: var(--k-danger); }
+:root[data-theme="dark"] .text-amber-600,
+:root[data-theme="dark"] .text-yellow-600,
+:root[data-theme="dark"] .text-orange-600 { color: var(--k-warn); }
+:root[data-theme="dark"] .text-blue-600 { color: #828fff; }
+
+/* 다크 포커스링·체크박스 — 검정(ring-black·accent-black)이 니어블랙서 안 보임 → 라벤더 액센트로 (2026-07-19).
+   입력창 76곳 공통. Tailwind ring은 --tw-ring-color 변수라 그것만 재정의. */
+:root[data-theme="dark"] .focus\:ring-black\/60:focus,
+:root[data-theme="dark"] .focus\:ring-black\/20:focus,
+:root[data-theme="dark"] .focus\:ring-black\/15:focus { --tw-ring-color: rgba(94, 106, 210, .7); }
+:root[data-theme="dark"] .accent-black { accent-color: var(--k-accent-solid); }

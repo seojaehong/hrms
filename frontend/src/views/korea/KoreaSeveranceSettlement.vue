@@ -139,7 +139,7 @@
 						<div class="k-block k-block--cream -mx-1">
 							<div class="k-eyebrow">NET TOTAL PAYOUT</div>
 							<div class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">실지급 총액</div>
-							<div class="k-display">{{ formatKRW(summary.net_total_payout) }}</div>
+							<div class="k-display k-settled">{{ formatKRW(summary.net_total_payout) }}</div>
 							<div class="mt-4 grid grid-cols-3 gap-2">
 								<div class="rounded-lg bg-white/55 px-3 py-2 text-center">
 									<p class="k-numeric text-sm font-bold k-amount">{{ formatKRW(summary.severance_pay_amount) }}</p>

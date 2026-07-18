@@ -1,7 +1,7 @@
 <template>
 	<ion-page>
 		<ion-header class="ion-no-border">
-			<div class="w-full bg-[var(--k-card)] shadow-sm">
+			<div class="w-full bg-[var(--k-card)] border-b border-[var(--k-hairline)]">
 				<div class="flex flex-col p-4 w-full sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto">
 					<div class="flex flex-row justify-between items-center">
 						<div class="flex flex-row items-center gap-2">
@@ -36,7 +36,7 @@
 									<FeatherIcon name="bell" class="h-6 w-6" />
 									<span
 										v-if="unreadNotificationsCount.data"
-										class="absolute top-0 right-0.5 inline-block w-2 h-2 bg-red-600 rounded-full border border-white"
+										class="absolute top-0 right-0.5 inline-block w-2 h-2 bg-red-600 rounded-full border border-[var(--k-card)]"
 									>
 									</span>
 								</span>

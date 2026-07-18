@@ -211,7 +211,7 @@
 						<div
 							v-for="item in wageStatementHistory.data"
 							:key="item.pay_year_month"
-							class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2 cursor-pointer hover:bg-[var(--k-surface-soft)] -mx-2 px-2 rounded transition-colors"
+							class="flex justify-between items-center border-b border-[var(--k-hairline-soft)] pb-2 cursor-pointer k-row-hover -mx-2 px-2 rounded"
 							@click="selectHistoryItem(item)"
 						>
 							<span class="text-sm text-[var(--k-ink)]">{{ item.pay_year_month }}</span>

@@ -40,7 +40,7 @@
 					카테고리 진단 데이터를 찾을 수 없습니다.<br />
 					<router-link
 						:to="{ name: 'KoreaComplianceDashboard' }"
-						class="text-[var(--k-ink)] font-semibold underline text-xs mt-1"
+						class="k-link font-semibold text-xs mt-1"
 					>
 						← 메인 대시보드로 돌아가기
 					</router-link>
@@ -56,7 +56,7 @@
 						<div class="text-sm font-bold tracking-tight text-[var(--k-ink)]">발견 사항</div>
 
 						<div v-if="actualFindings.length === 0 && dataUnavailableFindings.length === 0">
-							<div class="text-sm text-green-700 py-2 text-center">발견된 문제 없음</div>
+							<div class="text-sm text-[var(--k-success)] py-2 text-center">발견된 문제 없음</div>
 						</div>
 
 						<!-- 실제 위반/경고 발견 -->
@@ -64,7 +64,7 @@
 							v-for="(finding, idx) in maskedFindings"
 							:key="`finding-${idx}`"
 							class="border rounded-lg p-3 flex flex-col gap-1"
-							:class="categoryDetail.status === 'fail' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'"
+							:class="categoryDetail.status === 'fail' ? 'border-[var(--k-danger)] bg-[var(--k-surface-3)]' : 'border-[var(--k-warn)] bg-[var(--k-surface-3)]'"
 						>
 							<div class="flex items-start justify-between gap-2">
 								<div class="text-xs font-semibold text-[var(--k-ink)]">
@@ -180,7 +180,7 @@
 								:href="mod.route"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-xs text-[var(--k-ink)] font-medium hover:underline flex items-center gap-1"
+								class="k-link text-xs font-medium flex items-center gap-1"
 							>
 								{{ mod.label }} →
 							</a>
@@ -191,7 +191,7 @@
 					<div class="flex">
 						<router-link
 							:to="{ name: 'KoreaComplianceDashboard' }"
-							class="text-xs text-[var(--k-ink-muted)] hover:underline"
+							class="k-link text-xs"
 						>
 							← 대시보드로 돌아가기
 						</router-link>
@@ -202,7 +202,7 @@
 			<!-- Confirm: 해결 표시 -->
 			<div
 				v-if="showResolveConfirm"
-				class="fixed inset-0 bg-[var(--k-surface-soft)]0 flex items-center justify-center z-50"
+				class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
 				@click.self="showResolveConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">

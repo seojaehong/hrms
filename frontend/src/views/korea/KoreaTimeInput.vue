@@ -22,12 +22,12 @@
 						<input
 							v-model="period"
 							type="month"
-							class="k-numeric mt-1 w-full rounded-lg border border-[var(--k-hairline)] bg-white/70 px-3 py-2 text-sm font-semibold text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20"
+							class="k-numeric mt-1 w-full rounded-lg border border-[var(--k-hairline)] bg-[var(--k-card)] px-3 py-2 text-sm font-semibold text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/20"
 							@change="loadGrid"
 						/>
 					</div>
 					<div class="mt-3 grid grid-cols-4 gap-2">
-						<div v-for="field in HOUR_FIELDS" :key="field" class="rounded-xl bg-white/60 p-2 text-center">
+						<div v-for="field in HOUR_FIELDS" :key="field" class="rounded-xl bg-[var(--k-surface-1)] p-2 text-center">
 							<p class="k-numeric text-lg font-bold text-[var(--k-ink)]">{{ totals[field] }}</p>
 							<p class="text-xs font-medium text-[var(--k-ink-muted)]">{{ FIELD_LABELS[field] }}(h)</p>
 						</div>

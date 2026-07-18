@@ -1,7 +1,7 @@
 <template>
 	<ion-tab-bar
 		slot="bottom"
-		class="bg-[var(--k-card)] shadow-md sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto py-2 pb-2 standalone:pb-safe-bottom"
+		class="bg-[var(--k-card)] border-t border-[var(--k-hairline)] sm:w-96 md:w-[44rem] xl:w-[64rem] 2xl:w-[76rem] mx-auto py-2 pb-2 standalone:pb-safe-bottom"
 	>
 		<ion-tab-button
 			v-for="item in tabItems"

@@ -11,7 +11,7 @@
 								<h1 class="mt-1 k-t-display text-[var(--k-ink)]">{{ __("결재 인박스") }}</h1>
 								<p class="mt-1 text-sm font-medium text-[var(--k-ink-muted)]">{{ __("승인·반려가 필요한 요청을 한곳에서 처리합니다") }}</p>
 							</div>
-							<div class="rounded-xl bg-white/70 px-4 py-3 text-center">
+							<div class="rounded-xl bg-[var(--k-surface-2)] px-4 py-3 text-center">
 								<p class="k-numeric text-2xl font-bold text-[var(--k-ink)]">{{ items.length }}</p>
 								<p class="mt-0.5 text-xs font-medium text-[var(--k-ink-muted)]">{{ __("대기") }}</p>
 							</div>

@@ -94,7 +94,7 @@
 						</div>
 						<span class="rounded-full px-3 py-1 text-xs font-semibold" :class="dataSourceBadgeClass">{{ dataSourceBadge }}</span>
 					</div>
-					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-[var(--k-ink-muted)]">
+					<div v-if="runtimeLoading" class="mt-4 rounded-xl bg-[var(--k-surface-2)] p-3 text-sm text-[var(--k-ink-muted)]">
 						실데이터를 불러오는 중…
 					</div>
 					<div v-else-if="runtimeError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
@@ -104,10 +104,10 @@
 					<div v-else-if="runtimeWorklistError" class="mt-4 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
 						마감 목록 실조회 실패 — 예시 목록으로 대체 표시 중입니다. {{ runtimeWorklistError }}
 					</div>
-					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-white/55 p-3 text-sm text-[var(--k-ink-muted)]">
+					<div v-else-if="runtimeDashboard && !runtimeHasData && !runtimeHasWorklistData" class="mt-4 rounded-xl bg-[var(--k-surface-2)] p-3 text-sm text-[var(--k-ink-muted)]">
 						이 회사의 실데이터 대시보드 행이 없어 정적 예시 데이터가 유지됩니다.
 					</div>
-					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-white/70 p-3 text-sm text-[var(--k-ink)]">
+					<div v-else-if="runtimeDashboard" class="mt-4 rounded-xl bg-[var(--k-surface-2)] p-3 text-sm text-[var(--k-ink)]">
 						실데이터 대시보드 연결됨 (읽기 전용)
 						<span v-if="runtimeUiState.showFixtureFallbackCopy"> · {{ runtimeUiState.worklistBanner }}</span>
 					</div>
@@ -115,7 +115,7 @@
 						{{ runtimeUiState.worklistBanner }}
 					</div>
 					<div class="mt-4 grid grid-cols-3 gap-2 text-center">
-						<div class="rounded-xl bg-white/55 p-3">
+						<div class="rounded-xl bg-[var(--k-surface-2)] p-3">
 							<p class="text-2xl font-bold">{{ summaryCards.total_count }}</p>
 							<p class="text-xs text-[var(--k-ink-muted)]">사업장</p>
 						</div>
@@ -209,7 +209,7 @@
 								<td class="py-2 text-[var(--k-ink)]">{{ d.label || d.field }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.computed) }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.notified) }}</td>
-								<td class="py-2 text-right font-bold" :class="d.delta > 0 ? 'text-red-600' : 'text-blue-600'">
+								<td class="py-2 text-right font-bold" :class="d.delta !== 0 ? 'text-[var(--k-danger)]' : 'text-[var(--k-ink-muted)]'">
 									{{ formatWonPlain(d.delta) }}
 								</td>
 							</tr>
@@ -327,7 +327,7 @@ const dataSourceBadge = computed(() => runtimeUiState.value.dataSourceBadge)
 const dataSourceBadgeClass = computed(() => {
 	if (runtimeHasWorklistData.value) return "bg-green-100 text-green-800"
 	if (runtimeDashboard.value) return "bg-[var(--k-hairline-soft)] text-[var(--k-ink)]"
-	if (runtimeLoading.value) return "bg-white/20 text-white"
+	if (runtimeLoading.value) return "bg-[var(--k-surface-3)] text-[var(--k-ink-muted)]"
 	return "bg-amber-100 text-amber-900"
 })
 const summaryCards = computed(() => {

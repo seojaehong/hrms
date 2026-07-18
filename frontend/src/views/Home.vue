@@ -30,7 +30,7 @@
 								v-for="link in section.links"
 								:key="link.route"
 								:to="{ name: link.route }"
-								class="group flex flex-row items-center justify-between py-2.5 md:py-3 border-t border-[var(--k-hairline)]"
+								class="group flex flex-row items-center justify-between py-2.5 md:py-3 border-t border-[var(--k-hairline)] transition-colors hover:bg-[var(--k-surface-3)]"
 							>
 								<span class="text-sm md:text-base font-medium text-[var(--k-ink)]">{{ link.title }}</span>
 								<FeatherIcon name="chevron-right" class="h-4 w-4 text-[var(--k-ink-faint)] transition-transform group-hover:translate-x-0.5" />

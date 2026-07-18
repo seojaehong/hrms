@@ -9,6 +9,10 @@ export default {
 	],
 	theme: {
 		extend: {
+			// bare `border`의 기본색을 토큰으로 — 다크 쉼의 .border 블랭킷 대체(시맨틱 보더 보존)
+			borderColor: {
+				DEFAULT: "var(--k-hairline)",
+			},
 			// frappe-ui 프리셋의 sans=Inter를 Pretendard로 교체 — preflight(html)·font-sans 유틸 모두 통일
 			fontFamily: {
 				sans: [

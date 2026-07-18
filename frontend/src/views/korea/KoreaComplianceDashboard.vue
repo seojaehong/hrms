@@ -19,7 +19,7 @@
 						<input
 							type="date"
 							v-model="asOfDate"
-							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-black/60"
+							class="w-full border border-[var(--k-hairline)] rounded-lg px-3 py-2 text-sm text-[var(--k-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--k-accent-solid)]"
 						/>
 					</div>
 
@@ -127,7 +127,7 @@
 						<div class="pl-7 pt-1">
 							<router-link
 								:to="{ name: 'KoreaComplianceCategoryDetail', params: { categoryKey: cat.key }, query: { diagnosisId: currentDiagnosisId } }"
-								class="text-xs text-[var(--k-ink)] font-semibold hover:underline"
+								class="k-link text-xs font-semibold"
 							>
 								상세 보기 →
 							</router-link>
@@ -202,7 +202,7 @@
 					<div class="text-xs text-[var(--k-ink-faint)] border-t border-[var(--k-hairline-soft)] pt-2 mt-1">
 						{{ actionPlanResult.summary }}
 					</div>
-					<div class="text-xs text-red-600">
+					<div class="text-xs text-[var(--k-danger)]">
 						* 이 플랜은 human-review 대상입니다. 실제 조치는 담당자 확인 후 진행하세요.
 					</div>
 				</div>
@@ -210,7 +210,7 @@
 				<!-- 에러 -->
 				<div
 					v-if="complianceDiagnosis.error"
-					class="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700"
+					class="bg-[var(--k-surface-3)] border border-[var(--k-hairline)] rounded-lg p-4 text-sm text-[var(--k-danger)]"
 				>
 					진단 중 오류가 발생했습니다: {{ complianceDiagnosis.error }}
 				</div>
@@ -219,7 +219,7 @@
 			<!-- Confirm: 진단 실행 -->
 			<div
 				v-if="showDiagnosisConfirm"
-				class="fixed inset-0 bg-[var(--k-surface-soft)]0 flex items-center justify-center z-50"
+				class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
 				@click.self="showDiagnosisConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
@@ -251,7 +251,7 @@
 			<!-- Confirm: 액션 플랜 생성 -->
 			<div
 				v-if="showActionPlanConfirm"
-				class="fixed inset-0 bg-[var(--k-surface-soft)]0 flex items-center justify-center z-50"
+				class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
 				@click.self="showActionPlanConfirm = false"
 			>
 				<div class="bg-[var(--k-card)] rounded-2xl shadow-xl p-6 mx-6 flex flex-col gap-4 max-w-sm w-full">
@@ -329,11 +329,11 @@ const overallStatusTextClass = computed(() => overallConfig.value?.textClass ?? 
 
 const overallBannerClass = computed(() => {
 	const map = {
-		good: "bg-green-50",
-		needs_attention: "bg-yellow-50",
-		high_risk: "bg-red-50",
+		good: "bg-[var(--k-surface-3)]",
+		needs_attention: "bg-[var(--k-surface-3)]",
+		high_risk: "bg-[var(--k-surface-3)]",
 	}
-	return map[overallStatus.value] ?? "bg-[var(--k-surface-soft)]"
+	return map[overallStatus.value] ?? "bg-[var(--k-surface-3)]"
 })
 
 const categoryCards = computed(() => buildCategoryCards(diagnosisResult.value?.diagnoses))
@@ -428,10 +428,10 @@ async function generateActionPlan() {
 
 function severityClass(severity) {
 	return {
-		high: "text-red-700 bg-red-50",
-		medium: "text-yellow-700 bg-yellow-50",
-		low: "text-green-700 bg-green-50",
-	}[severity] ?? "text-[var(--k-ink)] bg-[var(--k-surface-soft)]"
+		high: "text-[var(--k-danger)] bg-[var(--k-surface-3)]",
+		medium: "text-[var(--k-warn)] bg-[var(--k-surface-3)]",
+		low: "text-[var(--k-success)] bg-[var(--k-surface-3)]",
+	}[severity] ?? "text-[var(--k-ink)] bg-[var(--k-surface-3)]"
 }
 
 function severityLabel(severity) {

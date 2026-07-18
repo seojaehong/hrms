@@ -12,7 +12,7 @@
 				</div>
 
 				<div v-if="listInspectionChecklist.loading && !items.length" class="text-sm text-[var(--k-ink-faint)] py-2">{{ __('불러오는 중...') }}</div>
-				<div v-if="listInspectionChecklist.error" class="text-center py-2 text-red-600 text-sm">
+				<div v-if="listInspectionChecklist.error" class="text-center py-2 text-[var(--k-danger)] text-sm">
 					{{ __('체크리스트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.') }}
 				</div>
 
@@ -24,7 +24,7 @@
 					<div class="mt-2 h-2 rounded-full bg-[var(--k-hairline)] overflow-hidden">
 						<div
 							class="h-full rounded-full transition-all"
-							:class="progressPercent === 100 ? 'bg-green-600' : 'bg-black'"
+							:class="progressPercent === 100 ? 'bg-[var(--k-success)]' : 'bg-[var(--k-accent-solid)]'"
 							:style="{ width: progressPercent + '%' }"
 						></div>
 					</div>
@@ -54,7 +54,7 @@
 							v-for="item in group.items"
 							:key="item.id"
 							class="rounded-lg border border-[var(--k-hairline)] p-3 flex flex-col gap-2"
-							:class="completed[item.id] ? 'bg-green-50/60 border-green-200' : ''"
+							:class="completed[item.id] ? 'bg-[var(--k-surface-3)] border-[var(--k-success)]' : ''"
 						>
 							<label class="flex items-start gap-2 cursor-pointer">
 								<input type="checkbox" v-model="completed[item.id]" class="mt-0.5" />
@@ -71,7 +71,7 @@
 								</div>
 								<div class="flex items-center gap-2 flex-wrap">
 									<span class="font-semibold text-[var(--k-ink-muted)]">{{ __('리스크') }}:</span>
-									<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+									<span class="px-2 py-0.5 rounded-full bg-[var(--k-surface-3)] text-[var(--k-danger)] font-semibold">
 										{{ item.risk.type }}<template v-if="item.risk.amount"> · {{ item.risk.amount }}</template>
 									</span>
 								</div>
@@ -80,7 +80,7 @@
 									<span class="font-semibold text-[var(--k-ink-muted)]">{{ __('자동점검') }}:</span>
 									<span
 										class="px-2 py-0.5 rounded-full font-semibold"
-										:class="isAutomated(item) ? 'bg-blue-100 text-blue-700' : 'bg-[var(--k-hairline)] text-[var(--k-ink-faint)]'"
+										:class="isAutomated(item) ? 'bg-[var(--k-surface-3)] text-[var(--k-ink-muted)]' : 'bg-[var(--k-hairline)] text-[var(--k-ink-faint)]'"
 									>
 										{{ isAutomated(item) ? item.automated_check : __('미확인 (수동 점검 필요)') }}
 									</span>

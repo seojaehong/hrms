@@ -225,6 +225,50 @@ class TestKoreaStatutoryPayroll(unittest.TestCase):
 		self.assertIn('"korea_component_category": "Employer Statutory Contribution"', source)
 		self.assertIn('"is_company_contribution_only": 1', source)
 
+	# --- payslip rounding parity (원단위절사) ------------------------------------
+	def _rounding_policy(self, rounding=None):
+		policy = dict(self.policy)
+		if rounding is not None:
+			policy["rounding"] = rounding
+		return policy
+
+	def test_default_rounding_is_half_up_and_unchanged(self):
+		# 3,333,333 taxable → NP 149,999.985 and EI 29,999.997 round UP under HALF_UP.
+		snap = self.mod.build_statutory_payroll_snapshot(
+			earnings=[{"component": "Basic Pay", "amount": 3333333}],
+			policy=self.policy,
+		)
+		self.assertEqual(snap["employee_deductions"]["National Pension"], 150000)
+		self.assertEqual(snap["employee_deductions"]["Employment Insurance"], 30000)
+
+	def test_truncate_rounding_floors_sub_won_for_payslip_parity(self):
+		# 4대보험 보험료는 원단위 미만 절사 → 명세서와 1원 단위로 일치시키는 모드.
+		snap = self.mod.build_statutory_payroll_snapshot(
+			earnings=[{"component": "Basic Pay", "amount": 3333333}],
+			policy=self._rounding_policy("truncate"),
+		)
+		self.assertEqual(snap["employee_deductions"]["National Pension"], 149999)
+		self.assertEqual(snap["employee_deductions"]["Employment Insurance"], 29999)
+
+	def test_truncate_also_applies_to_employer_and_employer_only_contributions(self):
+		policy = self._rounding_policy("truncate")
+		policy["industrial_accident_insurance"] = {"basis": "monthly_taxable_wage", "employer_rate": 0.007}
+		snap = self.mod.build_statutory_payroll_snapshot(
+			earnings=[{"component": "Basic Pay", "amount": 3333333}],
+			policy=policy,
+		)
+		# NP employer 149,999.985 → 149,999 (floored, not rounded to 150,000).
+		self.assertEqual(snap["employer_contributions"]["National Pension"], 149999)
+		# 산재 3,333,333 × 0.007 = 23,333.331 → 23,333.
+		self.assertEqual(snap["employer_contributions"]["Industrial Accident Insurance"], 23333)
+
+	def test_invalid_rounding_mode_raises(self):
+		with self.assertRaisesRegex(ValueError, "rounding must be one of"):
+			self.mod.build_statutory_payroll_snapshot(
+				earnings=[{"component": "Basic Pay", "amount": 3000000}],
+				policy=self._rounding_policy("bankers"),
+			)
+
 
 if __name__ == "__main__":
 	unittest.main()

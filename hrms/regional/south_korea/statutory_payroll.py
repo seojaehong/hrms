@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import re
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_DOWN, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +30,15 @@ _STATUTORY_COMPONENTS = {
 
 _ORDINARY_WAGE_COMPONENTS = {"Basic Pay"}
 _MEAL_ALLOWANCE_COMPONENT = "Meal Allowance"
+
+# Won-rounding policy for statutory contributions.
+#   round_half_up : nearest won (default; preserves existing engine behaviour)
+#   truncate      : 원단위 미만 절사 — floors sub-won fractions to match payslips
+_ROUNDING_MODES = {
+	"round_half_up": ROUND_HALF_UP,
+	"truncate": ROUND_DOWN,
+}
+_DEFAULT_ROUNDING = "round_half_up"
 _EXPONENT_STYLE_NUMBER_PATTERN = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)[eE][+-]?\d+$")
 
 
@@ -42,20 +51,22 @@ def build_statutory_payroll_snapshot(*, earnings: list[dict[str, Any]], policy: 
 	"""
 
 	_validate_policy(policy)
+	round_won = _make_won_rounder(policy.get("rounding", _DEFAULT_ROUNDING))
 	component_presets = load_korea_salary_component_presets()
 	lines = [_normalize_earning(line) for line in earnings]
 	tax_summary = _build_taxable_summary(lines, policy, component_presets)
 	basis = tax_summary["taxable_earnings"]
 
-	national_pension = _split_contribution(policy["national_pension"], basis)
-	health_insurance = _split_contribution(policy["health_insurance"], basis)
+	national_pension = _split_contribution(policy["national_pension"], basis, round_won=round_won)
+	health_insurance = _split_contribution(policy["health_insurance"], basis, round_won=round_won)
 	long_term_care = _split_contribution(
 		policy["long_term_care_insurance"],
 		health_insurance["employee"],
 		employer_basis=health_insurance["employer"],
+		round_won=round_won,
 	)
-	employment_insurance = _split_contribution(policy["employment_insurance"], basis)
-	industrial_accident = _employer_only_contribution(policy.get("industrial_accident_insurance"), basis)
+	employment_insurance = _split_contribution(policy["employment_insurance"], basis, round_won=round_won)
+	industrial_accident = _employer_only_contribution(policy.get("industrial_accident_insurance"), basis, round_won=round_won)
 
 	employee_deductions = {
 		_STATUTORY_COMPONENTS["national_pension"]: national_pension["employee"],
@@ -107,6 +118,9 @@ def load_korea_salary_component_presets() -> dict[str, dict[str, Any]]:
 def _validate_policy(policy: dict[str, Any]) -> None:
 	if not isinstance(policy, dict):
 		raise ValueError("policy must be a dict")
+	rounding = policy.get("rounding", _DEFAULT_ROUNDING)
+	if rounding not in _ROUNDING_MODES:
+		raise ValueError(f"rounding must be one of {sorted(_ROUNDING_MODES)}")
 	for key in _REQUIRED_POLICIES:
 		if key not in policy:
 			raise ValueError(f"{key} policy is required")
@@ -211,24 +225,32 @@ def _build_taxable_summary(lines: list[dict[str, Any]], policy: dict[str, Any], 
 	}
 
 
-def _split_contribution(policy: dict[str, Any], employee_basis: int, *, employer_basis: int | None = None) -> dict[str, int]:
+def _split_contribution(
+	policy: dict[str, Any],
+	employee_basis: int,
+	*,
+	employer_basis: int | None = None,
+	round_won: Any = None,
+) -> dict[str, int]:
+	round_won = round_won or _round_decimal_to_won
 	basis = _apply_floor_ceiling(employee_basis, policy)
 	employer_basis = basis if employer_basis is None else _apply_floor_ceiling(employer_basis, policy)
 	return {
-		"employee": _round_decimal_to_won(Decimal(basis) * _to_decimal(policy["employee_rate"], "employee_rate")),
-		"employer": _round_decimal_to_won(Decimal(employer_basis) * _to_decimal(policy["employer_rate"], "employer_rate")),
+		"employee": round_won(Decimal(basis) * _to_decimal(policy["employee_rate"], "employee_rate")),
+		"employer": round_won(Decimal(employer_basis) * _to_decimal(policy["employer_rate"], "employer_rate")),
 		"employee_basis": basis,
 		"employer_basis": employer_basis,
 	}
 
 
-def _employer_only_contribution(policy: dict[str, Any] | None, basis: int) -> dict[str, int] | None:
+def _employer_only_contribution(policy: dict[str, Any] | None, basis: int, *, round_won: Any = None) -> dict[str, int] | None:
 	if policy is None:
 		return None
+	round_won = round_won or _round_decimal_to_won
 	contribution_basis = _apply_floor_ceiling(basis, policy)
 	return {
 		"employee": 0,
-		"employer": _round_decimal_to_won(
+		"employer": round_won(
 			Decimal(contribution_basis) * _to_decimal(policy["employer_rate"], "industrial_accident_insurance.employer_rate")
 		),
 		"employee_basis": 0,
@@ -269,6 +291,15 @@ def _to_integer_won(value: Any, name: str) -> int:
 
 def _round_decimal_to_won(value: Decimal) -> int:
 	return int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _make_won_rounder(mode: str) -> Any:
+	rounding = _ROUNDING_MODES[mode]
+
+	def _round(value: Decimal) -> int:
+		return int(value.quantize(Decimal("1"), rounding=rounding))
+
+	return _round
 
 
 def _to_decimal(value: Any, name: str) -> Decimal:

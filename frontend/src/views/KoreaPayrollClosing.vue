@@ -209,7 +209,7 @@
 								<td class="py-2 text-[var(--k-ink)]">{{ d.label || d.field }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.computed) }}</td>
 								<td class="py-2 text-right k-amount">{{ formatWonPlain(d.notified) }}</td>
-								<td class="py-2 text-right font-bold" :class="d.delta !== 0 ? 'text-[var(--k-danger)]' : 'text-[var(--k-ink-muted)]'">
+								<td class="py-2 text-right font-bold" :class="isReconRowMismatch(d) ? 'text-[var(--k-danger)]' : 'text-[var(--k-ink-muted)]'">
 									{{ formatWonPlain(d.delta) }}
 								</td>
 							</tr>
@@ -305,6 +305,13 @@ const insuranceReconVisible = computed(() => hasKoreaInsuranceReconciliationData
 const insuranceReconData = computed(() => insuranceRecon.value?.data || null)
 const insuranceReconSummary = computed(() => insuranceReconData.value?.summary_ko || "")
 const insuranceReconTopDiffs = computed(() => (insuranceReconData.value?.reconciliation?.diffs || []).slice(0, 5))
+// 원단위 절사(±few won)로 생긴 차액은 within_tolerance=true → 중립(muted)으로 보이고,
+// 진짜 불일치(within_tolerance=false)만 danger로 강조한다. within_tolerance가 없는(레거시)
+// 응답은 기존 동작대로 delta!==0 이면 불일치로 취급한다.
+function isReconRowMismatch(d) {
+	if (typeof d?.within_tolerance === "boolean") return !d.within_tolerance
+	return d?.delta !== 0
+}
 const insuranceReconUnmatchedCount = computed(() => (insuranceReconData.value?.unmatched || []).length)
 const insuranceReconAmbiguousCount = computed(() => (insuranceReconData.value?.ambiguous || []).length)
 const requestedCompany = computed(() => {

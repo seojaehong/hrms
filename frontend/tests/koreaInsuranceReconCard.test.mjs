@@ -19,8 +19,9 @@ test("고지 대사 카드 마크업이 존재한다", () => {
 	assert.match(viewSource, />계산</)
 	assert.match(viewSource, />고지</)
 	assert.match(viewSource, />차이</)
-	// 차이 양수 빨강 / 음수 파랑
-	assert.match(viewSource, /d\.delta > 0 \? 'text-red-600' : 'text-blue-600'/)
+	// 허용오차 내 차액은 중립(muted), 진짜 불일치만 danger — within_tolerance 기반 분기
+	assert.match(viewSource, /within_tolerance/)
+	assert.match(viewSource, /isReconRowMismatch\(d\) \? 'text-\[var\(--k-danger\)\]' : 'text-\[var\(--k-ink-muted\)\]'/)
 	// unmatched/ambiguous 배지
 	assert.match(viewSource, /미매칭 \{\{ insuranceReconUnmatchedCount \}\}건/)
 	assert.match(viewSource, /동명이인 \{\{ insuranceReconAmbiguousCount \}\}건/)

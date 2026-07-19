@@ -438,6 +438,11 @@
 :root[data-theme="dark"] .before\:bg-black::before {
     background-color: var(--k-ink);
 }
+/* 다크 — solid .bg-black 내러티브 CTA 알약을 준-검정 캔버스에서 보이게 라벤더 액센트로.
+   exact solid 클래스만 매핑(위 .bg-black/NN 오버레이 규칙은 의도적으로 미포함). */
+:root[data-theme="dark"] .bg-black {
+    background-color: var(--k-accent-solid);
+}
 
 /* ── 다크 v1 브리지 쉼 — 컴포넌트 전반의 Tailwind gray 하드코딩을 다크에서만 토큰으로 리매핑.
    실앱 QA(2026-07-13)로 검증. 장기적으로는 components/ 감사 확대 후 개별 토큰화로 대체·제거. ── */

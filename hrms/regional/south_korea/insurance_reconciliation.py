@@ -13,7 +13,8 @@
 — 금액 키는 일부만 있어도 된다(있는 키만 대조).
 
 원칙:
-- 기본 허용오차 0원 (1원 단위 검증 — 글로벌 규칙). tolerance는 명시적으로만 완화.
+- 기본 허용오차 1원 (원단위절사 노이즈 흡수). |delta|<=tolerance 는 within_tolerance=True 로
+  남되 불일치로 세지 않는다. tolerance=0 을 명시하면 1원 단위 엄격 검증(옛 동작).
 - 차이·누락을 절대 숨기지 않는다: diffs / missing_in_notified / missing_in_computed 전부 반환.
 - 계산 전용 — 조회·저장 없음.
 
@@ -63,7 +64,7 @@ def reconcile_contributions(
 	computed: list[dict[str, Any]],
 	notified: list[dict[str, Any]],
 	*,
-	tolerance: int = 0,
+	tolerance: int = 1,
 	fields: tuple[str, ...] = CONTRIBUTION_FIELDS,
 ) -> dict[str, Any]:
 	"""직원별 보험료 대사.
@@ -71,14 +72,16 @@ def reconcile_contributions(
 	Args:
 		computed: 우리 엔진 계산분 (표준 행 리스트).
 		notified: 공단 고지분 (표준 행 리스트).
-		tolerance: 허용 오차(원). 기본 0 — 1원이라도 다르면 diff.
+		tolerance: 허용 오차(원). 기본 1 — 원단위절사(원단위 절사) 노이즈를 흡수한다.
+			차이가 있어도 |delta| <= tolerance 면 diff 행은 남되 within_tolerance=True 로
+			표시(불일치 아님). tolerance=0 을 명시하면 옛 엄격 동작(1원도 불일치).
 		fields: 대조할 금액 필드(기본 4대 전체). 양쪽 모두 값이 있는 필드만 대조.
 
 	Returns:
 		{
-			"ok": bool,                      # diff 0건 & 누락 0건
-			"match_count": int,              # 필드 단위 일치 수
-			"diffs": [ {employee, field, label, computed, notified, delta} ... ],
+			"ok": bool,                      # 허용오차 초과 diff 0건 & 누락 0건
+			"match_count": int,              # 필드 단위 일치 수(허용오차 내 포함)
+			"diffs": [ {employee, field, label, computed, notified, delta, within_tolerance} ... ],
 			"missing_in_notified": [employee...],  # 우리에겐 있는데 고지에 없음
 			"missing_in_computed": [employee...],  # 고지에 있는데 우리 계산에 없음
 			"totals": {field: {"computed": 합, "notified": 합, "delta": 차}},
@@ -116,19 +119,21 @@ def reconcile_contributions(
 				continue  # 한쪽에 없는 필드는 대조 대상 아님
 			c_won = _to_won(c_val, f"computed.{key}.{field}")
 			n_won = _to_won(n_val, f"notified.{key}.{field}")
+			delta = c_won - n_won
 			totals[field]["computed"] += c_won
 			totals[field]["notified"] += n_won
-			totals[field]["delta"] += c_won - n_won
-			if abs(c_won - n_won) <= tolerance:
+			totals[field]["delta"] += delta
+			if abs(delta) <= tolerance:
 				match_count += 1
-			else:
+			if delta != 0:
 				diffs.append({
 					"employee": key,
 					"field": field,
 					"label": FIELD_LABELS_KO.get(field, field),
 					"computed": c_won,
 					"notified": n_won,
-					"delta": c_won - n_won,
+					"delta": delta,
+					"within_tolerance": abs(delta) <= tolerance,
 				})
 
 	missing_in_notified = sorted(k for k in computed_by if k not in notified_by)
@@ -137,8 +142,9 @@ def reconcile_contributions(
 	# 과다공제 의심(delta>0)이 먼저 보이도록 |delta| 내림차순 정렬
 	diffs.sort(key=lambda d: (-abs(d["delta"]), d["employee"], d["field"]))
 
+	real_mismatch = any(not d["within_tolerance"] for d in diffs)
 	return {
-		"ok": not diffs and not missing_in_notified and not missing_in_computed,
+		"ok": not real_mismatch and not missing_in_notified and not missing_in_computed,
 		"match_count": match_count,
 		"diffs": diffs,
 		"missing_in_notified": missing_in_notified,
@@ -203,11 +209,13 @@ def summarize_reconciliation_ko(result: dict[str, Any]) -> str:
 	if result["ok"]:
 		return f"고지 대사 일치 — {result['match_count']}건 전부 1원 단위 일치"
 	parts = []
-	if result["diffs"]:
-		over = sum(1 for d in result["diffs"] if d["delta"] > 0)
-		under = len(result["diffs"]) - over
-		total_delta = sum(d["delta"] for d in result["diffs"])
-		parts.append(f"차이 {len(result['diffs'])}건(과다 {over}·과소 {under}, 합계 {total_delta:+,}원)")
+	# 원단위절사 노이즈(within_tolerance)는 불일치로 세지 않는다 — 진짜 차이만 요약.
+	mismatches = [d for d in result["diffs"] if not d.get("within_tolerance")]
+	if mismatches:
+		over = sum(1 for d in mismatches if d["delta"] > 0)
+		under = len(mismatches) - over
+		total_delta = sum(d["delta"] for d in mismatches)
+		parts.append(f"차이 {len(mismatches)}건(과다 {over}·과소 {under}, 합계 {total_delta:+,}원)")
 	if result["missing_in_notified"]:
 		parts.append(f"고지 누락 {len(result['missing_in_notified'])}명")
 	if result["missing_in_computed"]:

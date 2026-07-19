@@ -55,7 +55,7 @@ class TestKuukuuRegressionCase(unittest.TestCase):
 		self.assertIn("+21,230", summarize(out))
 
 	def test_one_won_matters(self):
-		# 1원 차이도 diff (tolerance 기본 0 — 글로벌 1원 단위 규칙)
+		# 1원 차이도 diff 행으로 남는다 (기본 tolerance=1 원단위절사이므로 within_tolerance=True)
 		out = reconcile(
 			[{"employee": "E1", "national_pension": 100001}],
 			[{"employee": "E1", "national_pension": 100000}],
@@ -69,6 +69,71 @@ class TestKuukuuRegressionCase(unittest.TestCase):
 			tolerance=10,
 		)
 		self.assertTrue(out["ok"])
+
+
+class TestWithinTolerance(unittest.TestCase):
+	"""원단위절사(원단위 절사) 노이즈는 mismatch가 아니라 within_tolerance 로 표시된다."""
+
+	def test_small_delta_is_within_tolerance(self):
+		# +4 차이, tolerance=10 → diff 행은 남되 within_tolerance True, ok True
+		out = reconcile(
+			[{"employee": "E1", "national_pension": 100004}],
+			[{"employee": "E1", "national_pension": 100000}],
+			tolerance=10,
+		)
+		self.assertEqual(len(out["diffs"]), 1)
+		self.assertTrue(out["diffs"][0]["within_tolerance"])
+		self.assertTrue(out["ok"])
+
+	def test_large_delta_is_not_within_tolerance(self):
+		# 43,000 차이 (기본 tolerance) → within_tolerance False, ok False
+		out = reconcile(
+			[{"employee": "E1", "national_pension": 209000}],
+			[{"employee": "E1", "national_pension": 166000}],
+		)
+		self.assertEqual(len(out["diffs"]), 1)
+		self.assertFalse(out["diffs"][0]["within_tolerance"])
+		self.assertFalse(out["ok"])
+
+	def test_default_tolerance_is_one_won(self):
+		# 기본 tolerance=1: 1원 차이는 within_tolerance True (원단위절사 허용)
+		out = reconcile(
+			[{"employee": "E1", "national_pension": 100001}],
+			[{"employee": "E1", "national_pension": 100000}],
+		)
+		self.assertEqual(out["tolerance"], 1)
+		self.assertTrue(out["diffs"][0]["within_tolerance"])
+		self.assertTrue(out["ok"])  # 1원 노이즈만이면 통과
+
+	def test_tolerance_zero_keeps_strict_behavior(self):
+		# tolerance=0 → 옛 엄격 동작: 1원도 within_tolerance False
+		out = reconcile(
+			[{"employee": "E1", "national_pension": 100001}],
+			[{"employee": "E1", "national_pension": 100000}],
+			tolerance=0,
+		)
+		self.assertFalse(out["diffs"][0]["within_tolerance"])
+		self.assertFalse(out["ok"])
+
+	def test_mixed_tolerated_and_real_mismatch(self):
+		# 한 사람은 원단위절사(+1, 허용), 한 사람은 진짜 불일치(+43,000) — 같은 tolerance
+		out = reconcile(
+			[
+				{"employee": "E1", "national_pension": 100001},
+				{"employee": "E2", "national_pension": 209000},
+			],
+			[
+				{"employee": "E1", "national_pension": 100000},
+				{"employee": "E2", "national_pension": 166000},
+			],
+		)  # 기본 tolerance=1
+		self.assertEqual(len(out["diffs"]), 2)
+		flags = {d["employee"]: d["within_tolerance"] for d in out["diffs"]}
+		self.assertTrue(flags["E1"])
+		self.assertFalse(flags["E2"])
+		self.assertFalse(out["ok"])  # 진짜 불일치 1건이 있으므로
+		# summarize는 within_tolerance False(진짜 불일치)만 "차이 N건"으로 센다
+		self.assertIn("차이 1건", summarize(out))
 
 
 class TestMissingAndPartial(unittest.TestCase):

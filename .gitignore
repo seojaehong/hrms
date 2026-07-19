@@ -47,3 +47,7 @@ ralph-prompt.md
 prd.json
 progress.txt
 archive/
+.last-branch
+verify.log
+scripts/landing/verify.log
+scripts/landing/assets/shotpage_*.html

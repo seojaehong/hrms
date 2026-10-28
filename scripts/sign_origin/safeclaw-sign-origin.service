@@ -1,0 +1,25 @@
+[Unit]
+Description=Signing-only HTTPS origin
+Requires=docker.service safeclaw-sign-firewall.service
+BindsTo=safeclaw-sign-firewall.service
+After=docker.service safeclaw-sign-firewall.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/safeclaw-sign/runtime/fullchain.pem
+ConditionPathExists=/etc/safeclaw-sign/runtime/privkey.pem
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/safeclaw-sign/origin.env
+ExecStartPre=/usr/bin/python3 /usr/local/lib/safeclaw-sign/firewall.py check
+ExecStartPre=/usr/bin/test -s /etc/safeclaw-sign/runtime/fullchain.pem
+ExecStartPre=/usr/bin/test -s /etc/safeclaw-sign/runtime/privkey.pem
+ExecStartPre=-/usr/bin/docker rm safeclaw-sign-origin
+ExecStart=/usr/bin/docker run --name safeclaw-sign-origin --network host --user 101:101 --cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp:uid=101,gid=101,mode=0700 -v /etc/safeclaw-sign/nginx.conf:/etc/nginx/nginx.conf:ro -v /etc/safeclaw-sign/runtime:/run/origin:ro --entrypoint nginx ${ORIGIN_IMAGE} -g "daemon off;"
+ExecStop=/usr/bin/docker stop -t 10 safeclaw-sign-origin
+ExecStopPost=-/usr/bin/docker rm safeclaw-sign-origin
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

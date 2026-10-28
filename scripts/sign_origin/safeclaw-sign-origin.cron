@@ -1,0 +1,1 @@
+17 * * * * root /usr/local/lib/safeclaw-sign/update-ranges.sh >> /var/log/safeclaw-sign-origin-ranges.log 2>&1

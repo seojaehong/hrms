@@ -1,0 +1,16 @@
+[Unit]
+Description=Restore fail-closed signing origin firewall
+DefaultDependencies=no
+Requires=netfilter-persistent.service
+After=local-fs.target systemd-modules-load.service netfilter-persistent.service
+Before=network-pre.target docker.service
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/flock -x /run/safeclaw-sign-origin.lock /usr/bin/python3 /usr/local/lib/safeclaw-sign/firewall.py restore
+ExecStop=/usr/bin/flock -x /run/safeclaw-sign-origin.lock /usr/bin/python3 /usr/local/lib/safeclaw-sign/firewall.py lock
+
+[Install]
+WantedBy=multi-user.target

@@ -36,3 +36,11 @@ Before publishing a signing URL, verify direct external denial while the origin
 is actually running, missing/wrong secret denial, /app and /login denial with a
 valid secret, TLS name/chain, and signing page/assets through CloudFront. Do not
 send employee messages or change signing links as part of infrastructure tests.
+
+Render `scripts/sign_origin/nginx.conf.template` with an explicit envsubst
+allowlist (`envsubst '${ORIGIN_HOST} ${FRAPPE_SITE}'`); nginx request variables
+must remain literal. Keep the rendered tenant-specific file outside Git.
+Both `/esign` and the framework's canonical `/hrms/esign` must be allowed for
+GET/HEAD: the client router changes to the canonical path, and refreshes must
+still work. The 64-character origin token requires map_hash_bucket_size 128;
+test with a realistic-length synthetic token, not a short placeholder.

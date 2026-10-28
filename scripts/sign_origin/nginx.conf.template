@@ -1,0 +1,62 @@
+worker_processes 1;
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+events { worker_connections 512; }
+http {
+    map_hash_bucket_size 128;
+    access_log off;
+    client_body_temp_path /tmp/client_body;
+    proxy_temp_path /tmp/proxy;
+    fastcgi_temp_path /tmp/fastcgi;
+    uwsgi_temp_path /tmp/uwsgi;
+    scgi_temp_path /tmp/scgi;
+    client_max_body_size 1m;
+    include /run/origin/origin-auth.conf;
+    map $http_cloudfront_viewer_address $viewer_ip {
+        default "";
+        ~^(?<cf_ipv4>[0-9.]+):[0-9]+$ $cf_ipv4;
+        ~^\[(?<cf_ipv6>[0-9a-fA-F:]+)\]:[0-9]+$ $cf_ipv6;
+    }
+    server {
+        listen 0.0.0.0:8443 ssl;
+        server_name ${ORIGIN_HOST};
+        ssl_certificate /run/origin/fullchain.pem;
+        ssl_certificate_key /run/origin/privkey.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        if ($host != ${ORIGIN_HOST}) { return 403; }
+        if ($origin_verified = 0) { return 403; }
+        if ($viewer_ip = "") { return 400; }
+        proxy_set_header Host ${FRAPPE_SITE};
+        proxy_set_header X-Frappe-Site-Name ${FRAPPE_SITE};
+        proxy_set_header X-Forwarded-Proto https;
+        # CloudFront must add this header through an origin request policy.
+        # Origin IPs and the secret header are verified before this is trusted.
+        proxy_set_header X-Forwarded-For $viewer_ip;
+        proxy_set_header X-Real-IP $viewer_ip;
+        proxy_set_header Cookie "";
+        proxy_hide_header Set-Cookie;
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "no-store" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy no-referrer always;
+        proxy_read_timeout 30s;
+        location = /esign {
+            limit_except GET { deny all; }
+            proxy_pass http://127.0.0.1:8000;
+        }
+        location = /hrms/esign {
+            limit_except GET { deny all; }
+            proxy_pass http://127.0.0.1:8000;
+        }
+        location /assets/hrms/ {
+            limit_except GET { deny all; }
+            proxy_pass http://127.0.0.1:8000;
+        }
+        location ~ ^/api/method/hrms[.]regional[.]south_korea[.]employment_contract_esign_api[.](start_auth|verify_auth|get_document|sign|decline|mark_delivered)$ {
+            if ($args != "") { return 400; }
+            limit_except POST { deny all; }
+            proxy_pass http://127.0.0.1:8000;
+        }
+        location / { return 404; }
+    }
+}

@@ -44,3 +44,33 @@ Both `/esign` and the framework's canonical `/hrms/esign` must be allowed for
 GET/HEAD: the client router changes to the canonical path, and refreshes must
 still work. The 64-character origin token requires map_hash_bucket_size 128;
 test with a realistic-length synthetic token, not a short placeholder.
+
+## WAF compatibility before a signing URL cutover
+
+Test request-body size as well as tokenless HTML and assets. The managed core
+rule set blocks request bodies over 8192 bytes (`SizeRestrictions_BODY`), which
+can reject a base64 signature image before application session validation.
+An accessible page is therefore not sufficient evidence of signing support.
+
+Keep the IP rate rule and other managed protections. If an approved exception
+is necessary, first add a trailing Block rule matching the managed
+`awswaf:managed:aws:core-rule-set:SizeRestrictions_Body` label unless BOTH the
+URI exactly equals the configured signing API and the method exactly equals
+POST. Then override only `SizeRestrictions_BODY` to Count. The compensating
+rule must run after the core group; never add an early Allow rule that skips
+other threat checks. Keep the origin's actual request-body cap (1 MiB in the
+provided nginx template). Obtain approval before relaxing body protection.
+
+Flat-rate Free eligibility does not establish support for these custom WAF
+statements. Validate through AWS and retain any feature-not-in-plan rejection
+as evidence. If the required protection is unsupported, use an approved
+pay-as-you-go configuration rather than weakening it to fit a plan. Read back
+the deployed web ACL: only one Count override, exact path/method exception,
+correct trailing priority, and unchanged IP limit and other managed actions.
+
+Use synthetic invalid sessions only: small and large signing POST bodies
+should reach application session rejection; other large-body paths and GET
+requests should remain WAF-blocked; a body over the origin cap should be 413.
+This proves request routing and body limits, not successful authenticated
+signing. Configuration propagation can take time: preserve the initial failed
+probe and rerun after confirming the actual deployed configuration.

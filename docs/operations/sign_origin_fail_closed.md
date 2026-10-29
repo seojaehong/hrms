@@ -74,3 +74,39 @@ requests should remain WAF-blocked; a body over the origin cap should be 413.
 This proves request routing and body limits, not successful authenticated
 signing. Configuration propagation can take time: preserve the initial failed
 probe and rerun after confirming the actual deployed configuration.
+
+## Manual preview with an existing trial link
+
+Before issuing any new link, inspect the deployed token verifier, tenant
+routing, and frontend. A host-only substitution is possible when tokens bind
+the internal site/document rather than the browser hostname, the proxy fixes
+the correct internal site headers, and public API requests use relative URLs.
+Preserve HTTPS, the exact path/query, and the entire original `#t=` fragment.
+Use the original message's full link: this frontend removes the fragment from
+the address bar after reading it and keeps it only in component memory.
+Do not reconstruct a token from a document ID, reissue/revoke links, print
+token values, or open a real contract during a preparation-only review.
+
+Read-only status/expiry metadata can identify obvious blockers but does not
+prove the user's original token is the current valid token. Opening the intro
+screen is distinct from requesting an OTP; the latter sends a real message.
+Leave all real authentication and signing to the user when requested.
+
+## Shared-host reboot planning
+
+Preparation-only requests require fresh execution approval even if an earlier
+maintenance window was authorized. Avoid the 02:00 KST backup and a buffer
+around it (01:30–03:30), and also defer whenever a backup or other long job is
+still running. Inventory immediately before execution, not just when planning:
+running systemd units, Docker identities/health/restart policies, sessions for
+all relevant users, Claude process metadata, boot ID, and firewall dependencies.
+Do not collect process arguments, prompts, environments, or credential values.
+
+Confirm automatic recovery before intervening. A Docker restart policy of
+`no` can be intentional when systemd owns the container. For other previously
+running manual containers, start the database before its API/workers and retain
+their existing policies. Report lost tmux/screen/Claude sessions explicitly;
+restarting a process is not proof that its original task resumed. Preserve an
+independent console recovery path and capture before/after inventories, boot
+ordering, external denial and tokenless page/asset checks. Real trial links,
+OTP requests, signing, DNS cutover and employee delivery remain separate steps.
